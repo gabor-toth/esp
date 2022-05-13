@@ -1,6 +1,7 @@
 idf_component_register(
         SRCS
         "lib/gpio_task.c"
+        "gpio_logic.c"
         "ontozo_main.c"
         "test_util.c"
         INCLUDE_DIRS
