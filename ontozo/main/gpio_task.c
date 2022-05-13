@@ -50,7 +50,6 @@ void gpio_task_init( gpio_change_callback _change_callback ) {
 void gpio_task_add( int io_num ) {
     char timer_name[10];
 
-    printf( "gpio_task_add %d\n", io_num );
     sprintf( timer_name, "gpio%d", io_num );
     GpioTimer *timer_data = malloc( sizeof( GpioTimer ));
     timer_data->io_num = io_num;
