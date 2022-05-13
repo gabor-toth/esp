@@ -33,10 +33,12 @@ static void init_gpio() {
     io_conf.pull_up_en = ENABLED;
     gpio_config( &io_conf );
 
-    gpio_task_init( gpio_changed );
-
     //install gpio isr service
     gpio_install_isr_service( ESP_INTR_FLAG_DEFAULT );
+
+    gpio_task_init( gpio_changed );
+    gpio_task_add( CONFIG_GPIO_INPUT_0 );
+    gpio_task_add( CONFIG_GPIO_INPUT_1 );
 }
 
 void app_main( void ) {
