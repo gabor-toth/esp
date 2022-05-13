@@ -1,0 +1,11 @@
+.metadata/
+
+/generic_gpio/
+/hello_world/
+/restful_server/
+
+build/
+.idea/
+cmake-build-debug/
+sdkconfig.old
+
