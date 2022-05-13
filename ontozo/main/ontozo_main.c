@@ -7,5 +7,5 @@
 
 void app_main( void ) {
     init_gpio();
-    init_test();
+//    init_test();
 }
