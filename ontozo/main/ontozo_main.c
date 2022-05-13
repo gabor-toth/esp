@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 #include "config.h"
-#include "gpio_task.h"
+#include "lib/gpio_task.h"
 #include "test_util.h"
 
 #define ESP_INTR_FLAG_DEFAULT 0
