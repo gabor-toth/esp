@@ -76,14 +76,42 @@ static void set_initial_pump_states() {
     int level2 = gpio_get_level( GPIO_INPUT_LEVEL_2 );
     int level3 = gpio_get_level( GPIO_INPUT_LEVEL_3 );
 
-    pump_main_state = reached( level0 );
-    pump_refill_state = !reached( level3 ) || !reached( level2 ) || !reached( level1 ) || !reached( level0 );
+    pump_main_state =
+            reached( level0 )
+            && reached( level1 );
+    pump_refill_state =
+            !reached( level3 )
+            || !reached( level2 )
+            || !reached( level1 )
+            || !reached( level0 );
     gpio_set_level( GPIO_OUTPUT_PUMP_MAIN, pump_main_state );
     gpio_set_level( GPIO_OUTPUT_PUMP_REFILL, pump_refill_state );
     print_state();
 }
 
 static void gpio_changed( uint32_t io_num, int state ) {
-    printf( "GPIO[%d] intr, val: %d\n", io_num, state );
-    set_initial_pump_states();
+    printf( "GPIO[%d] = %d\n", io_num, state );
+
+    if ( io_num == GPIO_INPUT_LEVEL_3 ) {
+        if ( state == ENABLED ) {
+            pump_refill_state = DISABLED;
+        } else {
+            pump_refill_state = ENABLED;
+        }
+        // } else if ( io_num == GPIO_INPUT_LEVEL_2 ) { // no change for this sensor
+    } else if ( io_num == GPIO_INPUT_LEVEL_1 ) {
+        if ( state == ENABLED ) {
+            pump_main_state = ENABLED;
+        }
+    } else if ( io_num == GPIO_INPUT_LEVEL_0 ) {
+        if ( state == DISABLED ) {
+            pump_main_state = DISABLED;
+        }
+    } else {
+        fprintf(stderr, "Unhandled gpio %d (state %d)!\n", io_num, state );
+    }
+
+    gpio_set_level( GPIO_OUTPUT_PUMP_MAIN, pump_main_state );
+    gpio_set_level( GPIO_OUTPUT_PUMP_REFILL, pump_refill_state );
+    print_state();
 }
