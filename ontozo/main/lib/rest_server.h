@@ -18,4 +18,10 @@ extern esp_err_t rest_server_start(
         const char *static_files_base_path,
         void (*rest_register_handlers)( httpd_handle_t, rest_server_context_t * ));
 
+/**
+ * Receive JSON body.
+ * Caller is responsible to call cJSON_Delete(root) and httpd_resp_sendstr()
+ */
+extern esp_err_t rest_receive_json_body( httpd_req_t *req, cJSON **root );
+
 #endif //LIB_REST_SERVER_H
