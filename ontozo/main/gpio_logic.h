@@ -3,36 +3,31 @@
 
 extern void gpio_init();
 
-// levels
+// inputs
 
 extern int gpio_get_level_state( int level );
 
 extern int gpio_get_number_of_levels();
 
-// zones
+// outputs
 
-extern int gpio_get_number_of_zones();
+#define PUMPS 0
+#define ZONES 1
 
-extern int gpio_is_zone_valid( int zone );
+extern int gpio_get_number_of_output_classes();
 
-extern int gpio_get_zone_state( int zone );
+extern char *gpio_get_class_name( int class );
 
-extern char *gpio_get_zone_name( int zone );
+extern int gpio_get_number_of_output_pins( int class );
 
-extern void gpio_set_zone_state( int zone, int state );
+extern bool gpio_is_valid_output_index( int class, int index );
 
-extern void gpio_set_zone_name( int zone, char *name );
+extern bool gpio_get_output_pin_state( int class, int index );
 
-// pumps
+extern char *gpio_get_output_pin_name( int class, int index );
 
-extern int gpio_get_number_of_pumps();
+extern void gpio_set_output_pin_state( int class, int index, bool state );
 
-extern int gpio_get_pump_state( int pump );
-
-extern char *gpio_get_pump_name( int pump );
-
-extern void gpio_set_pump_state( int pump, int state );
-
-extern void gpio_set_pump_name( int pump, char *name );
+extern void gpio_set_output_pin_name( int class, int index, char *name );
 
 #endif //ONTOZO_GPIO_LOGIC_H

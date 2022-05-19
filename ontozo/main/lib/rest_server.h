@@ -4,6 +4,7 @@
 #include <esp_err.h>
 #include <esp_vfs.h>
 #include <esp_http_server.h>
+#include <cJSON.h>
 
 #define REST_SCRATCH_BUFSIZE (10240)
 
