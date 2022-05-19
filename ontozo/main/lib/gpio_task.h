@@ -1,5 +1,5 @@
-#ifndef GPIO_TASK_H
-#define GPIO_TASK_H
+#ifndef LIB_GPIO_TASK_H
+#define LIB_GPIO_TASK_H
 
 #include <stdint.h>
 
@@ -9,4 +9,4 @@ extern void gpio_task_init( gpio_change_callback callback );
 
 extern void gpio_task_add( int io_num );
 
-#endif //GPIO_TASK_H
+#endif //LIB_GPIO_TASK_H

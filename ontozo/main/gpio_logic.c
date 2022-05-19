@@ -27,7 +27,7 @@ static void print_state() {
             pump_refill_state ? 'R' : 'r' );
 }
 
-void init_gpio() {
+void gpio_init() {
 
     /* does not work to get pin 26 work as output
     // Disable DAC1
@@ -96,7 +96,7 @@ void init_gpio() {
     gpio_task_add( GPIO_INPUT_BUTTON_START );
     gpio_task_add( GPIO_INPUT_BUTTON_STOP );
 
-//    set_initial_pump_states();
+    set_initial_pump_states();
     print_state();
 }
 

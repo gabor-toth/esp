@@ -4,8 +4,10 @@
 #include "config.h"
 #include "gpio_logic.h"
 #include "test_util.h"
+#include "lib/rest_main.h"
 
 void app_main( void ) {
-    init_gpio();
-//    init_test();
+    gpio_init();
+    rest_init();
+//    test_init();
 }
