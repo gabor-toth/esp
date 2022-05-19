@@ -24,14 +24,18 @@ static gpio_num_t output_pins[] = {
 static unsigned int blink_counter = NUMBER_OF_PINS - 1;
 
 void timer_blink_callback( TimerHandle_t xTimer ) {
-//    printf( "blink_counter: %d\n", blink_counter );
     gpio_set_level( output_pins[ blink_counter ], !ENABLED_STATE( blink_counter ));
     blink_counter = ( blink_counter + 1 ) % NUMBER_OF_PINS;
     gpio_set_level( output_pins[ blink_counter ], ENABLED_STATE( blink_counter ));
 }
 
 void init_test() {
-    TimerHandle_t timer_blink = xTimerCreate( "blink", 1000 / portTICK_PERIOD_MS, 1, NULL, timer_blink_callback );
+    TimerHandle_t timer_blink = xTimerCreate(
+            "blink",
+            1000 / portTICK_PERIOD_MS,
+            1,
+            NULL,
+            timer_blink_callback );
     xTimerReset( timer_blink, 10 );
 }
 
