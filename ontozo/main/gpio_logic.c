@@ -177,8 +177,8 @@ static void set_initial_pump_states() {
     int level3 = gpio_get_level( GPIO_INPUT_LEVEL_4 );
 
     set_pin_state( &outputs[ PUMPS ].pins[ PUMP_MAIN ],
-                   reached( level0 )
-                   && reached( level1 ));
+                   false );
+    // reached( level0 ) && reached( level1 )
     set_pin_state( &outputs[ PUMPS ].pins[ PUMP_REFILL ],
                    !reached( level3 )
                    || !reached( level2 )
