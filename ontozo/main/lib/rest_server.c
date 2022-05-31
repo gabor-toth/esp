@@ -102,6 +102,7 @@ static esp_err_t rest_common_get_handler( httpd_req_t *req ) {
 
 /* Simple handler for getting system handler */
 static esp_err_t system_info_get_handler( httpd_req_t *req ) {
+    httpd_resp_set_hdr( req, "Access-Control-Allow-Origin", "*" );
     httpd_resp_set_type( req, "application/json" );
     cJSON *root = cJSON_CreateObject();
     esp_chip_info_t chip_info;

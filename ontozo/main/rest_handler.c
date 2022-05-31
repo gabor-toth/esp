@@ -6,6 +6,7 @@
 #include "gpio_logic.h"
 
 static esp_err_t state_get_handler( httpd_req_t *req ) {
+    httpd_resp_set_hdr( req, "Access-Control-Allow-Origin", "*" );
     httpd_resp_set_type( req, "application/json" );
     char as_string[16];
     cJSON *root = cJSON_CreateObject();
@@ -47,17 +48,21 @@ static esp_err_t pins_put_handler_inner( httpd_req_t *req, cJSON *root, int clas
     }
 
     cJSON *state_element = cJSON_GetObjectItem( root, "state" );
+    char *class_name = gpio_get_class_name( class );
     if ( state_element != NULL) {
         int state = state_element->valueint;
         gpio_set_output_pin_state( class, id - 1, state );
-        ESP_LOGI( REST_TAG, "Zone %d state changed to %d", id, state );
+        ESP_LOGI( REST_TAG, "%s %d state changed to %d", class_name, id, state );
     }
     cJSON *name_element = cJSON_GetObjectItem( root, "name" );
     if ( name_element != NULL) {
         gpio_set_output_pin_name( class, id - 1, name_element->valuestring );
-        ESP_LOGI( REST_TAG, "Zone %d name changed", id );
+        ESP_LOGI( REST_TAG, "%s %d name changed", class_name, id );
     }
-    httpd_resp_sendstr( req, "Zone changed successfully" );
+
+    char response[256];
+    snprintf( response, sizeof response, "%s changed successfully", class_name );
+    httpd_resp_sendstr( req, response );
     return ESP_OK;
 }
 
