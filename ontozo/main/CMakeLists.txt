@@ -1,5 +1,6 @@
 idf_component_register(
         SRCS
+        "lib/gpio_define.c"
         "lib/gpio_task.c"
         "lib/rest_server.c"
         "gpio_logic.c"

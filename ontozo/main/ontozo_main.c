@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 #include "config.h"
-#include "gpio_logic.h"
+#include "lib/gpio_define.h"
 #include "test_util.h"
 #include "lib/rest_main.h"
 

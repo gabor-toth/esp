@@ -2,7 +2,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/timers.h"
 #include "driver/gpio.h"
-#include "lib/common.h"
+#include "lib/gpio_define.h"
 #include "config.h"
 
 static gpio_num_t output_pins[] = {
@@ -19,7 +19,7 @@ static gpio_num_t output_pins[] = {
 };
 #define NUMBER_OF_PINS  (sizeof( output_pins ) / sizeof( gpio_num_t ))
 
-#define ENABLED_STATE( counter ) ((counter) < 8 ? ZONE_ENABLED : ENABLED)
+#define ENABLED_STATE( counter ) ((counter) < 8 ? PIN_ENABLED : PIN_DISABLED)
 
 static unsigned int blink_counter = NUMBER_OF_PINS - 1;
 

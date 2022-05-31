@@ -9,10 +9,10 @@
 #include <string.h>
 #include <fcntl.h>
 #include <errno.h>
-#include "esp_chip_info.h"
-#include "esp_log.h"
-#include "esp_vfs.h"
-#include "cJSON.h"
+#include <esp_chip_info.h>
+#include <esp_log.h>
+#include <esp_vfs.h>
+#include <cJSON.h>
 #include "rest_server.h"
 
 const char *REST_TAG = "esp-rest";
