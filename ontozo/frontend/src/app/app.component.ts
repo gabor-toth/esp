@@ -15,6 +15,7 @@ export class AppComponent {
     faToggleOff = faToggleOff
     faToggleOn = faToggleOn
     state: State | undefined;
+    stateAsString = "";
 
     constructor(
         private stateService: StateService
@@ -32,12 +33,20 @@ export class AppComponent {
         }, 1000);
     }
 
+    private onUpdate(newState: State) {
+        this.scheduleUpdate();
+        let newStateAsString = JSON.stringify(newState);
+        if (newStateAsString != this.stateAsString) {
+            this.state = newState;
+            this.stateAsString = newStateAsString;
+        }
+    }
+
     private updateState() {
         let component = this;
         this.stateService.getState().subscribe({
-            next(_state) {
-                component.scheduleUpdate();
-                component.state = _state;
+            next(state) {
+                component.onUpdate(state);
             },
             error(err) {
                 component.scheduleUpdate();
