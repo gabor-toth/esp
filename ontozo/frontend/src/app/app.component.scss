@@ -71,9 +71,7 @@ fa-icon {
   flex-wrap: wrap;
   justify-content: center;
   margin-top: 16px;
-}
 
-.card-container {
   @media screen and (max-width: 767px) {
     & > *:not(.circle-link) {
       width: 100%;
@@ -86,7 +84,7 @@ fa-icon {
     border: 1px solid #eee;
     background-color: #fafafa;
     height: 40px;
-    width: 200px;
+    width: 160px;
     margin: 0 8px 16px;
     padding: 16px;
     display: flex;
@@ -95,6 +93,14 @@ fa-icon {
     align-items: center;
     transition: all 0.2s ease-in-out;
     line-height: 24px;
+
+    fa-icon.on {
+      color: #009f00;
+    }
+
+    fa-icon.off {
+      color: #be0000;
+    }
 
     &:not(:last-child) {
       margin-right: 0;
