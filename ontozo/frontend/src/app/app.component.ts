@@ -46,4 +46,18 @@ export class AppComponent {
             // complete() {  }
         });
     }
+
+    click(type: String, id: number, state: boolean) {
+        console.log('Clicked ' + type + ' ' + id);
+        let component = this;
+        this.stateService.setState(type, id, state).subscribe({
+            complete() {
+                component.scheduleUpdate();
+            },
+            error(err) {
+                console.error('Error writing state', err);
+                component.scheduleUpdate();
+            }
+        });
+    }
 }

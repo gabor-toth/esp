@@ -8,13 +8,20 @@ import {HttpClient} from '@angular/common/http';
 })
 export class StateService {
 
-    url = 'http://192.168.1.189/state';
+    baseUrl = 'http://192.168.1.189/';
 
     constructor(private http: HttpClient) {
     }
 
     getState(): Observable<State> {
-        return this.http.get<State>(this.url);
+        return this.http.get<State>(this.baseUrl + 'state');
+    }
+
+    setState(type: String, id: number, state: boolean): Observable<Object> {
+        let url = this.baseUrl + type;
+        let body = `{"id":${id}, "state": ${state}}`;
+        console.log('setState', url, body);
+        return this.http.put(url, body);
     }
 
     getStateSimulate(): Observable<State> {
