@@ -116,12 +116,12 @@ static esp_err_t system_info_get_handler( httpd_req_t *req ) {
     return ESP_OK;
 }
 
-esp_err_t rest_receive_json_body( httpd_req_t *req, cJSON **root ) {
+esp_err_t rest_receive_json_body( httpd_req_t *req, rest_server_context_t *context, cJSON **root ) {
     *root = 0;
 
     int total_len = req->content_len;
     int cur_len = 0;
-    char *buf = ((rest_server_context_t *) ( req->user_ctx ))->scratch;
+    char *buf = context->scratch;
     int received = 0;
     if ( total_len >= REST_SCRATCH_BUFSIZE) {
         /* Respond with 500 Internal Server Error */

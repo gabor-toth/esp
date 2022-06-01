@@ -8,6 +8,7 @@
 #include "rest_handler.h"
 
 typedef struct {
+    rest_server_context_t *rest_context;
     bool type;
     int class;
 } PinHandlerContext;
@@ -85,6 +86,7 @@ static esp_err_t pins_put_handler_inner( httpd_req_t *req, cJSON *root, bool is_
 
     char response[256];
     snprintf( response, sizeof response, "%s changed successfully", class_name );
+    httpd_resp_set_hdr( req, "Access-Control-Allow-Origin", "*" );
     httpd_resp_sendstr( req, response );
     return ESP_OK;
 }
@@ -93,13 +95,21 @@ static esp_err_t pins_put_handler( httpd_req_t *req ) {
     cJSON *root;
     esp_err_t result;
 
-    if (( result = rest_receive_json_body( req, &root )) != ESP_OK ) {
+    result = rest_receive_json_body( req, ((PinHandlerContext *) req->user_ctx )->rest_context, &root );
+    if ( result != ESP_OK ) {
         return result;
     }
     PinHandlerContext *context = (PinHandlerContext *) req->user_ctx;
     result = pins_put_handler_inner( req, root, context->type, context->class );
     cJSON_Delete( root );
     return result;
+}
+
+static esp_err_t options_handler( httpd_req_t *req ) {
+    httpd_resp_set_hdr( req, "Access-Control-Allow-Origin", "*" );
+    httpd_resp_set_hdr( req, "Access-Control-Allow-Methods", "PUT" );
+    httpd_resp_sendstr( req, "" );
+    return ESP_OK;
 }
 
 static void rest_register_state_handler( httpd_handle_t server, rest_server_context_t *rest_context ) {
@@ -120,6 +130,7 @@ static void rest_register_gpio_handlers( httpd_handle_t server, rest_server_cont
         for ( int class = 0; class < class_count; class++ ) {
             snprintf( uri, sizeof uri, "/%s", gpio_get_class_name( type, class ));
             PinHandlerContext *context = malloc( sizeof( PinHandlerContext ));
+            context->rest_context = rest_context;
             context->type = type;
             context->class = class;
             httpd_uri_t uri_definition = {
@@ -128,12 +139,28 @@ static void rest_register_gpio_handlers( httpd_handle_t server, rest_server_cont
                     .handler = pins_put_handler,
                     .user_ctx = context
             };
-            httpd_register_uri_handler( server, &uri_definition );
+            esp_err_t err = httpd_register_uri_handler( server, &uri_definition );
+            if ( err != ESP_OK ) {
+                ESP_LOGE( REST_TAG, "Failed to register URI handlerPUT %s: %s", uri, esp_err_to_name( err ));
+            } else {
+                ESP_LOGI( REST_TAG, "Registered PUT %s", uri );
+            }
         }
     }
+}
+
+static void rest_register_options_handlers( httpd_handle_t server, rest_server_context_t *rest_context ) {
+    httpd_uri_t options_uri = {
+            .uri = "/*",
+            .method = HTTP_OPTIONS,
+            .handler = options_handler,
+            .user_ctx = rest_context
+    };
+    httpd_register_uri_handler( server, &options_uri );
 }
 
 void rest_register_handlers( httpd_handle_t server, rest_server_context_t *rest_context ) {
     rest_register_state_handler( server, rest_context );
     rest_register_gpio_handlers( server, rest_context );
+    rest_register_options_handlers( server, rest_context );
 }

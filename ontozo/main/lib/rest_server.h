@@ -23,6 +23,6 @@ extern esp_err_t rest_server_start(
  * Receive JSON body.
  * Caller is responsible to call cJSON_Delete(root) and httpd_resp_sendstr()
  */
-extern esp_err_t rest_receive_json_body( httpd_req_t *req, cJSON **root );
+extern esp_err_t rest_receive_json_body( httpd_req_t *req, rest_server_context_t *context, cJSON **root );
 
 #endif //LIB_REST_SERVER_H
