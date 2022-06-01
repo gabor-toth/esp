@@ -91,10 +91,10 @@ static void set_pin_name( Pin *pin, char *name ) {
     pin->name = strdup( name );
 }
 
-void gpio_add_pin( bool is_input, int class, gpio_num_t pin, char *name, PinLevelType level_type,
-                   uint64_t *pin_bit_mask ) {
+void gpio_add_pin_with_allocated_name( bool is_input, int class, gpio_num_t pin, char *name, PinLevelType level_type,
+                                       uint64_t *pin_bit_mask ) {
     if ( name == NULL) {
-        name = "---";
+        name = strdup( "---" );
     }
     if ( !gpio_is_valid_class( is_input, class )) {
         ESP_LOGE( LOG_TAG, "Adding pin %d/%d %d \"%s\"", is_input, class, pin, name );
@@ -108,12 +108,18 @@ void gpio_add_pin( bool is_input, int class, gpio_num_t pin, char *name, PinLeve
         return;
     }
     Pin *output_pin = &pin_class->pins[ pin_class->used_pin_count++ ];
-    output_pin->name = name != NULL ? strdup( name ) : NULL;
+    output_pin->name = name;
     output_pin->pin = pin;
     output_pin->level_type = level_type != inherit ? level_type : pin_class->level_type;
 
     *pin_bit_mask |= ( 1ULL << pin );
     set_pin_state( output_pin, false );
+}
+
+void gpio_add_pin( bool is_input, int class, gpio_num_t pin, char *name, PinLevelType level_type,
+                   uint64_t *pin_bit_mask ) {
+    name = name != NULL ? strdup( name ) : NULL;
+    gpio_add_pin_with_allocated_name( is_input, class, pin, name, level_type, pin_bit_mask );
 }
 
 static void add_input_pins() {

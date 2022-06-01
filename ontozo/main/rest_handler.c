@@ -1,10 +1,11 @@
 #include <string.h>
 #include "esp_http_server.h"
 #include "esp_log.h"
-#include "lib/rest_server.h"
-#include "rest_handler.h"
 #include "lib/gpio_define.h"
+#include "lib/nvs_main.h"
+#include "lib/rest_server.h"
 #include "gpio_logic.h"
+#include "rest_handler.h"
 
 typedef struct {
     bool type;
@@ -70,6 +71,11 @@ static esp_err_t pins_put_handler_inner( httpd_req_t *req, cJSON *root, bool is_
         changed = true;
         char *name = name_element->valuestring;
         gpio_set_pin_name( is_input, class, pin_index, name );
+
+        char nvs_key[256];
+        snprintf( nvs_key, sizeof nvs_key, "%s.%d.name", gpio_get_class_name( is_input, class ), pin_index + 1 );
+        nvs_write_string( nvs_key, name );
+
         ESP_LOGI( REST_TAG, "%s %d name changed to %s", class_name, pin_index + 1, name );
     }
     if ( !changed ) {

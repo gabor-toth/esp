@@ -1,6 +1,7 @@
 #ifndef ONTOZO_GPIO_DEFINE_H
 #define ONTOZO_GPIO_DEFINE_H
 
+#include <stdint.h>
 #include <stdbool.h>
 #include <hal/gpio_types.h>
 
@@ -22,6 +23,10 @@ extern void gpio_add_class( bool is_input, char *name, int max_pin_count, PinLev
 
 extern void
 gpio_add_pin( bool is_input, int class, gpio_num_t pin, char *name, PinLevelType level_type, uint64_t *pin_bit_mask );
+
+extern void
+gpio_add_pin_with_allocated_name( bool is_input, int class, gpio_num_t pin, char *name, PinLevelType level_type,
+                                  uint64_t *pin_bit_mask );
 
 extern void gpio_define_output_pins_callback( gpio_config_t *io_conf );
 
