@@ -15,7 +15,6 @@ typedef struct {
 static esp_err_t state_get_handler( httpd_req_t *req ) {
     httpd_resp_set_hdr( req, "Access-Control-Allow-Origin", "*" );
     httpd_resp_set_type( req, "application/json" );
-    char as_string[16];
     cJSON *root = cJSON_CreateObject();
 
     for ( int type = OUTPUTS; type <= INPUTS; type++ ) {
@@ -23,13 +22,14 @@ static esp_err_t state_get_handler( httpd_req_t *req ) {
 
         int class_count = gpio_get_number_of_classes( type );
         for ( int class = 0; class < class_count; class++ ) {
-            cJSON *class_json = cJSON_AddObjectToObject( typeJson, gpio_get_class_name( type, class ));
+            cJSON *itemArray = cJSON_AddArrayToObject( typeJson, gpio_get_class_name( type, class ));
             int pin_count = gpio_get_number_of_pins( type, class );
             for ( int i = 0; i < pin_count; i++ ) {
-                itoa( i + 1, as_string, sizeof as_string );
-                cJSON *zone = cJSON_AddObjectToObject( class_json, as_string );
-                cJSON_AddStringToObject( zone, "name", gpio_get_pin_name( type, class, i ));
-                cJSON_AddBoolToObject( zone, "on", gpio_get_pin_state( type, class, i ));
+                cJSON *item = cJSON_CreateObject();
+                cJSON_AddNumberToObject( item, "id", i + 1 );
+                cJSON_AddStringToObject( item, "name", gpio_get_pin_name( type, class, i ));
+                cJSON_AddBoolToObject( item, "on", gpio_get_pin_state( type, class, i ));
+                cJSON_AddItemToArray( itemArray, item );
             }
         }
     }
