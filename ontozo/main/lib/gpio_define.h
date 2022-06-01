@@ -18,17 +18,14 @@ typedef enum {
     high_is_on, low_is_on, inherit = -1
 } PinLevelType;
 
-extern void add_output_class( char *name, int max_pin_count, PinLevelType level_type );
+extern void gpio_add_class( bool is_input, char *name, int max_pin_count, PinLevelType level_type );
 
-extern void add_input_class( char *name, int max_pin_count, PinLevelType level_type );
+extern void
+gpio_add_pin( bool is_input, int class, gpio_num_t pin, char *name, PinLevelType level_type, uint64_t *pin_bit_mask );
 
-extern void add_output_pin( int class, gpio_num_t pin, char *name, PinLevelType level_type, uint64_t *pin_bit_mask );
+extern void gpio_define_output_pins_callback( gpio_config_t *io_conf );
 
-extern void add_input_pin( int class, gpio_num_t pin, char *name, PinLevelType level_type, uint64_t *pin_bit_mask );
-
-extern void define_output_pins_callback( gpio_config_t *io_conf );
-
-extern void define_input_pins_callback( gpio_config_t *io_conf );
+extern void gpio_define_input_pins_callback( gpio_config_t *io_conf );
 
 extern void gpio_changed_callback( uint32_t io_num, int state );
 

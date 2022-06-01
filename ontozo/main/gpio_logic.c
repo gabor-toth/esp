@@ -29,34 +29,34 @@ static void set_initial_pump_states() {
                         || !reached( level0 ));
 }
 
-void define_output_pins_callback( gpio_config_t *io_conf ) {
-    add_output_class( "pumps", 2, high_is_on );
-    add_output_class( "zones", 8, low_is_on );
+void gpio_define_output_pins_callback( gpio_config_t *io_conf ) {
+    gpio_add_class( OUTPUTS, "pumps", 2, high_is_on );
+    gpio_add_class( OUTPUTS, "zones", 8, low_is_on );
 
-    add_output_pin( PUMPS, GPIO_OUTPUT_PUMP_MAIN, "öntöző", inherit, &io_conf->pin_bit_mask );
-    add_output_pin( PUMPS, GPIO_OUTPUT_PUMP_REFILL, "kút", inherit, &io_conf->pin_bit_mask );
-    add_output_pin( ZONES, GPIO_OUTPUT_ZONE_1, "fű nagy", inherit, &io_conf->pin_bit_mask );
-    add_output_pin( ZONES, GPIO_OUTPUT_ZONE_2, "fű elöl", inherit, &io_conf->pin_bit_mask );
-    add_output_pin( ZONES, GPIO_OUTPUT_ZONE_3, "fű hátul", inherit, &io_conf->pin_bit_mask );
-    add_output_pin( ZONES, GPIO_OUTPUT_ZONE_4, "hátsó kiskert", inherit, &io_conf->pin_bit_mask );
-    add_output_pin( ZONES, GPIO_OUTPUT_ZONE_5, "első kiskert", inherit, &io_conf->pin_bit_mask );
-    add_output_pin( ZONES, GPIO_OUTPUT_ZONE_6, "veteményes", inherit, &io_conf->pin_bit_mask );
-    add_output_pin( ZONES, GPIO_OUTPUT_ZONE_7, "ribizli", inherit, &io_conf->pin_bit_mask );
-    add_output_pin( ZONES, GPIO_OUTPUT_ZONE_8, NULL, inherit, &io_conf->pin_bit_mask );
+    gpio_add_pin( OUTPUTS, PUMPS, GPIO_OUTPUT_PUMP_MAIN, "öntöző", inherit, &io_conf->pin_bit_mask );
+    gpio_add_pin( OUTPUTS, PUMPS, GPIO_OUTPUT_PUMP_REFILL, "kút", inherit, &io_conf->pin_bit_mask );
+    gpio_add_pin( OUTPUTS, ZONES, GPIO_OUTPUT_ZONE_1, "fű nagy", inherit, &io_conf->pin_bit_mask );
+    gpio_add_pin( OUTPUTS, ZONES, GPIO_OUTPUT_ZONE_2, "fű elöl", inherit, &io_conf->pin_bit_mask );
+    gpio_add_pin( OUTPUTS, ZONES, GPIO_OUTPUT_ZONE_3, "fű hátul", inherit, &io_conf->pin_bit_mask );
+    gpio_add_pin( OUTPUTS, ZONES, GPIO_OUTPUT_ZONE_4, "hátsó kiskert", inherit, &io_conf->pin_bit_mask );
+    gpio_add_pin( OUTPUTS, ZONES, GPIO_OUTPUT_ZONE_5, "első kiskert", inherit, &io_conf->pin_bit_mask );
+    gpio_add_pin( OUTPUTS, ZONES, GPIO_OUTPUT_ZONE_6, "veteményes", inherit, &io_conf->pin_bit_mask );
+    gpio_add_pin( OUTPUTS, ZONES, GPIO_OUTPUT_ZONE_7, "ribizli", inherit, &io_conf->pin_bit_mask );
+    gpio_add_pin( OUTPUTS, ZONES, GPIO_OUTPUT_ZONE_8, NULL, inherit, &io_conf->pin_bit_mask );
 
     set_initial_pump_states();
 }
 
-void define_input_pins_callback( gpio_config_t *io_conf ) {
-    add_input_class( "levels", 4, low_is_on );
-    add_input_class( "buttons", 2, low_is_on );
+void gpio_define_input_pins_callback( gpio_config_t *io_conf ) {
+    gpio_add_class( INPUTS, "levels", 4, low_is_on );
+    gpio_add_class( INPUTS, "buttons", 2, low_is_on );
 
-    add_input_pin( LEVELS, GPIO_INPUT_LEVEL_1, "level1", low_is_on, &io_conf->pin_bit_mask );
-    add_input_pin( LEVELS, GPIO_INPUT_LEVEL_2, "level2", low_is_on, &io_conf->pin_bit_mask );
-    add_input_pin( LEVELS, GPIO_INPUT_LEVEL_3, "level3", high_is_on, &io_conf->pin_bit_mask );
-    add_input_pin( LEVELS, GPIO_INPUT_LEVEL_4, "level4", high_is_on, &io_conf->pin_bit_mask );
-    add_input_pin( BUTTONS, GPIO_INPUT_BUTTON_START, "button_start", low_is_on, &io_conf->pin_bit_mask );
-    add_input_pin( BUTTONS, GPIO_INPUT_BUTTON_STOP, "button_stop", low_is_on, &io_conf->pin_bit_mask );
+    gpio_add_pin( INPUTS, LEVELS, GPIO_INPUT_LEVEL_1, "level1", low_is_on, &io_conf->pin_bit_mask );
+    gpio_add_pin( INPUTS, LEVELS, GPIO_INPUT_LEVEL_2, "level2", low_is_on, &io_conf->pin_bit_mask );
+    gpio_add_pin( INPUTS, LEVELS, GPIO_INPUT_LEVEL_3, "level3", high_is_on, &io_conf->pin_bit_mask );
+    gpio_add_pin( INPUTS, LEVELS, GPIO_INPUT_LEVEL_4, "level4", high_is_on, &io_conf->pin_bit_mask );
+    gpio_add_pin( INPUTS, BUTTONS, GPIO_INPUT_BUTTON_START, "button_start", low_is_on, &io_conf->pin_bit_mask );
+    gpio_add_pin( INPUTS, BUTTONS, GPIO_INPUT_BUTTON_STOP, "button_stop", low_is_on, &io_conf->pin_bit_mask );
 }
 
 void gpio_changed_callback( uint32_t io_num, int state ) {

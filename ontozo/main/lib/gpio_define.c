@@ -62,7 +62,7 @@ bool gpio_is_valid_index( bool is_input, int class, int index ) {
     return false;
 }
 
-static void add_pin_class( bool is_input, char *name, int max_pin_count, PinLevelType level_type ) {
+void gpio_add_class( bool is_input, char *name, int max_pin_count, PinLevelType level_type ) {
     PinClasses *pin_classes = &pin_definitions[ is_input ];
     ESP_LOGI( LOG_TAG, "Adding pin class %d/%d \"%s\"", is_input, pin_classes->used_classes, name );
     if ( pin_classes->used_classes == MAX_PIN_CLASSES ) {
@@ -75,14 +75,6 @@ static void add_pin_class( bool is_input, char *name, int max_pin_count, PinLeve
     pin_class->used_pin_count = 0;
     pin_class->level_type = level_type;
     pin_class->pins = malloc( sizeof( Pin ) * max_pin_count );
-}
-
-void add_output_class( char *name, int max_pin_count, PinLevelType level_type ) {
-    add_pin_class( OUTPUTS, name, max_pin_count, level_type );
-}
-
-void add_input_class( char *name, int max_pin_count, PinLevelType level_type ) {
-    add_pin_class( INPUTS, name, max_pin_count, level_type );
 }
 
 static void set_pin_state( Pin *output_pin, bool enabled ) {
@@ -99,8 +91,8 @@ static void set_pin_name( Pin *pin, char *name ) {
     pin->name = strdup( name );
 }
 
-static void add_pin( bool is_input, int class, gpio_num_t pin, char *name, PinLevelType level_type,
-                     uint64_t *pin_bit_mask ) {
+void gpio_add_pin( bool is_input, int class, gpio_num_t pin, char *name, PinLevelType level_type,
+                   uint64_t *pin_bit_mask ) {
     if ( name == NULL) {
         name = "---";
     }
@@ -124,19 +116,11 @@ static void add_pin( bool is_input, int class, gpio_num_t pin, char *name, PinLe
     set_pin_state( output_pin, false );
 }
 
-void add_output_pin( int class, gpio_num_t pin, char *name, PinLevelType level_type, uint64_t *pin_bit_mask ) {
-    add_pin( OUTPUTS, class, pin, name, level_type, pin_bit_mask );
-}
-
-void add_input_pin( int class, gpio_num_t pin, char *name, PinLevelType level_type, uint64_t *pin_bit_mask ) {
-    add_pin( INPUTS, class, pin, name, level_type, pin_bit_mask );
-}
-
 static void add_input_pins() {
     //zero-initialize the config structure.
     gpio_config_t io_conf = {};
 
-    define_input_pins_callback( &io_conf );
+    gpio_define_input_pins_callback( &io_conf );
 
     io_conf.intr_type = GPIO_INTR_DISABLE;
     io_conf.mode = GPIO_MODE_OUTPUT;
@@ -177,7 +161,7 @@ static void add_output_pins() {
     REG_SET_BIT( RTC_IO_PAD_DAC2_REG, RTC_IO_PDAC2_DAC_XPD_FORCE );
      */
 
-    define_output_pins_callback( &io_conf );
+    gpio_define_output_pins_callback( &io_conf );
 }
 
 void gpio_init() {
