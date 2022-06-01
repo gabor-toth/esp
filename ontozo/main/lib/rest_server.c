@@ -143,6 +143,28 @@ esp_err_t rest_receive_json_body( httpd_req_t *req, cJSON **root ) {
     return ESP_OK;
 }
 
+static void rest_register_system_info_handler( httpd_handle_t server, rest_server_context_t *rest_context ) {
+    /* URI handler for fetching system info */
+    httpd_uri_t system_info_get_uri = {
+            .uri = "/system/info",
+            .method = HTTP_GET,
+            .handler = system_info_get_handler,
+            .user_ctx = rest_context
+    };
+    httpd_register_uri_handler( server, &system_info_get_uri );
+}
+
+static void rest_register_all_handler( httpd_handle_t server, rest_server_context_t *rest_context ) {
+    /* URI handler for getting web server files */
+    httpd_uri_t common_get_uri = {
+            .uri = "/*",
+            .method = HTTP_GET,
+            .handler = rest_common_get_handler,
+            .user_ctx = rest_context
+    };
+    httpd_register_uri_handler( server, &common_get_uri );
+}
+
 esp_err_t
 rest_server_start( const char *static_files_base_path,
                    void (*rest_register_handlers)( httpd_handle_t, rest_server_context_t * )) {
@@ -158,27 +180,12 @@ rest_server_start( const char *static_files_base_path,
     ESP_LOGI( REST_TAG, "Starting HTTP Server" );
     REST_CHECK( httpd_start( &server, &config ) == ESP_OK, "Start server failed", err_start );
 
-    /* URI handler for fetching system info */
-    httpd_uri_t system_info_get_uri = {
-            .uri = "/system/info",
-            .method = HTTP_GET,
-            .handler = system_info_get_handler,
-            .user_ctx = rest_context
-    };
-    httpd_register_uri_handler( server, &system_info_get_uri );
-
+    rest_register_system_info_handler( server, rest_context );
     rest_register_handlers( server, rest_context );
-
-    /* URI handler for getting web server files */
-    httpd_uri_t common_get_uri = {
-            .uri = "/*",
-            .method = HTTP_GET,
-            .handler = rest_common_get_handler,
-            .user_ctx = rest_context
-    };
-    httpd_register_uri_handler( server, &common_get_uri );
+    rest_register_all_handler( server, rest_context );
 
     return ESP_OK;
+
     err_start:
     free( rest_context );
     err:

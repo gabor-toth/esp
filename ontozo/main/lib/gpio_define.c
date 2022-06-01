@@ -55,7 +55,7 @@ bool gpio_is_valid_index( bool is_input, int class, int index ) {
          && index < max_pin_count ) {
         return true;
     }
-    ESP_LOGE( LOG_TAG, "Wrong pin index %d/%d/%d > %d",
+    ESP_LOGE( LOG_TAG, "Wrong pin index %d/%d/%d >= %d",
               is_input, class, index,
               max_pin_count
     );
@@ -104,12 +104,13 @@ static void add_pin( bool is_input, int class, gpio_num_t pin, char *name, PinLe
     if ( name == NULL) {
         name = "---";
     }
-    ESP_LOGI( LOG_TAG, "Adding pin %d/%d %d \"%s\"", is_input, class, pin, name );
     if ( !gpio_is_valid_class( is_input, class )) {
+        ESP_LOGE( LOG_TAG, "Adding pin %d/%d %d \"%s\"", is_input, class, pin, name );
         return;
     }
     PinClass *pin_class = &pin_definitions[ is_input ].classes[ class ];
 
+    ESP_LOGI( LOG_TAG, "Adding pin %d/%d/%d %d \"%s\"", is_input, class, pin_class->used_pin_count, pin, name );
     if ( pin_class->used_pin_count == pin_class->max_pin_count ) {
         ESP_LOGE( LOG_TAG, "Too many pins on class %d/%d \"%s\"", is_input, class, name );
         return;
