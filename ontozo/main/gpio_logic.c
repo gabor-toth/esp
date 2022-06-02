@@ -1,14 +1,11 @@
 #include <stdint.h>
-//#include <string.h>
-//#include <driver/gpio.h>
-//#include <soc/rtc_io_reg.h>
-//#include <esp_log.h>
-//#include "lib/gpio_task.h"
-//#include "lib/common.h"
+#include <esp_log.h>
 #include "config.h"
 #include "lib/gpio_define.h"
 #include "lib/nvs_main.h"
 #include "gpio_logic.h"
+
+static const char *LOG_TAG = "logic";
 
 #define reached( X ) ((X)!=0)
 
@@ -16,18 +13,20 @@
 #define PUMP_REFILL   1
 
 static void set_initial_pump_states() {
-    int level0 = gpio_get_level( GPIO_INPUT_LEVEL_1 );
-    int level1 = gpio_get_level( GPIO_INPUT_LEVEL_2 );
-    int level2 = gpio_get_level( GPIO_INPUT_LEVEL_3 );
-    int level3 = gpio_get_level( GPIO_INPUT_LEVEL_4 );
+    int level1 = gpio_get_pin_state( INPUTS, LEVELS, 0 );
+    int level2 = gpio_get_pin_state( INPUTS, LEVELS, 1 );
+    int level3 = gpio_get_pin_state( INPUTS, LEVELS, 2 );
+    int level4 = gpio_get_pin_state( INPUTS, LEVELS, 3 );
 
     gpio_set_pin_state( OUTPUTS, PUMPS, PUMP_MAIN, false );
     // reached( level0 ) && reached( level1 )
+    bool refillState = !reached( level4 )
+                       || !reached( level3 )
+                       || !reached( level2 )
+                       || !reached( level1 );
+    ESP_LOGI( LOG_TAG, "Levels: 1-%d 2-%d 3-%d 4-%d refillPump-%d", level1, level2, level3, level4, refillState );
     gpio_set_pin_state( OUTPUTS, PUMPS, PUMP_REFILL,
-                        !reached( level3 )
-                        || !reached( level2 )
-                        || !reached( level1 )
-                        || !reached( level0 ));
+                        refillState );
 }
 
 static gpio_num_t pump_pins[] = {
@@ -85,7 +84,7 @@ void gpio_define_input_pins_callback( gpio_config_t *io_conf ) {
 }
 
 void gpio_changed_callback( uint32_t io_num, int state ) {
-    printf( "GPIO[%d] = %d\n", io_num, state );
+    ESP_LOGI( LOG_TAG, "Pin %d changed to %d\n", io_num, state );
 
     bool refill_state = gpio_get_pin_state( OUTPUTS, PUMPS, PUMP_REFILL );
     bool main_state = gpio_get_pin_state( OUTPUTS, PUMPS, PUMP_MAIN );
@@ -111,7 +110,7 @@ void gpio_changed_callback( uint32_t io_num, int state ) {
     } else if ( io_num == GPIO_INPUT_BUTTON_STOP ) {
         main_state = false;
     } else {
-        fprintf(stderr, "Unhandled gpio %d (state %d)!\n", io_num, state );
+        ESP_LOGE( LOG_TAG, "Unhandled gpio %d (state %d)!\n", io_num, state );
     }
 
     gpio_set_pin_state( OUTPUTS, PUMPS, PUMP_MAIN, main_state );

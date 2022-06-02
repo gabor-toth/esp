@@ -81,6 +81,7 @@ static void set_pin_state( Pin *output_pin, bool enabled ) {
     output_pin->state = enabled;
     bool level =
             ( enabled && output_pin->level_type == high_is_on ) || ( !enabled && output_pin->level_type == low_is_on );
+    ESP_LOGI( LOG_TAG, "set pin %d to %d", output_pin->pin, level );
     gpio_set_level( output_pin->pin, level );
 }
 
@@ -158,6 +159,11 @@ static void add_input_pins() {
 static void add_output_pins() {
     gpio_config_t io_conf = {};
 
+    io_conf.intr_type = GPIO_INTR_DISABLE;
+    io_conf.mode = GPIO_MODE_OUTPUT;
+    io_conf.pull_down_en = PIN_DISABLED;
+    io_conf.pull_up_en = PIN_DISABLED;
+
     /* does not work to get pin 26 work as output
     // Disable DAC1
     REG_CLR_BIT( RTC_IO_PAD_DAC1_REG, RTC_IO_PDAC1_XPD_DAC );
@@ -168,6 +174,8 @@ static void add_output_pins() {
      */
 
     gpio_define_output_pins_callback( &io_conf );
+
+    gpio_config( &io_conf );
 }
 
 void gpio_init() {
@@ -198,9 +206,11 @@ bool gpio_get_pin_state( bool is_input, int class, int index ) {
         return -1;
     }
     Pin *pin = &pin_definitions[ is_input ].classes[ class ].pins[ index ];
-    return is_input
-           ? gpio_get_level( pin->pin )
-           : pin->state;
+    if ( !is_input ) {
+        return pin->state;
+    }
+    int state = gpio_get_level( pin->pin );
+    return ( pin->level_type == high_is_on ) == state;
 }
 
 char *gpio_get_pin_name( bool is_input, int class, int index ) {
