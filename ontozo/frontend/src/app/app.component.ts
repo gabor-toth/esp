@@ -15,6 +15,7 @@ export class AppComponent {
     faToggleOff = faToggleOff
     faToggleOn = faToggleOn
     state: State | undefined;
+    timer: number = 0;
     stateAsString = "";
 
     constructor(
@@ -28,7 +29,10 @@ export class AppComponent {
     }
 
     private scheduleUpdate() {
-        setTimeout(() => {
+        if (this.timer) {
+            clearTimeout(this.timer);
+        }
+        this.timer = setTimeout(() => {
             this.updateState();
         }, 1000);
     }
@@ -43,6 +47,8 @@ export class AppComponent {
     }
 
     private updateState() {
+        clearTimeout(this.timer);
+        this.timer = 0;
         let component = this;
         this.stateService.getState().subscribe({
             next(state) {
@@ -61,11 +67,10 @@ export class AppComponent {
         let component = this;
         this.stateService.setState(type, id, state).subscribe({
             complete() {
-                component.scheduleUpdate();
+                component.updateState();
             },
             error(err) {
                 console.error('Error writing state', err);
-                component.scheduleUpdate();
             }
         });
     }
