@@ -4,48 +4,17 @@
             alt="Angular Logo"
             src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTAgMjUwIj4KICAgIDxwYXRoIGZpbGw9IiNERDAwMzEiIGQ9Ik0xMjUgMzBMMzEuOSA2My4ybDE0LjIgMTIzLjFMMTI1IDIzMGw3OC45LTQzLjcgMTQuMi0xMjMuMXoiIC8+CiAgICA8cGF0aCBmaWxsPSIjQzMwMDJGIiBkPSJNMTI1IDMwdjIyLjItLjFWMjMwbDc4LjktNDMuNyAxNC4yLTEyMy4xTDEyNSAzMHoiIC8+CiAgICA8cGF0aCAgZmlsbD0iI0ZGRkZGRiIgZD0iTTEyNSA1Mi4xTDY2LjggMTgyLjZoMjEuN2wxMS43LTI5LjJoNDkuNGwxMS43IDI5LjJIMTgzTDEyNSA1Mi4xem0xNyA4My4zaC0zNGwxNy00MC45IDE3IDQwLjl6IiAvPgogIDwvc3ZnPg=="
     />
-    <span>Öntöző</span>
+    <nav>
+        <a routerLink="/dashboard"><span>Öntöző</span></a>
+        <!--        <a routerLink="/program"><span>Programok</span></a>-->
+        <a routerLink="/admin"><span>Adminisztráció</span></a>
+    </nav>
     <div class="spacer"></div>
 </div>
-
-<div class="content" role="main">
-
-    <h2>Pumpák</h2>
-    <div *ngIf="state && state.outputs" class="card-container">
-        <div *ngFor="let pump of state.outputs.pumps" class="card" (click)="click('pumps',pump.id,!pump.on)">
-            <fa-icon *ngIf="!pump.on" [icon]="faToggleOff" class="off"></fa-icon>
-            <fa-icon *ngIf="pump.on" [icon]="faToggleOn" class="on"></fa-icon>
-            <span>{{pump.name}}</span>
-        </div>
-    </div>
-
-    <h2>Zónák</h2>
-    <div *ngIf="state && state.outputs" class="card-container">
-        <div *ngFor="let zone of state.outputs.zones" class="card" (click)="click('zones',zone.id,!zone.on)">
-            <fa-icon *ngIf="!zone.on" [icon]="faToggleOff" class="off"></fa-icon>
-            <fa-icon *ngIf="zone.on" [icon]="faToggleOn" class="on"></fa-icon>
-            <span>{{zone.name}}</span>
-        </div>
-    </div>
-
-    <h2>Szintek</h2>
-    <div *ngIf="state && state.inputs" class="card-container">
-        <div *ngFor="let level of state.inputs.levels" class="card" (click)="click('levels',level.id,!level.on)">
-            <fa-icon *ngIf="!level.on" [icon]="faToggleOff" class="off"></fa-icon>
-            <fa-icon *ngIf="level.on" [icon]="faToggleOn" class="on"></fa-icon>
-            <span>{{level.name}}</span>
-        </div>
-    </div>
-
-    <h2>Gombok</h2>
-    <div *ngIf="state && state.inputs" class="card-container">
-        <div *ngFor="let button of state.inputs.buttons" class="card" (click)="click('buttons',button.id,!button.on)">
-            <fa-icon *ngIf="!button.on" [icon]="faToggleOff" class="off"></fa-icon>
-            <fa-icon *ngIf="button.on" [icon]="faToggleOn" class="on"></fa-icon>
-            <span>{{button.name}}</span>
-        </div>
-    </div>
-
-    <footer>
-    </footer>
+<div class="content">
+    <router-outlet></router-outlet>
+    <!--<app-messages></app-messages>-->
 </div>
+<footer>
+</footer>
+

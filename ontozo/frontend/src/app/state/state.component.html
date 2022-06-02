@@ -1,0 +1,37 @@
+<div class="state-container">
+    <h2>Pumpák</h2>
+    <div *ngIf="state && state.outputs" class="card-container">
+        <div *ngFor="let pump of state.outputs.pumps" class="card" (click)="click('pumps',pump.id,!pump.on)">
+            <fa-icon *ngIf="!pump.on" [icon]="faToggleOff" class="off"></fa-icon>
+            <fa-icon *ngIf="pump.on" [icon]="faToggleOn" class="on"></fa-icon>
+            <span>{{pump.name}}</span>
+        </div>
+    </div>
+
+    <h2>Zónák</h2>
+    <div *ngIf="state && state.outputs" class="card-container">
+        <div *ngFor="let zone of state.outputs.zones" class="card" (click)="click('zones',zone.id,!zone.on)">
+            <fa-icon *ngIf="!zone.on" [icon]="faToggleOff" class="off"></fa-icon>
+            <fa-icon *ngIf="zone.on" [icon]="faToggleOn" class="on"></fa-icon>
+            <span>{{zone.name}}</span>
+        </div>
+    </div>
+
+    <h2>Szintek</h2>
+    <div *ngIf="state && state.inputs" class="card-container">
+        <div *ngFor="let level of state.inputs.levels" class="card" (click)="click('levels',level.id,!level.on)">
+            <fa-icon *ngIf="!level.on" [icon]="faToggleOff" class="off"></fa-icon>
+            <fa-icon *ngIf="level.on" [icon]="faToggleOn" class="on"></fa-icon>
+            <span>{{level.name}}</span>
+        </div>
+    </div>
+
+    <h2>Gombok</h2>
+    <div *ngIf="state && state.inputs" class="card-container">
+        <div *ngFor="let button of state.inputs.buttons" class="card" (click)="click('buttons',button.id,!button.on)">
+            <fa-icon *ngIf="!button.on" [icon]="faToggleOff" class="off"></fa-icon>
+            <fa-icon *ngIf="button.on" [icon]="faToggleOn" class="on"></fa-icon>
+            <span>{{button.name}}</span>
+        </div>
+    </div>
+</div>
