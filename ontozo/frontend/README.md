@@ -5,6 +5,8 @@ Start
 ng version
 cd ontozo
 ng new frontend
+? Would you like to add Angular routing? Yes
+? Which stylesheet format would you like to use? SCSS   [ https://sass-lang.com/documentation/syntax#scss                ]
 
 #npm install @angular/cli
 
