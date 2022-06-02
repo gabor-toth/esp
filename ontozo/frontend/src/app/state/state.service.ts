@@ -8,7 +8,7 @@ import {HttpClient} from '@angular/common/http';
 })
 export class StateService {
 
-    baseUrl = 'http://192.168.1.189/';
+    baseUrl = 'http://192.168.1.82/';
 
     constructor(private http: HttpClient) {
     }
