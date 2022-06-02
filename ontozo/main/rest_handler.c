@@ -85,7 +85,7 @@ static esp_err_t pins_put_handler_inner( httpd_req_t *req, cJSON *root, bool is_
     }
 
     char response[256];
-    snprintf( response, sizeof response, "%s changed successfully", class_name );
+    snprintf( response, sizeof response, "{ \"message\": \"%s changed successfully\" }", class_name );
     httpd_resp_set_hdr( req, "Access-Control-Allow-Origin", "*" );
     httpd_resp_sendstr( req, response );
     return ESP_OK;
