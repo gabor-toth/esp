@@ -5,6 +5,7 @@ idf_component_register(
         "lib/nvs_main.c"
         "lib/rest_main.c"
         "lib/rest_server.c"
+        "lib/sntp_main.c"
         "gpio_logic.c"
         "ontozo_main.c"
         "rest_handler.c"

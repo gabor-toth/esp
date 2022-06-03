@@ -6,9 +6,9 @@ Frontend
 
     - programs
     - admin
-        - set name
+        - set names
         - reset
-        - set ip address
+        - set ip address for testing
     - highlight selected route
 
 - error handling (no connection, etc)
@@ -18,4 +18,10 @@ Backend
 
 - reset esp
 - programs
-- NTP
+
++ SNTP
+
+- httpd
+    - return index.html for unknown files
+- logic
+    - delay pump turn on after level 4 drop
