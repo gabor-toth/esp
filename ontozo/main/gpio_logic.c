@@ -1,5 +1,7 @@
 #include <stdint.h>
 #include <esp_log.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/timers.h>
 #include "config.h"
 #include "lib/gpio_define.h"
 #include "lib/nvs_main.h"
@@ -11,6 +13,9 @@ static const char *LOG_TAG = "logic";
 
 #define PUMP_MAIN     0
 #define PUMP_REFILL   1
+
+static TimerHandle_t level4_drop_timer;
+static int level4_drop_timeout_seconds = 30; //seconds
 
 static void set_initial_pump_states() {
     int level1 = gpio_get_pin_state( INPUTS, LEVELS, 0 );
@@ -59,14 +64,6 @@ void gpio_define_output_pins_callback( gpio_config_t *io_conf ) {
         gpio_add_pin_with_allocated_name( OUTPUTS, ZONES, zone_pins[ i ], nvs_read_string( nvs_key ), inherit,
                                           &io_conf->pin_bit_mask );
     }
-//    gpio_add_pin( OUTPUTS, ZONES, GPIO_OUTPUT_ZONE_1, "fű nagy", inherit, &io_conf->pin_bit_mask );
-//    gpio_add_pin( OUTPUTS, ZONES, GPIO_OUTPUT_ZONE_2, "fű elöl", inherit, &io_conf->pin_bit_mask );
-//    gpio_add_pin( OUTPUTS, ZONES, GPIO_OUTPUT_ZONE_3, "fű hátul", inherit, &io_conf->pin_bit_mask );
-//    gpio_add_pin( OUTPUTS, ZONES, GPIO_OUTPUT_ZONE_4, "hátsó kiskert", inherit, &io_conf->pin_bit_mask );
-//    gpio_add_pin( OUTPUTS, ZONES, GPIO_OUTPUT_ZONE_5, "első kiskert", inherit, &io_conf->pin_bit_mask );
-//    gpio_add_pin( OUTPUTS, ZONES, GPIO_OUTPUT_ZONE_6, "veteményes", inherit, &io_conf->pin_bit_mask );
-//    gpio_add_pin( OUTPUTS, ZONES, GPIO_OUTPUT_ZONE_7, "ribizli", inherit, &io_conf->pin_bit_mask );
-//    gpio_add_pin( OUTPUTS, ZONES, GPIO_OUTPUT_ZONE_8, NULL, inherit, &io_conf->pin_bit_mask );
 
     set_initial_pump_states();
 }
@@ -92,8 +89,10 @@ void gpio_changed_callback( uint32_t io_num, int state ) {
     if ( io_num == GPIO_INPUT_LEVEL_4 ) {
         if ( state == PIN_ENABLED ) {
             refill_state = false;
+            xTimerStop( level4_drop_timer, 10 );
         } else {
-            refill_state = true;
+            // delay start of pump due to waves
+            xTimerReset( level4_drop_timer, 10 );
         }
     } else if ( io_num == GPIO_INPUT_LEVEL_3 ) {
         // no change for this sensor
@@ -115,4 +114,17 @@ void gpio_changed_callback( uint32_t io_num, int state ) {
 
     gpio_set_pin_state( OUTPUTS, PUMPS, PUMP_MAIN, main_state );
     gpio_set_pin_state( OUTPUTS, PUMPS, PUMP_REFILL, refill_state );
+}
+
+static void level4_drop_timeout( TimerHandle_t timer ) {
+    gpio_set_pin_state( OUTPUTS, PUMPS, PUMP_REFILL, true );
+}
+
+void gpio_logic_init() {
+    level4_drop_timer = xTimerCreate(
+            "level4Drop",
+            ( level4_drop_timeout_seconds * 1000 ) / portTICK_PERIOD_MS,
+            0,
+            NULL,
+            level4_drop_timeout );
 }
