@@ -6,8 +6,9 @@
 #include <nvs.h>
 #include "nvs_main.h"
 
+static const char *LOG_TAG = "nvs";
+
 #define STORAGE_NAMESPACE "storage"
-#define LOG_TAG "nvs"
 
 void nvs_init( void ) {
     // Initialize NVS

@@ -4,8 +4,9 @@
 #include "lib/gpio_task.h"
 #include "gpio_define.h"
 
+static const char *LOG_TAG = "gpio";
+
 #define ESP_INTR_FLAG_DEFAULT 0
-#define LOG_TAG "gpio"
 
 #define reached( X ) ((X)!=0)
 

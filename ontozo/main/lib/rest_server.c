@@ -15,14 +15,14 @@
 #include <cJSON.h>
 #include "rest_server.h"
 
-const char *REST_TAG = "esp-rest";
+static const char *LOG_TAG = "rest-server";
 
 #define REST_CHECK( a, str, goto_tag, ... )                                              \
     do                                                                                 \
     {                                                                                  \
         if (!(a))                                                                      \
         {                                                                              \
-            ESP_LOGE(REST_TAG, "%s(%d): " str, __FUNCTION__, __LINE__, ##__VA_ARGS__); \
+            ESP_LOGE(LOG_TAG, "%s(%d): " str, __FUNCTION__, __LINE__, ##__VA_ARGS__); \
             goto goto_tag;                                                             \
         }                                                                              \
     } while (0)
@@ -64,8 +64,8 @@ static esp_err_t rest_common_get_handler( httpd_req_t *req ) {
     }
     int fd = open( filepath, O_RDONLY, 0 );
     if ( fd == -1 ) {
-        ESP_LOGW( REST_TAG, "Failed to open file : %s", filepath );
-        snprintf( error_message, sizeof( error_message ), "Failed to read file: %d", errno);
+        ESP_LOGW( LOG_TAG, "Failed to open file : %s", filepath );
+        snprintf( error_message, sizeof( error_message ), "Failed to read file: %d", errno );
         httpd_resp_send_err( req, HTTPD_404_NOT_FOUND, error_message );
         return ESP_FAIL;
     }
@@ -78,12 +78,12 @@ static esp_err_t rest_common_get_handler( httpd_req_t *req ) {
         /* Read file in chunks into the scratch buffer */
         read_bytes = read( fd, chunk, REST_SCRATCH_BUFSIZE);
         if ( read_bytes == -1 ) {
-            ESP_LOGE( REST_TAG, "Failed to read file : %s", filepath );
+            ESP_LOGE( LOG_TAG, "Failed to read file : %s", filepath );
         } else if ( read_bytes > 0 ) {
             /* Send the buffer contents as HTTP response chunk */
             if ( httpd_resp_send_chunk( req, chunk, read_bytes ) != ESP_OK ) {
                 close( fd );
-                ESP_LOGE( REST_TAG, "File sending failed!" );
+                ESP_LOGE( LOG_TAG, "File sending failed!" );
                 /* Abort sending file */
                 httpd_resp_sendstr_chunk( req, NULL);
                 /* Respond with 500 Internal Server Error */
@@ -94,7 +94,7 @@ static esp_err_t rest_common_get_handler( httpd_req_t *req ) {
     } while ( read_bytes > 0 );
     /* Close file after sending complete */
     close( fd );
-    ESP_LOGI( REST_TAG, "File sending complete" );
+    ESP_LOGI( LOG_TAG, "File sending complete" );
     /* Respond with an empty chunk to signal HTTP response completion */
     httpd_resp_send_chunk( req, NULL, 0 );
     return ESP_OK;
@@ -177,7 +177,7 @@ rest_server_start( const char *static_files_base_path,
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.uri_match_fn = httpd_uri_match_wildcard;
 
-    ESP_LOGI( REST_TAG, "Starting HTTP Server" );
+    ESP_LOGI( LOG_TAG, "Starting HTTP Server" );
     REST_CHECK( httpd_start( &server, &config ) == ESP_OK, "Start server failed", err_start );
 
     rest_register_system_info_handler( server, rest_context );

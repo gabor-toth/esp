@@ -7,6 +7,8 @@
 #include "gpio_logic.h"
 #include "rest_handler.h"
 
+static const char *LOG_TAG = "rest-handler";
+
 typedef struct {
     rest_server_context_t *rest_context;
     bool type;
@@ -65,7 +67,7 @@ static esp_err_t pins_put_handler_inner( httpd_req_t *req, cJSON *root, bool is_
         }
         int state = state_element->valueint;
         gpio_set_pin_state( is_input, class, pin_index, state );
-        ESP_LOGI( REST_TAG, "%s %d state changed to %d", class_name, pin_index + 1, state );
+        ESP_LOGI( LOG_TAG, "%s %d state changed to %d", class_name, pin_index + 1, state );
     }
     cJSON *name_element = cJSON_GetObjectItem( root, "name" );
     if ( name_element != NULL) {
@@ -77,7 +79,7 @@ static esp_err_t pins_put_handler_inner( httpd_req_t *req, cJSON *root, bool is_
         snprintf( nvs_key, sizeof nvs_key, "%s.%d.name", gpio_get_class_name( is_input, class ), pin_index + 1 );
         nvs_write_string( nvs_key, name );
 
-        ESP_LOGI( REST_TAG, "%s %d name changed to %s", class_name, pin_index + 1, name );
+        ESP_LOGI( LOG_TAG, "%s %d name changed to %s", class_name, pin_index + 1, name );
     }
     if ( !changed ) {
         httpd_resp_send_err( req, HTTPD_400_BAD_REQUEST, "Neither state nor name changed" );
@@ -141,9 +143,9 @@ static void rest_register_gpio_handlers( httpd_handle_t server, rest_server_cont
             };
             esp_err_t err = httpd_register_uri_handler( server, &uri_definition );
             if ( err != ESP_OK ) {
-                ESP_LOGE( REST_TAG, "Failed to register URI handlerPUT %s: %s", uri, esp_err_to_name( err ));
+                ESP_LOGE( LOG_TAG, "Failed to register URI handlerPUT %s: %s", uri, esp_err_to_name( err ));
             } else {
-                ESP_LOGI( REST_TAG, "Registered PUT %s", uri );
+                ESP_LOGI( LOG_TAG, "Registered PUT %s", uri );
             }
         }
     }

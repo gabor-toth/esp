@@ -13,8 +13,6 @@ typedef struct rest_server_context {
     char scratch[REST_SCRATCH_BUFSIZE];
 } rest_server_context_t;
 
-extern const char *REST_TAG;
-
 extern esp_err_t rest_server_start(
         const char *static_files_base_path,
         void (*rest_register_handlers)( httpd_handle_t, rest_server_context_t * ));
