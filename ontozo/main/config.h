@@ -23,7 +23,4 @@
 #define GPIO_OUTPUT_ZONE_7          GPIO_NUM_25
 #define GPIO_OUTPUT_ZONE_8          GPIO_NUM_13
 
-#define CONFIG_MDNS_HOST_NAME              "ontozo"
-#define CONFIG_MDNS_INSTANCE_NAME          "ontozo web server"
-
 #endif //ONTOZO_CONFIG_H

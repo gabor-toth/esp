@@ -28,9 +28,11 @@
 
 #include "config.h"
 
+static const char *LOG_TAG = "rest-main";
+
 static void initialise_mdns( void ) {
     mdns_init();
-    mdns_hostname_set( CONFIG_MDNS_HOST_NAME );
+    mdns_hostname_set( CONFIG_EXAMPLE_MDNS_HOST_NAME );
     mdns_instance_name_set( CONFIG_MDNS_INSTANCE_NAME );
 
     mdns_txt_item_t serviceTxtData[] = {
@@ -49,7 +51,7 @@ static void initialise_mdns( void ) {
 
 static void initialise_netbios( void ) {
     netbiosns_init();
-    netbiosns_set_name( CONFIG_MDNS_HOST_NAME );
+    netbiosns_set_name( CONFIG_EXAMPLE_MDNS_HOST_NAME );
 }
 
 #if CONFIG_EXAMPLE_WEB_DEPLOY_SEMIHOST
@@ -57,7 +59,7 @@ esp_err_t init_fs(void)
 {
     esp_err_t ret = esp_vfs_semihost_register(CONFIG_EXAMPLE_WEB_MOUNT_POINT, CONFIG_EXAMPLE_HOST_PATH_TO_MOUNT);
     if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to register semihost driver (%s)!", esp_err_to_name(ret));
+        ESP_LOGE(LOG_TAG, "Failed to register semihost driver (%s)!", esp_err_to_name(ret));
         return ESP_FAIL;
     }
     return ESP_OK;
@@ -86,9 +88,9 @@ esp_err_t init_fs(void)
     esp_err_t ret = esp_vfs_fat_sdmmc_mount(CONFIG_EXAMPLE_WEB_MOUNT_POINT, &host, &slot_config, &mount_config, &card);
     if (ret != ESP_OK) {
         if (ret == ESP_FAIL) {
-            ESP_LOGE(TAG, "Failed to mount filesystem.");
+            ESP_LOGE(LOG_TAG, "Failed to mount filesystem.");
         } else {
-            ESP_LOGE(TAG, "Failed to initialize the card (%s)", esp_err_to_name(ret));
+            ESP_LOGE(LOG_TAG, "Failed to initialize the card (%s)", esp_err_to_name(ret));
         }
         return ESP_FAIL;
     }
@@ -99,36 +101,37 @@ esp_err_t init_fs(void)
 #endif
 
 #if CONFIG_EXAMPLE_WEB_DEPLOY_SF
-esp_err_t init_fs(void)
-{
-    esp_vfs_spiffs_conf_t conf = {
-        .base_path = CONFIG_EXAMPLE_WEB_MOUNT_POINT,
-        .partition_label = NULL,
-        .max_files = 5,
-        .format_if_mount_failed = false
-    };
-    esp_err_t ret = esp_vfs_spiffs_register(&conf);
 
-    if (ret != ESP_OK) {
-        if (ret == ESP_FAIL) {
-            ESP_LOGE(TAG, "Failed to mount or format filesystem");
-        } else if (ret == ESP_ERR_NOT_FOUND) {
-            ESP_LOGE(TAG, "Failed to find SPIFFS partition");
+esp_err_t init_fs( void ) {
+    esp_vfs_spiffs_conf_t conf = {
+            .base_path = CONFIG_EXAMPLE_WEB_MOUNT_POINT,
+            .partition_label = NULL,
+            .max_files = 5,
+            .format_if_mount_failed = false
+    };
+    esp_err_t ret = esp_vfs_spiffs_register( &conf );
+
+    if ( ret != ESP_OK ) {
+        if ( ret == ESP_FAIL ) {
+            ESP_LOGE( LOG_TAG, "Failed to mount or format filesystem" );
+        } else if ( ret == ESP_ERR_NOT_FOUND ) {
+            ESP_LOGE( LOG_TAG, "Failed to find SPIFFS partition" );
         } else {
-            ESP_LOGE(TAG, "Failed to initialize SPIFFS (%s)", esp_err_to_name(ret));
+            ESP_LOGE( LOG_TAG, "Failed to initialize SPIFFS (%s)", esp_err_to_name( ret ));
         }
         return ESP_FAIL;
     }
 
     size_t total = 0, used = 0;
-    ret = esp_spiffs_info(NULL, &total, &used);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to get SPIFFS partition information (%s)", esp_err_to_name(ret));
+    ret = esp_spiffs_info(NULL, &total, &used );
+    if ( ret != ESP_OK ) {
+        ESP_LOGE( LOG_TAG, "Failed to get SPIFFS partition information (%s)", esp_err_to_name( ret ));
     } else {
-        ESP_LOGI(TAG, "Partition size: total: %d, used: %d", total, used);
+        ESP_LOGI( LOG_TAG, "Partition size: total: %d, used: %d", total, used );
     }
     return ESP_OK;
 }
+
 #endif
 
 void rest_init( void ) {
@@ -139,6 +142,6 @@ void rest_init( void ) {
     initialise_netbios();
 
     ESP_ERROR_CHECK( example_connect());
-//    ESP_ERROR_CHECK( init_fs());
-    ESP_ERROR_CHECK( rest_server_start( "/www", rest_register_handlers ));
+    ESP_ERROR_CHECK( init_fs());
+    ESP_ERROR_CHECK( rest_server_start( CONFIG_EXAMPLE_WEB_MOUNT_POINT, rest_register_handlers ));
 }
