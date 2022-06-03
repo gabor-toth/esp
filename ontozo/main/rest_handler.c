@@ -4,6 +4,7 @@
 #include "lib/gpio_define.h"
 #include "lib/nvs_main.h"
 #include "lib/rest_server.h"
+#include "lib/sntp_main.h"
 #include "gpio_logic.h"
 #include "rest_handler.h"
 
@@ -36,6 +37,12 @@ static esp_err_t state_get_handler( httpd_req_t *req ) {
             }
         }
     }
+
+    char time_buf[64];
+    local_time_to_buf( time_buf, sizeof time_buf );
+    cJSON *timeJson = cJSON_AddObjectToObject( root, "time" );
+    cJSON_AddStringToObject( timeJson, "time", time_buf );
+    cJSON_AddBoolToObject( timeJson, "isTimeSet", sntp_is_time_set());
 
     const char *json_response = cJSON_Print( root );
     httpd_resp_sendstr( req, json_response );

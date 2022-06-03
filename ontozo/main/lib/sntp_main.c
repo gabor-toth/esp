@@ -27,14 +27,18 @@ bool sntp_is_time_set() {
     return is_time_set;
 }
 
-static void print_local_time() {
+void local_time_to_buf( char *__restrict _s, size_t _maxsize ) {
     time_t now = 0;
     struct tm timeinfo = { 0 };
-    char strftime_buf[64];
 
     time( &now );
     localtime_r( &now, &timeinfo );
-    strftime( strftime_buf, sizeof( strftime_buf ), "%c", &timeinfo );
+    strftime( _s, _maxsize, "%c", &timeinfo );
+}
+
+static void print_local_time() {
+    char strftime_buf[64];
+    local_time_to_buf( strftime_buf, sizeof strftime_buf );
     ESP_LOGI( LOG_TAG, "The current date/time is: %s", strftime_buf );
 }
 
