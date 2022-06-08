@@ -6,6 +6,7 @@
 #include "lib/rest_server.h"
 #include "lib/sntp_main.h"
 #include "gpio_logic.h"
+#include "program_json.h"
 #include "rest_handler.h"
 
 static const char *LOG_TAG = "rest-handler";
@@ -45,9 +46,9 @@ static esp_err_t state_get_handler( httpd_req_t *req ) {
     cJSON_AddBoolToObject( timeJson, "isTimeSet", sntp_is_time_set());
 
     const char *json_response = cJSON_Print( root );
+    cJSON_Delete( root );
     httpd_resp_sendstr( req, json_response );
     free((void *) json_response );
-    cJSON_Delete( root );
     return ESP_OK;
 }
 
@@ -114,12 +115,40 @@ static esp_err_t pins_put_handler( httpd_req_t *req ) {
     return result;
 }
 
+static esp_err_t program_put_handler( httpd_req_t *req ) {
+    esp_err_t result;
+
+    cJSON *root;
+    result = rest_receive_json_body( req, (rest_server_context_t *) req->user_ctx, &root );
+    if ( result != ESP_OK ) {
+        return result;
+    }
+
+    Program *program;
+    result = program_read_from_json( root, &program );
+    if ( result != ESP_OK ) {
+        httpd_resp_send_err( req, HTTPD_400_BAD_REQUEST, "Bad request, see log for more information" );
+        return ESP_FAIL;
+    }
+
+    char *json_response;
+    program_write_to_json( program, &json_response );
+    program_destructor( program );
+
+    httpd_resp_set_hdr( req, "Content-Type", HTTPD_TYPE_JSON );
+    httpd_resp_sendstr( req, json_response );
+    free( json_response );
+
+    return ESP_OK;
+}
+
 static esp_err_t options_handler( httpd_req_t *req ) {
     httpd_resp_set_hdr( req, "Access-Control-Allow-Origin", "*" );
     httpd_resp_set_hdr( req, "Access-Control-Allow-Methods", "PUT" );
     httpd_resp_sendstr( req, "" );
     return ESP_OK;
 }
+
 
 static void rest_register_state_handler( httpd_handle_t server, rest_server_context_t *rest_context ) {
     httpd_uri_t state_get_uri = {
@@ -168,8 +197,19 @@ static void rest_register_options_handlers( httpd_handle_t server, rest_server_c
     httpd_register_uri_handler( server, &options_uri );
 }
 
+static void rest_register_programs_handlers( httpd_handle_t server, rest_server_context_t *rest_context ) {
+    httpd_uri_t program_put_uri = {
+            .uri = "/programs",
+            .method = HTTP_PUT,
+            .handler = program_put_handler,
+            .user_ctx = rest_context
+    };
+    httpd_register_uri_handler( server, &program_put_uri );
+}
+
 void rest_register_handlers( httpd_handle_t server, rest_server_context_t *rest_context ) {
     rest_register_state_handler( server, rest_context );
     rest_register_gpio_handlers( server, rest_context );
     rest_register_options_handlers( server, rest_context );
+    rest_register_programs_handlers( server, rest_context );
 }

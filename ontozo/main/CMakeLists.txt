@@ -7,6 +7,8 @@ idf_component_register(
         "lib/rest_server.c"
         "lib/sntp_main.c"
         "gpio_logic.c"
+        "program.c"
+        "program_json.c"
         "ontozo_main.c"
         "rest_handler.c"
         "test_util.c"

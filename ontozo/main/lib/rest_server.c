@@ -65,7 +65,7 @@ static esp_err_t rest_common_get_handler( httpd_req_t *req ) {
     int fd = open( filepath, O_RDONLY, 0 );
     if ( fd == -1 ) {
         ESP_LOGW( LOG_TAG, "Failed to open file : %s", filepath );
-        snprintf( error_message, sizeof( error_message ), "Failed to read file: %d", errno );
+        snprintf( error_message, sizeof( error_message ), "Failed to read file: %d", errno);
         httpd_resp_send_err( req, HTTPD_404_NOT_FOUND, error_message );
         return ESP_FAIL;
     }
@@ -176,6 +176,7 @@ rest_server_start( const char *static_files_base_path,
     httpd_handle_t server = NULL;
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.uri_match_fn = httpd_uri_match_wildcard;
+    config.max_uri_handlers = 16;
 
     ESP_LOGI( LOG_TAG, "Starting HTTP Server" );
     REST_CHECK( httpd_start( &server, &config ) == ESP_OK, "Start server failed", err_start );

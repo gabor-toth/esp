@@ -3,6 +3,7 @@
 #include "lib/rest_main.h"
 #include "lib/sntp_main.h"
 #include "gpio_logic.h"
+#include "program.h"
 #include "test_util.h"
 
 void app_main( void ) {
