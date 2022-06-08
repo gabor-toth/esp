@@ -45,22 +45,22 @@ nvs_handle_t nvs_open_storage() {
     return my_handle;
 }
 
-char *nvs_read_string( const char *key ) {
-    nvs_handle_t my_handle = nvs_open_storage();
-    if ( my_handle == 0 ) {
-        return NULL;
-    }
+void nvs_close_storage( nvs_handle_t handle ) {
+    nvs_commit( handle );
+    nvs_close( handle );
+}
 
+char *nvs_read_string( nvs_handle_t nvs_handle, const char *key ) {
     size_t length;
     char *result = NULL;
-    esp_err_t err = nvs_get_str( my_handle, key, 0, &length );
+    esp_err_t err = nvs_get_str( nvs_handle, key, 0, &length );
     if ( err == ESP_ERR_NVS_NOT_FOUND) {
         result = NULL;
     } else if ( err != ESP_OK ) {
         ESP_LOGE( LOG_TAG, "Error reading length of key %s: %s", key, esp_err_to_name( err ));
     } else {
         result = malloc( length );
-        err = nvs_get_str( my_handle, key, result, &length );
+        err = nvs_get_str( nvs_handle, key, result, &length );
         if ( err != ESP_OK ) {
             free( result );
             result = NULL;
@@ -68,23 +68,35 @@ char *nvs_read_string( const char *key ) {
         }
     }
     ESP_LOGI( LOG_TAG, "Read key %s: %s", key, result != NULL ? result : "NULL" );
-    nvs_close( my_handle );
     return result;
 }
 
-void nvs_write_string( const char *key, const char *value ) {
-    ESP_LOGI( LOG_TAG, "Writing key %s: %s", key, value );
-
-    nvs_handle_t my_handle = nvs_open_storage();
-    if ( my_handle == 0 ) {
+extern void nvs_open_and_write_string( const char *key, const char *value ) {
+    nvs_handle_t nvs_handle = nvs_open_storage();
+    if ( nvs_handle == 0 ) {
         return;
     }
+    nvs_close( nvs_handle );
+}
 
-    esp_err_t err = nvs_set_str( my_handle, key, value );
+void nvs_write_string( nvs_handle_t nvs_handle, const char *key, const char *value ) {
+    ESP_LOGI( LOG_TAG, "Writing key %s: %s", key, value );
+
+    esp_err_t err = nvs_set_str( nvs_handle, key, value );
     if ( err != ESP_OK ) {
         ESP_LOGE( LOG_TAG, "Error writing of key %s: %s", key, esp_err_to_name( err ));
     } else {
-        nvs_commit( my_handle );
+        nvs_commit( nvs_handle );
     }
-    nvs_close( my_handle );
+}
+
+void nvs_delete( nvs_handle_t nvs_handle, const char *key ) {
+    ESP_LOGI( LOG_TAG, "Deleting key %s", key );
+
+    esp_err_t err = nvs_erase_key( nvs_handle, key );
+    if ( err != ESP_OK ) {
+        ESP_LOGE( LOG_TAG, "Error erasing of key %s: %s", key, esp_err_to_name( err ));
+    } else {
+        nvs_commit( nvs_handle );
+    }
 }
