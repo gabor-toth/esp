@@ -17,6 +17,8 @@ typedef struct {
     int class;
 } PinHandlerContext;
 
+static void set_json_content_type( httpd_req_t *req ) { httpd_resp_set_hdr( req, "Content-Type", HTTPD_TYPE_JSON ); }
+
 static esp_err_t state_get_handler( httpd_req_t *req ) {
     httpd_resp_set_hdr( req, "Access-Control-Allow-Origin", "*" );
     httpd_resp_set_type( req, "application/json" );
@@ -47,6 +49,7 @@ static esp_err_t state_get_handler( httpd_req_t *req ) {
 
     const char *json_response = cJSON_Print( root );
     cJSON_Delete( root );
+    set_json_content_type( req );
     httpd_resp_sendstr( req, json_response );
     free((void *) json_response );
     return ESP_OK;
@@ -85,7 +88,7 @@ static esp_err_t pins_put_handler_inner( httpd_req_t *req, cJSON *root, bool is_
 
         char nvs_key[256];
         snprintf( nvs_key, sizeof nvs_key, "%s.%d.name", gpio_get_class_name( is_input, class ), pin_index + 1 );
-        nvs_write_string( nvs_key, name );
+        nvs_open_and_write_string( nvs_key, name );
 
         ESP_LOGI( LOG_TAG, "%s %d name changed to %s", class_name, pin_index + 1, name );
     }
@@ -94,9 +97,10 @@ static esp_err_t pins_put_handler_inner( httpd_req_t *req, cJSON *root, bool is_
         return ESP_FAIL;
     }
 
+    httpd_resp_set_hdr( req, "Access-Control-Allow-Origin", "*" );
     char response[256];
     snprintf( response, sizeof response, "{ \"message\": \"%s changed successfully\" }", class_name );
-    httpd_resp_set_hdr( req, "Access-Control-Allow-Origin", "*" );
+    set_json_content_type( req );
     httpd_resp_sendstr( req, response );
     return ESP_OK;
 }
@@ -115,7 +119,20 @@ static esp_err_t pins_put_handler( httpd_req_t *req ) {
     return result;
 }
 
-static esp_err_t program_put_handler( httpd_req_t *req ) {
+static esp_err_t programs_get_handler( httpd_req_t *req ) {
+    char *json_out;
+    esp_err_t result = programs_header_write_to_json( &json_out );
+    if ( result != ESP_OK ) {
+        return result;
+    }
+    set_json_content_type( req );
+    httpd_resp_sendstr( req, json_out );
+    free((void *) json_out );
+    return ESP_OK;
+}
+
+static esp_err_t program_put_post_handler( httpd_req_t *req, bool is_put ) {
+
     esp_err_t result;
 
     cJSON *root;
@@ -130,16 +147,36 @@ static esp_err_t program_put_handler( httpd_req_t *req ) {
         httpd_resp_send_err( req, HTTPD_400_BAD_REQUEST, "Bad request, see log for more information" );
         return ESP_FAIL;
     }
+    if ( !is_put ) {
+        if ( program->index == 0 ) {
+            httpd_resp_send_err( req, HTTPD_400_BAD_REQUEST, "Needs an index for POST" );
+            return ESP_FAIL;
+        }
+        program_change( program );
+    } else {
+        program_add( program );
+    }
 
-    char *json_response;
-    program_write_to_json( program, &json_response );
-    program_destructor( program );
-
-    httpd_resp_set_hdr( req, "Content-Type", HTTPD_TYPE_JSON );
-    httpd_resp_sendstr( req, json_response );
-    free( json_response );
+    char response[256];
+    snprintf( response,
+              sizeof response, "{ \"id\": %d }", program->index );
+    set_json_content_type( req );
+    httpd_resp_sendstr( req, response );
 
     return ESP_OK;
+}
+
+static esp_err_t program_put_handler( httpd_req_t *req ) {
+    return program_put_post_handler( req, true );
+}
+
+static esp_err_t program_post_handler( httpd_req_t *req ) {
+    return program_put_post_handler( req, false );
+}
+
+static esp_err_t program_delete_handler( httpd_req_t *req ) {
+    printf( "%s\n", req->uri );
+    return ESP_ERR_INVALID_STATE; //program_put_post_handler( req, false );
 }
 
 static esp_err_t options_handler( httpd_req_t *req ) {
@@ -205,6 +242,30 @@ static void rest_register_programs_handlers( httpd_handle_t server, rest_server_
             .user_ctx = rest_context
     };
     httpd_register_uri_handler( server, &program_put_uri );
+
+    httpd_uri_t program_post_uri = {
+            .uri = "/programs",
+            .method = HTTP_POST,
+            .handler = program_post_handler,
+            .user_ctx = rest_context
+    };
+    httpd_register_uri_handler( server, &program_post_uri );
+
+    httpd_uri_t program_delete_uri = {
+            .uri = "/programs/*",
+            .method = HTTP_DELETE,
+            .handler = program_delete_handler,
+            .user_ctx = rest_context
+    };
+    httpd_register_uri_handler( server, &program_delete_uri );
+
+    httpd_uri_t programs_get_uri = {
+            .uri = "/programs*",
+            .method = HTTP_GET,
+            .handler = programs_get_handler,
+            .user_ctx = rest_context
+    };
+    httpd_register_uri_handler( server, &programs_get_uri );
 }
 
 void rest_register_handlers( httpd_handle_t server, rest_server_context_t *rest_context ) {

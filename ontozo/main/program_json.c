@@ -9,6 +9,7 @@
 
 static char *const LOG_TAG = "program_json";
 
+static char *const FIELD_INDEX = "index";
 static char *const FIELD_NAME = "name";
 static char *const FIELD_START_TIMES = "startTimes";
 static char *const FIELD_ZONES = "zones";
@@ -49,13 +50,21 @@ const char *const VALUE_DAY_NAMES[] = { "", "Mon", "Tue", "Wed", "Thu", "Fri", "
     }
  */
 
-static esp_err_t read_name( const cJSON *root, Program *program ) {
-    cJSON *name_element = cJSON_GetObjectItem( root, FIELD_NAME );
-    if ( name_element == NULL) {
-        ESP_LOGW( LOG_TAG, "has no %s", FIELD_NAME );
-        return ESP_ERR_INVALID_ARG;
+static esp_err_t read_head( const cJSON *root, Program *program ) {
+    {
+        cJSON *name_element = cJSON_GetObjectItem( root, FIELD_NAME );
+        if ( name_element == NULL) {
+            ESP_LOGW( LOG_TAG, "has no %s", FIELD_NAME );
+            return ESP_ERR_INVALID_ARG;
+        }
+        program->name = strdup( name_element->valuestring );
     }
-    program->name = name_element->valuestring;
+    {
+        cJSON *index_element = cJSON_GetObjectItem( root, FIELD_INDEX );
+        if ( index_element != NULL) {
+            program->index = index_element->valueint;
+        }
+    }
     return ESP_OK;
 }
 
@@ -179,8 +188,6 @@ esp_err_t read_days( const cJSON *root, Program *program ) {
         cJSON *interval_start_reset_element = cJSON_GetObjectItem( days_element, FIELD_INTERVAL_START_RESET );
         if ( interval_start_reset_element ) {
             program->days.interval_start_reset = interval_start_reset_element->valueint;
-        } else {
-            ESP_LOGI( LOG_TAG, "has no %s", FIELD_INTERVAL_START_RESET );
         }
         program->days.type = interval;
         program->days.interval_days = interval_days_element->valueint;
@@ -192,12 +199,22 @@ esp_err_t read_days( const cJSON *root, Program *program ) {
     return ESP_OK;
 }
 
+esp_err_t program_read_from_string( const char *json_string, Program **program_out ) {
+    cJSON *root = cJSON_Parse( json_string );
+    if ( root == NULL) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    esp_err_t result = program_read_from_json( root, program_out );
+    cJSON_Delete( root );
+    return result;
+}
+
 esp_err_t program_read_from_json( cJSON *root, Program **program_out ) {
     *program_out = NULL;
     Program *program = program_constructor();
 
     esp_err_t result;
-    if (( result = read_name( root, program )) != ESP_OK ||
+    if (( result = read_head( root, program )) != ESP_OK ||
         ( result = read_days( root, program )) != ESP_OK ||
         ( result = read_start_times( root, program )) != ESP_OK ||
         ( result = read_zones( root, program )) != ESP_OK ) {
@@ -209,8 +226,9 @@ esp_err_t program_read_from_json( cJSON *root, Program **program_out ) {
     return ESP_OK;
 }
 
-void write_name( cJSON *json, Program *program ) {
+void write_head( cJSON *json, Program *program ) {
     cJSON_AddStringToObject( json, FIELD_NAME, program->name );
+    cJSON_AddNumberToObject( json, FIELD_INDEX, program->index );
 }
 
 void write_days( cJSON *json, Program *program ) {
@@ -234,7 +252,7 @@ void write_days( cJSON *json, Program *program ) {
         }
     } else if ( program->days.type == interval ) {
         cJSON_AddStringToObject( days, FIELD_TYPE, VALUE_TYPE_INTERVAL );
-        cJSON_AddNumberToObject( days, FIELD_INTERVAL_START_RESET, program->days.interval_days );
+        cJSON_AddNumberToObject( days, FIELD_INTERVAL_DAYS, program->days.interval_days );
         cJSON_AddStringToObject( days, FIELD_INTERVAL_STARTS_ON, VALUE_DAY_NAMES[ program->days.interval_start_day ] );
     } else {
         cJSON_AddStringToObject( days, FIELD_TYPE, VALUE_TYPE_UNUSED );
@@ -277,13 +295,33 @@ void write_zones( cJSON *json, Program *program ) {
     }
 }
 
-esp_err_t program_write_to_json( Program *program, char **json_out ) {
+esp_err_t program_write_to_string( Program *program, char **json_out ) {
     cJSON *root = cJSON_CreateObject();
 
-    write_name( root, program );
+    write_head( root, program );
     write_days( root, program );
     write_start_times( root, program );
     write_zones( root, program );
+
+    *json_out = cJSON_Print( root );
+    cJSON_Delete( root );
+    return ESP_OK;
+}
+
+esp_err_t programs_header_write_to_json( char **json_out ) {
+    cJSON *root = cJSON_CreateArray();
+
+    int count = program_get_count();
+    for ( int i = 0; i < count; i++ ) {
+        Program *program = program_get( i );
+        if ( program == NULL) {
+            continue;
+        }
+        cJSON *item = cJSON_CreateObject();
+        cJSON_AddItemToArray( root, item );
+        cJSON_AddNumberToObject( item, FIELD_INDEX, program->index );
+        cJSON_AddStringToObject( item, FIELD_NAME, program->name );
+    }
 
     *json_out = cJSON_Print( root );
     cJSON_Delete( root );

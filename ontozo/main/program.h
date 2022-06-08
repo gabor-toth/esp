@@ -3,6 +3,8 @@
 
 #include <sys/time.h>
 #include <stdbool.h>
+#include <esp_err.h>
+#include "cJSON.h"
 
 typedef struct {
     int zone_id;
@@ -22,6 +24,7 @@ typedef struct {
 } ProgramDay;
 
 typedef struct {
+    int index;
     char *name;
     int zones_count;
     ProgramZone *zones;
@@ -31,6 +34,18 @@ typedef struct {
     time_t last_run_time;
     time_t next_run_time;
 } Program;
+
+extern void program_init();
+
+extern void program_add( Program *program );
+
+extern void program_change( Program *program );
+
+extern void program_delete( int index );
+
+extern int program_get_count();
+
+extern Program *program_get( int index );
 
 extern Program *program_constructor();
 
