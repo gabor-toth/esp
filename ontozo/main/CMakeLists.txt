@@ -2,10 +2,12 @@ idf_component_register(
         SRCS
         "lib/gpio_define.c"
         "lib/gpio_task.c"
+        "lib/main_main.c"
         "lib/nvs_main.c"
         "lib/rest_main.c"
         "lib/rest_server.c"
         "lib/sntp_main.c"
+        "lib/wifi_connect.c"
         "gpio_logic.c"
         "program.c"
         "program_json.c"

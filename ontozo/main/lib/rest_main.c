@@ -12,9 +12,6 @@
 #include "esp_vfs_fat.h"
 #include "esp_spiffs.h"
 #include "sdmmc_cmd.h"
-#include "nvs_flash.h"
-#include "esp_netif.h"
-#include "esp_event.h"
 #include "esp_log.h"
 #include "mdns.h"
 #include "lwip/apps/netbiosns.h"
@@ -134,14 +131,12 @@ esp_err_t init_fs( void ) {
 
 #endif
 
-void rest_init( void ) {
-    ESP_ERROR_CHECK( nvs_flash_init());
-    ESP_ERROR_CHECK( esp_netif_init());
-    ESP_ERROR_CHECK( esp_event_loop_create_default());
+void rest_init_before_wifi( void ) {
     initialise_mdns();
     initialise_netbios();
+}
 
-    ESP_ERROR_CHECK( example_connect());
+void rest_init_after_wifi( void ) {
     ESP_ERROR_CHECK( init_fs());
     ESP_ERROR_CHECK( rest_server_start( CONFIG_EXAMPLE_WEB_MOUNT_POINT, rest_register_handlers ));
 }
