@@ -12,8 +12,8 @@ void app_main( void ) {
     main_main();
 
     nvs_init();
-    gpio_init();
     gpio_logic_init();
+    program_init();
 
     sntp_init_before_wifi();
     rest_init_before_wifi();

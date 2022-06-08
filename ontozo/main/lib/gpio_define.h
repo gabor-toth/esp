@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include <hal/gpio_types.h>
 
-extern void gpio_init();
+extern void gpio_init( void *user_context );
 
 #define PIN_ENABLED     1
 #define PIN_DISABLED    0
@@ -28,9 +28,9 @@ extern void
 gpio_add_pin_with_allocated_name( bool is_input, int class, gpio_num_t pin, char *name, PinLevelType level_type,
                                   uint64_t *pin_bit_mask );
 
-extern void gpio_define_output_pins_callback( gpio_config_t *io_conf );
+extern void gpio_define_output_pins_callback( gpio_config_t *io_conf, void *user_context );
 
-extern void gpio_define_input_pins_callback( gpio_config_t *io_conf );
+extern void gpio_define_input_pins_callback( gpio_config_t *io_conf, void *user_context );
 
 extern void gpio_changed_callback( uint32_t io_num, int state );
 

@@ -124,11 +124,11 @@ void gpio_add_pin( bool is_input, int class, gpio_num_t pin, char *name, PinLeve
     gpio_add_pin_with_allocated_name( is_input, class, pin, name, level_type, pin_bit_mask );
 }
 
-static void add_input_pins() {
+static void add_input_pins( void *user_context ) {
     //zero-initialize the config structure.
     gpio_config_t io_conf = {};
 
-    gpio_define_input_pins_callback( &io_conf );
+    gpio_define_input_pins_callback( &io_conf, user_context );
 
     io_conf.intr_type = GPIO_INTR_DISABLE;
     io_conf.mode = GPIO_MODE_OUTPUT;
@@ -157,7 +157,7 @@ static void add_input_pins() {
     }
 }
 
-static void add_output_pins() {
+static void add_output_pins( void *user_context ) {
     gpio_config_t io_conf = {};
 
     io_conf.intr_type = GPIO_INTR_DISABLE;
@@ -174,14 +174,14 @@ static void add_output_pins() {
     REG_SET_BIT( RTC_IO_PAD_DAC2_REG, RTC_IO_PDAC2_DAC_XPD_FORCE );
      */
 
-    gpio_define_output_pins_callback( &io_conf );
+    gpio_define_output_pins_callback( &io_conf, user_context );
 
     gpio_config( &io_conf );
 }
 
-void gpio_init() {
-    add_input_pins();
-    add_output_pins();
+void gpio_init( void *user_context ) {
+    add_input_pins( user_context );
+    add_output_pins( user_context );
 }
 
 int gpio_get_number_of_classes( bool is_input ) {
