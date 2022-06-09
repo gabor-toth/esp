@@ -25,6 +25,8 @@ typedef struct {
 
 typedef struct {
     int index;
+    bool valid;
+    bool enabled;
     char *name;
     int zones_count;
     ProgramZone *zones;
@@ -41,7 +43,7 @@ extern void program_add( Program *program );
 
 extern void program_change( Program *program );
 
-extern void program_delete( int index );
+extern esp_err_t program_delete( int index );
 
 extern int program_get_count();
 

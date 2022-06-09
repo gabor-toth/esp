@@ -124,14 +124,12 @@ esp_err_t rest_receive_json_body( httpd_req_t *req, rest_server_context_t *conte
     char *buf = context->scratch;
     int received = 0;
     if ( total_len >= REST_SCRATCH_BUFSIZE) {
-        /* Respond with 500 Internal Server Error */
-        httpd_resp_send_err( req, HTTPD_500_INTERNAL_SERVER_ERROR, "content too long" );
+        httpd_resp_send_err( req, HTTPD_400_BAD_REQUEST, "content too long" );
         return ESP_FAIL;
     }
     while ( cur_len < total_len ) {
         received = httpd_req_recv( req, buf + cur_len, total_len );
         if ( received <= 0 ) {
-            /* Respond with 500 Internal Server Error */
             httpd_resp_send_err( req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to post control value" );
             return ESP_FAIL;
         }
@@ -193,5 +191,21 @@ rest_server_start( const char *static_files_base_path,
     return ESP_FAIL;
 }
 
-void set_json_content_type( httpd_req_t *req ) { httpd_resp_set_hdr( req, "Content-Type", HTTPD_TYPE_JSON ); }
+void rest_set_json_content_type( httpd_req_t *req ) { httpd_resp_set_hdr( req, "Content-Type", HTTPD_TYPE_JSON ); }
 
+esp_err_t rest_set_error_code( httpd_req_t *req, esp_err_t esp_err, const char *message ) {
+    httpd_err_code_t http_error;
+
+    switch ( esp_err ) {
+        case ESP_ERR_INVALID_ARG:
+            http_error = HTTPD_400_BAD_REQUEST;
+            break;
+        case ESP_ERR_NOT_FOUND:
+            http_error = HTTPD_404_NOT_FOUND;
+            break;
+        default:
+            http_error = HTTPD_500_INTERNAL_SERVER_ERROR;
+            break;
+    }
+    return httpd_resp_send_err( req, http_error, message );
+}

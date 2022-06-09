@@ -21,9 +21,8 @@ static void get_nvs_key( uint index, char *name_buffer, int name_buffer_size ) {
 }
 
 Program *program_constructor() {
-    Program *top = malloc( sizeof( Program ));
-    memset( top, 0, sizeof( Program ));
-    return top;
+    Program *program = calloc( 1, sizeof( Program ));
+    return program;
 }
 
 void program_destructor( Program *program ) {
@@ -80,9 +79,9 @@ void program_change( Program *program ) {
     write_program_to_nvs( program );
 }
 
-void program_delete( int index ) {
+esp_err_t program_delete( int index ) {
     if ( index < 0 || index >= program_count ) {
-        return;
+        return ESP_ERR_NOT_FOUND;
     }
     program_destructor( programs[ index ] );
 
@@ -106,6 +105,7 @@ void program_delete( int index ) {
         nvs_close_storage( nvs_handle );
     }
     program_count--;
+    return ESP_OK;
 }
 
 int program_get_count() {
@@ -136,12 +136,13 @@ void program_init() {
             get_nvs_key( i, nvs_key, sizeof nvs_key );
             char *program_as_json_string = nvs_read_string( nvs_handle, nvs_key );
             if ( program_as_json_string == NULL) {
-                ESP_LOGW( LOG_TAG, "Unable to read program %d", i );
-                program_add(NULL);
-            } else if ( program_read_from_string( program_as_json_string, &program ) != ESP_OK ) {
-                ESP_LOGW( LOG_TAG, "Unable to parse program %d", i );
+                ESP_LOGE( LOG_TAG, "Unable to read program %d", i );
                 program_add(NULL);
             } else {
+                program_read_from_string( program_as_json_string, &program );
+                if ( !program->valid ) {
+                    ESP_LOGE( LOG_TAG, "Unable to parse program %d", i );
+                }
                 program_add( program );
             }
         }

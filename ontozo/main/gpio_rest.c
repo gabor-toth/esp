@@ -1,9 +1,8 @@
-#include "esp_log.h"
+#include <esp_log.h>
 #include "lib/gpio_define.h"
 #include "lib/nvs_main.h"
 #include "lib/sntp_main.h"
 #include "gpio_rest.h"
-#include "gpio_logic.h"
 
 static const char *LOG_TAG = "gpio_rest";
 
@@ -43,7 +42,7 @@ static esp_err_t state_get_handler( httpd_req_t *req ) {
 
     const char *json_response = cJSON_Print( root );
     cJSON_Delete( root );
-    set_json_content_type( req );
+    rest_set_json_content_type( req );
     httpd_resp_sendstr( req, json_response );
     free((void *) json_response );
     return ESP_OK;
@@ -52,13 +51,11 @@ static esp_err_t state_get_handler( httpd_req_t *req ) {
 static esp_err_t pins_put_handler_inner( httpd_req_t *req, cJSON *root, bool is_input, int class ) {
     cJSON *id_element = cJSON_GetObjectItem( root, "id" );
     if ( id_element == NULL) {
-        httpd_resp_send_err( req, HTTPD_400_BAD_REQUEST, "Id is mandatory" );
-        return ESP_FAIL;
+        return httpd_resp_send_err( req, HTTPD_400_BAD_REQUEST, "Id is mandatory" );
     }
     int pin_index = id_element->valueint - 1;
     if ( !gpio_is_valid_index( is_input, class, pin_index )) {
-        httpd_resp_send_err( req, HTTPD_400_BAD_REQUEST, "Id is not valid" );
-        return ESP_FAIL;
+        return httpd_resp_send_err( req, HTTPD_400_BAD_REQUEST, "Id is not valid" );
     }
 
     cJSON *state_element = cJSON_GetObjectItem( root, "state" );
@@ -67,8 +64,7 @@ static esp_err_t pins_put_handler_inner( httpd_req_t *req, cJSON *root, bool is_
     if ( state_element != NULL) {
         changed = true;
         if ( is_input ) {
-            httpd_resp_send_err( req, HTTPD_403_FORBIDDEN, "Unable to set state of an input pin" );
-            return ESP_FAIL;
+            return httpd_resp_send_err( req, HTTPD_403_FORBIDDEN, "Unable to set state of an input pin" );
         }
         int state = state_element->valueint;
         gpio_set_pin_state( is_input, class, pin_index, state );
@@ -87,14 +83,13 @@ static esp_err_t pins_put_handler_inner( httpd_req_t *req, cJSON *root, bool is_
         ESP_LOGI( LOG_TAG, "%s %d name changed to %s", class_name, pin_index + 1, name );
     }
     if ( !changed ) {
-        httpd_resp_send_err( req, HTTPD_400_BAD_REQUEST, "Neither state nor name changed" );
-        return ESP_FAIL;
+        return httpd_resp_send_err( req, HTTPD_400_BAD_REQUEST, "Neither state nor name changed" );
     }
 
     httpd_resp_set_hdr( req, "Access-Control-Allow-Origin", "*" );
     char response[256];
     snprintf( response, sizeof response, "{ \"message\": \"%s changed successfully\" }", class_name );
-    set_json_content_type( req );
+    rest_set_json_content_type( req );
     httpd_resp_sendstr( req, response );
     return ESP_OK;
 }
