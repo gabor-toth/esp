@@ -23,4 +23,6 @@ extern esp_err_t rest_server_start(
  */
 extern esp_err_t rest_receive_json_body( httpd_req_t *req, rest_server_context_t *context, cJSON **root );
 
+extern void set_json_content_type( httpd_req_t *req );
+
 #endif //LIB_REST_SERVER_H

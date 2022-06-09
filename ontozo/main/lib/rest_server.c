@@ -192,3 +192,6 @@ rest_server_start( const char *static_files_base_path,
     err:
     return ESP_FAIL;
 }
+
+void set_json_content_type( httpd_req_t *req ) { httpd_resp_set_hdr( req, "Content-Type", HTTPD_TYPE_JSON ); }
+
