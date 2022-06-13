@@ -20,6 +20,8 @@ typedef struct {
     char *name;
     PinLevelType level_type;
     bool state;
+    int delay_ms_going_low;
+    int delay_ms_going_high;
 } Pin;
 
 typedef struct {
@@ -93,35 +95,39 @@ static void set_pin_name( Pin *pin, char *name ) {
     pin->name = strdup( name );
 }
 
-void gpio_add_pin_with_allocated_name( bool is_input, int class, gpio_num_t pin, char *name, PinLevelType level_type,
-                                       uint64_t *pin_bit_mask ) {
+int gpio_add_pin_with_allocated_name( bool is_input, int class, gpio_num_t pin, char *name, PinLevelType level_type,
+                                      uint64_t *pin_bit_mask ) {
     if ( name == NULL) {
         name = strdup( "---" );
     }
     if ( !gpio_is_valid_class( is_input, class )) {
         ESP_LOGE( LOG_TAG, "Adding pin %d/%d %d \"%s\"", is_input, class, pin, name );
-        return;
+        return -1;
     }
     PinClass *pin_class = &pin_definitions[ is_input ].classes[ class ];
 
     ESP_LOGI( LOG_TAG, "Adding pin %d/%d/%d %d \"%s\"", is_input, class, pin_class->used_pin_count, pin, name );
     if ( pin_class->used_pin_count == pin_class->max_pin_count ) {
         ESP_LOGE( LOG_TAG, "Too many pins on class %d/%d \"%s\"", is_input, class, name );
-        return;
+        return -1;
     }
-    Pin *output_pin = &pin_class->pins[ pin_class->used_pin_count++ ];
+    int index = pin_class->used_pin_count++;
+    Pin *output_pin = &pin_class->pins[ index ];
     output_pin->name = name;
     output_pin->pin = pin;
     output_pin->level_type = level_type != inherit ? level_type : pin_class->level_type;
 
     *pin_bit_mask |= ( 1ULL << pin );
-    set_pin_state( output_pin, false );
+    if ( !is_input ) {
+        set_pin_state( output_pin, false );
+    }
+    return index;
 }
 
-void gpio_add_pin( bool is_input, int class, gpio_num_t pin, char *name, PinLevelType level_type,
-                   uint64_t *pin_bit_mask ) {
+int gpio_add_pin( bool is_input, int class, gpio_num_t pin, char *name, PinLevelType level_type,
+                  uint64_t *pin_bit_mask ) {
     name = name != NULL ? strdup( name ) : NULL;
-    gpio_add_pin_with_allocated_name( is_input, class, pin, name, level_type, pin_bit_mask );
+    return gpio_add_pin_with_allocated_name( is_input, class, pin, name, level_type, pin_bit_mask );
 }
 
 static void add_input_pins( void *user_context ) {
@@ -152,7 +158,7 @@ static void add_input_pins( void *user_context ) {
     for ( int input_class_index = 0; input_class_index < input_classes->used_classes; input_class_index++ ) {
         PinClass *input_class = &input_classes->classes[ input_class_index ];
         for ( int input_pin = 0; input_pin < input_class->used_pin_count; input_pin++ ) {
-            gpio_task_add( input_class->pins[ input_pin ].pin );
+            gpio_task_add( input_class->pins[ input_pin ].pin, 0, 0 );
         }
     }
 }
@@ -235,3 +241,11 @@ void gpio_set_pin_name( bool is_input, int class, int index, char *name ) {
     set_pin_name( &pin_definitions[ is_input ].classes[ class ].pins[ index ], name );
 }
 
+void gpio_set_delays( bool is_input, int class, int index, int delay_ms_going_low, int delay_ms_going_high ) {
+    if ( !gpio_is_valid_index( is_input, class, index )) {
+        return;
+    }
+    Pin *pin = &pin_definitions[ is_input ].classes[ class ].pins[ index ];
+    pin->delay_ms_going_high = delay_ms_going_high;
+    pin->delay_ms_going_low = delay_ms_going_low;
+}

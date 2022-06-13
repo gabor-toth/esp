@@ -1,29 +1,26 @@
 Frontend
 ========
 
-+ routing
-    + state
-
-    - programs
-    - admin
-        - set names
-        - reset
-        - set ip address for testing
+- ~~routing~~
+    - ~~state~~
     - highlight selected route
-
+- programs
+- admin
+    - set names
+    - reset
+    - set ip address for testing
 - error handling (no connection, etc)
 
 Backend
 =======
 
 - reset esp
-- programs
-
-+ SNTP
-
+- ~~program admin~~
+- program logic
+- ~~SNTP~~
 - httpd
     - return index.html for unknown files
-    - logic
-        + delay pump turn on after level 4 drop
-
-        - level4 drop timeout configurable
+- logic
+    - ~~delay pump turn on after level 4 drop~~
+    - level4 drop timeout configurableű
+- 

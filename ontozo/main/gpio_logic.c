@@ -92,6 +92,7 @@ void gpio_define_input_pins_callback( gpio_config_t *io_conf, void *user_context
     gpio_add_class( INPUTS, "levels", 4, low_is_on );
     gpio_add_class( INPUTS, "buttons", 2, low_is_on );
 
+    int index;
     gpio_add_pin_with_allocated_name( INPUTS, LEVELS, GPIO_INPUT_LEVEL_1,
                                       read_nvs_or_default( nvs_handle, "level", 1 ),
                                       low_is_on, &io_conf->pin_bit_mask );
@@ -101,9 +102,10 @@ void gpio_define_input_pins_callback( gpio_config_t *io_conf, void *user_context
     gpio_add_pin_with_allocated_name( INPUTS, LEVELS, GPIO_INPUT_LEVEL_3,
                                       read_nvs_or_default( nvs_handle, "level", 3 ),
                                       high_is_on, &io_conf->pin_bit_mask );
-    gpio_add_pin_with_allocated_name( INPUTS, LEVELS, GPIO_INPUT_LEVEL_4,
-                                      read_nvs_or_default( nvs_handle, "level", 4 ),
-                                      high_is_on, &io_conf->pin_bit_mask );
+    index = gpio_add_pin_with_allocated_name( INPUTS, LEVELS, GPIO_INPUT_LEVEL_4,
+                                              read_nvs_or_default( nvs_handle, "level", 4 ),
+                                              high_is_on, &io_conf->pin_bit_mask );
+    gpio_set_delays( INPUTS, LEVELS, index, 10 * 1000, 10 * 1000 );
     gpio_add_pin_with_allocated_name( INPUTS, BUTTONS, GPIO_INPUT_BUTTON_START,
                                       read_nvs_or_default( nvs_handle, "button", 1 ),
                                       low_is_on, &io_conf->pin_bit_mask );

@@ -21,12 +21,14 @@ typedef enum {
 
 extern void gpio_add_class( bool is_input, char *name, int max_pin_count, PinLevelType level_type );
 
-extern void
+extern int
 gpio_add_pin( bool is_input, int class, gpio_num_t pin, char *name, PinLevelType level_type, uint64_t *pin_bit_mask );
 
-extern void
+extern int
 gpio_add_pin_with_allocated_name( bool is_input, int class, gpio_num_t pin, char *name, PinLevelType level_type,
                                   uint64_t *pin_bit_mask );
+
+extern void gpio_set_delays( bool is_input, int class, int index, int delay_ms_going_low, int delay_ms_going_high );
 
 extern void gpio_define_output_pins_callback( gpio_config_t *io_conf, void *user_context );
 
