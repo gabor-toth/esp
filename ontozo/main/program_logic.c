@@ -2,13 +2,11 @@
 #include <string.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/timers.h"
+#include "lib/common.h"
 #include "lib/gpio_define.h"
 #include "gpio_logic.h"
 #include "program_logic.h"
 #include "program.h"
-
-/* A block time of 0 simply means "don't block". */
-#define staticDONT_BLOCK                    ( ( TickType_t ) 0 )
 
 static const char *LOG_TAG = "program_logic";
 
