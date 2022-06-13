@@ -4,6 +4,8 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "lib/gpio_define.h"
+#include "gpio_logic.h"
 #include "program_json.h"
 #include "program.h"
 
@@ -108,7 +110,12 @@ void read_zones( const cJSON *root, Program *program ) {
         cJSON *zone_element = cJSON_GetArrayItem( zones_element, i );
         cJSON *zone_id_element = cJSON_GetObjectItem( zone_element, FIELD_ZONE_ID );
         if ( zone_id_element ) {
-            program->zones[ i ].zone_id = zone_id_element->valueint;
+            int zone_id = zone_id_element->valueint - 1;
+            if ( !gpio_is_valid_index( OUTPUTS, ZONES, zone_id )) {
+                program->valid = false;
+            } else {
+                program->zones[ i ].zone_id = zone_id;
+            }
         } else {
             ESP_LOGW( LOG_TAG, "has no %s", FIELD_ZONE_ID );
         }
@@ -177,7 +184,6 @@ void read_days( const cJSON *root, Program *program ) {
             int day_index = get_day_index( day_name );
             if ( day_index != 0 ) {
                 program->days.on_days |= 1 << day_index;
-                printf( "program->days.on_days = %04x\n", program->days.on_days );
             }
         }
     }
@@ -255,7 +261,6 @@ void write_days( cJSON *json, Program *program ) {
                                  VALUE_TYPE_UNUSED;
     cJSON_AddStringToObject( days, FIELD_TYPE, type_as_string );
 
-    printf( "program->days.on_days = %04x\n", program->days.on_days );
     if ( program->days.type == on || program->days.on_days != 0 ) {
         cJSON *days_array = cJSON_AddArrayToObject( days, FIELD_ON_DAYS );
         for ( int day_index = 1; day_index <= VALUE_DAY_NAMES_COUNT; day_index++ ) {
@@ -305,7 +310,7 @@ void write_zones( cJSON *json, Program *program ) {
         ProgramZone *zone = program->zones + i;
         cJSON *item = cJSON_CreateObject();
         cJSON_AddItemToArray( array, item );
-        cJSON_AddNumberToObject( item, FIELD_ZONE_ID, zone->zone_id );
+        cJSON_AddNumberToObject( item, FIELD_ZONE_ID, zone->zone_id + 1 );
         cJSON_AddNumberToObject( item, FIELD_DURATION, zone->duration_in_seconds );
     }
 }

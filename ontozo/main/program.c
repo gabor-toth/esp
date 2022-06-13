@@ -81,6 +81,7 @@ void program_change( Program *program ) {
 
 esp_err_t program_delete( int index ) {
     if ( index < 0 || index >= program_count ) {
+        ESP_LOGW( LOG_TAG, "Program index %d is out of range 1..%d", index, program_count );
         return ESP_ERR_NOT_FOUND;
     }
     program_destructor( programs[ index ] );
@@ -114,6 +115,7 @@ int program_get_count() {
 
 Program *program_get( int index ) {
     if ( index < 0 || index >= program_count ) {
+        ESP_LOGW( LOG_TAG, "Program index %d is out of range 1..%d", index, program_count );
         return NULL;
     }
     return programs[ index ];

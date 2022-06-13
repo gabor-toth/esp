@@ -2,6 +2,7 @@
 #include "lib/gpio_define.h"
 #include "lib/nvs_main.h"
 #include "lib/sntp_main.h"
+#include "lib/rest_util.h"
 #include "gpio_rest.h"
 
 static const char *LOG_TAG = "gpio_rest";
@@ -40,11 +41,7 @@ static esp_err_t state_get_handler( httpd_req_t *req ) {
     cJSON_AddStringToObject( timeJson, "time", time_buf );
     cJSON_AddBoolToObject( timeJson, "isTimeSet", sntp_is_time_set());
 
-    const char *json_response = cJSON_Print( root );
-    cJSON_Delete( root );
-    rest_set_json_content_type( req );
-    httpd_resp_sendstr( req, json_response );
-    free((void *) json_response );
+    rest_send_json_back( req, root );
     return ESP_OK;
 }
 
@@ -87,10 +84,7 @@ static esp_err_t pins_put_handler_inner( httpd_req_t *req, cJSON *root, bool is_
     }
 
     httpd_resp_set_hdr( req, "Access-Control-Allow-Origin", "*" );
-    char response[256];
-    snprintf( response, sizeof response, "{ \"message\": \"%s changed successfully\" }", class_name );
-    rest_set_json_content_type( req );
-    httpd_resp_sendstr( req, response );
+    rest_send_message_back( req, "%s changed successfully", class_name );
     return ESP_OK;
 }
 

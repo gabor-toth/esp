@@ -1,3 +1,4 @@
+#include "lib/rest_util.h"
 #include "program_rest.h"
 #include "program_json.h"
 
@@ -5,24 +6,6 @@
 
 #define PROGRAMS_PREFIX    "/programs/"
 #define PROGRAMS_URI    PROGRAMS_PREFIX "*"
-
-static esp_err_t parse_index( httpd_req_t *req, int *index, bool needed ) {
-    const char *uri = req->uri;
-    size_t prefix_length = strlen( PROGRAMS_PREFIX );
-
-    if ( strncmp( uri, PROGRAMS_PREFIX, prefix_length ) != 0 ) {
-        printf( "prefix in uri %s is bad\n", uri );
-        return ESP_ERR_INVALID_ARG;
-    }
-    uri += prefix_length;
-    char *end;
-    *index = strtol( uri, &end, 10 );
-    if ( *end != 0 || ( needed && end == uri )) {
-        printf( "Numeric index expected\n" );
-        return ESP_ERR_INVALID_ARG;
-    }
-    return ESP_OK;
-}
 
 static esp_err_t programs_get_handler( httpd_req_t *req ) {
     char *json_out;
@@ -39,7 +22,7 @@ static esp_err_t program_get_handler( httpd_req_t *req ) {
     int index;
     esp_err_t result;
 
-    if (( result = parse_index( req, &index, true )) != ESP_OK ) {
+    if (( result = rest_parse_index( req->uri + strlen( PROGRAMS_PREFIX ), &index, true )) != ESP_OK ) {
         return rest_set_error_code( req, result, "Program index expected in URL" );
     }
     Program *program = program_get( index - 1 );
@@ -101,7 +84,7 @@ static esp_err_t program_delete_handler( httpd_req_t *req ) {
     esp_err_t result;
     int index;
 
-    if (( result = parse_index( req, &index, true )) != ESP_OK ) {
+    if (( result = rest_parse_index( req->uri + strlen( PROGRAMS_PREFIX ), &index, true )) != ESP_OK ) {
         return rest_set_error_code( req, result, "Program index expected in URL" );
     }
     if (( result = program_delete( index - 1 )) != ESP_OK ) {

@@ -24,7 +24,7 @@ static void IRAM_ATTR gpio_isr_handler( void *arg ) {
     xTimerResetFromISR( timer_data->timer_going_low, NULL );
 }
 
-void timer_gpio_callback( TimerHandle_t timer ) {
+static void timer_gpio_callback( TimerHandle_t timer ) {
     GpioTimer *timer_data = (GpioTimer *) pvTimerGetTimerID( timer );
     uint32_t io_num = timer_data->io_num;
     int current_state = gpio_get_level( io_num );

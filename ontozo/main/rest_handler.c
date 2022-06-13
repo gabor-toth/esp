@@ -2,10 +2,9 @@
 #include "lib/nvs_main.h"
 #include "lib/rest_server.h"
 #include "gpio_rest.h"
+#include "program_logic_rest.h"
 #include "program_rest.h"
 #include "rest_handler.h"
-
-//static const char *LOG_TAG = "rest_handler";
 
 static esp_err_t options_handler( httpd_req_t *req ) {
     httpd_resp_set_hdr( req, "Access-Control-Allow-Origin", "*" );
@@ -28,4 +27,5 @@ void rest_register_handlers( httpd_handle_t server, rest_server_context_t *rest_
     rest_register_options_handlers( server, rest_context );
     rest_register_gpio_handlers( server, rest_context );
     rest_register_programs_handlers( server, rest_context );
+    rest_register_program_logic_handlers( server, rest_context );
 }
