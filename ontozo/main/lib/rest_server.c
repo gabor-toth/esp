@@ -190,22 +190,3 @@ rest_server_start( const char *static_files_base_path,
     err:
     return ESP_FAIL;
 }
-
-void rest_set_json_content_type( httpd_req_t *req ) { httpd_resp_set_hdr( req, "Content-Type", HTTPD_TYPE_JSON ); }
-
-esp_err_t rest_set_error_code( httpd_req_t *req, esp_err_t esp_err, const char *message ) {
-    httpd_err_code_t http_error;
-
-    switch ( esp_err ) {
-        case ESP_ERR_INVALID_ARG:
-            http_error = HTTPD_400_BAD_REQUEST;
-            break;
-        case ESP_ERR_NOT_FOUND:
-            http_error = HTTPD_404_NOT_FOUND;
-            break;
-        default:
-            http_error = HTTPD_500_INTERNAL_SERVER_ERROR;
-            break;
-    }
-    return httpd_resp_send_err( req, http_error, message );
-}
