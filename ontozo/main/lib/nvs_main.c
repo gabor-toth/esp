@@ -67,7 +67,8 @@ char *nvs_read_string( nvs_handle_t nvs_handle, const char *key ) {
             ESP_LOGE( LOG_TAG, "Error reading value of key %s: %s", key, esp_err_to_name( err ));
         }
     }
-    ESP_LOGI( LOG_TAG, "Read key %s: %s", key, result != NULL ? result : "NULL" );
+    ESP_LOGI( LOG_TAG, "Read key %s", key );
+//    ESP_LOGI( LOG_TAG, "Read key %s: %s", key, result != NULL ? result : "NULL" );
     return result;
 }
 
@@ -80,7 +81,8 @@ extern void nvs_open_and_write_string( const char *key, const char *value ) {
 }
 
 void nvs_write_string( nvs_handle_t nvs_handle, const char *key, const char *value ) {
-    ESP_LOGI( LOG_TAG, "Writing key %s: %s", key, value );
+    ESP_LOGI( LOG_TAG, "Writing key %s", key );
+//    ESP_LOGI( LOG_TAG, "Writing key %s: %s", key, value );
 
     esp_err_t err = nvs_set_str( nvs_handle, key, value );
     if ( err != ESP_OK ) {
