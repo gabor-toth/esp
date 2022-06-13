@@ -1,6 +1,7 @@
 #include <esp_log.h>
 #include <string.h>
 #include "freertos/FreeRTOS.h"
+#include "freertos/queue.h"
 #include "freertos/timers.h"
 #include "lib/common.h"
 #include "lib/gpio_define.h"
@@ -8,19 +9,27 @@
 #include "program_logic.h"
 #include "program.h"
 
+#define MAX_QUEUE_LENGTH 16
+
+#define NOT_RUNNING -1
+
 static const char *LOG_TAG = "program_logic";
 
-static int running_program_index = -1;
+static int running_program_index = NOT_RUNNING;
 static int running_zone_index;
 static Program *current_program;
 static TimerHandle_t timer;
+static int queue[MAX_QUEUE_LENGTH];
+static int queue_length = 0;
+
+static QueueHandle_t gpio_evt_queue = NULL;
 
 static void start_next_zone() {
     if ( running_zone_index >= 0 ) {
         gpio_set_pin_state( OUTPUTS, ZONES, current_program->zones[ running_zone_index ].zone_id, false );
     }
     if ( ++running_zone_index == current_program->zones_count ) {
-        ESP_LOGI( LOG_TAG, "program ended after last zone" );
+        ESP_LOGI( LOG_TAG, "Ending program %d after last zone", running_program_index );
         program_logic_stop();
         return;
     }
@@ -35,12 +44,25 @@ static void start_next_zone() {
 }
 
 static void timer_callback( TimerHandle_t timer ) {
-    start_next_zone();
+    uint32_t dummy = 0;
+    xQueueSend( gpio_evt_queue, &dummy, 0 );
+}
+
+_Noreturn static void task_main( void *arg ) {
+    for ( ;; ) {
+        uint32_t dummy;
+        if ( xQueueReceive( gpio_evt_queue, &dummy, portMAX_DELAY )) {
+            start_next_zone();
+        }
+    }
 }
 
 void program_logic_init() {
-    running_program_index = -1;
+    running_program_index = NOT_RUNNING;
     current_program = NULL;
+
+    gpio_evt_queue = xQueueCreate( 10, sizeof( uint32_t ));
+    xTaskCreate( task_main, LOG_TAG, 2048, NULL, 10, NULL);
 
     timer = xTimerCreate(
             "program_runner",
@@ -50,7 +72,7 @@ void program_logic_init() {
             timer_callback );
 }
 
-void program_logic_start( int index ) {
+static void program_logic_start( int index ) {
     if ( running_program_index >= 0 ) {
         ESP_LOGW( LOG_TAG, "Program %d is already running", running_program_index );
         return;
@@ -59,9 +81,23 @@ void program_logic_start( int index ) {
     if ( current_program == NULL) {
         return;
     }
+    ESP_LOGI( LOG_TAG, "Starting program %d", index );
     running_program_index = index;
     running_zone_index = -1;
+    gpio_pump_main( true );
     start_next_zone();
+}
+
+void program_logic_queue_start( int index ) {
+    if ( running_program_index == NOT_RUNNING ) {
+        program_logic_start( index );
+        return;
+    }
+    if ( queue_length >= MAX_QUEUE_LENGTH ) {
+        return;
+    }
+    queue[ queue_length++ ] = index;
+    ESP_LOGI( LOG_TAG, "Queued program %d", index );
 }
 
 void program_logic_move_to_next_zone() {
@@ -84,6 +120,16 @@ void program_logic_get_state( RunningProgramState *state ) {
 
 void program_logic_stop() {
     xTimerStop( timer, staticDONT_BLOCK );
-    running_program_index = -1;
+    running_program_index = NOT_RUNNING;
     current_program = NULL;
+
+    if ( queue_length > 0 ) {
+        int index = queue[ 0 ];
+        if ( --queue_length != 0 ) {
+            memmove( queue, queue + 1, queue_length * sizeof( queue[ 0 ] ));
+        }
+        program_logic_start( index );
+    } else {
+        gpio_pump_main( false );
+    }
 }

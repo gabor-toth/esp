@@ -24,7 +24,7 @@ static esp_err_t run_post_handler( httpd_req_t *req ) {
         if (( result = rest_parse_index( uri, &index, true )) != ESP_OK ) {
             return rest_set_error_code( req, result, "Program index expected in URL" );
         }
-        program_logic_start( index - 1 );
+        program_logic_queue_start( index - 1 );
         rest_send_message_back( req, "started" );
     } else {
         ESP_LOGW( LOG_TAG, "Unknown command in %s", req->uri );

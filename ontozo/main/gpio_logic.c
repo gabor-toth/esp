@@ -166,3 +166,7 @@ void gpio_logic_init() {
             NULL,
             level4_drop_timeout );
 }
+
+void gpio_pump_main( bool on ) {
+    gpio_set_pin_state( OUTPUTS, PUMPS, PUMP_MAIN, on );
+}

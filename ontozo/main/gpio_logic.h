@@ -13,4 +13,6 @@
 
 extern void gpio_logic_init();
 
+extern void gpio_pump_main( bool on );
+
 #endif //ONTOZO_GPIO_LOGIC_H
