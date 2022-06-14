@@ -60,12 +60,18 @@ static void program_add_to_list( Program *program ) {
     programs[ program_count++ ] = program;
 }
 
-void program_add( Program *program ) {
+static void do_program_add( Program *program, bool from_init ) {
     program_add_to_list( program );
     if ( program != NULL) {
         program->index = program_count;
-        write_program_to_nvs( program );
+        if ( !from_init ) {
+            write_program_to_nvs( program );
+        }
     }
+}
+
+void program_add( Program *program ) {
+    do_program_add( program, false );
 }
 
 void program_change( Program *program ) {
@@ -139,13 +145,13 @@ void program_init() {
             char *program_as_json_string = nvs_read_string( nvs_handle, nvs_key );
             if ( program_as_json_string == NULL) {
                 ESP_LOGE( LOG_TAG, "Unable to read program %d", i );
-                program_add(NULL);
+                do_program_add(NULL, true );
             } else {
                 program_read_from_string( program_as_json_string, &program );
                 if ( !program->valid ) {
                     ESP_LOGE( LOG_TAG, "Unable to parse program %d", i );
                 }
-                program_add( program );
+                do_program_add( program, true );
             }
         }
     } else {
