@@ -15,9 +15,6 @@ static const char *LOG_TAG = "logic";
 #define PUMP_MAIN     0
 #define PUMP_REFILL   1
 
-static TimerHandle_t level4_drop_timer;
-static int level4_drop_timeout_seconds = 30; //seconds
-
 static void set_initial_pump_states() {
     int level1 = gpio_get_pin_state( INPUTS, LEVELS, 0 );
     int level2 = gpio_get_pin_state( INPUTS, LEVELS, 1 );
@@ -70,11 +67,13 @@ void gpio_define_output_pins_callback( gpio_config_t *io_conf, void *user_contex
     gpio_add_class( OUTPUTS, "pumps", 2, high_is_on );
     gpio_add_class( OUTPUTS, "zones", 8, low_is_on );
 
+    int index;
     for ( int i = 0; i < sizeof pump_pins / sizeof pump_pins[ 0 ]; i++ ) {
-        gpio_add_pin_with_allocated_name( OUTPUTS, PUMPS, pump_pins[ i ],
-                                          read_nvs_or_default( nvs_handle, "pumps", i + 1 ),
-                                          inherit,
-                                          &io_conf->pin_bit_mask );
+        index = gpio_add_pin_with_allocated_name( OUTPUTS, PUMPS, pump_pins[ i ],
+                                                  read_nvs_or_default( nvs_handle, "pumps", i + 1 ),
+                                                  inherit,
+                                                  &io_conf->pin_bit_mask );
+
     }
     for ( int i = 0; i < sizeof zone_pins / sizeof zone_pins[ 0 ]; i++ ) {
         gpio_add_pin_with_allocated_name( OUTPUTS, ZONES, zone_pins[ i ],
@@ -123,10 +122,6 @@ void gpio_changed_callback( uint32_t io_num, int state ) {
     if ( io_num == GPIO_INPUT_LEVEL_4 ) {
         if ( state == PIN_ENABLED ) {
             refill_state = false;
-            xTimerStop( level4_drop_timer, 10 );
-        } else {
-            // delay start of pump due to waves
-            xTimerReset( level4_drop_timer, 10 );
         }
     } else if ( io_num == GPIO_INPUT_LEVEL_3 ) {
         // no change for this sensor
@@ -158,13 +153,6 @@ void gpio_logic_init() {
     nvs_handle_t nvs_handle = nvs_open_storage();
     gpio_init((void *) nvs_handle );
     nvs_close_storage( nvs_handle );
-
-    level4_drop_timer = xTimerCreate(
-            "level4Drop",
-            ( level4_drop_timeout_seconds * 1000 ) / portTICK_PERIOD_MS,
-            0,
-            NULL,
-            level4_drop_timeout );
 }
 
 void gpio_pump_main( bool on ) {
