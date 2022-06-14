@@ -11,7 +11,7 @@ typedef struct {
 
 extern void program_logic_init();
 
-extern void program_logic_queue_start( int index );
+extern void program_logic_start( int index );
 
 extern void program_logic_move_to_next_zone();
 
