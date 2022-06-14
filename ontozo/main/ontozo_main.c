@@ -7,6 +7,7 @@
 #include "gpio_logic.h"
 #include "program.h"
 #include "program_logic.h"
+#include "program_start.h"
 
 void app_main( void ) {
     main_main();
@@ -24,4 +25,5 @@ void app_main( void ) {
     sntp_init_after_wifi();
 
     program_logic_init();
+    program_start_init();
 }

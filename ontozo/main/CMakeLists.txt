@@ -15,6 +15,7 @@ idf_component_register(
         "program_json.c"
         "program_logic.c"
         "program_logic_rest.c"
+        "program_start.c"
         "program_rest.c"
         "ontozo_main.c"
         "rest_handler.c"

@@ -1,17 +1,8 @@
 #include <string.h>
 #include <time.h>
-#include <sys/time.h>
 #include <stdbool.h>
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/event_groups.h"
-#include "esp_system.h"
-#include "esp_event.h"
 #include "esp_log.h"
 #include "esp_attr.h"
-#include "esp_sleep.h"
-#include "nvs_flash.h"
-#include "protocol_examples_common.h"
 #include "esp_sntp.h"
 #include "sntp_main.h"
 
@@ -37,9 +28,9 @@ void local_time_to_buf( char *__restrict _s, size_t _maxsize ) {
 }
 
 static void print_local_time() {
-    char strftime_buf[64];
-    local_time_to_buf( strftime_buf, sizeof strftime_buf );
-    ESP_LOGI( LOG_TAG, "The current date/time is: %s", strftime_buf );
+    char buf[64];
+    local_time_to_buf( buf, sizeof buf );
+    ESP_LOGI( LOG_TAG, "The current date/time is: %s", buf );
 }
 
 void time_sync_notification_cb( struct timeval *tv ) {
