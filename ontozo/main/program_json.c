@@ -84,7 +84,7 @@ static void read_start_times( const cJSON *root, Program *program ) {
         char *start_time_string = start_time_element->valuestring;
         int hour, minute;
         if ( sscanf( start_time_string, "%d:%d", &hour, &minute ) == 2 ) {
-            program->start_times[ i ] = hour * 100 + minute;
+            program->start_times[ i ] = PROGRAM_START_TIME( hour, minute );
         }
     }
 }
