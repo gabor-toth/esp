@@ -26,7 +26,7 @@ static QueueHandle_t gpio_evt_queue = NULL;
 
 static void start_next_zone() {
     if ( running_zone_index >= 0 ) {
-        gpio_set_pin_state( OUTPUTS, ZONES, current_program->zones[ running_zone_index ].zone_id, false );
+        gpio_set_pin_state( OUTPUTS, ZONES_CLASS, current_program->zones[ running_zone_index ].zone_id, false );
     }
     if ( ++running_zone_index == current_program->zones_count ) {
         ESP_LOGI( LOG_TAG, "Ending program %d after last zone", running_program_index );
@@ -37,7 +37,7 @@ static void start_next_zone() {
     ESP_LOGI( LOG_TAG, "moving to zone %d/%d: id %d, duration %d secs",
               running_zone_index, current_program->zones_count,
               zone->zone_id, zone->duration_in_seconds );
-    gpio_set_pin_state( OUTPUTS, ZONES, zone->zone_id, true );
+    gpio_set_pin_state( OUTPUTS, ZONES_CLASS, zone->zone_id, true );
     ESP_LOGI( LOG_TAG, "set timer to %d ticks", zone->duration_in_seconds * 1000 / portTICK_PERIOD_MS );
     xTimerChangePeriod( timer, zone->duration_in_seconds * 1000 / portTICK_PERIOD_MS, staticDONT_BLOCK );
     xTimerReset( timer, staticDONT_BLOCK );

@@ -111,7 +111,7 @@ void read_zones( const cJSON *root, Program *program ) {
         cJSON *zone_id_element = cJSON_GetObjectItem( zone_element, FIELD_ZONE_ID );
         if ( zone_id_element ) {
             int zone_id = zone_id_element->valueint - 1;
-            if ( !gpio_is_valid_index( OUTPUTS, ZONES, zone_id )) {
+            if ( !gpio_is_valid_index( OUTPUTS, ZONES_CLASS, zone_id )) {
                 program->valid = false;
             } else {
                 program->zones[ i ].zone_id = zone_id;

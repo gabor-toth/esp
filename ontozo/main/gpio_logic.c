@@ -6,6 +6,7 @@
 #include "config.h"
 #include "lib/gpio_define.h"
 #include "lib/nvs_main.h"
+#include "gpio_json.h"
 #include "gpio_logic.h"
 
 static const char *LOG_TAG = "logic";
@@ -15,20 +16,26 @@ static const char *LOG_TAG = "logic";
 #define PUMP_MAIN     0
 #define PUMP_REFILL   1
 
-static void set_initial_pump_states() {
-    int level1 = gpio_get_pin_state( INPUTS, LEVELS, 0 );
-    int level2 = gpio_get_pin_state( INPUTS, LEVELS, 1 );
-    int level3 = gpio_get_pin_state( INPUTS, LEVELS, 2 );
-    int level4 = gpio_get_pin_state( INPUTS, LEVELS, 3 );
+static char *const PUMPS_NAME = "pumps";
+static char *const ZONES_NAME = "zones";
+static char *const BUTTON_NAME = "button";
 
-    gpio_set_pin_state( OUTPUTS, PUMPS, PUMP_MAIN, false );
+static char *const LEVEL_NAME = "level";
+
+static void set_initial_pump_states() {
+    int level1 = gpio_get_pin_state( INPUTS, LEVELS_CLASS, 0 );
+    int level2 = gpio_get_pin_state( INPUTS, LEVELS_CLASS, 1 );
+    int level3 = gpio_get_pin_state( INPUTS, LEVELS_CLASS, 2 );
+    int level4 = gpio_get_pin_state( INPUTS, LEVELS_CLASS, 3 );
+
+    gpio_set_pin_state( OUTPUTS, PUMPS_CLASS, PUMP_MAIN, false );
     // reached( level0 ) && reached( level1 )
     bool refillState = !reached( level4 )
                        || !reached( level3 )
                        || !reached( level2 )
                        || !reached( level1 );
     ESP_LOGI( LOG_TAG, "Levels: 1-%d 2-%d 3-%d 4-%d refillPump-%d", level1, level2, level3, level4, refillState );
-    gpio_set_pin_state( OUTPUTS, PUMPS, PUMP_REFILL,
+    gpio_set_pin_state( OUTPUTS, PUMPS_CLASS, PUMP_REFILL,
                         refillState );
 }
 
@@ -64,20 +71,20 @@ char *read_nvs_or_default( nvs_handle_t nvs_handle, const char *prefix, int inde
 void gpio_define_output_pins_callback( gpio_config_t *io_conf, void *user_context ) {
     nvs_handle_t nvs_handle = (nvs_handle_t) user_context;
 
-    gpio_add_class( OUTPUTS, "pumps", 2, high_is_on );
-    gpio_add_class( OUTPUTS, "zones", 8, low_is_on );
+    gpio_add_class( OUTPUTS, PUMPS_NAME, 2, high_is_on );
+    gpio_add_class( OUTPUTS, ZONES_NAME, 8, low_is_on );
 
     int index;
     for ( int i = 0; i < sizeof pump_pins / sizeof pump_pins[ 0 ]; i++ ) {
-        index = gpio_add_pin_with_allocated_name( OUTPUTS, PUMPS, pump_pins[ i ],
-                                                  read_nvs_or_default( nvs_handle, "pumps", i + 1 ),
+        index = gpio_add_pin_with_allocated_name( OUTPUTS, PUMPS_CLASS, pump_pins[ i ],
+                                                  read_nvs_or_default( nvs_handle, PUMPS_NAME, i + 1 ),
                                                   inherit,
                                                   &io_conf->pin_bit_mask );
 
     }
     for ( int i = 0; i < sizeof zone_pins / sizeof zone_pins[ 0 ]; i++ ) {
-        gpio_add_pin_with_allocated_name( OUTPUTS, ZONES, zone_pins[ i ],
-                                          read_nvs_or_default( nvs_handle, "zones", i + 1 ),
+        gpio_add_pin_with_allocated_name( OUTPUTS, ZONES_CLASS, zone_pins[ i ],
+                                          read_nvs_or_default( nvs_handle, ZONES_NAME, i + 1 ),
                                           inherit,
                                           &io_conf->pin_bit_mask );
     }
@@ -92,32 +99,32 @@ void gpio_define_input_pins_callback( gpio_config_t *io_conf, void *user_context
     gpio_add_class( INPUTS, "buttons", 2, low_is_on );
 
     int index;
-    gpio_add_pin_with_allocated_name( INPUTS, LEVELS, GPIO_INPUT_LEVEL_1,
-                                      read_nvs_or_default( nvs_handle, "level", 1 ),
+    gpio_add_pin_with_allocated_name( INPUTS, LEVELS_CLASS, GPIO_INPUT_LEVEL_1,
+                                      read_nvs_or_default( nvs_handle, LEVEL_NAME, 1 ),
                                       low_is_on, &io_conf->pin_bit_mask );
-    gpio_add_pin_with_allocated_name( INPUTS, LEVELS, GPIO_INPUT_LEVEL_2,
-                                      read_nvs_or_default( nvs_handle, "level", 2 ),
+    gpio_add_pin_with_allocated_name( INPUTS, LEVELS_CLASS, GPIO_INPUT_LEVEL_2,
+                                      read_nvs_or_default( nvs_handle, LEVEL_NAME, 2 ),
                                       low_is_on, &io_conf->pin_bit_mask );
-    gpio_add_pin_with_allocated_name( INPUTS, LEVELS, GPIO_INPUT_LEVEL_3,
-                                      read_nvs_or_default( nvs_handle, "level", 3 ),
+    gpio_add_pin_with_allocated_name( INPUTS, LEVELS_CLASS, GPIO_INPUT_LEVEL_3,
+                                      read_nvs_or_default( nvs_handle, LEVEL_NAME, 3 ),
                                       high_is_on, &io_conf->pin_bit_mask );
-    index = gpio_add_pin_with_allocated_name( INPUTS, LEVELS, GPIO_INPUT_LEVEL_4,
-                                              read_nvs_or_default( nvs_handle, "level", 4 ),
+    index = gpio_add_pin_with_allocated_name( INPUTS, LEVELS_CLASS, GPIO_INPUT_LEVEL_4,
+                                              read_nvs_or_default( nvs_handle, LEVEL_NAME, 4 ),
                                               high_is_on, &io_conf->pin_bit_mask );
-    gpio_set_delays( INPUTS, LEVELS, index, 10 * 1000, 10 * 1000 );
-    gpio_add_pin_with_allocated_name( INPUTS, BUTTONS, GPIO_INPUT_BUTTON_START,
-                                      read_nvs_or_default( nvs_handle, "button", 1 ),
+    gpio_set_delays( INPUTS, LEVELS_CLASS, index, 10 * 1000, 10 * 1000 );
+    gpio_add_pin_with_allocated_name( INPUTS, BUTTONS_CLASS, GPIO_INPUT_BUTTON_START,
+                                      read_nvs_or_default( nvs_handle, BUTTON_NAME, 1 ),
                                       low_is_on, &io_conf->pin_bit_mask );
-    gpio_add_pin_with_allocated_name( INPUTS, BUTTONS, GPIO_INPUT_BUTTON_STOP,
-                                      read_nvs_or_default( nvs_handle, "button", 2 ),
+    gpio_add_pin_with_allocated_name( INPUTS, BUTTONS_CLASS, GPIO_INPUT_BUTTON_STOP,
+                                      read_nvs_or_default( nvs_handle, BUTTON_NAME, 2 ),
                                       low_is_on, &io_conf->pin_bit_mask );
 }
 
 void gpio_changed_callback( uint32_t io_num, int state ) {
     ESP_LOGI( LOG_TAG, "Pin %d changed to %d\n", io_num, state );
 
-    bool refill_state = gpio_get_pin_state( OUTPUTS, PUMPS, PUMP_REFILL );
-    bool main_state = gpio_get_pin_state( OUTPUTS, PUMPS, PUMP_MAIN );
+    bool refill_state = gpio_get_pin_state( OUTPUTS, PUMPS_CLASS, PUMP_REFILL );
+    bool main_state = gpio_get_pin_state( OUTPUTS, PUMPS_CLASS, PUMP_MAIN );
 
     if ( io_num == GPIO_INPUT_LEVEL_4 ) {
         if ( state == PIN_ENABLED ) {
@@ -141,12 +148,12 @@ void gpio_changed_callback( uint32_t io_num, int state ) {
         ESP_LOGE( LOG_TAG, "Unhandled gpio %d (state %d)!\n", io_num, state );
     }
 
-    gpio_set_pin_state( OUTPUTS, PUMPS, PUMP_MAIN, main_state );
-    gpio_set_pin_state( OUTPUTS, PUMPS, PUMP_REFILL, refill_state );
+    gpio_set_pin_state( OUTPUTS, PUMPS_CLASS, PUMP_MAIN, main_state );
+    gpio_set_pin_state( OUTPUTS, PUMPS_CLASS, PUMP_REFILL, refill_state );
 }
 
 static void level4_drop_timeout( TimerHandle_t timer ) {
-    gpio_set_pin_state( OUTPUTS, PUMPS, PUMP_REFILL, true );
+    gpio_set_pin_state( OUTPUTS, PUMPS_CLASS, PUMP_REFILL, true );
 }
 
 void gpio_logic_init() {
@@ -156,5 +163,5 @@ void gpio_logic_init() {
 }
 
 void gpio_pump_main( bool on ) {
-    gpio_set_pin_state( OUTPUTS, PUMPS, PUMP_MAIN, on );
+    gpio_set_pin_state( OUTPUTS, PUMPS_CLASS, PUMP_MAIN, on );
 }
