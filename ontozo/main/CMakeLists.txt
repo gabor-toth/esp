@@ -9,6 +9,7 @@ idf_component_register(
         "lib/rest_util.c"
         "lib/sntp_main.c"
         "lib/wifi_connect.c"
+        "lib/gpio_json.c"
         "gpio_logic.c"
         "gpio_rest.c"
         "program.c"

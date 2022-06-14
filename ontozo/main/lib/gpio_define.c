@@ -2,7 +2,9 @@
 #include <driver/gpio.h>
 #include <esp_log.h>
 #include "lib/gpio_task.h"
+#include "lib/nvs_main.h"
 #include "gpio_define.h"
+#include "gpio_json.h"
 
 static const char *LOG_TAG = "gpio";
 
@@ -15,11 +17,14 @@ static const char *LOG_TAG = "gpio";
 
 #define MAX_PIN_CLASSES 4
 
+static nvs_handle_t nvs_storage_handle;
+
 typedef struct {
     gpio_num_t pin;
     char *name;
     PinLevelType level_type;
     bool state;
+    bool is_manual;
     int delay_ms_going_low;
     int delay_ms_going_high;
 } Pin;
@@ -39,7 +44,11 @@ typedef struct {
 
 static PinClasses pin_definitions[2];
 
-static bool gpio_is_valid_class( bool is_input, int class ) {
+static void get_nvs_key( bool is_input, int class, int index, char *buffer, size_t buffer_size ) {
+    snprintf( buffer, buffer_size, "%s.%d", gpio_get_class_name( is_input, class ), index + 1 );
+}
+
+static bool is_valid_class( bool is_input, int class ) {
     if ( class >= 0 && class < pin_definitions[ is_input ].used_classes ) {
         return true;
     }
@@ -50,7 +59,7 @@ static bool gpio_is_valid_class( bool is_input, int class ) {
 }
 
 bool gpio_is_valid_index( bool is_input, int class, int index ) {
-    if ( !gpio_is_valid_class( is_input, class )) {
+    if ( !is_valid_class( is_input, class )) {
         return false;
     }
     int max_pin_count = pin_definitions[ is_input ].classes[ class ].max_pin_count;
@@ -88,46 +97,50 @@ static void set_pin_state( Pin *output_pin, bool enabled ) {
     gpio_set_level( output_pin->pin, level );
 }
 
-static void set_pin_name( Pin *pin, char *name ) {
-    if ( pin->name != NULL) {
-        free( pin->name );
+static void read_nvs_or_default( bool is_input, int class, int index, PinData *pin_data ) {
+    char nvs_key[256];
+
+    memset( pin_data, 0, sizeof( PinData ));
+    get_nvs_key( is_input, class, index, nvs_key, sizeof( nvs_key ));
+    char *json_string = nvs_read_string( nvs_storage_handle, nvs_key );
+    if ( json_string == NULL) {
+        pin_data->name = strdup( nvs_key );
+        return;
     }
-    pin->name = strdup( name );
+
+    gpio_data_from_json_string( json_string, pin_data );
+    free( json_string );
 }
 
-int gpio_add_pin_with_allocated_name( bool is_input, int class, gpio_num_t pin, char *name, PinLevelType level_type,
-                                      uint64_t *pin_bit_mask ) {
-    if ( name == NULL) {
-        name = strdup( "---" );
-    }
-    if ( !gpio_is_valid_class( is_input, class )) {
-        ESP_LOGE( LOG_TAG, "Adding pin %d/%d %d \"%s\"", is_input, class, pin, name );
+int gpio_add_pin( bool is_input, int class, gpio_num_t gpio_pin, PinLevelType level_type, uint64_t *pin_bit_mask ) {
+    if ( !is_valid_class( is_input, class )) {
+        ESP_LOGE( LOG_TAG, "Adding pin %d/%d %d", is_input, class, gpio_pin );
         return -1;
     }
+
     PinClass *pin_class = &pin_definitions[ is_input ].classes[ class ];
 
-    ESP_LOGI( LOG_TAG, "Adding pin %d/%d/%d %d \"%s\"", is_input, class, pin_class->used_pin_count, pin, name );
+    ESP_LOGI( LOG_TAG, "Adding pin %d/%d/%d %d", is_input, class, pin_class->used_pin_count, gpio_pin );
     if ( pin_class->used_pin_count == pin_class->max_pin_count ) {
-        ESP_LOGE( LOG_TAG, "Too many pins on class %d/%d \"%s\"", is_input, class, name );
+        ESP_LOGE( LOG_TAG, "Too many pins on class %d/%d", is_input, class );
         return -1;
     }
     int index = pin_class->used_pin_count++;
-    Pin *output_pin = &pin_class->pins[ index ];
-    output_pin->name = name;
-    output_pin->pin = pin;
-    output_pin->level_type = level_type != inherit ? level_type : pin_class->level_type;
 
-    *pin_bit_mask |= ( 1ULL << pin );
+    PinData pin_data;
+    read_nvs_or_default( is_input, class, index, &pin_data );
+
+    Pin *pin = &pin_class->pins[ index ];
+    pin->name = pin_data.name;
+    pin->is_manual = pin_data.is_manual;
+    pin->pin = gpio_pin;
+    pin->level_type = level_type != inherit ? level_type : pin_class->level_type;
+
+    *pin_bit_mask |= ( 1ULL << gpio_pin );
     if ( !is_input ) {
-        set_pin_state( output_pin, false );
+        set_pin_state( pin, false );
     }
     return index;
-}
-
-int gpio_add_pin( bool is_input, int class, gpio_num_t pin, char *name, PinLevelType level_type,
-                  uint64_t *pin_bit_mask ) {
-    name = name != NULL ? strdup( name ) : NULL;
-    return gpio_add_pin_with_allocated_name( is_input, class, pin, name, level_type, pin_bit_mask );
 }
 
 static void add_input_pins( void *user_context ) {
@@ -186,8 +199,11 @@ static void add_output_pins( void *user_context ) {
 }
 
 void gpio_init( void *user_context ) {
+    nvs_storage_handle = nvs_open_storage();
     add_input_pins( user_context );
     add_output_pins( user_context );
+    nvs_close_storage( nvs_storage_handle );
+    nvs_storage_handle = 0;
 }
 
 int gpio_get_number_of_classes( bool is_input ) {
@@ -195,14 +211,14 @@ int gpio_get_number_of_classes( bool is_input ) {
 }
 
 char *gpio_get_class_name( bool is_input, int class ) {
-    if ( !gpio_is_valid_class( is_input, class )) {
+    if ( !is_valid_class( is_input, class )) {
         return "wrong class";
     }
     return pin_definitions[ is_input ].classes[ class ].name;
 }
 
 int gpio_get_number_of_pins( bool is_input, int class ) {
-    if ( !gpio_is_valid_class( is_input, class )) {
+    if ( !is_valid_class( is_input, class )) {
         return -1;
     }
     return pin_definitions[ is_input ].classes[ class ].max_pin_count;
@@ -220,25 +236,60 @@ bool gpio_get_pin_state( bool is_input, int class, int index ) {
     return ( pin->level_type == high_is_on ) == state;
 }
 
-char *gpio_get_pin_name( bool is_input, int class, int index ) {
+bool gpio_get_pin_data( bool is_input, int class, int index, PinData *pin_data ) {
     if ( !gpio_is_valid_index( is_input, class, index )) {
-        return NULL;
+        return false;
     }
-    return pin_definitions[ is_input ].classes[ class ].pins[ index ].name;
+    Pin *pin = &pin_definitions[ is_input ].classes[ class ].pins[ index ];
+    pin_data->name = pin->name;
+    pin_data->is_manual = pin->is_manual;
+    pin_data->state = gpio_get_pin_state( is_input, class, index );
+    return true;
 }
 
 void gpio_set_pin_state( bool is_input, int class, int index, bool state ) {
     if ( is_input || !gpio_is_valid_index( is_input, class, index )) {
         return;
     }
+
+    Pin *pin = &pin_definitions[ is_input ].classes[ class ].pins[ index ];
+    if ( !pin->is_manual ) {
+        set_pin_state( pin, state );
+    }
+}
+
+void gpio_set_pin_state_forced( bool is_input, int class, int index, bool state ) {
+    if ( is_input || !gpio_is_valid_index( is_input, class, index )) {
+        return;
+    }
     set_pin_state( &pin_definitions[ is_input ].classes[ class ].pins[ index ], state );
 }
 
-void gpio_set_pin_name( bool is_input, int class, int index, char *name ) {
+bool gpio_set_pin_data( bool is_input, int class, int index, PinData *pin_data ) {
     if ( !gpio_is_valid_index( is_input, class, index )) {
-        return;
+        return false;
     }
-    set_pin_name( &pin_definitions[ is_input ].classes[ class ].pins[ index ], name );
+    Pin *pin = &pin_definitions[ is_input ].classes[ class ].pins[ index ];
+    bool write_to_nvs = false;
+    if ( pin_data->name != NULL && pin_data->name != pin->name ) {
+        if ( pin->name != NULL) {
+            free( pin->name );
+        }
+        pin->name = strdup( pin_data->name );
+        write_to_nvs = true;
+    }
+    if ( pin_data->is_manual != pin->is_manual ) {
+        pin->is_manual = pin_data->is_manual;
+        write_to_nvs = true;
+    }
+    if ( write_to_nvs ) {
+        char *json_string = gpio_data_to_json_string( pin_data );
+        char nvs_key[256];
+        get_nvs_key( is_input, class, index, nvs_key, sizeof nvs_key );
+        nvs_open_and_write_string( nvs_key, json_string );
+        free( json_string );
+    }
+    return true;
 }
 
 void gpio_set_delays( bool is_input, int class, int index, int delay_ms_going_low, int delay_ms_going_high ) {

@@ -15,6 +15,12 @@ extern void gpio_init( void *user_context );
 #define INPUTS   1
 #define OUTPUTS  0
 
+typedef struct {
+    char *name;
+    bool is_manual;
+    bool state;
+} PinData;
+
 typedef enum {
     high_is_on, low_is_on, inherit = -1
 } PinLevelType;
@@ -22,11 +28,7 @@ typedef enum {
 extern void gpio_add_class( bool is_input, char *name, int max_pin_count, PinLevelType level_type );
 
 extern int
-gpio_add_pin( bool is_input, int class, gpio_num_t pin, char *name, PinLevelType level_type, uint64_t *pin_bit_mask );
-
-extern int
-gpio_add_pin_with_allocated_name( bool is_input, int class, gpio_num_t pin, char *name, PinLevelType level_type,
-                                  uint64_t *pin_bit_mask );
+gpio_add_pin( bool is_input, int class, gpio_num_t gpio_pin, PinLevelType level_type, uint64_t *pin_bit_mask );
 
 extern void gpio_set_delays( bool is_input, int class, int index, int delay_ms_going_low, int delay_ms_going_high );
 
@@ -46,10 +48,12 @@ extern bool gpio_is_valid_index( bool is_input, int class, int index );
 
 extern bool gpio_get_pin_state( bool is_input, int class, int index );
 
-extern char *gpio_get_pin_name( bool is_input, int class, int index );
+extern bool gpio_get_pin_data( bool is_input, int class, int index, PinData *pin_data );
 
 extern void gpio_set_pin_state( bool is_input, int class, int index, bool state );
 
-extern void gpio_set_pin_name( bool is_input, int class, int index, char *name );
+extern void gpio_set_pin_state_forced( bool is_input, int class, int index, bool state );
+
+extern bool gpio_set_pin_data( bool is_input, int class, int index, PinData *pin_data );
 
 #endif //ONTOZO_GPIO_DEFINE_H

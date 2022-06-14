@@ -77,6 +77,7 @@ extern void nvs_open_and_write_string( const char *key, const char *value ) {
     if ( nvs_handle == 0 ) {
         return;
     }
+    nvs_write_string( nvs_handle, key, value );
     nvs_close( nvs_handle );
 }
 

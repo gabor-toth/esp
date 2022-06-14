@@ -15,7 +15,6 @@ typedef struct {
 
 static esp_err_t state_get_handler( httpd_req_t *req ) {
     httpd_resp_set_hdr( req, "Access-Control-Allow-Origin", "*" );
-    httpd_resp_set_type( req, "application/json" );
     cJSON *root = cJSON_CreateObject();
 
     for ( int type = OUTPUTS; type <= INPUTS; type++ ) {
@@ -26,9 +25,12 @@ static esp_err_t state_get_handler( httpd_req_t *req ) {
             cJSON *itemArray = cJSON_AddArrayToObject( typeJson, gpio_get_class_name( type, class ));
             int pin_count = gpio_get_number_of_pins( type, class );
             for ( int i = 0; i < pin_count; i++ ) {
+                PinData pin_data;
+                gpio_get_pin_data( type, class, i, &pin_data );
                 cJSON *item = cJSON_CreateObject();
                 cJSON_AddNumberToObject( item, "id", i + 1 );
-                cJSON_AddStringToObject( item, "name", gpio_get_pin_name( type, class, i ));
+                cJSON_AddStringToObject( item, "name", pin_data.name );
+                cJSON_AddBoolToObject( item, "manual", pin_data.is_manual );
                 cJSON_AddBoolToObject( item, "on", gpio_get_pin_state( type, class, i ));
                 cJSON_AddItemToArray( itemArray, item );
             }
@@ -55,33 +57,39 @@ static esp_err_t pins_put_handler_inner( httpd_req_t *req, cJSON *root, bool is_
         return httpd_resp_send_err( req, HTTPD_400_BAD_REQUEST, "Id is not valid" );
     }
 
-    cJSON *state_element = cJSON_GetObjectItem( root, "state" );
     char *class_name = gpio_get_class_name( is_input, class );
+
     bool changed = false;
-    if ( state_element != NULL) {
+    PinData pin_data;
+    gpio_get_pin_data( is_input, class, pin_index, &pin_data );
+
+    cJSON *element;
+    element = cJSON_GetObjectItem( root, "state" );
+    if ( cJSON_IsBool( element )) {
         changed = true;
         if ( is_input ) {
             return httpd_resp_send_err( req, HTTPD_403_FORBIDDEN, "Unable to set state of an input pin" );
         }
-        int state = state_element->valueint;
-        gpio_set_pin_state( is_input, class, pin_index, state );
+        int state = element->valueint;
+        gpio_set_pin_state_forced( is_input, class, pin_index, state );
         ESP_LOGI( LOG_TAG, "%s %d state changed to %d", class_name, pin_index + 1, state );
     }
-    cJSON *name_element = cJSON_GetObjectItem( root, "name" );
-    if ( name_element != NULL) {
+    element = cJSON_GetObjectItem( root, "name" );
+    if ( cJSON_IsString( element )) {
         changed = true;
-        char *name = name_element->valuestring;
-        gpio_set_pin_name( is_input, class, pin_index, name );
-
-        char nvs_key[256];
-        snprintf( nvs_key, sizeof nvs_key, "%s.%d.name", gpio_get_class_name( is_input, class ), pin_index + 1 );
-        nvs_open_and_write_string( nvs_key, name );
-
-        ESP_LOGI( LOG_TAG, "%s %d name changed to %s", class_name, pin_index + 1, name );
+        pin_data.name = element->valuestring;
+        ESP_LOGI( LOG_TAG, "%s %d name changed to %s", class_name, pin_index + 1, pin_data.name );
+    }
+    element = cJSON_GetObjectItem( root, "manual" );
+    if ( cJSON_IsBool( element )) {
+        changed = true;
+        pin_data.is_manual = element->valueint;
+        ESP_LOGI( LOG_TAG, "%s %d manual changed to %d", class_name, pin_index + 1, pin_data.is_manual );
     }
     if ( !changed ) {
-        return httpd_resp_send_err( req, HTTPD_400_BAD_REQUEST, "Neither state nor name changed" );
+        return httpd_resp_send_err( req, HTTPD_400_BAD_REQUEST, "Nothing changed" );
     }
+    gpio_set_pin_data( is_input, class, pin_index, &pin_data );
 
     httpd_resp_set_hdr( req, "Access-Control-Allow-Origin", "*" );
     rest_send_message_back( req, "%s changed successfully", class_name );
