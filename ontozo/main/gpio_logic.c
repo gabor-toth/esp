@@ -92,8 +92,10 @@ void gpio_define_input_pins_callback( gpio_config_t *io_conf, void *user_context
 void gpio_changed_callback( uint32_t io_num, int state ) {
     ESP_LOGI( LOG_TAG, "Pin %d changed to %d\n", io_num, state );
 
-    bool refill_state = gpio_get_pin_state( OUTPUTS, PUMPS_CLASS, PUMP_REFILL );
-    bool main_state = gpio_get_pin_state( OUTPUTS, PUMPS_CLASS, PUMP_MAIN );
+    bool refill_state = gpio_get_pin_state( OUTPUTS, PUMPS_CLASS, PUMP_REFILL ),
+            old_refill_state = refill_state;
+    bool main_state = gpio_get_pin_state( OUTPUTS, PUMPS_CLASS, PUMP_MAIN ),
+            old_main_state = main_state;
 
     if ( io_num == GPIO_INPUT_LEVEL_4 ) {
         if ( state == PIN_ENABLED ) {
@@ -117,8 +119,15 @@ void gpio_changed_callback( uint32_t io_num, int state ) {
         ESP_LOGE( LOG_TAG, "Unhandled gpio %d (state %d)!\n", io_num, state );
     }
 
-    gpio_set_pin_state( OUTPUTS, PUMPS_CLASS, PUMP_MAIN, main_state );
-    gpio_set_pin_state( OUTPUTS, PUMPS_CLASS, PUMP_REFILL, refill_state );
+    if ( old_main_state != main_state ) {
+        // TODO notify program handler
+        if ( !main_state ) {
+            gpio_set_pin_state( OUTPUTS, PUMPS_CLASS, PUMP_MAIN, main_state );
+        }
+    }
+    if ( old_refill_state != refill_state ) {
+        gpio_set_pin_state( OUTPUTS, PUMPS_CLASS, PUMP_REFILL, refill_state );
+    }
 }
 
 void gpio_logic_init() {

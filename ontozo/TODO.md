@@ -4,12 +4,16 @@ Frontend
 - ~~routing~~
     - ~~state~~
     - highlight selected route
-- programs
+- state
+    - manual display/change
 - admin
     - set names
-    - reset
-    - set ip address for testing
+    - reset esp
+    - manage wifi connections
+    - manage programs
 - error handling (no connection, etc)
+- selective value settings (angular)
+- display esp's clock
 
 Backend
 =======
@@ -22,5 +26,20 @@ Backend
     - return index.html for unknown files
 - logic
     - ~~delay pump turn on after level 4 drop~~
-    - level4 drop timeout configurableű
-- 
+- show next program time
+- get prog return time
+- store and retrieve logs
+- run program with percentage
+- set overall percentage (?)
+- websocket?
+- gpio_logic change main pump state: notify program logic
+- program_logic: suspend/resume on empty tank
+- pump manual change: re-evaluate state
+
+Hardware
+========
+
+- physical button
+- lcd display?
+- esp32 wifi antenna
+- microtik ap outside

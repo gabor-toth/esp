@@ -25,10 +25,9 @@ cd ~/own/projects/esp-idf
 Compile & more
 ==============
 
+copy init.sh, run .sh
 ```
-. ~/own/projects/esp-idf/export.sh
-
-#su - $USER
+. ./init.sh
 
 idf.py set-target esp32
 idf.py menuconfig

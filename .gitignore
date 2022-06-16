@@ -2,6 +2,8 @@
 
 /generic_gpio/
 /hello_world/
+/i2c_simple/
+/i2c_tools/
 /restful_server/
 
 build/
