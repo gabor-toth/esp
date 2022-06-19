@@ -340,6 +340,9 @@ void programs_header_write_to_json( char **json_out ) {
         cJSON_AddItemToArray( root, item );
         cJSON_AddNumberToObject( item, FIELD_INDEX, program->index );
         cJSON_AddStringToObject( item, FIELD_NAME, program->name );
+        cJSON_AddBoolToObject( item, FIELD_ENABLED, program->enabled );
+        // TODO FIELD_PERCENTAGE
+        // TODO FIELD_NEXT_START_TIME
     }
 
     *json_out = cJSON_Print( root );
