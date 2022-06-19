@@ -13,6 +13,7 @@ static esp_err_t run_post_handler( httpd_req_t *req ) {
     int index;
     const char *uri = req->uri + strlen( RUN_PREFIX );
 
+    rest_allow_cors( req );
     if ( strcmp( uri, "stop" ) == 0 ) {
         program_logic_stop();
         rest_send_message_back( req, "stopped" );
@@ -46,6 +47,7 @@ static esp_err_t run_get_handler( httpd_req_t *req ) {
         cJSON_AddNumberToObject( root, "zonesCount", state.zones_count );
         cJSON_AddNumberToObject( root, "zoneLeftSeconds", state.zone_left_seconds );
     }
+    rest_allow_cors( req );
     rest_add_time_json( root );
     rest_send_json_back( req, root );
     return ESP_OK;

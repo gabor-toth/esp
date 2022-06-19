@@ -17,4 +17,6 @@ extern void rest_send_json_back( httpd_req_t *req, cJSON *root );
 
 extern void rest_add_time_json( cJSON *root );
 
+extern void rest_allow_cors( httpd_req_t *req );
+
 #endif //ONTOZO_REST_UTIL_H

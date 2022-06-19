@@ -14,7 +14,7 @@ typedef struct {
 } PinHandlerContext;
 
 static esp_err_t state_get_handler( httpd_req_t *req ) {
-    httpd_resp_set_hdr( req, "Access-Control-Allow-Origin", "*" );
+    rest_allow_cors( req );
     cJSON *root = cJSON_CreateObject();
 
     for ( int type = OUTPUTS; type <= INPUTS; type++ ) {
@@ -87,7 +87,7 @@ static esp_err_t pins_put_handler_inner( httpd_req_t *req, cJSON *root, bool is_
     }
     gpio_set_pin_data( is_input, class, pin_index, &pin_data );
 
-    httpd_resp_set_hdr( req, "Access-Control-Allow-Origin", "*" );
+    rest_allow_cors( req );
     rest_send_message_back( req, "%s changed successfully", class_name );
     return ESP_OK;
 }

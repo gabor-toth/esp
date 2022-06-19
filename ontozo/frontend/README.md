@@ -9,6 +9,7 @@ ng new frontend
 ? Which stylesheet format would you like to use? SCSS   [ https://sass-lang.com/documentation/syntax#scss                ]
 
 #npm install @angular/cli
+ng add @angular/material
 
 ```
 

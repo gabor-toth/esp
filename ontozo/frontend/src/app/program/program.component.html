@@ -1,0 +1,73 @@
+<h2>Programok</h2>
+
+<button (click)="stopProgram(); $event.stopPropagation()">
+    Stop
+</button>
+<button (click)="nextZone(); $event.stopPropagation()">
+    Next
+</button>
+<div *ngIf="programs">
+    <table mat-table [dataSource]="dataSource" multiTemplateDataRows class="mat-elevation-z8">
+
+        <!--- Note that these columns can be defined in any order.
+              The actual rendered columns are set as a property on the row definition" -->
+
+        <!-- Name Column -->
+        <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef> Név</th>
+            <td mat-cell *matCellDef="let element"> {{element.name}}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="enabled">
+            <th mat-header-cell *matHeaderCellDef> Engedélyezve</th>
+            <td mat-cell *matCellDef="let element">
+                <fa-icon *ngIf="!element.enabled" [icon]="faToggleOff" class="off"></fa-icon>
+                <fa-icon *ngIf="element.enabled" [icon]="faToggleOn" class="on"></fa-icon>
+            </td>
+        </ng-container>
+
+        <ng-container matColumnDef="expand">
+            <th mat-header-cell *matHeaderCellDef aria-label="row actions">&nbsp;</th>
+            <td mat-cell *matCellDef="let element">
+                <button mat-icon-button aria-label="expand row"
+                        (click)="clickExpand(element); $event.stopPropagation()">
+                    <mat-icon *ngIf="expandedElement !== element">keyboard_arrow_down</mat-icon>
+                    <mat-icon *ngIf="expandedElement === element">keyboard_arrow_up</mat-icon>
+                </button>
+            </td>
+        </ng-container>
+
+        <ng-container matColumnDef="expandedDetail">
+            <td mat-cell *matCellDef="let element" [attr.colspan]="displayedColumns.length">
+                <div class="program-detail"
+                     [@detailExpand]="element == expandedElement ? 'expanded' : 'collapsed'">
+                    <div *ngIf="element.program">
+                        <div class="program-position"> {{element.program.startTimes}}</div>
+                        <div *ngIf="element.program.days.type=='on'" class="program-position">
+                            on: {{element.program.days.onDays}}
+                        </div>
+                        <div *ngIf="element.program.days.type=='interval'" class="program-position">
+                            interval: {{element.program.days.intervalDays}} starting on
+                            {{element.program.days.intervalStartsOn}}
+                        </div>
+                    </div>
+                    <div *ngIf="!element.program" class="program-detail-loader">
+                        <mat-spinner diameter="30"></mat-spinner>
+                    </div>
+                    <button (click)="startProgram(element); $event.stopPropagation()">
+                        Start
+                    </button>
+                </div>
+            </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let element; columns: displayedColumns;"
+            class="program-row"
+            [class.program-expanded-row]="expandedElement === element"
+            (click)="clickExpand(element)">
+        </tr>
+
+        <tr mat-row *matRowDef="let row; columns: ['expandedDetail']" class="program-detail-row"></tr>
+    </table>
+</div>

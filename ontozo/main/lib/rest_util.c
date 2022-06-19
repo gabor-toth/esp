@@ -3,7 +3,7 @@
 #include "sntp_main.h"
 
 void rest_set_json_content_type( httpd_req_t *req ) {
-    httpd_resp_set_hdr( req, "Content-Type", HTTPD_TYPE_JSON );
+    httpd_resp_set_type( req, HTTPD_TYPE_JSON );
 }
 
 esp_err_t rest_set_error_code( httpd_req_t *req, esp_err_t esp_err, const char *message ) {
@@ -61,4 +61,8 @@ void rest_add_time_json( cJSON *root ) {
     cJSON *timeJson = cJSON_AddObjectToObject( root, "time" );
     cJSON_AddStringToObject( timeJson, "time", time_buf );
     cJSON_AddBoolToObject( timeJson, "isTimeSet", sntp_is_time_set());
+}
+
+void rest_allow_cors( httpd_req_t *req ) {
+    httpd_resp_set_hdr( req, "Access-Control-Allow-Origin", "*" );
 }

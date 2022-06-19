@@ -5,9 +5,10 @@
 #include "program_logic_rest.h"
 #include "program_rest.h"
 #include "rest_handler.h"
+#include "rest_util.h"
 
 static esp_err_t options_handler( httpd_req_t *req ) {
-    httpd_resp_set_hdr( req, "Access-Control-Allow-Origin", "*" );
+    rest_allow_cors( req );
     httpd_resp_set_hdr( req, "Access-Control-Allow-Methods", "PUT,POST,DELETE" );
     httpd_resp_sendstr( req, "" );
     return ESP_OK;

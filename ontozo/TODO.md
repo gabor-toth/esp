@@ -10,8 +10,9 @@ Frontend
     - set names
     - reset esp
     - manage wifi connections
+- ~~list programs~~
     - manage programs
-    - program start/stop/next
+- ~~program start/stop/next~~
 - error handling (no connection, etc)
 - ~~selective value settings (angular)~~
 - ~~display esp's clock~~

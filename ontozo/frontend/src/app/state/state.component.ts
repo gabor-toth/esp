@@ -3,7 +3,7 @@ import {State} from "./state";
 import {StateService} from "./state.service";
 
 // see https://fontawesome.com/icons/square-caret-down?s=solid
-import {faSquareCaretDown, faSquareCaretUp, faToggleOff, faToggleOn} from '@fortawesome/free-solid-svg-icons';
+import {faToggleOff, faToggleOn} from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'app-state',

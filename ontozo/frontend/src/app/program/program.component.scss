@@ -1,0 +1,40 @@
+fa-icon.on {
+  color: #009f00;
+}
+
+fa-icon.off {
+  color: #be0000;
+}
+
+.program-detail {
+  overflow: hidden;
+  display: flex;
+}
+
+.program-detail-row {
+  height: 0;
+}
+
+.program-row {
+  &:not(.program-expanded-row):hover {
+    background: whitesmoke;
+  }
+
+  &:not(.program-expanded-row):active {
+    background: #efefef;
+  }
+
+  td {
+    border-bottom-width: 0;
+  }
+
+}
+
+.program-detail-loader {
+  width: 100%;
+
+  mat-spinner {
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
