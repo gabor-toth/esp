@@ -50,6 +50,33 @@ esp_err_t set_content_type_from_file( httpd_req_t *req, const char *filepath ) {
     return httpd_resp_set_type( req, type );
 }
 
+static bool has_2_dots_in_file_name( char *filepath ) {
+    char *p;
+
+    return (( p = strchr( filepath, '.' )) != NULL) || strchr( p + 1, '.' ) != NULL;
+}
+
+static void set_cache_forever( httpd_req_t *req, char *filepath ) {
+    ESP_LOGI( LOG_TAG, "Set cache forever for %s", filepath );
+    /*
+    Last-Modified: Mon, 08 Dec 2014 19:23:51 GMT
+    ETag: "5485fac7-ae74"
+    Cache-Control: max-age=533280
+    Expires: Sun, 03 May 2015 23:02:37 GMT
+     */
+//    static char last_modified_header_value[32];
+//    static char max_age_header_value[32];
+
+    httpd_resp_set_hdr( req, "Cache-Control", "max-age=31536000" ); // 1 year in seconds
+
+//    struct stat file_state;
+//    stat( filepath, &file_state );
+//    struct tm timeinfo = { 0 };
+//    localtime_r( &file_state.st_mtim.tv_sec, &timeinfo );
+//    strftime( last_modified_header_value, sizeof last_modified_header_value, "%r", &timeinfo );
+//    httpd_resp_set_hdr( req, "Last-Modified", last_modified_header_value );
+}
+
 /* Send HTTP response with the contents of the requested file */
 static esp_err_t rest_common_get_handler( httpd_req_t *req ) {
     char filepath[FILE_PATH_MAX];
@@ -57,7 +84,7 @@ static esp_err_t rest_common_get_handler( httpd_req_t *req ) {
 
     rest_server_context_t *rest_context = (rest_server_context_t *) req->user_ctx;
     strlcpy( filepath, rest_context->base_path, sizeof( filepath ));
-    if ( req->uri[ strlen( req->uri ) - 1 ] == '/' ) {
+    if ( req->uri[ strlen( req->uri ) - 1 ] == '/' || !strchr( req->uri, '.' )) {
         strlcat( filepath, "/index.html", sizeof( filepath ));
     } else {
         strlcat( filepath, req->uri, sizeof( filepath ));
@@ -70,6 +97,9 @@ static esp_err_t rest_common_get_handler( httpd_req_t *req ) {
         return ESP_FAIL;
     }
 
+    if ( has_2_dots_in_file_name( filepath )) {
+        set_cache_forever( req, filepath );
+    }
     set_content_type_from_file( req, filepath );
 
     char *chunk = rest_context->scratch;
