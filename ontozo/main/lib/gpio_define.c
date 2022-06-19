@@ -171,7 +171,8 @@ static void add_input_pins( void *user_context ) {
     for ( int input_class_index = 0; input_class_index < input_classes->used_classes; input_class_index++ ) {
         PinClass *input_class = &input_classes->classes[ input_class_index ];
         for ( int input_pin = 0; input_pin < input_class->used_pin_count; input_pin++ ) {
-            gpio_task_add( input_class->pins[ input_pin ].pin, 0, 0 );
+            Pin *pin = &input_class->pins[ input_pin ];
+            gpio_task_add( pin->pin, pin->delay_ms_going_low, pin->delay_ms_going_high );
         }
     }
 }
