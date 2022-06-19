@@ -14,6 +14,7 @@ export class StateComponent implements OnInit {
     faToggleOff = faToggleOff
     faToggleOn = faToggleOn
     state: State | undefined;
+    remoteTime: String | undefined;
     timer: number = 0;
     stateAsString = "";
 
@@ -30,11 +31,13 @@ export class StateComponent implements OnInit {
         }
         this.timer = setTimeout(() => {
             this.updateState();
-        }, 1000);
+        }, 5000);
     }
 
     private onUpdate(newState: State) {
         this.scheduleUpdate();
+        this.remoteTime = newState.time?.time;
+        newState.time = null;
         let newStateAsString = JSON.stringify(newState);
         if (newStateAsString != this.stateAsString) {
             this.state = newState;
@@ -54,7 +57,6 @@ export class StateComponent implements OnInit {
                 component.scheduleUpdate();
                 console.error('Error reading state', err);
             },
-            // complete() {  }
         });
     }
 

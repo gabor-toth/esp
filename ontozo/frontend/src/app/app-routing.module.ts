@@ -4,8 +4,8 @@ import {StateComponent} from "./state/state.component";
 import {AdminComponent} from "./admin/admin.component";
 
 const routes: Routes = [
-    // {path: '', redirectTo: '/dashboard', pathMatch: 'full'},
-    {path: '', component: StateComponent},
+    {path: '', redirectTo: '/dashboard', pathMatch: 'full'},
+    {path: 'dashboard', component: StateComponent},
     // {path: 'detail/:id', component: HeroDetailComponent},
     {path: 'admin', component: AdminComponent}
 ];

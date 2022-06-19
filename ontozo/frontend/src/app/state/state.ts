@@ -14,7 +14,13 @@ export interface OutputsState {
     pumps: PinState[];
 }
 
+export interface TimeState {
+    time?: String;
+    isTimeSet: boolean;
+}
+
 export interface State {
     inputs: InputsState;
     outputs: OutputsState;
+    time?: TimeState | null;
 }

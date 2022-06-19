@@ -1,4 +1,7 @@
 <div class="state-container">
+    <div class="time">
+        {{remoteTime!}}
+    </div>
     <h2>Pumpák</h2>
     <div *ngIf="state && state.outputs" class="card-container">
         <div *ngFor="let pump of state.outputs.pumps" class="card" (click)="click('pumps',pump.id,!pump.on)">
@@ -19,10 +22,7 @@
 
     <h2>Szintek</h2>
     <div *ngIf="state && state.inputs" class="card-container">
-        <div *ngFor="let level of state.inputs.levels" class="card" (click)="click('levels',level.id,!level.on)">
-            <fa-icon *ngIf="!level.on" [icon]="faToggleOff" class="off"></fa-icon>
-            <fa-icon *ngIf="level.on" [icon]="faToggleOn" class="on"></fa-icon>
-            <span>{{level.name}}</span>
+        <div *ngFor="let level of state.inputs.levels" class="card-level {{level.on?'filled':''}}">
         </div>
     </div>
 
