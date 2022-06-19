@@ -46,6 +46,7 @@ static esp_err_t run_get_handler( httpd_req_t *req ) {
         cJSON_AddNumberToObject( root, "zonesCount", state.zones_count );
         cJSON_AddNumberToObject( root, "zoneLeftSeconds", state.zone_left_seconds );
     }
+    rest_add_time_json( root );
     rest_send_json_back( req, root );
     return ESP_OK;
 }

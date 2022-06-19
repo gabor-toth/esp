@@ -15,4 +15,6 @@ extern void rest_send_message_back( httpd_req_t *req, const char *format, ... );
 /* Will free root */
 extern void rest_send_json_back( httpd_req_t *req, cJSON *root );
 
+extern void rest_add_time_json( cJSON *root );
+
 #endif //ONTOZO_REST_UTIL_H

@@ -37,11 +37,7 @@ static esp_err_t state_get_handler( httpd_req_t *req ) {
         }
     }
 
-    char time_buf[64];
-    local_time_to_buf( time_buf, sizeof time_buf );
-    cJSON *timeJson = cJSON_AddObjectToObject( root, "time" );
-    cJSON_AddStringToObject( timeJson, "time", time_buf );
-    cJSON_AddBoolToObject( timeJson, "isTimeSet", sntp_is_time_set());
+    rest_add_time_json( root );
 
     rest_send_json_back( req, root );
     return ESP_OK;

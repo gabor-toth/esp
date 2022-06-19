@@ -11,14 +11,14 @@
 
 static char *const LOG_TAG = "program_json";
 
-char *const FIELD_INDEX = "index";
+static char *const FIELD_DAYS = "days";
+static char *const FIELD_DURATION = "duration";
 static char *const FIELD_ENABLED = "enabled";
+char *const FIELD_INDEX = "index";
 static char *const FIELD_NAME = "name";
 static char *const FIELD_START_TIMES = "startTimes";
-static char *const FIELD_ZONES = "zones";
 static char *const FIELD_ZONE_ID = "zoneId";
-static char *const FIELD_DURATION = "duration";
-static char *const FIELD_DAYS = "days";
+static char *const FIELD_ZONES = "zones";
 const char *const FIELD_TYPE = "type";
 const char *const VALUE_TYPE_ON = "on";
 const char *const VALUE_TYPE_INTERVAL = "interval";

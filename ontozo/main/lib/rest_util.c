@@ -1,5 +1,6 @@
 #include "cJSON.h"
 #include "rest_util.h"
+#include "sntp_main.h"
 
 void rest_set_json_content_type( httpd_req_t *req ) {
     httpd_resp_set_hdr( req, "Content-Type", HTTPD_TYPE_JSON );
@@ -54,3 +55,10 @@ void rest_send_json_back( httpd_req_t *req, cJSON *root ) {
     free((void *) json_response );
 }
 
+void rest_add_time_json( cJSON *root ) {
+    char time_buf[64];
+    local_time_to_buf( time_buf, sizeof time_buf );
+    cJSON *timeJson = cJSON_AddObjectToObject( root, "time" );
+    cJSON_AddStringToObject( timeJson, "time", time_buf );
+    cJSON_AddBoolToObject( timeJson, "isTimeSet", sntp_is_time_set());
+}
