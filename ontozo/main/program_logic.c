@@ -10,16 +10,23 @@
 
 #define MAX_QUEUE_LENGTH 16
 
-#define COMMAND_START           (1<<8)
-#define COMMAND_STOP            (2<<8)
-#define COMMAND_NEXT_ZONE       (3<<8)
-#define COMMAND_QUEUE_START     (4<<8)
-#define GET_COMMAND( X )        ((X)&0x0f00)
+#define COMMAND_START           1
+#define COMMAND_STOP            2
+#define COMMAND_NEXT_ZONE       3
+#define COMMAND_QUEUE_START     4
+#define GET_COMMAND( X )        (((X)>>8)&0xff)
 #define GET_PROGRAM( X )        ((X)&0x00ff)
-#define CREATE_DATA( C, P )     ((C)|GET_PROGRAM(P) )
+#define CREATE_DATA( C, P )     (((C)<<8)|(P) )
 
 static const char *LOG_TAG = "program_logic";
 
+static const char *command_names[] = {
+        "unknown",
+        "start",
+        "stop",
+        "next_zone",
+        "queue"
+};
 static bool is_running = false;
 static int current_program_index;
 static int current_zone_index;
@@ -74,7 +81,7 @@ static void fire_command( int command, int program ) {
 }
 
 static void timer_callback( TimerHandle_t unused ) {
-    fire_command(COMMAND_NEXT_ZONE, current_program_index );
+    fire_command( COMMAND_NEXT_ZONE, current_program_index );
 }
 
 static void start_program( int index ) {
@@ -139,9 +146,10 @@ _Noreturn static void task_main( void *unused ) {
         if ( xQueueReceive( gpio_evt_queue, &data, portMAX_DELAY )) {
             uint32_t command = GET_COMMAND( data );
             int program = GET_PROGRAM( data );
-            if ( command != COMMAND_START && current_program_index != program ) {
-                ESP_LOGW( LOG_TAG, "Current program %d != sent program %d, ignoring command %d", current_program_index,
-                          program, command );
+            ESP_LOGI( LOG_TAG, "Command %s for program %d received ", command_names[ command ], program );
+            if (( command == COMMAND_NEXT_ZONE || command == COMMAND_STOP ) && current_program_index != program ) {
+                ESP_LOGW( LOG_TAG, "Current program %d != sent program %d, ignoring command %d",
+                          current_program_index, program, command );
                 continue;
             }
             switch ( command ) {
@@ -165,15 +173,15 @@ _Noreturn static void task_main( void *unused ) {
 }
 
 void program_logic_start( int index ) {
-    fire_command(COMMAND_QUEUE_START, index );
+    fire_command( COMMAND_QUEUE_START, index );
 }
 
 void program_logic_move_to_next_zone() {
-    fire_command(COMMAND_NEXT_ZONE, current_program_index );
+    fire_command( COMMAND_NEXT_ZONE, current_program_index );
 }
 
 void program_logic_stop() {
-    fire_command(COMMAND_STOP, current_program_index );
+    fire_command( COMMAND_STOP, current_program_index );
 }
 
 void program_logic_get_state( RunningProgramState *state ) {
@@ -195,7 +203,7 @@ void program_logic_init() {
     current_program = NULL;
 
     gpio_evt_queue = xQueueCreate( 16, sizeof( uint32_t ));
-    xTaskCreate( task_main, LOG_TAG, 2048, NULL, 10, NULL);
+    xTaskCreate( task_main, LOG_TAG, 3072, NULL, 10, NULL);
 
     timer = xTimerCreate(
             "program_runner",
