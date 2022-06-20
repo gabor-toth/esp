@@ -16,10 +16,15 @@ ng add @angular/material
 Documentation
 =============
 
-- https://angular.io/guide/setup-local
-- https://angular.io/cli
 - https://angular.io/start
-- https://angular.io/guide/http
+    - https://angular.io/guide/setup-local
+    - https://angular.io/cli
+    - https://angular.io/guide/http
+- https://material.angular.io/
+    - https://material.angular.io/components/progress-spinner/api
+    - https://material.angular.io/components/table/overview
+        - https://blog.angular-university.io/angular-material-data-table/
+          -https://material.angular.io/components/button/overview
 
 Components
 ===========

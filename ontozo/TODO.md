@@ -46,3 +46,7 @@ Hardware
 - esp32 wifi antenna (needs soldering, see 3rd picture
   on https://marksbench.com/electronics/esp32-cam-antenna-workaround/)
 - mikrotik ap outside
+
+- https://slov-aqua.eu/hu/kategoriak/1630-nyomascsokkento-rain-bird-psi-m20-34-14-bar.html
+- https://www.senninger.com/irrigation-product/prl/
+- 
