@@ -8,7 +8,7 @@ import {FontAwesomeModule} from '@fortawesome/angular-fontawesome';
 import {HttpClientModule} from '@angular/common/http';
 import {StateComponent} from './state/state.component';
 import {AdminComponent} from './admin/admin.component';
-import {ProgramsComponent} from './program/program.component';
+import {ProgramsComponent} from './program/programs.component';
 
 import {MatTableModule} from "@angular/material/table";
 import {BrowserAnimationsModule} from '@angular/platform-browser/animations';

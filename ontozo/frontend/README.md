@@ -41,4 +41,5 @@ Commands
 
 - `ng serve`
 - `ng generate component component-name`
-- `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+- `ng generate directive|pipe|service|class|guard|interface|enum|module`
+- `ng update @angular/cdk @angular/cli @angular/core @angular/material`

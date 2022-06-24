@@ -8,8 +8,8 @@ import {RunService} from "./run.service";
 
 @Component({
     selector: 'app-program',
-    templateUrl: './program.component.html',
-    styleUrls: ['./program.component.scss'],
+    templateUrl: './programs.component.html',
+    styleUrls: ['./programs.component.scss'],
     animations: [
         trigger('detailExpand', [
             state('collapsed', style({height: '0px', minHeight: '0'})),
