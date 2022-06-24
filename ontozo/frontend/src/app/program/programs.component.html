@@ -21,8 +21,8 @@
         <ng-container matColumnDef="enabled">
             <th mat-header-cell *matHeaderCellDef> Engedélyezve</th>
             <td mat-cell *matCellDef="let element">
-                <fa-icon *ngIf="!element.enabled" [icon]="faToggleOff" class="off"></fa-icon>
-                <fa-icon *ngIf="element.enabled" [icon]="faToggleOn" class="on"></fa-icon>
+                <mat-icon *ngIf="element.enabled" class="material-icons-outlined on icon-switch">toggle_on</mat-icon>
+                <mat-icon *ngIf="!element.enabled" class="material-icons-outlined off icon-switch">toggle_off</mat-icon>
             </td>
         </ng-container>
 

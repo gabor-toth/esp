@@ -2,17 +2,12 @@ import {Component, OnInit} from '@angular/core';
 import {State} from "./state";
 import {StateService} from "./state.service";
 
-// see https://fontawesome.com/icons/square-caret-down?s=solid
-import {faToggleOff, faToggleOn} from '@fortawesome/free-solid-svg-icons';
-
 @Component({
     selector: 'app-state',
     templateUrl: './state.component.html',
     styleUrls: ['./state.component.scss']
 })
 export class StateComponent implements OnInit {
-    faToggleOff = faToggleOff
-    faToggleOn = faToggleOn
     state: State | undefined;
     remoteTime: String | undefined;
     timer: number = 0;

@@ -51,14 +51,6 @@
     transition: all 0.2s ease-in-out;
     line-height: 24px;
 
-    fa-icon.on {
-      color: #009f00;
-    }
-
-    fa-icon.off {
-      color: #be0000;
-    }
-
     &:not(:last-child) {
       margin-right: 0;
     }

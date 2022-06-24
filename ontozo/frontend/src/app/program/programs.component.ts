@@ -2,7 +2,6 @@ import {Component, OnInit} from '@angular/core';
 import {Program, ProgramHeader} from "./program";
 import {MatTableDataSource, MatTableModule} from '@angular/material/table';
 import {ProgramService} from "./program.service";
-import {faToggleOff, faToggleOn} from '@fortawesome/free-solid-svg-icons';
 import {animate, state, style, transition, trigger} from '@angular/animations';
 import {RunService} from "./run.service";
 
@@ -19,9 +18,6 @@ import {RunService} from "./run.service";
     ],
 })
 export class ProgramsComponent implements OnInit {
-    faToggleOff = faToggleOff
-    faToggleOn = faToggleOn
-
     displayedColumns: string[] = ['name', 'enabled', 'expand'];
     dataSource: MatTableDataSource<ProgramHeader>;
     programs: ProgramHeader[] | undefined;
