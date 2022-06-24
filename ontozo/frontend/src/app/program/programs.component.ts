@@ -18,7 +18,7 @@ import {RunService} from "./run.service";
         ]),
     ],
 })
-export class ProgramComponent implements OnInit {
+export class ProgramsComponent implements OnInit {
     faToggleOff = faToggleOff
     faToggleOn = faToggleOn
 
