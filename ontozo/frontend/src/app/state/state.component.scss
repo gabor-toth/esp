@@ -1,10 +1,11 @@
-.state-container {
-  align-items: center;
-  display: flex;
-  flex-direction: column;
-  padding: 0 16px;
-  position: relative;
-}
+@use 'sass:map';
+@use '@angular/material' as mat;
+
+@import "../../theme";
+
+$color-config: mat.get-color-config($my-app-theme);
+$primary-palette: map.get($color-config, 'primary');
+$foreground-palette: map.get($color-config, 'foreground');
 
 .time {
   position: absolute;
@@ -31,25 +32,15 @@
     width: 40px;
 
     &.filled {
-      background-color: #009f00;
+      background-color: mat.get-color-from-palette($primary-palette, 700);
     }
   }
 
-  .card {
-    all: unset;
-    border-radius: 4px;
-    border: 1px solid #eee;
-    background-color: #fafafa;
-    height: 40px;
+  button.card {
+    height: 70px;
     width: 160px;
     margin: 0 8px 16px;
     padding: 16px;
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    transition: all 0.2s ease-in-out;
-    line-height: 24px;
 
     &:not(:last-child) {
       margin-right: 0;

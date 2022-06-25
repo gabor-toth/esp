@@ -1,43 +1,10 @@
-:host {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-  font-size: 14px;
-  color: #333;
-  box-sizing: border-box;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+@use 'sass:map';
+@use '@angular/material' as mat;
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  margin: 8px 0;
-}
+@import "../theme";
 
-p {
-  margin: 0;
-}
-
-a,
-a:visited,
-a:hover {
-  color: #1976d2;
-  text-decoration: none;
-}
-
-a:hover {
-  color: #125699;
-}
-
-nav {
-  a {
-    color: white;
-    margin-right: 1em;
-    padding: 7px;
-  }
-}
+$color-config: mat.get-color-config($my-app-theme);
+$primary-palette: map.get($color-config, 'primary');
 
 .toolbar {
   position: absolute;
@@ -47,9 +14,14 @@ nav {
   height: 60px;
   display: flex;
   align-items: center;
-  background-color: #1976d2;
-  color: white;
-  font-weight: 600;
+  background-color: mat.get-color-from-palette($primary-palette, 700);
+  color: mat.get-color-from-palette($primary-palette, 50);
+  font-weight: normal;
+
+  a {
+    margin-right: 1em;
+    padding: 7px;
+  }
 
   img {
     margin: 0 16px;

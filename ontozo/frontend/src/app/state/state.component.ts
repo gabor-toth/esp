@@ -1,11 +1,19 @@
 import {Component, OnInit} from '@angular/core';
 import {State} from "./state";
 import {StateService} from "./state.service";
+import {animate, state, style, transition, trigger} from "@angular/animations";
 
 @Component({
     selector: 'app-state',
     templateUrl: './state.component.html',
-    styleUrls: ['./state.component.scss']
+    styleUrls: ['./state.component.scss'],
+    animations: [
+        trigger('detailExpand', [
+            state('collapsed', style({height: '0px', minHeight: '0'})),
+            state('expanded', style({height: '*'})),
+            transition('expanded <=> collapsed', animate('225ms cubic-bezier(0.4, 0.0, 0.2, 1)')),
+        ]),
+    ],
 })
 export class StateComponent implements OnInit {
     state: State | undefined;

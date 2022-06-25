@@ -18,7 +18,8 @@ import {RunService} from "./run.service";
     ],
 })
 export class ProgramsComponent implements OnInit {
-    displayedColumns: string[] = ['name', 'enabled', 'expand'];
+    displayedColumns: string[] = ['name', 'enabled', 'start', 'expand'];
+    displayedColumnsMobile: string[] = ['name', 'enabled', 'expand'];
     dataSource: MatTableDataSource<ProgramHeader>;
     programs: ProgramHeader[] | undefined;
     expandedElement: ProgramHeader | null;

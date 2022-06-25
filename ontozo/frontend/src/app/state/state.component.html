@@ -1,23 +1,25 @@
-<div class="state-container">
+<div class="page-container">
     <div class="time">
         {{remoteTime!}}
     </div>
     <h2>Pumpák</h2>
     <div *ngIf="state && state.outputs" class="card-container">
-        <div *ngFor="let pump of state.outputs.pumps" class="card" (click)="click('pumps',pump.id,!pump.on)">
+        <button *ngFor="let pump of state.outputs.pumps" mat-stroked-button color="foreground" class="card"
+                (click)="click('pumps',pump.id,!pump.on)">
             <mat-icon *ngIf="pump.on" class="material-icons-outlined on icon-switch">toggle_on</mat-icon>
             <mat-icon *ngIf="!pump.on" class="material-icons-outlined off icon-switch">toggle_off</mat-icon>
             <span>{{pump.name}}</span>
-        </div>
+        </button>
     </div>
 
     <h2>Zónák</h2>
     <div *ngIf="state && state.outputs" class="card-container">
-        <div *ngFor="let zone of state.outputs.zones" class="card" (click)="click('zones',zone.id,!zone.on)">
+        <button *ngFor="let zone of state.outputs.zones" mat-stroked-button color="foreground" class="card"
+                (click)="click('zones',zone.id,!zone.on)">
             <mat-icon *ngIf="zone.on" class="material-icons-outlined on icon-switch">toggle_on</mat-icon>
             <mat-icon *ngIf="!zone.on" class="material-icons-outlined off icon-switch">toggle_off</mat-icon>
             <span>{{zone.name}}</span>
-        </div>
+        </button>
     </div>
 
     <h2>Szintek</h2>
@@ -28,10 +30,11 @@
 
     <h2>Gombok</h2>
     <div *ngIf="state && state.inputs" class="card-container">
-        <div *ngFor="let button of state.inputs.buttons" class="card" (click)="click('buttons',button.id,!button.on)">
+        <button *ngFor="let button of state.inputs.buttons" mat-stroked-button color="foreground" class="card"
+                (click)="click('buttons',button.id,!button.on)">
             <mat-icon *ngIf="button.on" class="material-icons-outlined on icon-switch">toggle_on</mat-icon>
             <mat-icon *ngIf="!button.on" class="material-icons-outlined off icon-switch">toggle_off</mat-icon>
             <span>{{button.name}}</span>
-        </div>
+        </button>
     </div>
 </div>

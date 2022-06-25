@@ -21,10 +21,19 @@ Documentation
     - https://angular.io/cli
     - https://angular.io/guide/http
 - https://material.angular.io/
-    - https://material.angular.io/components/progress-spinner/api
-    - https://material.angular.io/components/table/overview
+    - spinner
+        - https://material.angular.io/components/progress-spinner/api
+    - table
+        - https://material.angular.io/components/table/overview
         - https://blog.angular-university.io/angular-material-data-table/
-          -https://material.angular.io/components/button/overview
+    - button
+        - https://material.angular.io/components/button/overview
+- Theming
+    - https://material.angular.io/guide/theming
+    - https://material.io/archive/guidelines/style/color.html#color-color-system
+    - https://stackoverflow.com/questions/64494792/how-to-use-colors-of-the-prebuilt-angular-material-themes
+- Icons
+    - https://fonts.google.com/icons
 
 Components
 ===========
