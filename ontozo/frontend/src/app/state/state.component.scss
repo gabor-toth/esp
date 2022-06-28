@@ -6,11 +6,12 @@
 $color-config: mat.get-color-config($my-app-theme);
 $primary-palette: map.get($color-config, 'primary');
 $foreground-palette: map.get($color-config, 'foreground');
+$foreground-icon: map.get($foreground-palette, "icon");
 
-.time {
-  position: absolute;
-  right: 0;
-  top: 0;
+.column-container {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
 }
 
 .card-container {
@@ -28,7 +29,8 @@ $foreground-palette: map.get($color-config, 'foreground');
   .card-level {
     background-color: #fafafa;
     border: 1px solid #eee;
-    height: 72px;
+    box-sizing: border-box;
+    height: 70px;
     width: 40px;
 
     &.filled {
@@ -36,11 +38,20 @@ $foreground-palette: map.get($color-config, 'foreground');
     }
   }
 
-  button.card {
+  .card {
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    box-sizing: border-box;
     height: 70px;
-    width: 160px;
     margin: 0 8px 16px;
     padding: 16px;
+    text-align: center;
+    width: 160px;
+
+    span {
+      * {
+        vertical-align: middle;
+      }
+    }
 
     &:not(:last-child) {
       margin-right: 0;
@@ -51,18 +62,20 @@ $foreground-palette: map.get($color-config, 'foreground');
       width: 168px;
     }
 
-    cursor: pointer;
-    @media screen and (max-width: 767px) {
-      height: 16px;
-      margin: 8px 0;
-    }
-
-    &:hover {
-      //transform: translateY(-3px);
-      box-shadow: 0 4px 17px rgba(0, 0, 0, 0.35);
-    }
-
   }
 
+  .desc {
+    margin-bottom: 0.5em;
+  }
+
+  mat-icon.icon-timer {
+    font-size: 24px;
+    vertical-align: middle;
+    color: $foreground-icon;
+  }
+
+  mat-icon.icon-hotel {
+    color: $foreground-icon;
+  }
 }
 

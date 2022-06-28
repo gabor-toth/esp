@@ -1,7 +1,11 @@
 import {Component, OnInit} from '@angular/core';
-import {State} from "./state";
+import {PinsState} from "../pin/pin";
 import {StateService} from "./state.service";
+import {PinService} from "../pin/pin.service";
 import {animate, state, style, transition, trigger} from "@angular/animations";
+import {ProgramService} from "../program/program.service";
+import {RunService} from "../program/run.service";
+import {RunState} from "../program/run";
 
 @Component({
     selector: 'app-state',
@@ -16,62 +20,65 @@ import {animate, state, style, transition, trigger} from "@angular/animations";
     ],
 })
 export class StateComponent implements OnInit {
-    state: State | undefined;
+    pinState: PinsState | undefined;
+    runState: RunState | undefined;
     remoteTime: String | undefined;
     timer: number = 0;
-    stateAsString = "";
+    pinStateAsString = "";
+    programStateAsString = "";
 
-    constructor(private stateService: StateService) {
+    constructor(private pinService: PinService, private runService: RunService) {
     }
 
     ngOnInit(): void {
         this.updateState();
+        this.scheduleUpdate();
     }
 
     private scheduleUpdate() {
         if (this.timer) {
             clearTimeout(this.timer);
         }
-        this.timer = setTimeout(() => {
+        this.timer = setInterval(() => {
             this.updateState();
-        }, 5000);
+        }, 10000);
     }
 
-    private onUpdate(newState: State) {
-        this.scheduleUpdate();
+    private onUpdatePinState(newState: PinsState) {
         this.remoteTime = newState.time?.time;
         newState.time = null;
         let newStateAsString = JSON.stringify(newState);
-        if (newStateAsString != this.stateAsString) {
-            this.state = newState;
-            this.stateAsString = newStateAsString;
+        if (newStateAsString != this.pinStateAsString) {
+            this.pinState = newState;
+            this.pinStateAsString = newStateAsString;
+        }
+    }
+
+    private onUpdateRunState(newState: RunState) {
+        let newStateAsString = JSON.stringify(newState);
+        if (newStateAsString != this.programStateAsString) {
+            this.runState = newState;
+            this.programStateAsString = newStateAsString;
         }
     }
 
     private updateState() {
-        clearTimeout(this.timer);
-        this.timer = 0;
         let component = this;
-        this.stateService.getState().subscribe({
+        this.pinService.getState().subscribe({
             next(state) {
-                component.onUpdate(state);
+                component.onUpdatePinState(state);
             },
             error(err) {
-                component.scheduleUpdate();
                 console.error('Error reading state', err);
             },
         });
-    }
-
-    click(type: String, id: number, state: boolean) {
-        let component = this;
-        this.stateService.setState(type, id, state).subscribe({
-            complete() {
-                component.updateState();
+        this.runService.getState().subscribe({
+            next(state) {
+                component.onUpdateRunState(state);
             },
             error(err) {
-                console.error('Error writing state', err);
-            }
+                console.error('Error reading state', err);
+            },
         });
     }
 }
