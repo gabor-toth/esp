@@ -1,0 +1,62 @@
+@use 'sass:map';
+@use '@angular/material' as mat;
+
+@import "../../theme";
+
+$color-config: mat.get-color-config($my-app-theme);
+$primary-palette: map.get($color-config, 'primary');
+$foreground-palette: map.get($color-config, 'foreground');
+
+.card-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 16px;
+
+  @media screen and (max-width: 767px) {
+    & > *:not(.circle-link) {
+      width: 100%;
+    }
+  }
+
+  .card-level {
+    background-color: #fafafa;
+    border: 1px solid #eee;
+    box-sizing: border-box;
+    height: 70px;
+    width: 40px;
+
+    &.filled {
+      background-color: mat.get-color-from-palette($primary-palette, 700);
+    }
+  }
+
+  button.card {
+    height: 70px;
+    width: 160px;
+    margin: 0 8px 16px;
+    padding: 16px;
+
+    &:not(:last-child) {
+      margin-right: 0;
+    }
+
+    &.card-small {
+      height: 16px;
+      width: 168px;
+    }
+
+    cursor: pointer;
+    @media screen and (max-width: 767px) {
+      margin: 8px 0;
+    }
+
+    &:hover {
+      //transform: translateY(-3px);
+      box-shadow: 0 4px 17px rgba(0, 0, 0, 0.35);
+    }
+
+  }
+
+}
+
