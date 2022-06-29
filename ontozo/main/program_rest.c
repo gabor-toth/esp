@@ -11,7 +11,7 @@ static esp_err_t programs_get_handler( httpd_req_t *req ) {
     char *json_out;
 
     rest_allow_cors( req );
-    programs_header_write_to_json( &json_out );
+    programs_write_to_json( &json_out );
     rest_set_json_content_type( req );
     httpd_resp_sendstr( req, json_out );
     free((void *) json_out );

@@ -11,7 +11,7 @@ $foreground-palette: map.get($color-config, 'foreground');
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  margin-top: 16px;
+  margin-top: 0.5em;
 
   @media screen and (max-width: 767px) {
     & > *:not(.circle-link) {
@@ -34,7 +34,7 @@ $foreground-palette: map.get($color-config, 'foreground');
   button.card {
     height: 70px;
     width: 160px;
-    margin: 0 8px 16px;
+    margin: 0 8px 8px;
     padding: 16px;
 
     &:not(:last-child) {

@@ -1,11 +1,3 @@
-fa-icon.on {
-  color: #009f00;
-}
-
-fa-icon.off {
-  color: #be0000;
-}
-
 .program-detail {
   overflow: hidden;
   display: flex;
@@ -30,11 +22,6 @@ fa-icon.off {
 
 }
 
-.program-detail-loader {
-  width: 100%;
-
-  mat-spinner {
-    margin-left: auto;
-    margin-right: auto;
-  }
+.button-row {
+  margin-top: 0.5em;
 }

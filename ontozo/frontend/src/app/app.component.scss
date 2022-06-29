@@ -7,16 +7,18 @@ $color-config: mat.get-color-config($my-app-theme);
 $primary-palette: map.get($color-config, 'primary');
 
 .toolbar {
+  align-items: center;
+  display: flex;
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   height: 60px;
-  display: flex;
-  align-items: center;
   background-color: mat.get-color-from-palette($primary-palette, 700);
   color: mat.get-color-from-palette($primary-palette, 50);
   font-weight: normal;
+  padding-left: 0.5em;
+  padding-right: 0.5em;
 
   a {
     margin-right: 1em;

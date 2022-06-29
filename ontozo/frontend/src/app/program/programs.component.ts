@@ -1,5 +1,5 @@
 import {Component, OnInit} from '@angular/core';
-import {Program, ProgramHeader} from "./program";
+import {Program, ProgramDayType} from "./program";
 import {MatTableDataSource, MatTableModule} from '@angular/material/table';
 import {ProgramService} from "./program.service";
 import {animate, state, style, transition, trigger} from '@angular/animations';
@@ -20,9 +20,10 @@ import {RunService} from "./run.service";
 export class ProgramsComponent implements OnInit {
     displayedColumns: string[] = ['name', 'enabled', 'start', 'expand'];
     displayedColumnsMobile: string[] = ['name', 'enabled', 'expand'];
-    dataSource: MatTableDataSource<ProgramHeader>;
-    programs: ProgramHeader[] | undefined;
-    expandedElement: ProgramHeader | null;
+    dataSource: MatTableDataSource<Program>;
+    programs: Program[] | undefined;
+    expandedElement: Program | null;
+    readonly ProgramDayType = ProgramDayType;
 
     constructor(private programService: ProgramService, private runService: RunService) {
         this.dataSource = new MatTableDataSource(this.programs);
@@ -46,22 +47,12 @@ export class ProgramsComponent implements OnInit {
         });
     }
 
-    clickExpand(element: ProgramHeader) {
+    clickExpand(element: Program) {
         let component = this;
         this.expandedElement = this.expandedElement === element ? null : element;
-        if (element.program == null) {
-            this.programService.get(element.index).subscribe({
-                next(program) {
-                    element.program = program;
-                },
-                error(err) {
-                    console.error('Error reading program ' + element.index, err);
-                },
-            });
-        }
     }
 
-    startProgram(element: ProgramHeader) {
+    startProgram(element: Program) {
         this.runService.start(element.index).subscribe({
             next(dummy) {
                 // toaster: add success

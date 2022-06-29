@@ -45,10 +45,12 @@ fa-icon {
 }
 
 mat-icon.mat-icon {
-  font-size: 36px;
-  height: auto;
-  width: auto;
-  margin-right: 0.1em;
+  .icon-switch & {
+    font-size: 36px;
+    height: auto;
+    width: auto;
+    margin-right: 0.1em;
+  }
 
   &.on {
     color: mat.get-color-from-palette($primary-palette, 700);
@@ -61,7 +63,7 @@ mat-icon.mat-icon {
 }
 
 .content {
-  margin: 82px auto 32px;
+  margin: 72px auto 32px;
   //padding: 0 16px;
 }
 
@@ -81,6 +83,14 @@ body {
   flex-direction: column;
   margin: 0 16px;
   position: relative;
+
+  > * {
+    margin-top: 1em;
+  }
+
+  > *:first-child {
+    margin-top: 0;
+  }
 }
 
 table.mat-table {
@@ -92,7 +102,7 @@ table.mat-table {
 }
 
 .button-holder {
-  margin-bottom: 1em;
+  margin-bottom: 0.5em;
 
   button {
     margin-right: 1em;
@@ -114,4 +124,25 @@ table.mat-table {
 
 }
 
+.time-container {
+  margin: 0;
 
+  @media screen and (min-width: 768px) {
+    position: absolute;
+    right: 0;
+    top: 0;
+  }
+  @media screen and (max-width: 767px) {
+    text-align: right;
+    width: 100%;
+  }
+}
+
+.load-spinner {
+  width: 100%;
+
+  mat-spinner {
+    margin-left: auto;
+    margin-right: auto;
+  }
+}

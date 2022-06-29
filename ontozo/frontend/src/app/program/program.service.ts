@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {Program, ProgramHeader} from './program';
+import {Program} from './program';
 import {Observable} from "rxjs";
 import {HttpClient} from '@angular/common/http';
 import {environment} from '../../environments/environment';
@@ -12,8 +12,8 @@ export class ProgramService {
     constructor(private http: HttpClient) {
     }
 
-    getAll(): Observable<ProgramHeader[]> {
-        return this.http.get<ProgramHeader[]>(environment.baseUrl + 'programs');
+    getAll(): Observable<Program[]> {
+        return this.http.get<Program[]>(environment.baseUrl + 'programs');
     }
 
     get(index: number): Observable<Program> {

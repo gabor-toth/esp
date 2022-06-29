@@ -1,20 +1,19 @@
 <div class="page-container">
-    <div class="time">
-        {{remoteTime!}}
-    </div>
-    <!--   -->
     <div fxFlex fxLayout="row" fxLayout.sm="column" fxLayout.xs="column" fxLayoutGap="25px" fxLayoutAlign="center none">
         <!--fxFlex fxLayoutAlign="center" class="card" -->
         <div class="column-container">
             <h2>Pumpák</h2>
             <div *ngIf="pinState && pinState.outputs" class="card-container">
                 <div *ngFor="let pump of pinState.outputs.pumps" class="card">
-                    <span>
-                    <mat-icon *ngIf="pump.on" class="material-icons-outlined on">toggle_on</mat-icon>
-                    <mat-icon *ngIf="!pump.on" class="material-icons-outlined off">toggle_off</mat-icon>
-                    <span>{{pump.name}}</span>
+                    <span class="icon-switch">
+                        <mat-icon *ngIf="pump.on" class="material-icons-outlined on">toggle_on</mat-icon>
+                        <mat-icon *ngIf="!pump.on" class="material-icons-outlined off">toggle_off</mat-icon>
+                        <span>{{pump.name}}</span>
                     </span>
                 </div>
+            </div>
+            <div *ngIf="!pinState" class="load-spinner">
+                <mat-spinner diameter="30"></mat-spinner>
             </div>
         </div>
 
@@ -23,6 +22,9 @@
             <div *ngIf="pinState && pinState.inputs" class="card-container">
                 <div *ngFor="let level of pinState.inputs.levels" class="card-level {{level.on?'filled':''}}">
                 </div>
+            </div>
+            <div *ngIf="!pinState" class="load-spinner">
+                <mat-spinner diameter="30"></mat-spinner>
             </div>
         </div>
 
@@ -42,6 +44,13 @@
                     </div>
                 </div>
             </div>
+            <div *ngIf="!runState" class="load-spinner">
+                <mat-spinner diameter="30"></mat-spinner>
+            </div>
         </div>
+    </div>
+
+    <div class="time-container">
+        {{remoteTime!}}
     </div>
 </div>

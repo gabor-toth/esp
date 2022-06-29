@@ -2,6 +2,9 @@
 #include "lib/rest_util.h"
 #include "program_logic_rest.h"
 #include "program_logic.h"
+#include "program.h"
+#include "lib/gpio_define.h"
+#include "gpio_logic.h"
 
 #define RUN_PREFIX "/run/"
 #define RUN_URI RUN_PREFIX "*"
@@ -43,7 +46,11 @@ static esp_err_t run_get_handler( httpd_req_t *req ) {
     cJSON_AddBoolToObject( root, "isProgramRunning", state.is_program_running );
     if ( state.is_program_running ) {
         cJSON_AddNumberToObject( root, "programIndex", state.program_index + 1 );
+        cJSON_AddStringToObject( root, "programName", program_get( state.program_index )->name );
         cJSON_AddNumberToObject( root, "zoneIndex", state.zone_index + 1 );
+        PinData pin_data;
+        gpio_get_pin_data( OUTPUTS, ZONES_CLASS, state.zone_index, &pin_data );
+        cJSON_AddStringToObject( root, "zoneName", pin_data.name );
         cJSON_AddNumberToObject( root, "zonesCount", state.zones_count );
         cJSON_AddNumberToObject( root, "zoneLeftSeconds", state.zone_left_seconds );
     }

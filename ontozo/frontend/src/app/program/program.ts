@@ -28,10 +28,3 @@ export interface Program {
     lastRunTime: number;
     nextRunTime: number;
 }
-
-export interface ProgramHeader {
-    index: number;
-    enabled: boolean;
-    name: string;
-    program: Program;
-}

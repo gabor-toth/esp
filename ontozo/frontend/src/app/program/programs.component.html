@@ -1,12 +1,18 @@
 <div class="page-container">
     <h2>Programok</h2>
 
-    <div class="button-holder">
-        <button mat-raised-button color="primary" (click)="stopProgram(); $event.stopPropagation()">
-            Stop
-        </button>
+    <div *ngIf="!programs" class="load-spinner">
+        <mat-spinner diameter="30"></mat-spinner>
+    </div>
+
+    <div *ngIf="programs" class="button-holder">
         <button mat-raised-button color="primary" (click)="nextZone(); $event.stopPropagation()">
             Következő zóna
+            <mat-icon class="material-icons-outlined">skip_next</mat-icon>
+        </button>
+        <button mat-raised-button color="primary" (click)="stopProgram(); $event.stopPropagation()">
+            Stop
+            <mat-icon class="material-icons-outlined">stop</mat-icon>
         </button>
     </div>
     <div *ngIf="programs">
@@ -25,12 +31,11 @@
             <ng-container matColumnDef="enabled">
                 <th mat-header-cell *matHeaderCellDef> Engedélyezve</th>
                 <td mat-cell *matCellDef="let element">
-                    <button mat-icon-button>
-                        <mat-icon *ngIf="element.enabled" class="material-icons-outlined on icon-switch">toggle_on
-                        </mat-icon>
-                        <mat-icon *ngIf="!element.enabled" class="material-icons-outlined off icon-switch">toggle_off
-                        </mat-icon>
-                    </button>
+                    <mat-icon
+                            *ngIf="element.enabled && element.days && element.days.type != ProgramDayType.unused"
+                            class="material-icons-outlined on">timer
+                    </mat-icon>
+                    <mat-icon *ngIf="!element.enabled" class="material-icons-outlined off">timer_off</mat-icon>
                 </td>
             </ng-container>
 
@@ -38,15 +43,13 @@
             <ng-container matColumnDef="start">
                 <th mat-header-cell *matHeaderCellDef> Indítás</th>
                 <td mat-cell *matCellDef="let element">
-                    <div *ngIf="element.program">
-                        <div class="program-position"> {{element.program.startTimes}}</div>
-                        <div *ngIf="element.program.days.type=='on'" class="program-position">
-                            on: {{element.program.days.onDays}}
-                        </div>
-                        <div *ngIf="element.program.days.type=='interval'" class="program-position">
-                            interval: {{element.program.days.intervalDays}} starting on
-                            {{element.program.days.intervalStartsOn}}
-                        </div>
+                    <div class="program-position"> {{element.startTimes}}</div>
+                    <div *ngIf="element.days.type=='on'" class="program-position">
+                        on: {{element.days.onDays}}
+                    </div>
+                    <div *ngIf="element.days.type=='interval'" class="program-position">
+                        interval: {{element.days.intervalDays}} starting on
+                        {{element.days.intervalStartsOn}}
                     </div>
                 </td>
             </ng-container>
@@ -66,31 +69,26 @@
                 <td mat-cell *matCellDef="let element" [attr.colspan]="displayedColumns.length">
                     <div class="program-detail"
                          [@detailExpand]="element == expandedElement ? 'expanded' : 'collapsed'">
-                        <div *ngIf="element.program">
-                            <div class="program-position"> {{element.program.startTimes}}</div>
-                            <div *ngIf="element.program.days.type=='on'" class="program-position">
-                                on: {{element.program.days.onDays}}
+                        <div>
+                            <div class="program-position"> {{element.startTimes}}</div>
+                            <div *ngIf="element.days.type=='on'" class="program-position">
+                                on: {{element.days.onDays}}
                             </div>
-                            <div *ngIf="element.program.days.type=='interval'" class="program-position">
-                                interval: {{element.program.days.intervalDays}} starting on
-                                {{element.program.days.intervalStartsOn}}
+                            <div *ngIf="element.days.type=='interval'" class="program-position">
+                                interval: {{element.days.intervalDays}} starting on
+                                {{element.days.intervalStartsOn}}
                             </div>
-                        </div>
-                        <div *ngIf="!element.program" class="program-detail-loader">
-                            <mat-spinner diameter="30"></mat-spinner>
                         </div>
                         <div class="button-holder">
                             <button mat-raised-button color="primary"
                                     (click)="startProgram(element); $event.stopPropagation()">
                                 Start
+                                <mat-icon class="material-icons-outlined">start</mat-icon>
                             </button>
                         </div>
                         <div>
-                            <mat-icon class="material-icons-outlined ">settings</mat-icon>
-                            <mat-icon class="material-icons-outlined ">add</mat-icon>
+                            <mat-icon class="material-icons-outlined ">edit</mat-icon>
                             <mat-icon class="material-icons-outlined ">delete</mat-icon>
-                            <mat-icon class="material-icons-outlined ">cancel</mat-icon>
-                            <mat-icon class="material-icons-outlined ">arrow_forward</mat-icon>
 
                         </div>
                     </div>
@@ -106,5 +104,10 @@
 
             <tr mat-row *matRowDef="let row; columns: ['expandedDetail']" class="program-detail-row"></tr>
         </table>
+        <div class="button-row">
+            <button mat-fab color="primary">
+                <mat-icon class="material-icons-outlined ">add</mat-icon>
+            </button>
+        </div>
     </div>
 </div>

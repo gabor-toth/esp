@@ -315,19 +315,23 @@ void write_zones( cJSON *json, Program *program ) {
     }
 }
 
-void program_write_to_string( Program *program, char **json_out ) {
-    cJSON *root = cJSON_CreateObject();
-
+static void add_program_to_json( Program *program, cJSON *root ) {
     write_head( root, program );
     write_days( root, program );
     write_start_times( root, program );
     write_zones( root, program );
+}
+
+void program_write_to_string( Program *program, char **json_out ) {
+    cJSON *root = cJSON_CreateObject();
+
+    add_program_to_json( program, root );
 
     *json_out = cJSON_Print( root );
     cJSON_Delete( root );
 }
 
-void programs_header_write_to_json( char **json_out ) {
+void programs_write_to_json( char **json_out ) {
     cJSON *root = cJSON_CreateArray();
 
     int count = program_get_count();
@@ -338,9 +342,7 @@ void programs_header_write_to_json( char **json_out ) {
         }
         cJSON *item = cJSON_CreateObject();
         cJSON_AddItemToArray( root, item );
-        cJSON_AddNumberToObject( item, FIELD_INDEX, program->index );
-        cJSON_AddStringToObject( item, FIELD_NAME, program->name );
-        cJSON_AddBoolToObject( item, FIELD_ENABLED, program->enabled );
+        add_program_to_json( program, item );
         // TODO FIELD_PERCENTAGE
         // TODO FIELD_NEXT_START_TIME
     }
