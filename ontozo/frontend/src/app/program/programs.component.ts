@@ -1,5 +1,5 @@
 import {Component, OnInit} from '@angular/core';
-import {Program, ProgramDayType} from "./program";
+import {Program, ProgramDayType, ProgramDayValue} from "./program";
 import {MatTableDataSource, MatTableModule} from '@angular/material/table';
 import {ProgramService} from "./program.service";
 import {animate, state, style, transition, trigger} from '@angular/animations';
@@ -23,6 +23,7 @@ export class ProgramsComponent implements OnInit {
     dataSource: MatTableDataSource<Program>;
     programs: Program[] | undefined;
     expandedElement: Program | null;
+    programDaysDisplay: string[] = ['H', 'K', 'Sz', 'Cs', 'P', 'Sz', 'V'];
     readonly ProgramDayType = ProgramDayType;
 
     constructor(private programService: ProgramService, private runService: RunService) {
@@ -82,5 +83,9 @@ export class ProgramsComponent implements OnInit {
                 console.error('Error moving to next zone', err);
             },
         });
+    }
+
+    hasDay(program: Program, dayIndex: number): boolean {
+        return program.days.onDays.find(e => String(e.valueOf()) == ProgramDayValue[dayIndex]) != null;
     }
 }

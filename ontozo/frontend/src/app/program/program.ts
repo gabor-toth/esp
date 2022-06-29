@@ -9,9 +9,19 @@ export enum ProgramDayType {
     interval
 }
 
+export enum ProgramDayValue {
+    Mon,
+    Tue,
+    Wed,
+    Thu,
+    Fri,
+    Sat,
+    Sun,
+}
+
 export interface ProgramDay {
     type: ProgramDayType;
-    onDays: string[];
+    onDays: ProgramDayValue[];
     intervalDays: number;
     intervalStartsOn: number;
     intervalStartReset: boolean;

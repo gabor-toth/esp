@@ -1,6 +1,15 @@
+@use 'sass:map';
+@use '@angular/material' as mat;
+@import "../../theme";
+
+$color-config: mat.get-color-config($my-app-theme);
+$primary-palette: map.get($color-config, 'primary');
+$foreground-palette: map.get($color-config, 'foreground');
+$foreground-disabled: map.get($foreground-palette, "disabled-button");
+
 .program-detail {
+  text-align: right;
   overflow: hidden;
-  display: flex;
 }
 
 .program-detail-row {
@@ -24,4 +33,23 @@
 
 .button-row {
   margin-top: 0.5em;
+}
+
+.program-days {
+  .program-day {
+    border: 1px solid #cecece;
+    display: inline-block;
+    margin: 2px;
+    padding: 2px;
+    text-align: center;
+    width: 20px;
+
+    &.on {
+      color: mat.get-color-from-palette($primary-palette, 700);
+    }
+
+    &.off {
+      color: $foreground-disabled;
+    }
+  }
 }
