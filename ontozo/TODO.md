@@ -16,6 +16,8 @@ Frontend
 - error handling (no connection, etc)
 - ~~selective value settings (angular)~~
 - ~~display esp's clock~~
+- command line interface
+    - logs
 
 Backend
 =======
@@ -35,8 +37,9 @@ Backend
 - overall program disable
 - websocket?
 - gpio_logic change main pump state: notify program logic
-- program_logic: suspend/resume on empty tank
+- program_logic: suspend/resume on empty/partially filled tank
 - pump manual change: re-evaluate state
+- log & show full tank time
 
 Hardware
 ========
@@ -45,7 +48,8 @@ Hardware
 - lcd display?
 - esp32 wifi antenna (needs soldering, see 3rd picture
   on https://marksbench.com/electronics/esp32-cam-antenna-workaround/)
-- mikrotik ap outside
+
++ mikrotik ap outside
 
 - https://slov-aqua.eu/hu/kategoriak/1630-nyomascsokkento-rain-bird-psi-m20-34-14-bar.html
 - https://www.senninger.com/irrigation-product/prl/
