@@ -9,12 +9,12 @@
 #include <string.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <esp_chip_info.h>
 #include <esp_log.h>
 #include <esp_vfs.h>
 #include <cJSON.h>
 #include "rest_server.h"
 #include "rest_util.h"
+#include "system_info_rest.h"
 
 static const char *LOG_TAG = "rest-server";
 
@@ -54,7 +54,7 @@ esp_err_t set_content_type_from_file( httpd_req_t *req, const char *filepath ) {
 static bool has_2_dots_in_file_name( char *filepath ) {
     char *p;
 
-    return (( p = strchr( filepath, '.' )) != NULL) || strchr( p + 1, '.' ) != NULL;
+    return (( p = strchr( filepath, '.' )) != NULL) && strchr( p + 1, '.' ) != NULL;
 }
 
 static void set_cache_forever( httpd_req_t *req, char *filepath ) {
@@ -86,6 +86,7 @@ static esp_err_t rest_common_get_handler( httpd_req_t *req ) {
     rest_server_context_t *rest_context = (rest_server_context_t *) req->user_ctx;
     strlcpy( filepath, rest_context->base_path, sizeof( filepath ));
     if ( req->uri[ strlen( req->uri ) - 1 ] == '/' || !strchr( req->uri, '.' )) {
+        // serve index.html for Angular routes
         strlcat( filepath, "/index.html", sizeof( filepath ));
     } else {
         strlcat( filepath, req->uri, sizeof( filepath ));
@@ -98,6 +99,7 @@ static esp_err_t rest_common_get_handler( httpd_req_t *req ) {
         return ESP_FAIL;
     }
 
+    ESP_LOGI( LOG_TAG, "Sending file %s", filepath );
     if ( has_2_dots_in_file_name( filepath )) {
         set_cache_forever( req, filepath );
     }
@@ -131,22 +133,6 @@ static esp_err_t rest_common_get_handler( httpd_req_t *req ) {
     return ESP_OK;
 }
 
-/* Simple handler for getting system handler */
-static esp_err_t system_info_get_handler( httpd_req_t *req ) {
-    rest_allow_cors( req );
-    httpd_resp_set_type( req, "application/json" );
-    cJSON *root = cJSON_CreateObject();
-    esp_chip_info_t chip_info;
-    esp_chip_info( &chip_info );
-    cJSON_AddStringToObject( root, "version", IDF_VER );
-    cJSON_AddNumberToObject( root, "cores", chip_info.cores );
-    const char *sys_info = cJSON_Print( root );
-    httpd_resp_sendstr( req, sys_info );
-    free((void *) sys_info );
-    cJSON_Delete( root );
-    return ESP_OK;
-}
-
 esp_err_t rest_receive_json_body( httpd_req_t *req, rest_server_context_t *context, cJSON **root ) {
     *root = 0;
 
@@ -170,17 +156,6 @@ esp_err_t rest_receive_json_body( httpd_req_t *req, rest_server_context_t *conte
 
     *root = cJSON_Parse( buf );
     return ESP_OK;
-}
-
-static void rest_register_system_info_handler( httpd_handle_t server, rest_server_context_t *rest_context ) {
-    /* URI handler for fetching system info */
-    httpd_uri_t system_info_get_uri = {
-            .uri = "/system/info",
-            .method = HTTP_GET,
-            .handler = system_info_get_handler,
-            .user_ctx = rest_context
-    };
-    httpd_register_uri_handler( server, &system_info_get_uri );
 }
 
 static void rest_register_all_handler( httpd_handle_t server, rest_server_context_t *rest_context ) {
