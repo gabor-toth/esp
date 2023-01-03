@@ -9,31 +9,31 @@
 #include "sdkconfig.h"
 #include "esp_spiffs.h"
 #include "esp_log.h"
-#include "mdns.h"
+//#include "mdns.h"
 #include "lwip/apps/netbiosns.h"
 #include "lib/rest_server.h"
 #include "rest_handler.h"
 
 static const char *LOG_TAG = "rest-main";
 
-static void initialise_mdns( void ) {
-    mdns_init();
-    mdns_hostname_set( CONFIG_EXAMPLE_MDNS_HOST_NAME );
-    mdns_instance_name_set( CONFIG_MDNS_INSTANCE_NAME );
-
-    mdns_txt_item_t serviceTxtData[] = {
-            { "board", "esp32" },
-            { "path",  "/" }
-    };
-
-    ESP_ERROR_CHECK( mdns_service_add(
-            "ESP32-WebServer",
-            "_http",
-            "_tcp",
-            80,
-            serviceTxtData,
-            sizeof( serviceTxtData ) / sizeof( serviceTxtData[ 0 ] )));
-}
+//static void initialise_mdns( void ) {
+//    mdns_init();
+//    mdns_hostname_set( CONFIG_EXAMPLE_MDNS_HOST_NAME );
+//    mdns_instance_name_set( CONFIG_MDNS_INSTANCE_NAME );
+//
+//    mdns_txt_item_t serviceTxtData[] = {
+//            { "board", "esp32" },
+//            { "path",  "/" }
+//    };
+//
+//    ESP_ERROR_CHECK( mdns_service_add(
+//            "ESP32-WebServer",
+//            "_http",
+//            "_tcp",
+//            80,
+//            serviceTxtData,
+//            sizeof( serviceTxtData ) / sizeof( serviceTxtData[ 0 ] )));
+//}
 
 static void initialise_netbios( void ) {
     netbiosns_init();
@@ -61,7 +61,7 @@ esp_err_t init_fs( void ) {
     }
 
     size_t total = 0, used = 0;
-    ret = esp_spiffs_info(NULL, &total, &used );
+    ret = esp_spiffs_info( NULL, &total, &used );
     if ( ret != ESP_OK ) {
         ESP_LOGE( LOG_TAG, "Failed to get SPIFFS partition information (%s)", esp_err_to_name( ret ));
     } else {
@@ -71,7 +71,7 @@ esp_err_t init_fs( void ) {
 }
 
 void rest_init_before_wifi( void ) {
-    initialise_mdns();
+//    initialise_mdns();
     initialise_netbios();
 }
 
