@@ -32,7 +32,7 @@ static void timer_blink_callback( TimerHandle_t xTimer ) {
 void test_init() {
     TimerHandle_t timer_blink = xTimerCreate(
             "blink",
-            1000 / portTICK_PERIOD_MS,
+            pdMS_TO_TICKS( 1000 ),
             1,
             NULL,
             timer_blink_callback );

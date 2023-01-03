@@ -61,8 +61,8 @@ static void start_next_zone() {
     ESP_LOGI( LOG_TAG, "moving to zone %d/%d: id %d, duration %d secs",
               current_zone_index + 1, current_program->zones_count, zone->zone_id, zone->duration_in_seconds );
     gpio_set_pin_state( OUTPUTS, ZONES_CLASS, zone->zone_id, true );
-    TickType_t timer_ticks = zone->duration_in_seconds * 1000 / portTICK_PERIOD_MS;
-    ESP_LOGI( LOG_TAG, "set timer to %d ticks", timer_ticks );
+    TickType_t timer_ticks = pdMS_TO_TICKS( zone->duration_in_seconds * 1000 );
+    ESP_LOGI( LOG_TAG, "set timer to %ld ticks", timer_ticks );
     if ( !xTimerChangePeriod( timer, timer_ticks, portMAX_DELAY )) {
         ESP_LOGE( LOG_TAG, "xTimerChangePeriod failed, aborting program" );
         program_logic_stop();
@@ -86,7 +86,7 @@ static void timer_callback( TimerHandle_t unused ) {
 
 static void start_program( int index ) {
     current_program = program_get( index );
-    if ( current_program == NULL) {
+    if ( current_program == NULL ) {
         ESP_LOGE( LOG_TAG, "Program does %d not exists, skipping", index );
         stop_and_move_to_next_program();
         return;
@@ -148,7 +148,7 @@ _Noreturn static void task_main( void *unused ) {
             int program = GET_PROGRAM( data );
             ESP_LOGI( LOG_TAG, "Command %s for program %d received ", command_names[ command ], program );
             if (( command == COMMAND_NEXT_ZONE || command == COMMAND_STOP ) && current_program_index != program ) {
-                ESP_LOGW( LOG_TAG, "Current program %d != sent program %d, ignoring command %d",
+                ESP_LOGW( LOG_TAG, "Current program %d != sent program %d, ignoring command %ld",
                           current_program_index, program, command );
                 continue;
             }
@@ -203,7 +203,7 @@ void program_logic_init() {
     current_program = NULL;
 
     gpio_evt_queue = xQueueCreate( 16, sizeof( uint32_t ));
-    xTaskCreate( task_main, LOG_TAG, 3072, NULL, 10, NULL);
+    xTaskCreate( task_main, LOG_TAG, 3072, NULL, 10, NULL );
 
     timer = xTimerCreate(
             "program_runner",

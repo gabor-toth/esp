@@ -18,7 +18,9 @@ typedef struct {
 static QueueHandle_t gpio_evt_queue = NULL;
 static gpio_change_callback change_callback = NULL;
 
-static void IRAM_ATTR gpio_isr_handler( void *arg ) {
+static void IRAM_ATTR
+
+gpio_isr_handler( void *arg ) {
     GpioTimer *timer_data = (GpioTimer *) arg;
     xTimerResetFromISR( timer_data->timer_going_high, NULL );
     xTimerResetFromISR( timer_data->timer_going_low, NULL );
@@ -48,13 +50,13 @@ void gpio_task_init( gpio_change_callback _change_callback ) {
     //create a queue to handle gpio event from isr
     gpio_evt_queue = xQueueCreate( 10, sizeof( uint32_t ));
     //start gpio task
-    xTaskCreate( task_gpio, "task_gpio", 2048, NULL, 10, NULL);
+    xTaskCreate( task_gpio, "task_gpio", 2048, NULL, 10, NULL );
 }
 
 static TimerHandle_t create_timer( const char *timer_name, const GpioTimer *timer_data, int delay_ms ) {
     return xTimerCreate(
             timer_name,
-            ( delay_ms != 0 ? delay_ms : DEFAULT_DELAY_MS ) / portTICK_PERIOD_MS,
+            pdMS_TO_TICKS( delay_ms != 0 ? delay_ms : DEFAULT_DELAY_MS ),
             0,
             (void *) timer_data,
             timer_gpio_callback );
