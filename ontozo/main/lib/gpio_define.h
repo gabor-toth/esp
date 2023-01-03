@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <hal/gpio_types.h>
+#include <driver/gpio.h>
 
 extern void gpio_init( void *user_context );
 
