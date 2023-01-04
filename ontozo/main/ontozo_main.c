@@ -19,10 +19,10 @@ void app_main( void ) {
     sntp_init_before_wifi();
     rest_init_before_wifi();
 
-    wifi_connect();
+//    wifi_connect();
 
-    rest_init_after_wifi();
-    sntp_init_after_wifi();
+//    rest_init_after_wifi();
+//    sntp_init_after_wifi();
 
     program_logic_init();
     program_start_init();
