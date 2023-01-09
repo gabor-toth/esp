@@ -4,8 +4,6 @@ idf_component_register(
         "lib/gpio_task.c"
         "lib/main_main.c"
         "lib/nvs_main.c"
-#        "lib/rest_main.c"
-#        "lib/rest_server.c"
         "lib/rest_util.c"
         "lib/sntp_main.c"
         "lib/system_info_rest.c"
