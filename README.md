@@ -14,7 +14,7 @@ sudo apt-mark auto libusb-1.0-0 python3 python3-setuptools wget
 cd ~/own/projects
 git clone --recursive https://github.com/espressif/esp-idf.git
 cd esp-idf
-./install.sh esp32
+./install.sh esp32 esp32s2
 ```
 
 LVGL
@@ -82,6 +82,8 @@ copy init.sh, run .sh
 . ./init.sh
 
 idf.py set-target esp32
+# or
+idf.py set-target esp32s2
 idf.py menuconfig
 idf.py -p /dev/ttyUSB0 flash monitor
 ```
