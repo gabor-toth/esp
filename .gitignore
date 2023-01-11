@@ -2,6 +2,7 @@
 .gitignore
 !/ontozo/
 !/hajo/
+!/lvgl-ui/
 !/README.md
 
 
