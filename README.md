@@ -62,6 +62,7 @@ idf.py build
 Upgrade project in CLion
 ------------------------
 
+  * ```echo $PATH```
   * Change IDF_PATH and PATH in CLion
   * File/Reload CMake project
 
@@ -82,8 +83,6 @@ copy init.sh, run .sh
 . ./init.sh
 
 idf.py set-target esp32
-# or
-idf.py set-target esp32s2
 idf.py menuconfig
 idf.py -p /dev/ttyUSB0 flash monitor
 ```
@@ -92,6 +91,17 @@ New project
 -----------
 
 File, Open, CMakeLists.txt
+
+Change target 
+-------------
+
+```
+idf.py set-target esp32s2
+rm -rf cmake-build-debug/
+idf.py fullclean
+```
+
+Reload CMake project in CLion
 
 Git
 ===

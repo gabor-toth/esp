@@ -23,3 +23,8 @@ CS	2
 DC	5
 RST	4
 BCKL	19
+
+setCpuFrequencyMhz(160);
+
+adc_power_off();
+
