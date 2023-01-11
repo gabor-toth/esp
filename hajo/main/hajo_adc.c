@@ -1,130 +1,118 @@
-#include "driver/adc.h"
-#include "esp_adc_cal.h"
 #include "esp_adc/adc_oneshot.h"
+#include "esp_adc/adc_cali.h"
+#include "esp_adc/adc_cali_scheme.h"
 #include "esp_event.h"
 #include "esp_log.h"
 #include "freertos/timers.h"
 #include "hajo_adc.h"
 
-#define DEFAULT_VREF    1100        //Use adc2_vref_to_gpio() to obtain a better estimate
+// config
 
-static esp_adc_cal_characteristics_t *adc_chars;
-#if CONFIG_IDF_TARGET_ESP32
-static const adc_channel_t channel = ADC_CHANNEL_6;     //GPIO34 if ADC1, GPIO14 if ADC2
-static const adc_bits_width_t width = ADC_WIDTH_BIT_12;
-#elif CONFIG_IDF_TARGET_ESP32S2
-static const adc1_channel_t adc_channel1 = ADC1_CHANNEL_0;     // GPIO1
-static const adc1_channel_t adc_channel2 = ADC1_CHANNEL_1;     // GPIO2
-static const adc1_channel_t adc_channel3 = ADC1_CHANNEL_2;     // GPIO3
-static const adc_bits_width_t width = ADC_WIDTH_BIT_13;
-#endif
-static const adc_atten_t adc_attenuation = ADC_ATTEN_DB_0;
-static const adc_unit_t adc_unit = ADC_UNIT_1;
-static int adc_number_of_samples = 64;  // Multisampling, was originally 64
+typedef struct {
+    adc_channel_t channel;
+    const char *name;
+} channel_config_t;
 
+static const channel_config_t channels[] = {
+        {
+                .channel = ADC_CHANNEL_0,
+                .name = "motor",
+        },
+        {
+                .channel = ADC_CHANNEL_1,
+                .name = "munka1",
+        },
+        {
+                .channel = ADC_CHANNEL_2,
+                .name = "munka2",
+        }
+};
+static int channel_count = sizeof( channels ) / sizeof( channel_config_t );
+static int number_of_samples = 16;  // Multisampling, was originally 64
+static int sampling_interval_seconds = 10;
 
-static void check_efuse(void)
-{
-#if CONFIG_IDF_TARGET_ESP32
-    //Check if TP is burned into eFuse
-    if (esp_adc_cal_check_efuse(ESP_ADC_CAL_VAL_EFUSE_TP) == ESP_OK) {
-        printf("eFuse Two Point: Supported\n");
-    } else {
-        printf("eFuse Two Point: NOT supported\n");
-    }
-    //Check Vref is burned into eFuse
-    if (esp_adc_cal_check_efuse(ESP_ADC_CAL_VAL_EFUSE_VREF) == ESP_OK) {
-        printf("eFuse Vref: Supported\n");
-    } else {
-        printf("eFuse Vref: NOT supported\n");
-    }
-#elif CONFIG_IDF_TARGET_ESP32S2
-    if (esp_adc_cal_check_efuse(ESP_ADC_CAL_VAL_EFUSE_TP) == ESP_OK) {
-        printf("eFuse Two Point: Supported\n");
-    } else {
-        printf("Cannot retrieve eFuse Two Point calibration values. Default calibration values will be used.\n");
-    }
-#else
-#error "This example is configured for ESP32/ESP32S2."
-#endif
-}
+// static variables
 
+static adc_cali_handle_t scheme_handle = NULL;
+static adc_oneshot_unit_handle_t unit_handle = NULL;
+static QueueHandle_t timer_event_queue = NULL;
 
-static void print_char_val_type(esp_adc_cal_value_t val_type)
-{
-    if (val_type == ESP_ADC_CAL_VAL_EFUSE_TP) {
-        printf("Characterized using Two Point Value\n");
-    } else if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF) {
-        printf("Characterized using eFuse Vref\n");
-    } else {
-        printf("Characterized using Default Vref\n");
-    }
-}
-
-void adc_read(const char* name, adc1_channel_t channel) {
-//    adc2_vref_to_gpio();
+static void read_one( const channel_config_t *channel ) {
     uint32_t adc_reading = 0;
-    //Multisampling
-    for (int i = 0; i < adc_number_of_samples; i++) {
-        adc_reading += adc1_get_raw((adc1_channel_t)channel);
+    for ( int i = 0; i < number_of_samples; i++ ) {
+        int raw = 0;
+        // TODO ESP_ERROR_CHECK == ESP_ERR_TIMEOUT
+        adc_oneshot_read( unit_handle, channel->channel, &raw );
+        adc_reading += raw;
     }
-    adc_reading /= adc_number_of_samples;
-    //Convert adc_reading to voltage in mV
-    uint32_t voltage = esp_adc_cal_raw_to_voltage(adc_reading, adc_chars);
-    ESP_LOGI("adc","Channel %8s Raw: %4ld\tVoltage: %4ldmV", name, adc_reading, voltage);
-
-    //  esp_err_t adc_oneshot_read(adc_oneshot_unit_handle_t handle, adc_channel_t chan, int *out_raw)
+    adc_reading /= number_of_samples;
+    int voltage;
+    ESP_ERROR_CHECK( adc_cali_raw_to_voltage( scheme_handle, adc_reading, &voltage ));
+    ESP_LOGI( "adc", "Channel %-8s Raw: %4ld Voltage: %4dmV", channel->name, adc_reading, voltage );
 }
 
-static QueueHandle_t adc_timer_event_queue = NULL;
+static void read_all() {
+    for ( int i = 0; i < channel_count; i++ ) {
+        read_one( &channels[ i ] );
+    }
+}
 
-_Noreturn static void adc_timer_event( void *arg ) {
+_Noreturn static void timer_task_main( void *arg ) {
+    (void) arg;
+
     for ( ;; ) {
         uint32_t dummy;
-        if ( xQueueReceive( adc_timer_event_queue, &dummy, portMAX_DELAY )) {
-            adc_read("motor",adc_channel1);
-            adc_read("munka1",adc_channel2);
-            adc_read("munka2",adc_channel3);
+        if ( xQueueReceive( timer_event_queue, &dummy, portMAX_DELAY )) {
+            read_all();
         }
     }
 }
 
-static void adc_timer_callback( TimerHandle_t timer ) {
+static void timer_callback( TimerHandle_t timer ) {
+    (void) timer;
+
     uint32_t dummy = 0;
-    ESP_LOGI("adc","tick");
-    xQueueSend( adc_timer_event_queue, &dummy, 0 );
+    ESP_LOGI( "adc", "tick" );
+    xQueueSend( timer_event_queue, &dummy, 0 );
 }
 
-void adc_timer_start() {
-    adc_timer_event_queue = xQueueCreate( 10, sizeof( uint32_t ));
-    xTaskCreate( adc_timer_event, "adc", 2048, NULL, 5, NULL);
+static void timer_start() {
+    timer_event_queue = xQueueCreate( 10, sizeof( uint32_t ));
+    xTaskCreate( timer_task_main, "adc", 2048, NULL, 5, NULL);
 
     TimerHandle_t timer = xTimerCreate(
             "adc",
-            pdMS_TO_TICKS( 10*1000 ),
+            pdMS_TO_TICKS( sampling_interval_seconds * 1000 ),
             1,
             NULL,
-            adc_timer_callback );
+            timer_callback );
     xTimerStart( timer, portMAX_DELAY );
 
     uint32_t dummy = 0;
-    xQueueSend( adc_timer_event_queue, &dummy, 0 );
+    xQueueSend( timer_event_queue, &dummy, 0 );
 }
 
-void adc_main(void)
-{
-    //Check if Two Point or Vref are burned into eFuse
-    check_efuse();
+void adc_main( void ) {
+    adc_cali_line_fitting_config_t cali_config = {
+            .atten = ADC_ATTEN_DB_0,
+            .bitwidth = ADC_BITWIDTH_13,
+            .unit_id = ADC_UNIT_1,
+    };
+    ESP_ERROR_CHECK( adc_cali_create_scheme_line_fitting( &cali_config, &scheme_handle ));
 
-    //Configure ADC
-    adc1_config_width(width);
-    adc1_config_channel_atten( adc_channel1, adc_attenuation);
-    adc1_config_channel_atten( adc_channel2, adc_attenuation);
-    adc1_config_channel_atten( adc_channel3, adc_attenuation);
+    adc_oneshot_unit_init_cfg_t unit_config = {
+            .ulp_mode = ADC_ULP_MODE_DISABLE,
+            .unit_id = ADC_UNIT_1,
+    };
+    ESP_ERROR_CHECK( adc_oneshot_new_unit( &unit_config, &unit_handle ));
+    const adc_oneshot_chan_cfg_t channel_config = {
+            .atten = ADC_ATTEN_DB_0,
+            .bitwidth = ADC_BITWIDTH_13,
+    };
 
-    //Characterize ADC
-    adc_chars = calloc(1, sizeof(esp_adc_cal_characteristics_t));
-    esp_adc_cal_value_t val_type = esp_adc_cal_characterize( adc_unit, adc_attenuation, width, DEFAULT_VREF, adc_chars);
-    print_char_val_type(val_type);
-    adc_timer_start();
+    for ( int i = 0; i < channel_count; i++ ) {
+        ESP_ERROR_CHECK( adc_oneshot_config_channel( unit_handle, channels[ i ].channel, &channel_config ));
+    }
+
+    timer_start();
 }
