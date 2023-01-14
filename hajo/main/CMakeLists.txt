@@ -10,8 +10,9 @@ idf_component_register(
         "lib/wifi_connect.c"
         "lib/gpio_json.c"
         "hajo_adc.c"
-        "hajo_can.c"
         "hajo_main.c"
+        "n2k_protocol.c"
+        "n2k_sender.c"
         INCLUDE_DIRS
         "."
         "lib"

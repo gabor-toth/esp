@@ -11,23 +11,31 @@
 typedef struct {
     adc_channel_t channel;
     const char *name;
-} channel_config_t;
+    uint8_t instance_id;
+    int value;
+} adc_channel_data_t;
 
-static const channel_config_t channels[] = {
+static adc_channel_data_t channels[] = {
         {
-                .channel = ADC_CHANNEL_0,
+                .channel = ADC_CHANNEL_0, // GPIO_NUM_1
                 .name = "motor",
+                .instance_id = 0,
+                .value = 0,
         },
         {
-                .channel = ADC_CHANNEL_1,
+                .channel = ADC_CHANNEL_1, // GPIO_NUM_2
                 .name = "munka1",
+                .instance_id = 1,
+                .value = 0,
         },
         {
-                .channel = ADC_CHANNEL_2,
+                .channel = ADC_CHANNEL_2, // GPIO_NUM_3
                 .name = "munka2",
+                .instance_id = 2,
+                .value = 0,
         }
 };
-static int channel_count = sizeof( channels ) / sizeof( channel_config_t );
+static int channel_count = sizeof( channels ) / sizeof( adc_channel_data_t );
 static int number_of_samples = 16;  // Multisampling, was originally 64
 static int sampling_interval_seconds = 10;
 
@@ -37,7 +45,7 @@ static adc_cali_handle_t scheme_handle = NULL;
 static adc_oneshot_unit_handle_t unit_handle = NULL;
 static QueueHandle_t timer_event_queue = NULL;
 
-static void read_one( const channel_config_t *channel ) {
+static void read_one( const adc_channel_data_t *channel ) {
     uint32_t adc_reading = 0;
     for ( int i = 0; i < number_of_samples; i++ ) {
         int raw = 0;
@@ -90,6 +98,20 @@ static void timer_start() {
 
     uint32_t dummy = 0;
     xQueueSend( timer_event_queue, &dummy, 0 );
+}
+
+int adc_number_of_channels() {
+    return channel_count;
+}
+
+extern uint32_t adc_get_channel_value( int index, adc_channel_value_t *channel_value ) {
+    if ( index < 0 || index > channel_count ) {
+        return ESP_FAIL;
+    }
+    adc_channel_data_t *channel = &channels[ index ];
+    channel_value->instance = channel->instance_id;
+    channel_value->value = channel->value;
+    return ESP_OK;
 }
 
 void adc_main( void ) {
