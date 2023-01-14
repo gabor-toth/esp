@@ -13,6 +13,18 @@ static QueueHandle_t transmit_event_queue = NULL;
 static n2k_callback receiver_callback = NULL;
 static uint8_t source_id = 0;
 
+static void log_packet( const can_message_t *message, bool out ) {
+    char data[2 * TWAI_FRAME_MAX_DLC + 1];
+    char *dst = data;
+    for ( int i = 0; i < message->len; i++, dst += 2 ) {
+        sprintf( dst, "%02x", message->data[ i ] );
+    }
+    ESP_LOGI( LOG, "%c PGN %06lx src %02x dst %02x prio %02x len %2d data %s",
+              ( out ? '>' : '<' ),
+              message->pgn, message->src, message->dst, message->prio, message->len,
+              data );
+}
+
 static void sendN2kFastPacket( can_message_t *message, twai_message_t *frame ) {
     int index = 0;
     int remainingDataBytes = message->len;
@@ -38,8 +50,9 @@ static void sendN2kFastPacket( can_message_t *message, twai_message_t *frame ) {
                 remainingDataBytes = 0;
             }
         }
-        ESP_LOGI( LOG, "PGN fast %06lx src %02x dst %02x prio %02x len %2d idx %d rem %d",
-                  message->pgn, message->src, message->dst, message->prio, message->len, index, remainingDataBytes );
+        log_packet( message, true );
+//        ESP_LOGI( LOG, "PGN fast %06lx src %02x dst %02x prio %02x len %2d idx %d rem %d",
+//                  message->pgn, message->src, message->dst, message->prio, message->len, index, remainingDataBytes );
         twai_transmit( frame, 10 );
         index++;
     }
@@ -64,29 +77,28 @@ unsigned int getCanIdFromISO11783Bits( unsigned int prio, unsigned int pgn, unsi
     return canId;
 }
 
-static void sendN2kPacket( can_message_t *msg ) {
+static void sendN2kPacket( can_message_t *message ) {
     twai_message_t frame;
     memset( &frame, 0, sizeof( frame ));
 
-    if ( msg->pgn >= ( 1 << 18 )) {
+    if ( message->pgn >= ( 1 << 18 )) {
         // PGNs can't have more than 18 bits, otherwise it overwrites priority bits
-        ESP_LOGE( LOG, "Invalid PGN, too big (0x%lx). Skipping.\n", msg->pgn );
+        ESP_LOGE( LOG, "Invalid PGN, too big (0x%lx). Skipping.\n", message->pgn );
         return;
     }
 
     uint8_t source = source_id; // msg->src
-    frame.identifier = getCanIdFromISO11783Bits( msg->prio, msg->pgn, source, msg->dst );
+    frame.identifier = getCanIdFromISO11783Bits( message->prio, message->pgn, source, message->dst );
 
-    if ( msg->len <= 8 ) {
+    if ( message->len <= 8 ) {
         // 8 or less bytes of data -> PGN fits into a single CAN frame
-        frame.data_length_code = msg->len;
-        memcpy( frame.data, msg->data, msg->len );
-        ESP_LOGI( LOG, "PGN      %06lx src %02x dst %02x prio %02x len %2d data",
-                  msg->pgn, msg->src, msg->dst, msg->prio, msg->len );
+        frame.data_length_code = message->len;
+        memcpy( frame.data, message->data, message->len );
+        log_packet( message, true );
         twai_transmit( &frame, 10 );
     } else {
         // Send PGN as n2k fast packet (spans multiple CAN frames, but CAN ID is still same for each frame)
-        sendN2kFastPacket( msg, &frame );
+        sendN2kFastPacket( message, &frame );
     }
 }
 
@@ -153,21 +165,31 @@ static bool is_standalone_packet( twai_message_t *message, can_message_t *can_me
 }
 
 static void packet_received( const can_message_t *can_message ) {
+    log_packet( can_message, false );
     if ( receiver_callback == NULL) {
         return;
     }
     receiver_callback( can_message );
 }
 
+static void receive_standalone_packet( const twai_message_t *twai_message, can_message_t *can_message ) {
+    can_message->len = twai_message->data_length_code;
+    memcpy( &can_message->data, twai_message->data, twai_message->data_length_code );
+    packet_received( can_message );
+}
+
+static void receive_fast_packet( twai_message_t *message, can_message_t *can_message ) {
+    ESP_LOGW( LOG, "fast packets not yet implemented " );
+}
+
 static void receive_packet( twai_message_t *twai_message ) {
     can_message_t can_message;
+    // is_standalone_packet fills the fields prio, pgn, dst, src
     if ( is_standalone_packet( twai_message, &can_message )) {
-        // received a standalone packet
-        can_message.len = twai_message->data_length_code;
-        memcpy( &can_message.data, twai_message->data, twai_message->data_length_code );
-        packet_received( &can_message );
+        receive_standalone_packet( twai_message, &can_message );
+    } else {
+        receive_fast_packet( twai_message, &can_message );
     }
-    // TODO collect packets
 }
 
 _Noreturn static void receive_task_main( void *arg ) {

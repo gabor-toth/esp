@@ -45,7 +45,7 @@ static adc_cali_handle_t scheme_handle = NULL;
 static adc_oneshot_unit_handle_t unit_handle = NULL;
 static QueueHandle_t timer_event_queue = NULL;
 
-static void read_one( const adc_channel_data_t *channel ) {
+static void read_one( adc_channel_data_t *channel ) {
     uint32_t adc_reading = 0;
     for ( int i = 0; i < number_of_samples; i++ ) {
         int raw = 0;
@@ -56,6 +56,7 @@ static void read_one( const adc_channel_data_t *channel ) {
     adc_reading /= number_of_samples;
     int voltage;
     ESP_ERROR_CHECK( adc_cali_raw_to_voltage( scheme_handle, adc_reading, &voltage ));
+    channel->value = voltage;
     ESP_LOGI( "adc", "Channel %-8s Raw: %4ld Voltage: %4dmV", channel->name, adc_reading, voltage );
 }
 

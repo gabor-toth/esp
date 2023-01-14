@@ -151,7 +151,7 @@ static_assert( sizeof( pgn_fluid_level_t ) == 8, "Size of pgn_fluid_level_t is n
  */
 
 #define PGN_BATTERY_STATUS 0x1F214
-#define PGN_BATTERY_STATUS_INTERVAL 1500
+#define PGN_BATTERY_STATUS_INTERVAL 5000 // 1500
 
 typedef struct __attribute__((packed)) {
     unsigned int instance: 8;
