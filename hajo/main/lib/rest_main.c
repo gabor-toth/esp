@@ -1,3 +1,4 @@
+#if defined(CONFIG_EXAMPLE_CONNECT_WIFI)
 /* HTTP Restful API Server Example
 
    This example code is in the Public Domain (or CC0 licensed, at your option.)
@@ -79,3 +80,4 @@ void rest_init_after_wifi( void ) {
     ESP_ERROR_CHECK( init_fs());
     ESP_ERROR_CHECK( rest_server_start( CONFIG_EXAMPLE_WEB_MOUNT_POINT, rest_register_handlers ));
 }
+#endif

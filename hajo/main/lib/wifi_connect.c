@@ -1,3 +1,4 @@
+#if defined(CONFIG_EXAMPLE_CONNECT_WIFI)
 #include <string.h>
 #include "sdkconfig.h"
 #include "esp_event.h"
@@ -209,3 +210,4 @@ esp_err_t wifi_connect( void ) {
     return ESP_OK;
 }
 
+#endif

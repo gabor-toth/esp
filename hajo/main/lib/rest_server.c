@@ -1,3 +1,4 @@
+#if defined(CONFIG_EXAMPLE_CONNECT_WIFI)
 /* HTTP Restful API Server
 
    This example code is in the Public Domain (or CC0 licensed, at your option.)
@@ -196,3 +197,4 @@ rest_server_start( const char *static_files_base_path,
     err:
     return ESP_FAIL;
 }
+#endif

@@ -1,3 +1,4 @@
+#if defined(CONFIG_EXAMPLE_CONNECT_WIFI)
 #include <string.h>
 #include <time.h>
 #include <stdbool.h>
@@ -101,3 +102,4 @@ void sntp_init_after_wifi() {
     }
     check_if_time_is_set();
 }
+#endif

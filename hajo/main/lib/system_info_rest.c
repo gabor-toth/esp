@@ -1,3 +1,4 @@
+#if defined(CONFIG_EXAMPLE_CONNECT_WIFI)
 #include "rest_server.h"
 #include "rest_util.h"
 #include "freertos/portmacro.h"
@@ -102,3 +103,4 @@ void rest_register_system_info_handler( httpd_handle_t server, rest_server_conte
     };
     httpd_register_uri_handler( server, &system_info_get_uri );
 }
+#endif
