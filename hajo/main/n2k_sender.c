@@ -23,7 +23,7 @@ _Noreturn static void task_main( void *arg ) {
             can_message_t can_message;
             int index = 0;
             for ( index = 0; timer_data->callback( index, &can_message ); index++ ) {
-                ESP_LOGI( LOG, "sending %s/%d", timer_data->name, index );
+//                ESP_LOGI( LOG, "sending %s/%d", timer_data->name, index );
                 nk2_send( &can_message );
             }
             if ( index == 0 ) {

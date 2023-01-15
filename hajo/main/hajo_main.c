@@ -10,6 +10,14 @@
 
 static const char *LOG = "hajo_main";
 
+// defined by pins 26/21
+#define DEVICE_TYPE_GAUGE_DISPLAY 0b11
+#define DEVICE_TYPE_BATTERY_MONITOR 0b10
+#define DEVICE_TYPE_RESERVED_1 0b01
+#define DEVICE_TYPE_RESERVED_0 0b00
+
+static int device_type = 0xff;
+
 static void set_pins() {
     //zero-initialize the config structure.
     gpio_config_t io_conf = {};
@@ -57,7 +65,7 @@ static bool n2k_send_battery_status( int index, can_message_t *message ) {
     if ( index == 0 ) {
         sid++;
     }
-    message->pgn = PGN_BATTERY_STATUS;
+    message->pgn = N2K_PGN_BATTERY_STATUS;
     message->dst = 0;
     message->prio = 0;
     message->src = 0;
@@ -74,14 +82,43 @@ static bool n2k_send_battery_status( int index, can_message_t *message ) {
     return true;
 }
 
+static void determine_device_type() {
+    gpio_config_t io_conf = {};
+
+    io_conf.intr_type = GPIO_INTR_DISABLE;
+    io_conf.mode = GPIO_MODE_INPUT;
+    io_conf.pin_bit_mask = BIT21 | BIT26;
+    io_conf.pull_down_en = false;
+    io_conf.pull_up_en = true;
+    gpio_config( &io_conf );
+
+    device_type = ( gpio_get_level( GPIO_NUM_26 ) << 1 ) |
+                  gpio_get_level( GPIO_NUM_21 );
+    ESP_LOGI( LOG, "device type %d", device_type );
+}
+
 void app_main() {
+    determine_device_type();
+
     ESP_ERROR_CHECK( esp_event_loop_create_default());
 //    main_main();
 //    set_pins();
     nk2_main();
-    adc_main();
 
-    nk2_register_sender( "battery", PGN_BATTERY_STATUS_INTERVAL, n2k_send_battery_status );
+    switch ( device_type ) {
+        case DEVICE_TYPE_GAUGE_DISPLAY:
+            break;
+        case DEVICE_TYPE_BATTERY_MONITOR:
+            adc_main();
+            nk2_register_sender( "battery", N2K_PGN_BATTERY_STATUS_INTERVAL, n2k_send_battery_status );
+            break;
+        default:
+            // TODO fail
+            ESP_LOGE( LOG, "Unhandled device type %c%c",
+                      device_type & 2 ? '1' : '0',
+                      device_type & 1 ? '1' : '0' );
+            break;
+    }
 
 //    esp_sleep_enable_timer_wakeup(1000000);
 //    esp_sleep_enable_ext0_wakeup();
