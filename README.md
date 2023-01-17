@@ -1,6 +1,7 @@
 Links:
   * https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/linux-macos-setup.html#get-started-first-steps
   * https://github.com/espressif/idf-eclipse-plugin/blob/master/README.md#GettingStarted
+  * https://docs.espressif.com/projects/esp-idf/en/v5.0/esp32s2/hw-reference/chip-series-comparison.html
 
 Install
 =======
@@ -20,6 +21,8 @@ cd esp-idf
 LVGL
 ----
 
+ * https://github.com/lvgl/lv_port_esp32
+ 
 ```
 cd esp-idf
 git submodule add https://github.com/lvgl/lvgl.git components/lvgl
@@ -43,7 +46,7 @@ pushd ../../esp-idf
 git pull
 git submodule update --init --recursive
 rm -rf /home/tothg/.espressif/
-./install.sh esp32
+./install.sh esp32 esp32s2
 . ./export.sh
 cd tools
 ./idf_tools.py install cmake
@@ -68,6 +71,10 @@ Upgrade project in CLion
 
 Compile & more
 ==============
+
+```
+. ~/own/projects/esp-idf/export.sh
+```
 
 Find out device
 
