@@ -97,13 +97,18 @@ static void determine_device_type() {
     ESP_LOGI( LOG, "device type %d", device_type );
 }
 
+extern void display_main();
+
 void app_main() {
-    determine_device_type();
+//    determine_device_type();
+    device_type = DEVICE_TYPE_GAUGE_DISPLAY;
 
     ESP_ERROR_CHECK( esp_event_loop_create_default());
 //    main_main();
 //    set_pins();
     nk2_main();
+
+    display_main();
 
     switch ( device_type ) {
         case DEVICE_TYPE_GAUGE_DISPLAY:

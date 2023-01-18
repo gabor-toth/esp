@@ -30,9 +30,7 @@ pushd components/lvgl
 git checkout release/v8.3
 popd
 
-cd ..
-git clone https://github.com/lvgl/lv_port_esp32.git
-mv lv_port_esp32/components/lvgl_esp32_drivers/ esp-idf/components/
+git submodule add https://github.com/lvgl/lvgl_esp32_drivers.git components/lvgl_esp32_drivers
 ```
 
 Upgrade
