@@ -1,3 +1,4 @@
+#include "config.h"
 #include "driver/gpio.h"
 #include "esp_event.h"
 #include "esp_log.h"
@@ -5,14 +6,13 @@
 #include "n2k_png.h"
 #include "n2k_protocol.h"
 #include "n2k_sender.h"
-#include "lib/main_main.h"
-#include "lib/nvs_main.h"
+#include "lib/adc.h"
 
 static const char *LOG = "hajo_main";
 
 // defined by pins 26/21
-#define DEVICE_TYPE_GAUGE_DISPLAY 0b11
-#define DEVICE_TYPE_BATTERY_MONITOR 0b10
+#define DEVICE_TYPE_GAUGE_DISPLAY 0b111
+#define DEVICE_TYPE_BATTERY_MONITOR 0b110
 #define DEVICE_TYPE_RESERVED_1 0b01
 #define DEVICE_TYPE_RESERVED_0 0b00
 
@@ -23,7 +23,7 @@ static void set_pins() {
     gpio_config_t io_conf = {};
 
     io_conf.intr_type = GPIO_INTR_DISABLE;
-    io_conf.mode = GPIO_MODE_INPUT;
+    io_conf.mode = GPIO_MODE_DISABLE;
     io_conf.pin_bit_mask =
             BIT1 | BIT2 | BIT3;
     io_conf.pull_down_en = false;
@@ -82,44 +82,76 @@ static bool n2k_send_battery_status( int index, can_message_t *message ) {
     return true;
 }
 
+static bool n2k_send_fluid_level( int index, can_message_t *message ) {
+    int channel_count = adc_number_of_channels();
+    if ( index >= channel_count ) {
+        return false;
+    }
+    message->pgn = N2K_PGN_FLUID_LEVEL;
+    message->dst = 0;
+    message->prio = 0;
+    message->src = 0;
+    message->len = sizeof( pgn_fluid_level_t );
+    pgn_fluid_level_t *data = (pgn_fluid_level_t *) message->data;
+
+    adc_channel_value_t channel_data;
+    adc_get_channel_value( index, &channel_data );
+    data->capacity = 0; // not available
+    data->instance = channel_data.instance;
+    data->level = channel_data.value;
+    data->reserved = 0;
+    data->type = channel_data.type;
+    return true;
+}
+
 static void determine_device_type() {
     gpio_config_t io_conf = {};
 
     io_conf.intr_type = GPIO_INTR_DISABLE;
     io_conf.mode = GPIO_MODE_INPUT;
-    io_conf.pin_bit_mask = BIT21 | BIT26;
+    io_conf.pin_bit_mask =
+            ( 1 << GPIO_NUM_DEVICE_TYPE_0 ) |
+            ( 1 << GPIO_NUM_DEVICE_TYPE_1 ) |
+            ( 1 << GPIO_NUM_DEVICE_TYPE_2 );
     io_conf.pull_down_en = false;
     io_conf.pull_up_en = true;
     gpio_config( &io_conf );
+    vTaskDelay(pdMS_TO_TICKS( 10 ));
 
-    device_type = ( gpio_get_level( GPIO_NUM_26 ) << 1 ) |
-                  gpio_get_level( GPIO_NUM_21 );
+    device_type = ( gpio_get_level( GPIO_NUM_DEVICE_TYPE_2 ) << 2 ) |
+                  ( gpio_get_level( GPIO_NUM_DEVICE_TYPE_1 ) << 1 ) |
+                  gpio_get_level( GPIO_NUM_DEVICE_TYPE_0 );
     ESP_LOGI( LOG, "device type %d", device_type );
+
+    io_conf.mode = GPIO_MODE_DISABLE;
+    io_conf.pull_down_en = false;
+    io_conf.pull_up_en = false;
+    gpio_config( &io_conf );
 }
 
 extern void display_main();
 
 void app_main() {
-//    determine_device_type();
-    device_type = DEVICE_TYPE_GAUGE_DISPLAY;
+    determine_device_type();
 
+//    ESP_ERROR_CHECK( nvs_flash_init());
     ESP_ERROR_CHECK( esp_event_loop_create_default());
-//    main_main();
-//    set_pins();
-    nk2_main();
-
-    display_main();
+    n2k_main();
 
     switch ( device_type ) {
         case DEVICE_TYPE_GAUGE_DISPLAY:
+            hajo_adc_main( false );
+            nk2_register_sender( "fluids", N2K_PGN_FLUID_LEVEL_INTERVAL, n2k_send_fluid_level );
+            display_main();
             break;
         case DEVICE_TYPE_BATTERY_MONITOR:
-            adc_main();
+            hajo_adc_main( true );
             nk2_register_sender( "battery", N2K_PGN_BATTERY_STATUS_INTERVAL, n2k_send_battery_status );
             break;
         default:
             // TODO fail
-            ESP_LOGE( LOG, "Unhandled device type %c%c",
+            ESP_LOGE( LOG, "Unhandled device type %c%c%c",
+                      device_type & 4 ? '1' : '0',
                       device_type & 2 ? '1' : '0',
                       device_type & 1 ? '1' : '0' );
             break;
