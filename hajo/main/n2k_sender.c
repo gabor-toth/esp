@@ -24,7 +24,7 @@ _Noreturn static void task_main( void *arg ) {
             int index = 0;
             for ( index = 0; timer_data->callback( index, &can_message ); index++ ) {
 //                ESP_LOGI( LOG, "sending %s/%d", timer_data->name, index );
-                nk2_send( &can_message );
+                n2k_send( &can_message );
             }
             if ( index == 0 ) {
                 ESP_LOGI( LOG, "nothing to send for %s", timer_data->name );

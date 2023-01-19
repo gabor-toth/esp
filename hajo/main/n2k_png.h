@@ -1,3 +1,5 @@
+#include <assert.h>
+
 /*
  * Documents:
  *
@@ -80,6 +82,13 @@
 #define N2K_PRIORITY_LEAVE_UNCHANGED 8
 #define N2K_PRIORITY_RESET_TO_DEFAULT 9
 
+#define N2K_TANK_TYPE_FUEL 0
+#define N2K_TANK_TYPE_WATER 1
+#define N2K_TANK_TYPE_GRAY_WATER 2
+#define N2K_TANK_TYPE_LIVE_WELL 3
+#define N2K_TANK_TYPE_OIL 4
+#define N2K_TANK_TYPE_BLACK_WATER 5
+
 /*
  * PNGs
  * (+: implemented, -: not implemented yet)
@@ -137,9 +146,9 @@ static_assert( sizeof( pgn_iso_address_claim_t ) == 8, "Size of pgn_iso_address_
 
 typedef struct __attribute__((packed)) {
     unsigned int instance: 4;
-    unsigned int type: 4;
-    unsigned int level: 16;
-    unsigned int capacity: 32;
+    unsigned int type: 4; // see N2K_TANK_TYPE_*
+    unsigned int level: 16; // unit 0.004%
+    unsigned int capacity: 32; // unit 0.1L
     unsigned int reserved: 8;
 } pgn_fluid_level_t;
 

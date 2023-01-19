@@ -1,7 +1,8 @@
-#include "driver/twai.h"
-#include "esp_event.h"
-#include "esp_log.h"
-#include "freertos/timers.h"
+#include "config.h"
+#include <driver/twai.h>
+#include <esp_event.h>
+#include <esp_log.h>
+#include <freertos/timers.h>
 #include "n2k_protocol.h"
 #include "n2k_png.h"
 #include <string.h>
@@ -112,14 +113,14 @@ void initialize_driver() {
 
     io_conf.intr_type = GPIO_INTR_DISABLE;
     io_conf.mode = GPIO_MODE_OUTPUT;
-    io_conf.pin_bit_mask = BIT6;
+    io_conf.pin_bit_mask = 1 << N2K_GPIO_NUM_STANDBY;
     io_conf.pull_down_en = false;
     io_conf.pull_up_en = false;
     gpio_config( &io_conf );
-    gpio_set_level( GPIO_NUM_6, 0 );
+    gpio_set_level( N2K_GPIO_NUM_STANDBY, 0 );
 
     //Initialize configuration structures using macro initializers
-    twai_general_config_t g_config = TWAI_GENERAL_CONFIG_DEFAULT( GPIO_NUM_4, GPIO_NUM_5, TWAI_MODE_NO_ACK );
+    twai_general_config_t g_config = TWAI_GENERAL_CONFIG_DEFAULT( N2K_GPIO_NUM_TX, N2K_GPIO_NUM_RX, TWAI_MODE_NO_ACK );
     twai_timing_config_t t_config = TWAI_TIMING_CONFIG_250KBITS();
     twai_filter_config_t f_config = TWAI_FILTER_CONFIG_ACCEPT_ALL();
 
@@ -236,15 +237,19 @@ void create_event_task() {
     xTaskCreate( transmit_task_main, "cantx", 3072, NULL, 5, NULL);
 }
 
-void nk2_main() {
+void n2k_main() {
+    ESP_LOGI( LOG, "n2k start" );
     initialize_driver();
     create_event_task();
+    ESP_LOGI( LOG, "n2k started" );
 }
 
-void nk2_send( const can_message_t *message ) {
+void n2k_send( const can_message_t *message ) {
     xQueueSend( transmit_event_queue, message, 0 );
 }
 
-void nk2_register_receiver( n2k_callback receiver ) {
+void n2k_register_receiver( n2k_callback receiver ) {
     receiver_callback = receiver;
 }
+
+static_assert( sizeof( pgn_iso_address_claim_t ) == 8, "Size of pgn_iso_address_claim_t is not correct" );
