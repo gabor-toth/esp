@@ -1,22 +1,18 @@
-
-/**
- * @file main
- *
- */
-
 /*********************
  *      INCLUDES
  *********************/
 
 #define LV_TICK_PERIOD_MS 10
 
-#include <stdlib.h>
-#include "lvgl/lvgl.h"
-#include "lvgl_esp32_drivers/lvgl_helpers.h"
+#include "config.h"
+#include "driver/gpio.h"
+#include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h"
-#include "esp_timer.h"
+#include "lvgl/lvgl.h"
+#include "lvgl_esp32_drivers/lvgl_helpers.h"
+#include <stdlib.h>
 
 /*********************
  *      DEFINES
