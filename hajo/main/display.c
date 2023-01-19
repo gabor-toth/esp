@@ -6,6 +6,7 @@
 
 #include "config.h"
 #include "driver/gpio.h"
+#include "esp_lcd_backlight.h"
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -92,6 +93,7 @@ static lv_obj_t *meter_voltage;
 
 static const lv_font_t *font_large;
 static const lv_font_t *font_normal;
+static disp_backlight_config_t *backlight_handler;
 
 /**********************
  *   GLOBAL FUNCTIONS
@@ -111,7 +113,8 @@ static void guiTask( void *pvParameter ) {
     lv_init();
 
     /* Initialize SPI or I2C bus used by the drivers */
-    lvgl_driver_init();
+    backlight_handler = lvgl_driver_init();
+    disp_backlight_set( backlight_handler, 100 );
 
 //    hal_init();
     lv_color_t *buf1 = heap_caps_malloc( DISP_BUF_SIZE * sizeof( lv_color_t ), MALLOC_CAP_DMA);
