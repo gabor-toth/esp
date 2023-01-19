@@ -4,6 +4,7 @@ idf_component_register(
         "fonts/rubik_12_subpx.c"
         "fonts/rubik_18.c"
         "fonts/rubik_18_subpx.c"
+        "lib/adc.c"
         "lib/gpio_define.c"
         "lib/gpio_task.c"
         "lib/main_main.c"
