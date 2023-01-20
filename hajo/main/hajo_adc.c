@@ -4,27 +4,39 @@
 
 static int battery_rmes = 6350;
 static int battery_rtop = 93400;
-static double battery_offset = -140;
+static double battery_offset = -360;
 //static int battery_rmes = 16900;
 //static int battery_rtop = 316000;
 static double battery_multiplier;
 
-static double fluid_u = 3.3;
-static double fluid_rtop = 634;
+static double fluid_u = 3.28;
+static double fluid_rtop = 680;
+//static double fluid_rtop = 634;
+static double fluid_rmes_min = 2;
+static double fluid_rmes_max = 180;
 
 uint32_t convert_battery_voltage( uint32_t raw_value ) {
     // U=(Rtop+Rmes)/Rmes*Umes
-    return (uint32_t) ( raw_value * battery_multiplier + battery_offset );
+    double value = ( raw_value * battery_multiplier + battery_offset );
+    if ( value < 0.0 ) {
+        value = 0.0;
+    }
+    return (uint32_t) value;
 }
 
 uint32_t convert_fluid_level( uint32_t raw_value ) {
     // Rmes=Rtop/(U/Umes-1)
     // 0% = 2 Ohm, 100% = 180 Ohm
-    double value = fluid_rtop / ( fluid_u / raw_value - 1 );
-    if ( value < 0 ) {
+    double rmes = fluid_rtop / ( fluid_u * 1000 / raw_value - 1 );
+    uint32_t value;
+    if ( rmes <= fluid_rmes_min ) {
         value = 0;
+    } else if ( rmes >= fluid_rmes_max ) {
+        value = 100;
+    } else {
+        value = (uint32_t) (( rmes - fluid_rmes_min ) / ( fluid_rmes_max - fluid_rmes_min ) * 100 );
     }
-    return (uint32_t) value;
+    return value;
 }
 
 void hajo_adc_main( bool is_battery ) {

@@ -3,11 +3,12 @@ Before go live
 
 + calculate displayed values from raw adc
 + change values displayed
++ fluid level hardware
++ fluid level measurement
 
+- own 3.3V regulator
 - shared SPI bus on display
 - turn display off (timer/touch) / on (touch irq)
-- fluid level hardware
-- fluid level measurement
 
 Long term plans
 ===============
