@@ -5,9 +5,9 @@ Before go live
 + change values displayed
 + fluid level hardware
 + fluid level measurement
++ own 3.3V regulator
++ shared SPI bus on display
 
-- own 3.3V regulator
-- shared SPI bus on display
 - turn display off (timer/touch) / on (touch irq)
 
 Long term plans
