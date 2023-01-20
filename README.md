@@ -25,6 +25,7 @@ LVGL
  
 ```
 cd esp-idf
+
 git submodule add https://github.com/lvgl/lvgl.git components/lvgl
 pushd components/lvgl
 git checkout release/v8.3
@@ -70,6 +71,7 @@ Upgrade project in CLion
 Compile & more
 ==============
 
+init.sh does this
 ```
 . ~/own/projects/esp-idf/export.sh
 ```
@@ -82,7 +84,10 @@ crw-rw---- 1 root dialout 188, 0 ápr    5 20:01 /dev/ttyUSB0
 sudo usermod -a -G dialout tothg
 ```
 
-copy init.sh, run .sh
+New project
+-----------
+
+Copy init.sh, run it
 
 ```
 . ./init.sh
@@ -92,10 +97,9 @@ idf.py menuconfig
 idf.py -p /dev/ttyUSB0 flash monitor
 ```
 
-New project
------------
-
-File, Open, CMakeLists.txt
+In CLion
+  * File, Open
+  * CMakeLists.txt
 
 Change target 
 -------------
@@ -110,6 +114,8 @@ Reload CMake project in CLion
 
 Git
 ===
+
+Use different SSL private key
 
 ```
 export GIT_SSH_COMMAND="ssh -i $HOME/.ssh/id_gabtoth -o IdentitiesOnly=yes"
@@ -131,4 +137,12 @@ PATH += /home/tothg/.espressif/tools/xtensa-esp32-elf/esp-2021r2-patch3-8.4.0/xt
 IDF_PATH = /home/tothg/own/projects/esp-idf
 ```
 
+Hardware
+========
+
+Display
+-------
+
+  * https://electropeak.com/learn/interfacing-2-8-inch-tft-lcd-touch-screen-with-esp32/
+  * http://www.lcdwiki.com/2.8inch_SPI_Module_ILI9341_SKU:MSP2807
 

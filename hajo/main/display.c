@@ -198,7 +198,10 @@ static void init_theme() {
 static void create_tabs( void ) {
     // https://docs.lvgl.io/8.0/widgets/extra/tabview.html
     lv_obj_t *tabView = lv_tabview_create( lv_scr_act(), LV_DIR_TOP, tab_height );
-//    lv_tabview_set_act(tabView, 0, LV_ANIM_OFF);
+    lv_tabview_options_t tab_options = {
+            .dont_animate = true
+    };
+    lv_tabview_set_options( tabView, tab_options );
 
     lv_obj_t *tab1 = lv_tabview_add_tab( tabView, "Víz" );
     lv_obj_t *tab2 = lv_tabview_add_tab( tabView, "Üzemanyag" );

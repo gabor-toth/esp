@@ -18,6 +18,7 @@ typedef struct {
     uint8_t instance_type;
     adc_value_converter converter;
     int raw_value;
+    uint32_t converted_value;
 } adc_channel_data_t;
 
 static adc_channel_data_t channels[MAX_CHANNELS];
@@ -43,7 +44,15 @@ static void read_one( adc_channel_data_t *channel ) {
     int voltage;
     ESP_ERROR_CHECK( adc_cali_raw_to_voltage( scheme_handle, adc_reading, &voltage ));
     channel->raw_value = voltage;
-    ESP_LOGI( LOG, "Channel %d %-8s Raw: %4ld Voltage: %4dmV", channel->channel, channel->name, adc_reading, voltage );
+    if ( channel->converter ) {
+        channel->converted_value = channel->converter( channel->raw_value );
+    }
+    ESP_LOGI( LOG, "Channel %d %-8s Raw: %4ld Voltage: %4dmV Display: %5ld",
+              channel->channel,
+              channel->name,
+              adc_reading,
+              voltage,
+              channel->converted_value );
 }
 
 static void read_all() {
@@ -98,7 +107,9 @@ extern esp_err_t adc_get_channel_value( int index, adc_channel_value_t *channel_
     adc_channel_data_t *channel = &channels[ index ];
     channel_value->instance = channel->instance_id;
     channel_value->type = channel->instance_type;
-    channel_value->value = channel->converter != NULL ? channel->converter( channel->raw_value ) : channel->raw_value;
+    channel_value->value = channel->converter != NULL
+                           ? channel->converted_value // channel->converter( channel->raw_value )
+                           : channel->raw_value;
     return ESP_OK;
 }
 
