@@ -12,8 +12,10 @@ static const char *LOG = "can";
 static QueueHandle_t receive_event_queue = NULL;
 static QueueHandle_t transmit_event_queue = NULL;
 static n2k_callback receiver_callback = NULL;
+static n2k_callback receiver_sender_loopback = NULL;
 static uint8_t source_id = 0;
 static int receive_timeout_secs = 30;
+static bool log_message_header = false;
 
 static void log_packet( const can_message_t *message, bool out ) {
     char data[2 * TWAI_FRAME_MAX_DLC + 1];
@@ -77,6 +79,13 @@ unsigned int getCanIdFromISO11783Bits( unsigned int prio, unsigned int pgn, unsi
     }
     canId |= prio << 26;
 
+    if ( log_message_header ) {
+        ESP_LOGI( LOG, "getCanIdFromISO11783Bits(%08x,%02x,%05x,%02x,%02x)", canId,
+                  prio,
+                  pgn,
+                  src,
+                  dst );
+    }
     return canId;
 }
 
@@ -90,8 +99,13 @@ static void sendN2kPacket( can_message_t *message ) {
         return;
     }
 
+    if ( receiver_sender_loopback != NULL) {
+        receiver_sender_loopback( message );
+    }
+
     uint8_t source = source_id; // msg->src
     frame.identifier = getCanIdFromISO11783Bits( message->prio, message->pgn, source, message->dst );
+    frame.extd = true;
 
     if ( message->len <= 8 ) {
         // 8 or less bytes of data -> PGN fits into a single CAN frame
@@ -167,14 +181,28 @@ static bool is_standalone_packet( twai_message_t *message, can_message_t *can_me
                               &can_message->pgn,
                               &can_message->src,
                               &can_message->dst );
-    if ( can_message->pgn <= 0xffff ) {
+    uint32_t pgn = can_message->pgn;
+    if ( log_message_header ) {
+        ESP_LOGI( LOG, "getISO11783BitsFromCanId(%08lx,%02x,%05lx,%02x,%02x)", message->identifier,
+                  can_message->prio,
+                  pgn,
+                  can_message->src,
+                  can_message->dst );
+    }
+    if ( pgn <= 0XFFFF ) {
         return true;
     }
-    if ( can_message->pgn < 0x1F000 || can_message->pgn >= 0x1FF00 ) {
+    if ( pgn < 0x1F000 || pgn >= 0x1FF00 ) {
         return false;
     }
     // TODO PDU2 (non-addressed) mixed single/fast packet PGN range 0x1F000 to 0x1FEFF (126976 - 130815)
-    return false;
+    switch ( pgn ) {
+        case N2K_PGN_FLUID_LEVEL: // 0x1F211
+        case N2K_PGN_BATTERY_STATUS: // 0x1F214
+            return true;
+        default:
+            return false;
+    }
 }
 
 static void packet_received( const can_message_t *can_message ) {
@@ -250,6 +278,10 @@ void n2k_send( const can_message_t *message ) {
 
 void n2k_register_receiver( n2k_callback receiver ) {
     receiver_callback = receiver;
+}
+
+void n2k_register_sender_loopback( n2k_callback receiver ) {
+    receiver_sender_loopback = receiver;
 }
 
 static_assert( sizeof( pgn_iso_address_claim_t ) == 8, "Size of pgn_iso_address_claim_t is not correct" );
