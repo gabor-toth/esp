@@ -19,7 +19,6 @@ typedef struct {
     uint8_t data[FASTPACKET_MAX_SIZE];
 } can_message_t;
 
-// receiver has to free the memory
 typedef void (*n2k_callback)( const can_message_t *message );
 
 extern void n2k_main();
@@ -28,5 +27,6 @@ extern void n2k_send( const can_message_t *message );
 
 extern void n2k_register_receiver( n2k_callback receiver );
 
+extern void n2k_register_sender_loopback( n2k_callback receiver );
 
 #endif //HAJO_N2K_PROTOCOL_H

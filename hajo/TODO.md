@@ -2,8 +2,8 @@ Before go live
 ==============
 
 + calculate displayed values from raw adc
++ change values displayed
 
-- change values displayed
 - shared SPI bus on display
 - turn display off (timer/touch) / on (touch irq)
 - fluid level hardware
@@ -18,7 +18,7 @@ Long term plans
   adc_power_off();
   ```
 - data logger to SD card
-- configuration via ISO-11... commands
+- configuration via ISO-11783 commands
 - measure declination
 - configuration on display
     - dimmer

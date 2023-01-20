@@ -5,8 +5,10 @@
 #define LV_TICK_PERIOD_MS 10
 
 #include "config.h"
+#include "display.h"
 #include "driver/gpio.h"
 #include "esp_lcd_backlight.h"
+#include "esp_log.h"
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -38,13 +40,12 @@ typedef struct {
 typedef struct {
     arc_data_t part[3];
     int count;
+    int32_t current_value;
 } arcs_data_t;
 
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-
-static void hal_init( void );
 
 static lv_obj_t *create_water_meter( lv_obj_t *parent );
 
@@ -52,7 +53,7 @@ static lv_obj_t *create_fuel_meter( lv_obj_t *parent );
 
 static lv_obj_t *create_voltage_meter( lv_obj_t *parent );
 
-static void meter_animation_callback( void *var, int32_t value );
+static void meter_animation_callback( arcs_data_t *arcs_data, int32_t value );
 
 static void start_animation();
 
@@ -69,6 +70,8 @@ static void set_values();
 /**********************
  *  STATIC VARIABLES
  **********************/
+
+static const char *LOG = "display";
 
 /* Creates a semaphore to handle concurrent call to lvgl stuff
  * If you wish to call *any* lvgl function from other threads/tasks
@@ -116,7 +119,6 @@ static void guiTask( void *pvParameter ) {
     backlight_handler = lvgl_driver_init();
     disp_backlight_set( backlight_handler, 100 );
 
-//    hal_init();
     lv_color_t *buf1 = heap_caps_malloc( DISP_BUF_SIZE * sizeof( lv_color_t ), MALLOC_CAP_DMA);
     assert( buf1 != NULL );
     lv_color_t *buf2 = heap_caps_malloc( DISP_BUF_SIZE * sizeof( lv_color_t ), MALLOC_CAP_DMA);
@@ -151,7 +153,7 @@ static void guiTask( void *pvParameter ) {
 
     init_theme();
     create_tabs();
-    set_values();
+//    set_values();
 //    start_animation();
 
     while ( 1 ) {
@@ -164,12 +166,6 @@ static void guiTask( void *pvParameter ) {
             xSemaphoreGive( xGuiSemaphore );
         }
     }
-}
-
-/**
- * Initialize the Hardware Abstraction Layer (HAL) for the LVGL graphics library
- */
-static void hal_init( void ) {
 }
 
 static void init_theme() {
@@ -232,8 +228,7 @@ static lv_obj_t *create_meter_box( lv_obj_t *parent ) {
     return meter;
 }
 
-static void meter_animation_callback( void *var, int32_t value ) {
-    arcs_data_t *arcs_data = var;
+static void meter_animation_callback( arcs_data_t *arcs_data, int32_t value ) {
     for ( int i = 0; i < arcs_data->count; i++ ) {
         arc_data_t *arc = &arcs_data->part[ i ];
         if ( value <= arc->min_value ) {
@@ -244,6 +239,7 @@ static void meter_animation_callback( void *var, int32_t value ) {
             lv_meter_set_indicator_end_value( arc->parent, arc->obj, value );
         }
     }
+    arcs_data->current_value = value;
 //    lv_obj_t * label = lv_obj_get_child(meter3, 0);
 //    lv_label_set_text_fmt(label, "%"LV_PRId32, v);
 }
@@ -429,7 +425,7 @@ static void start_animation() {
     lv_anim_init( &a );
     lv_anim_set_values( &a, 0, 100 );
     lv_anim_set_repeat_count( &a, LV_ANIM_REPEAT_INFINITE );
-    lv_anim_set_exec_cb( &a, meter_animation_callback );
+    lv_anim_set_exec_cb( &a, (lv_anim_exec_xcb_t) meter_animation_callback );
     lv_anim_set_var( &a, &arcs_water[ 0 ] );
     lv_anim_set_time( &a, 1600 );
     lv_anim_set_playback_time( &a, 400 );
@@ -438,7 +434,7 @@ static void start_animation() {
     lv_anim_init( &a );
     lv_anim_set_values( &a, 0, 100 );
     lv_anim_set_repeat_count( &a, LV_ANIM_REPEAT_INFINITE );
-    lv_anim_set_exec_cb( &a, meter_animation_callback );
+    lv_anim_set_exec_cb( &a, (lv_anim_exec_xcb_t) meter_animation_callback );
     lv_anim_set_var( &a, &arcs_fuel[ 0 ] );
     lv_anim_set_time( &a, 1600 );
     lv_anim_set_playback_time( &a, 400 );
@@ -447,7 +443,7 @@ static void start_animation() {
     lv_anim_init( &a );
     lv_anim_set_values( &a, 100, 150 );
     lv_anim_set_repeat_count( &a, LV_ANIM_REPEAT_INFINITE );
-    lv_anim_set_exec_cb( &a, meter_animation_callback );
+    lv_anim_set_exec_cb( &a, (lv_anim_exec_xcb_t) meter_animation_callback );
     lv_anim_set_var( &a, &arcs_voltage[ 1 ] );
     lv_anim_set_time( &a, 1600 );
     lv_anim_set_playback_time( &a, 400 );
@@ -464,4 +460,36 @@ static void set_values() {
     meter_animation_callback( &arcs_voltage[ 0 ], 108 );
     meter_animation_callback( &arcs_voltage[ 1 ], 127 );
     meter_animation_callback( &arcs_voltage[ 2 ], 142 );
+}
+
+void display_set_value( display_type_t type, int instance, int value ) {
+    arcs_data_t *arcs;
+    int arcs_count;
+    switch ( type ) {
+        case FUEL:
+            arcs = arcs_fuel;
+            arcs_count = sizeof( arcs_fuel ) / sizeof( arcs_data_t );
+            break;
+        case VOLTAGE:
+            arcs = arcs_voltage;
+            arcs_count = sizeof( arcs_voltage ) / sizeof( arcs_data_t );
+            break;
+        case WATER:
+            arcs = arcs_water;
+            arcs_count = sizeof( arcs_water ) / sizeof( arcs_data_t );
+            break;
+        default:
+            ESP_LOGE( LOG, "Unhandled type %d", type );
+            return;
+    }
+    if ( instance < 0 || instance >= arcs_count ) {
+        ESP_LOGE( LOG, "Instance %d/%d is out of range", type, instance );
+        return;
+    }
+//    if ( value != arcs[ instance ].current_value ) {
+    if ( pdTRUE == xSemaphoreTake( xGuiSemaphore, portMAX_DELAY )) {
+        meter_animation_callback( arcs + instance, value );
+        xSemaphoreGive( xGuiSemaphore );
+    }
+//    }
 }

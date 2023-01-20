@@ -1,4 +1,5 @@
 #include "config.h"
+#include "display.h"
 #include "driver/gpio.h"
 #include "esp_event.h"
 #include "esp_log.h"
@@ -104,6 +105,31 @@ static bool n2k_send_fluid_level( int index, can_message_t *message ) {
     return true;
 }
 
+static void process_incoming_pgn_fluid_level( const can_message_t *message ) {
+    pgn_fluid_level_t *data = (pgn_fluid_level_t *) message->data;
+    ESP_LOGI( LOG, "packet fluid level %d/%d = %d", data->type, data->instance, data->level );
+    if ( data->type == N2K_TANK_TYPE_FUEL ) {
+        display_set_value( FUEL, data->instance, data->level );
+    } else if ( data->type == N2K_TANK_TYPE_WATER ) {
+        display_set_value( WATER, data->instance, data->level );
+    }
+}
+
+static void process_incoming_pgn_battery_status( const can_message_t *message ) {
+    pgn_battery_status_t *data = (pgn_battery_status_t *) message->data;
+    ESP_LOGI( LOG, "packet battery status %d = %d", data->instance, data->voltage );
+    display_set_value( VOLTAGE, data->instance, data->voltage / 100 );
+}
+
+static void process_incoming_pgn( const can_message_t *message ) {
+    ESP_LOGI( LOG, "packet pgn %5lx", message->pgn );
+    if ( message->pgn == N2K_PGN_FLUID_LEVEL ) {
+        process_incoming_pgn_fluid_level( message );
+    } else if ( message->pgn == N2K_PGN_BATTERY_STATUS ) {
+        process_incoming_pgn_battery_status( message );
+    }
+}
+
 static void determine_device_type() {
     gpio_config_t io_conf = {};
 
@@ -129,8 +155,6 @@ static void determine_device_type() {
     gpio_config( &io_conf );
 }
 
-extern void display_main();
-
 void app_main() {
     determine_device_type();
 
@@ -143,6 +167,8 @@ void app_main() {
             hajo_adc_main( false );
             nk2_register_sender( "fluids", N2K_PGN_FLUID_LEVEL_INTERVAL, n2k_send_fluid_level );
             display_main();
+            n2k_register_receiver( process_incoming_pgn );
+            n2k_register_sender_loopback( process_incoming_pgn );
             break;
         case DEVICE_TYPE_BATTERY_MONITOR:
             hajo_adc_main( true );

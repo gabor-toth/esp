@@ -20,7 +20,11 @@ uint32_t convert_battery_voltage( uint32_t raw_value ) {
 uint32_t convert_fluid_level( uint32_t raw_value ) {
     // Rmes=Rtop/(U/Umes-1)
     // 0% = 2 Ohm, 100% = 180 Ohm
-    return (uint32_t) ( fluid_rtop / ( fluid_u / raw_value - 1 ));
+    double value = fluid_rtop / ( fluid_u / raw_value - 1 );
+    if ( value < 0 ) {
+        value = 0;
+    }
+    return (uint32_t) value;
 }
 
 void hajo_adc_main( bool is_battery ) {
@@ -31,8 +35,8 @@ void hajo_adc_main( bool is_battery ) {
         adc_add_channel( 2, "munka2", 2, 0, convert_battery_voltage );
     } else {
         adc_add_channel( 4, "uzemanyag", 0, N2K_TANK_TYPE_FUEL, convert_fluid_level );
-        adc_add_channel( 5, "viz bal", 1, N2K_TANK_TYPE_WATER, convert_fluid_level );
-        adc_add_channel( 6, "viz jobb", 2, N2K_TANK_TYPE_WATER, convert_fluid_level );
+        adc_add_channel( 5, "viz bal", 0, N2K_TANK_TYPE_WATER, convert_fluid_level );
+        adc_add_channel( 6, "viz jobb", 1, N2K_TANK_TYPE_WATER, convert_fluid_level );
     }
     adc_main();
 }
