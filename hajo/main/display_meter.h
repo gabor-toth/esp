@@ -1,7 +1,5 @@
-#ifndef HAJO_DISPLAY_H
-#define HAJO_DISPLAY_H
-
-extern void display_main();
+#ifndef HAJO_DISPLAY_METER_H
+#define HAJO_DISPLAY_METER_H
 
 typedef enum {
     FUEL,
@@ -9,6 +7,8 @@ typedef enum {
     WATER
 } display_type_t;
 
+extern void display_meter_main();
+
 extern void display_set_value( display_type_t type, int instance, int value );
 
-#endif //HAJO_DISPLAY_H
+#endif //HAJO_DISPLAY_METER_H

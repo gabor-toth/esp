@@ -1,5 +1,6 @@
 #include "config.h"
-#include "display.h"
+#include "display_main.h"
+#include "display_meter.h"
 #include "driver/gpio.h"
 #include "esp_event.h"
 #include "esp_log.h"
