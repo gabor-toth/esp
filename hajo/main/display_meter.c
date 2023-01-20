@@ -57,7 +57,7 @@ static void set_values();
  *  STATIC VARIABLES
  **********************/
 
-static const char *LOG = "display";
+static const char *LOG = "meter";
 
 //LV_FONT_DECLARE( rubik_12 )
 LV_FONT_DECLARE( rubik_12_subpx )

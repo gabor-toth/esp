@@ -7,8 +7,7 @@ Before go live
 + fluid level measurement
 + own 3.3V regulator
 + shared SPI bus on display
-
-- turn display off (timer/touch) / on (touch irq)
++ turn display off (timer/touch) / on (touch irq)
 
 Long term plans
 ===============

@@ -1,10 +1,12 @@
 #include "display_main.h"
 #include "display_meter.h"
 #include "esp_lcd_backlight.h"
+#include "esp_log.h"
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #include "freertos/task.h"
+#include "freertos/timers.h"
 #include "lvgl_esp32_drivers/lvgl_helpers.h"
 #include <stdlib.h>
 
@@ -22,12 +24,21 @@ static void guiTask( void *pvParameter );
 
 static void lv_tick_task( void *arg );
 
+static void backlight_callback( TimerHandle_t timer );
+
 /**********************
  *  STATIC VARIABLES
  **********************/
 
+static const char *LOG = "display";
+
 static SemaphoreHandle_t xGuiSemaphore;
 static disp_backlight_config_t *backlight_handler;
+static int backlight_off_interval = 30;
+static TimerHandle_t backlight_timer;
+static bool is_display_on;
+static lv_indev_t *indev;
+static lv_indev_state_t indev_previous_state;
 
 /**********************
  *   GLOBAL FUNCTIONS
@@ -38,6 +49,13 @@ void display_main() {
      * Otherwise there can be problem such as memory corruption and so on.
      * NOTE: When not using Wi-Fi nor Bluetooth you can pin the guiTask to core 0 */
     xTaskCreatePinnedToCore( guiTask, "gui", 4096 * 2, NULL, 0, NULL, 0 );
+
+    backlight_timer = xTimerCreate(
+            "backlight",
+            pdMS_TO_TICKS( backlight_off_interval * 1000 ),
+            0,
+            NULL,
+            backlight_callback );
 }
 
 bool display_start_task() {
@@ -52,6 +70,35 @@ void display_end_task() {
  *   STATIC FUNCTIONS
  **********************/
 
+static void backlight_on() {
+    disp_backlight_set( backlight_handler, 100 );
+    is_display_on = true;
+    xTimerStart( backlight_timer, portMAX_DELAY );
+    ESP_LOGI( LOG, "backlight_on" );
+}
+
+static void backlight_off() {
+    disp_backlight_set( backlight_handler, 0 );
+    is_display_on = false;
+    xTimerStop( backlight_timer, portMAX_DELAY );
+    ESP_LOGI( LOG, "backlight_off" );
+}
+
+static void indev_read( lv_indev_drv_t *drv, lv_indev_data_t *data ) {
+    touch_driver_read( drv, data );
+
+//    ESP_LOGI( LOG, "indev_read state %d pn %d", indev->proc.state, is_display_on );
+    lv_indev_state_t current_state = indev->proc.state;
+    if ( indev_previous_state != current_state ) {
+        if ( current_state == LV_INDEV_STATE_PRESSED && !is_display_on ) {
+            backlight_on();
+        } else if ( current_state == LV_INDEV_STATE_RELEASED && is_display_on ) {
+            xTimerReset( backlight_timer, portMAX_DELAY );
+        }
+        indev_previous_state = current_state;
+    }
+}
+
 static void guiTask( void *pvParameter ) {
     xGuiSemaphore = xSemaphoreCreateMutex();
 
@@ -60,7 +107,7 @@ static void guiTask( void *pvParameter ) {
 
     /* Initialize SPI or I2C bus used by the drivers */
     backlight_handler = lvgl_driver_init();
-    disp_backlight_set( backlight_handler, 100 );
+    backlight_on();
 
     lv_color_t *buf1 = heap_caps_malloc( DISP_BUF_SIZE * sizeof( lv_color_t ), MALLOC_CAP_DMA);
     assert( buf1 != NULL );
@@ -90,9 +137,9 @@ static void guiTask( void *pvParameter ) {
 
     lv_indev_drv_t indev_drv;
     lv_indev_drv_init( &indev_drv );
-    indev_drv.read_cb = touch_driver_read;
+    indev_drv.read_cb = indev_read;
     indev_drv.type = LV_INDEV_TYPE_POINTER;
-    lv_indev_drv_register( &indev_drv );
+    indev = lv_indev_drv_register( &indev_drv );
 
     display_meter_main();
 
@@ -113,3 +160,10 @@ static void lv_tick_task( void *arg ) {
 
     lv_tick_inc( LV_TICK_PERIOD_MS );
 }
+
+static void backlight_callback( TimerHandle_t timer ) {
+    (void) timer;
+
+    backlight_off();
+}
+
