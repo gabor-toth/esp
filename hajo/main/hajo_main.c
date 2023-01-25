@@ -4,6 +4,7 @@
 #include "driver/gpio.h"
 #include "esp_event.h"
 #include "esp_log.h"
+#include "esp_pm.h"
 #include "hajo_adc.h"
 #include "n2k_png.h"
 #include "n2k_protocol.h"
@@ -159,7 +160,16 @@ static void determine_device_type() {
 void app_main() {
     determine_device_type();
 
-//    ESP_ERROR_CHECK( nvs_flash_init());
+    esp_pm_config_esp32s2_t pm_config = {
+            .min_freq_mhz = 40,
+            .max_freq_mhz = 80,
+            .light_sleep_enable = false
+    };
+
+    ESP_ERROR_CHECK( esp_pm_configure( &pm_config ));
+    ESP_ERROR_CHECK( esp_pm_get_configuration( &pm_config ));
+    ESP_LOGI( LOG, "Clock min: %d max: %d", pm_config.min_freq_mhz, pm_config.max_freq_mhz );
+
     ESP_ERROR_CHECK( esp_event_loop_create_default());
     n2k_main();
 
@@ -183,9 +193,4 @@ void app_main() {
                       device_type & 1 ? '1' : '0' );
             break;
     }
-
-//    esp_sleep_enable_timer_wakeup(1000000);
-//    esp_sleep_enable_ext0_wakeup();
-//    esp_sleep_enable_gpio_wakeup();
-//    esp_light_sleep_start();
 }

@@ -283,5 +283,3 @@ void n2k_register_receiver( n2k_callback receiver ) {
 void n2k_register_sender_loopback( n2k_callback receiver ) {
     receiver_sender_loopback = receiver;
 }
-
-static_assert( sizeof( pgn_iso_address_claim_t ) == 8, "Size of pgn_iso_address_claim_t is not correct" );

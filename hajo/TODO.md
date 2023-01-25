@@ -9,6 +9,10 @@ Before go live
 + shared SPI bus on display
 + turn display off (timer/touch) / on (touch irq)
 
+- fluid level power source
+- adc read on timer only
+- schematic
+
 Long term plans
 ===============
 
