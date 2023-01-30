@@ -14,7 +14,7 @@ typedef struct {
     uint8_t type;
 } adc_channel_value_t;
 
-typedef uint32_t (*adc_value_converter)( uint32_t raw_value );
+typedef void (*adc_value_converter)( uint32_t raw_value, uint32_t *display_value, uint32_t *correction );
 
 extern esp_err_t adc_get_channel_value( int index, adc_channel_value_t *channel_value );
 

@@ -4,27 +4,34 @@
 
 static int battery_rmes = 6350;
 static int battery_rtop = 93400;
-static double battery_offset = -360;
+static int battery_offset = 92;
 //static int battery_rmes = 16900;
 //static int battery_rtop = 316000;
 static double battery_multiplier;
 
-static double fluid_u = 3.28;
+static double fluid_u = 3.32;
 static double fluid_rtop = 680;
 //static double fluid_rtop = 634;
 static double fluid_rmes_min = 2;
 static double fluid_rmes_max = 180;
 
-uint32_t convert_battery_voltage( uint32_t raw_value ) {
+void convert_battery_voltage( uint32_t raw_value, uint32_t *display_value, uint32_t *correction ) {
     // U=(Rtop+Rmes)/Rmes*Umes
-    double value = ( raw_value * battery_multiplier + battery_offset );
+    *correction = battery_offset;
+    double value = raw_value * battery_multiplier;
+    if ( raw_value <= 20 ) {
+        value = 0.0;
+        *correction = 0;
+    } else {
+        value += battery_offset;
+    }
     if ( value < 0.0 ) {
         value = 0.0;
     }
-    return (uint32_t) value;
+    *display_value = (uint32_t) value;
 }
 
-uint32_t convert_fluid_level( uint32_t raw_value ) {
+void convert_fluid_level( uint32_t raw_value, uint32_t *display_value, uint32_t *correction ) {
     // Rmes=Rtop/(U/Umes-1)
     // 0% = 2 Ohm, 100% = 180 Ohm
     double rmes = fluid_rtop / ( fluid_u * 1000 / raw_value - 1 );
@@ -36,7 +43,8 @@ uint32_t convert_fluid_level( uint32_t raw_value ) {
     } else {
         value = (uint32_t) (( rmes - fluid_rmes_min ) / ( fluid_rmes_max - fluid_rmes_min ) * 100 );
     }
-    return value;
+    *display_value = value;
+    *correction = 0;
 }
 
 void hajo_adc_main( bool is_battery ) {

@@ -44,15 +44,17 @@ static void read_one( adc_channel_data_t *channel ) {
     int voltage;
     ESP_ERROR_CHECK( adc_cali_raw_to_voltage( scheme_handle, adc_reading, &voltage ));
     channel->raw_value = voltage;
+    uint32_t correction = 0;
     if ( channel->converter ) {
-        channel->converted_value = channel->converter( channel->raw_value );
+        channel->converter( channel->raw_value, &channel->converted_value, &correction );
     }
-    ESP_LOGI( LOG, "Channel %d %-10s Raw: %4ld Voltage: %4dmV Display: %5ld",
+    ESP_LOGI( LOG, "Channel %d %-10s Raw: %4ld Voltage: %4dmV Display: %5ld (%ld)",
               channel->channel,
               channel->name,
               adc_reading,
               voltage,
-              channel->converted_value );
+              channel->converted_value,
+              correction );
 }
 
 static void read_all() {
