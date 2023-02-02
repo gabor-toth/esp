@@ -11,7 +11,10 @@ Before go live
 
 - fluid level power source
 - adc read on timer only
-- schematic
+- schematics
+- round up/down when displaying data
+- can transceiver standby?
+- 160MHz for drawing display
 
 Long term plans
 ===============
@@ -30,7 +33,3 @@ Long term plans
 
 Hardware
 ========
-
-R 120
-C 10uF +-
-jumper

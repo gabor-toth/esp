@@ -2,9 +2,9 @@
 #include "n2k_png.h"
 #include "lib/adc.h"
 
-static int battery_rmes = 6350;
-static int battery_rtop = 93400;
-static int battery_offset = 92;
+static int battery_rmes = 16900;
+static int battery_rtop = 316000;
+static int battery_offset = 150;
 //static int battery_rmes = 16900;
 //static int battery_rtop = 316000;
 static double battery_multiplier;

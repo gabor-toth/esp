@@ -34,6 +34,17 @@ popd
 git submodule add https://github.com/lvgl/lvgl_esp32_drivers.git components/lvgl_esp32_drivers
 ```
 
+NMEA2000
+--------
+
+In menuconfig check "Enable C++ extension" before adding the component
+
+```
+mkdir -p components
+cd components
+git submodule add https://github.com/ttlappalainen/NMEA2000
+```
+
 Upgrade
 =======
 
