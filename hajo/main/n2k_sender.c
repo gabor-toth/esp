@@ -42,7 +42,7 @@ static void timer_callback( TimerHandle_t timer ) {
 void nk2_register_sender( const char *name, int interval_ms, n2k_sender_callback callback ) {
     if ( timer_event_queue == NULL) {
         timer_event_queue = xQueueCreate( 10, sizeof( callback_data_t * ));
-        xTaskCreate( task_main, LOG, 2048, NULL, 10, NULL);
+        xTaskCreate( task_main, LOG, 3072, NULL, 10, NULL);
     }
 
     callback_data_t *timer_data = malloc( sizeof( callback_data_t ));

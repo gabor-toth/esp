@@ -9,8 +9,6 @@
 
 static const char *LOG = "can";
 
-static QueueHandle_t receive_event_queue = NULL;
-static QueueHandle_t transmit_event_queue = NULL;
 static n2k_callback receiver_callback = NULL;
 static n2k_callback receiver_sender_loopback = NULL;
 static uint8_t source_id = 0;
@@ -29,7 +27,7 @@ static void log_packet( const can_message_t *message, bool out ) {
               data );
 }
 
-static void sendN2kFastPacket( can_message_t *message, twai_message_t *frame ) {
+static void sendN2kFastPacket( const can_message_t *message, twai_message_t *frame ) {
     int index = 0;
     int remainingDataBytes = message->len;
     while ( remainingDataBytes > 0 ) {
@@ -55,6 +53,7 @@ static void sendN2kFastPacket( can_message_t *message, twai_message_t *frame ) {
             }
         }
         log_packet( message, true );
+        gpio_set_level( N2K_GPIO_NUM_STANDBY, 0 );
         esp_err_t result = twai_transmit( frame, 10 );
         if ( ESP_OK != result ) {
             ESP_LOGW( LOG, "twai_transmit resulted in %d", result );
@@ -89,7 +88,7 @@ unsigned int getCanIdFromISO11783Bits( unsigned int prio, unsigned int pgn, unsi
     return canId;
 }
 
-static void sendN2kPacket( can_message_t *message ) {
+static void sendN2kPacket( const can_message_t *message ) {
     twai_message_t frame;
     memset( &frame, 0, sizeof( frame ));
 
@@ -108,7 +107,7 @@ static void sendN2kPacket( can_message_t *message ) {
     frame.extd = true;
 
     if ( message->len <= 8 ) {
-        // 8 or less bytes of data -> PGN fits into a single CAN frame
+        // 8 or fewer bytes of data -> PGN fits into a single CAN frame
         frame.data_length_code = message->len;
         memcpy( frame.data, message->data, message->len );
         log_packet( message, true );
@@ -122,19 +121,19 @@ static void sendN2kPacket( can_message_t *message ) {
     }
 }
 
-void initialize_driver() {
+static void initialize_driver() {
     gpio_config_t io_conf = {};
 
     io_conf.intr_type = GPIO_INTR_DISABLE;
-    io_conf.mode = GPIO_MODE_OUTPUT;
+    io_conf.mode = GPIO_MODE_OUTPUT_OD;
     io_conf.pin_bit_mask = 1 << N2K_GPIO_NUM_STANDBY;
     io_conf.pull_down_en = false;
     io_conf.pull_up_en = false;
     gpio_config( &io_conf );
-    gpio_set_level( N2K_GPIO_NUM_STANDBY, 0 );
 
     //Initialize configuration structures using macro initializers
     twai_general_config_t g_config = TWAI_GENERAL_CONFIG_DEFAULT( N2K_GPIO_NUM_TX, N2K_GPIO_NUM_RX, TWAI_MODE_NO_ACK );
+    g_config.tx_queue_len = 20;
     twai_timing_config_t t_config = TWAI_TIMING_CONFIG_250KBITS();
     twai_filter_config_t f_config = TWAI_FILTER_CONFIG_ACCEPT_ALL();
 
@@ -220,6 +219,9 @@ static void receive_standalone_packet( const twai_message_t *twai_message, can_m
 }
 
 static void receive_fast_packet( twai_message_t *message, can_message_t *can_message ) {
+    (void) message;
+    (void) can_message;
+
     ESP_LOGW( LOG, "fast packets not yet implemented " );
 }
 
@@ -247,22 +249,8 @@ _Noreturn static void receive_task_main( void *arg ) {
     }
 }
 
-_Noreturn static void transmit_task_main( void *arg ) {
-    (void) arg;
-
-    for ( ;; ) {
-        can_message_t can_message;
-        if ( xQueueReceive( transmit_event_queue, &can_message, portMAX_DELAY )) {
-            sendN2kPacket( &can_message );
-        }
-    }
-}
-
 void create_event_task() {
-    receive_event_queue = xQueueCreate( 10, sizeof( uint32_t ));
-    transmit_event_queue = xQueueCreate( 10, sizeof( can_message_t ));
-    xTaskCreate( receive_task_main, "canrx", 3072, NULL, 5, NULL);
-    xTaskCreate( transmit_task_main, "cantx", 3072, NULL, 5, NULL);
+    xTaskCreate( receive_task_main, "twai_rx", 2048, NULL, 5, NULL);
 }
 
 void n2k_main() {
@@ -273,7 +261,7 @@ void n2k_main() {
 }
 
 void n2k_send( const can_message_t *message ) {
-    xQueueSend( transmit_event_queue, message, 0 );
+    sendN2kPacket( message );
 }
 
 void n2k_register_receiver( n2k_callback receiver ) {
