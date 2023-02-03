@@ -3,11 +3,12 @@
 #include <esp_event.h>
 #include <esp_log.h>
 #include <freertos/timers.h>
+#include <hal/twai_hal.h>
 #include "n2k_protocol.h"
 #include "n2k_png.h"
 #include <string.h>
 
-static const char *LOG = "can";
+static const char *LOG = "n2k";
 
 static n2k_callback receiver_callback = NULL;
 static n2k_callback receiver_sender_loopback = NULL;
@@ -25,6 +26,38 @@ static void log_packet( const can_message_t *message, bool out ) {
               ( out ? '>' : '<' ),
               message->pgn, message->src, message->dst, message->prio, message->len,
               data );
+}
+
+static void transmit_frame( const can_message_t *message, const twai_message_t *frame ) {
+    log_packet( message, true );
+//        ESP_LOGI( LOG, "transmit start" );
+//        gpio_set_level( N2K_GPIO_NUM_STANDBY, 0 );
+    for ( ;; ) {
+        esp_err_t result = twai_transmit( frame, 10 );
+        if ( result == ESP_OK ) {
+            return;
+        }
+        if ( result == ESP_ERR_INVALID_STATE ) {
+            twai_status_info_t status_info;
+            twai_get_status_info( &status_info );
+            if ( status_info.state == TWAI_STATE_BUS_OFF ) {
+                ESP_LOGW( LOG, "Driver is in state %d, result is %04d, initiate recovery, dropping package",
+                          status_info.state, result );
+                twai_initiate_recovery();
+            } else if ( status_info.state == TWAI_STATE_STOPPED ) {
+                ESP_LOGW( LOG, "Driver is in state %d, result is %04d, start driver, retry package",
+                          status_info.state, result );
+                twai_start();
+                continue;
+            } else {
+                ESP_LOGW( LOG, "Driver is in state %d, result is %04d", status_info.state, result );
+            }
+        } else if ( ESP_OK != result ) {
+            ESP_LOGW( LOG, "twai_transmit resulted in %d", result );
+            // TODO handle result, restart driver for example
+        }
+        return;
+    }
 }
 
 static void sendN2kFastPacket( const can_message_t *message, twai_message_t *frame ) {
@@ -52,12 +85,7 @@ static void sendN2kFastPacket( const can_message_t *message, twai_message_t *fra
                 remainingDataBytes = 0;
             }
         }
-        log_packet( message, true );
-        gpio_set_level( N2K_GPIO_NUM_STANDBY, 0 );
-        esp_err_t result = twai_transmit( frame, 10 );
-        if ( ESP_OK != result ) {
-            ESP_LOGW( LOG, "twai_transmit resulted in %d", result );
-        }
+        transmit_frame( message, frame );
         index++;
     }
 }
@@ -106,39 +134,15 @@ static void sendN2kPacket( const can_message_t *message ) {
     frame.identifier = getCanIdFromISO11783Bits( message->prio, message->pgn, source, message->dst );
     frame.extd = true;
 
-    if ( message->len <= 8 ) {
-        // 8 or fewer bytes of data -> PGN fits into a single CAN frame
-        frame.data_length_code = message->len;
-        memcpy( frame.data, message->data, message->len );
-        log_packet( message, true );
-        esp_err_t result = twai_transmit( &frame, 10 );
-        if ( ESP_OK != result ) {
-            ESP_LOGW( LOG, "twai_transmit resulted in %d", result );
-        }
-    } else {
+    if ( message->len > 8 ) {
         // Send PGN as n2k fast packet (spans multiple CAN frames, but CAN ID is still same for each frame)
         sendN2kFastPacket( message, &frame );
+        return;
     }
-}
-
-static void initialize_driver() {
-    gpio_config_t io_conf = {};
-
-    io_conf.intr_type = GPIO_INTR_DISABLE;
-    io_conf.mode = GPIO_MODE_OUTPUT_OD;
-    io_conf.pin_bit_mask = 1 << N2K_GPIO_NUM_STANDBY;
-    io_conf.pull_down_en = false;
-    io_conf.pull_up_en = false;
-    gpio_config( &io_conf );
-
-    //Initialize configuration structures using macro initializers
-    twai_general_config_t g_config = TWAI_GENERAL_CONFIG_DEFAULT( N2K_GPIO_NUM_TX, N2K_GPIO_NUM_RX, TWAI_MODE_NO_ACK );
-    g_config.tx_queue_len = 20;
-    twai_timing_config_t t_config = TWAI_TIMING_CONFIG_250KBITS();
-    twai_filter_config_t f_config = TWAI_FILTER_CONFIG_ACCEPT_ALL();
-
-    ESP_ERROR_CHECK( twai_driver_install( &g_config, &t_config, &f_config ));
-    ESP_ERROR_CHECK( twai_start());
+    // 8 or fewer bytes of data -> PGN fits into a single CAN frame
+    frame.data_length_code = message->len;
+    memcpy( frame.data, message->data, message->len );
+    transmit_frame( message, &frame );
 }
 
 #undef PS
@@ -241,16 +245,64 @@ _Noreturn static void receive_task_main( void *arg ) {
     twai_message_t message;
     for ( ;; ) {
         esp_err_t result = twai_receive( &message, pdMS_TO_TICKS( receive_timeout_secs * 1000 ));
-        if ( result == ESP_ERR_TIMEOUT ) {
-            ESP_LOGI( LOG, "nothing received in %d secs ", receive_timeout_secs );
+        if ( result == ESP_OK ) {
+            receive_packet( &message );
             continue;
         }
-        receive_packet( &message );
+        if ( result == ESP_ERR_TIMEOUT ) {
+            ESP_LOGI( LOG, "nothing received in %d secs ", receive_timeout_secs );
+            // TODO maybe restart driver?
+            continue;
+        }
+        ESP_LOGW( LOG, "Unhandled result %04x from twai_receive", result );
     }
 }
 
+_Noreturn static void alert_task_main( void *arg ) {
+    (void) arg;
+
+    for ( ;; ) {
+        uint32_t alerts = 0;
+        esp_err_t result = twai_read_alerts( &alerts, portMAX_DELAY );
+        if ( result == ESP_ERR_TIMEOUT ) {
+            continue;
+        }
+        ESP_LOGI( LOG, "alert got %08lx", alerts );
+        // twai_get_status_info(twai_status_info_t *status_info)
+//        if ( alerts & TWAI_ALERT_TX_IDLE ) {
+//            gpio_set_level( N2K_GPIO_NUM_STANDBY, 1 );
+//            ESP_LOGI( LOG, "transmit end" );
+//        }
+    }
+}
+
+static void initialize_driver() {
+    gpio_config_t io_conf = {};
+
+    io_conf.intr_type = GPIO_INTR_DISABLE;
+    io_conf.mode = GPIO_MODE_OUTPUT_OD;
+    io_conf.pin_bit_mask = BIT( N2K_GPIO_NUM_STANDBY );
+    io_conf.pull_down_en = false;
+    io_conf.pull_up_en = false;
+    gpio_config( &io_conf );
+    gpio_set_level( N2K_GPIO_NUM_STANDBY, 0 );
+
+    //Initialize configuration structures using macro initializers
+    twai_general_config_t g_config = TWAI_GENERAL_CONFIG_DEFAULT( N2K_GPIO_NUM_TX, N2K_GPIO_NUM_RX, TWAI_MODE_NO_ACK );
+    g_config.alerts_enabled = TWAI_ALERT_ALL; //TWAI_ALERT_TX_IDLE;
+    g_config.intr_flags = ESP_INTR_FLAG_IRAM;
+    g_config.tx_queue_len = 20;
+    twai_timing_config_t t_config = TWAI_TIMING_CONFIG_250KBITS();
+    twai_filter_config_t f_config = TWAI_FILTER_CONFIG_ACCEPT_ALL();
+
+    ESP_ERROR_CHECK( twai_driver_install( &g_config, &t_config, &f_config ));
+
+    ESP_ERROR_CHECK( twai_start());
+}
+
 void create_event_task() {
-    xTaskCreate( receive_task_main, "twai_rx", 2048, NULL, 5, NULL);
+    xTaskCreate( receive_task_main, "twai_rx", 3072, NULL, 5, NULL);
+    xTaskCreate( alert_task_main, "twai_idle", 2048, NULL, 5, NULL);
 }
 
 void n2k_main() {
