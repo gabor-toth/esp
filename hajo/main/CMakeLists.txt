@@ -18,10 +18,11 @@ idf_component_register(
         "display_meter.c"
         "hajo_adc.c"
         "hajo_main.c"
+        #        "hajo_nmea.cpp"
         "n2k_protocol.c"
         "n2k_sender.c"
-        INCLUDE_DIRS
-        "."
+        INCLUDE_DIRS "."
+        #        INCLUDE_DIRS "../components/NMEA2000/src"
         "lib"
 )
 
