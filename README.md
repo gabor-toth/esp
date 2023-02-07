@@ -75,7 +75,7 @@ idf.py build
 Upgrade project in CLion
 ------------------------
 
-  * ```echo $PATH```
+  * ``echo $PATH``
   * Change IDF_PATH and PATH in CLion
   * File/Reload CMake project
 
