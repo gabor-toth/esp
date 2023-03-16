@@ -157,7 +157,7 @@ static void determine_device_type() {
     gpio_config( &io_conf );
 }
 
-void app_main() {
+void app_main_old() {
     determine_device_type();
 
     esp_pm_config_esp32s2_t pm_config = {

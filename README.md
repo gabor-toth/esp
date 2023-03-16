@@ -43,6 +43,7 @@ In menuconfig check "Enable C++ extension" before adding the component
 mkdir -p components
 cd components
 git submodule add https://github.com/ttlappalainen/NMEA2000
+git submodule add https://github.com/ttlappalainen/NMEA2000_esp32
 ```
 
 Upgrade
@@ -148,6 +149,11 @@ PATH += /home/tothg/.espressif/tools/xtensa-esp32-elf/esp-2021r2-patch3-8.4.0/xt
 IDF_PATH = /home/tothg/own/projects/esp-idf
 ```
 
+ESP-IDF features
+================
+
+  * https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/ota.html
+  
 Hardware
 ========
 

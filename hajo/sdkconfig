@@ -2009,6 +2009,17 @@ CONFIG_WPA_MBEDTLS_TLS_CLIENT=y
 # CONFIG_WPA_11R_SUPPORT is not set
 # CONFIG_WPA_WPS_SOFTAP_REGISTRAR is not set
 # end of Supplicant
+
+#
+# NMEA2000 configuration
+#
+CONFIG_NMEA2000_BUF_DEBUG=y
+CONFIG_NMEA2000_FRAME_ERROR_DEBUG=y
+CONFIG_NMEA2000_FRAME_IN_DEBUG=y
+CONFIG_NMEA2000_FRAME_OUT_DEBUG=y
+CONFIG_NMEA2000_DEBUG=y
+CONFIG_NMEA2000_MSG_DEBUG=y
+# end of NMEA2000 configuration
 # end of Component config
 
 # Deprecated options for backward compatibility
