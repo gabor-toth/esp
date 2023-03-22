@@ -7,8 +7,9 @@ Install
 =======
 
 ```
-sudo apt-get install git wget flex bison gperf python3 python3-pip python3-setuptools python3.8-venv cmake ninja-build ccache libffi-dev libssl-dev dfu-util libusb-1.0-0
-sudo apt-mark auto libusb-1.0-0 python3 python3-setuptools wget 
+sudo apt-get install bison ccache cmake dfu-util flex gperf libffi-dev libssl-dev libusb-1.0-0 ninja-build python3 python-is-python3 python3-pip python3-setuptools python3-venv
+#sudo apt-get install git wget 
+#sudo apt-mark auto libusb-1.0-0 python3 python3-setuptools wget 
 ```
 
 ```
