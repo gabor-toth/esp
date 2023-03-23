@@ -12,6 +12,11 @@ extern "C" {
 }
 
 #include "n2k_sender.h"
+
+#define ESP32_CAN_TX_PIN N2K_GPIO_NUM_TX
+#define ESP32_CAN_RX_PIN N2K_GPIO_NUM_RX
+#define ESP32_CAN_STANDBY_PIN N2K_GPIO_NUM_STANDBY
+
 #include "NMEA2000_CAN.h"
 
 static const char *LOG = "hajo_main";
@@ -218,7 +223,7 @@ void setup_n2k_display() {
                                    2046  // Just chosen free from code list on http://www.nmea.org/Assets/20121020%20nmea%202000%20registration%20list.pdf
     );
 
-    uint8_t sourceAddress = 25;
+    uint8_t sourceAddress = 26;
     NMEA2000.SetMode( tNMEA2000::N2km_ListenAndNode, sourceAddress );
     // NMEA2000.EnableForward(false);                      // Disable all msg forwarding to USB (=Serial)
     // NMEA2000.SetN2kCANMsgBufSize(2);                    // For this simple example, limit buffer size to 2, since we are only sending data
@@ -269,7 +274,7 @@ void setup_n2k_battery() {
                                    2046  // Just chosen free from code list on http://www.nmea.org/Assets/20121020%20nmea%202000%20registration%20list.pdf
     );
 
-    uint8_t sourceAddress = 25;
+    uint8_t sourceAddress = 0; //25;
     NMEA2000.SetMode( tNMEA2000::N2km_ListenAndNode, sourceAddress );
     // NMEA2000.EnableForward(false);                      // Disable all msg forwarding to USB (=Serial)
     //  NMEA2000.SetN2kCANMsgBufSize(2);                    // For this simple example, limit buffer size to 2, since we are only sending data
@@ -281,19 +286,32 @@ void setup_n2k_battery() {
     NMEA2000.Open();
 }
 
+static void initialize_twai_driver() {
+    gpio_config_t io_conf = {};
+
+    io_conf.intr_type = GPIO_INTR_DISABLE;
+    io_conf.mode = GPIO_MODE_OUTPUT_OD;
+    io_conf.pin_bit_mask = BIT( N2K_GPIO_NUM_STANDBY );
+    io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
+    io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
+    gpio_config( &io_conf );
+    gpio_set_level( N2K_GPIO_NUM_STANDBY, 0 );
+}
+
 extern "C" {
 void app_main() {
     determine_device_type();
+    initialize_twai_driver();
 
-    esp_pm_config_esp32s2_t pm_config = {
-            .max_freq_mhz = 80,
-            .min_freq_mhz = 40,
-            .light_sleep_enable = false
-    };
-
-    ESP_ERROR_CHECK( esp_pm_configure( &pm_config ));
-    ESP_ERROR_CHECK( esp_pm_get_configuration( &pm_config ));
-    ESP_LOGI( LOG, "Clock min: %d max: %d", pm_config.min_freq_mhz, pm_config.max_freq_mhz );
+//    esp_pm_config_esp32s2_t pm_config = {
+//            .max_freq_mhz = 80,
+//            .min_freq_mhz = 40,
+//            .light_sleep_enable = false
+//    };
+//
+//    ESP_ERROR_CHECK( esp_pm_configure( &pm_config ));
+//    ESP_ERROR_CHECK( esp_pm_get_configuration( &pm_config ));
+//    ESP_LOGI( LOG, "Clock min: %d max: %d", pm_config.min_freq_mhz, pm_config.max_freq_mhz );
 
     ESP_ERROR_CHECK( esp_event_loop_create_default());
 

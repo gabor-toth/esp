@@ -126,7 +126,7 @@ static void sendN2kPacket( const can_message_t *message ) {
         return;
     }
 
-    if ( receiver_sender_loopback != NULL) {
+    if ( receiver_sender_loopback != NULL ) {
         receiver_sender_loopback( message );
     }
 
@@ -210,7 +210,7 @@ static bool is_standalone_packet( twai_message_t *message, can_message_t *can_me
 
 static void packet_received( const can_message_t *can_message ) {
     log_packet( can_message, false );
-    if ( receiver_callback == NULL) {
+    if ( receiver_callback == NULL ) {
         return;
     }
     receiver_callback( can_message );
@@ -268,6 +268,11 @@ _Noreturn static void alert_task_main( void *arg ) {
             continue;
         }
         ESP_LOGI( LOG, "alert got %08lx", alerts );
+        // TWAI_ALERT_TX_IDLE 0x00000001
+        // TWAI_ALERT_TX_SUCCESS 0x00000002
+        // TWAI_ALERT_RX_DATA 0x00000004
+        // TWAI_ALERT_ERR_ACTIVE 0x00000010
+        // TWAI_ALERT_BUS_ERROR 0x00000200
         // twai_get_status_info(twai_status_info_t *status_info)
 //        if ( alerts & TWAI_ALERT_TX_IDLE ) {
 //            gpio_set_level( N2K_GPIO_NUM_STANDBY, 1 );
@@ -301,8 +306,8 @@ static void initialize_driver() {
 }
 
 void create_event_task() {
-    xTaskCreate( receive_task_main, "twai_rx", 3072, NULL, 5, NULL);
-    xTaskCreate( alert_task_main, "twai_idle", 2048, NULL, 5, NULL);
+    xTaskCreate( receive_task_main, "twai_rx", 3072, NULL, 5, NULL );
+    xTaskCreate( alert_task_main, "twai_idle", 2048, NULL, 5, NULL );
 }
 
 void n2k_main() {
