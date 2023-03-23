@@ -14,11 +14,19 @@ typedef struct {
     uint8_t type;
 } adc_channel_value_t;
 
-typedef void (*adc_value_converter)( uint32_t raw_value, uint32_t *display_value, uint32_t *correction );
+typedef void (*adc_value_converter)( uint32_t raw_value,
+                                     uint32_t *display_value,
+                                     uint32_t *correction );
 
-extern esp_err_t adc_get_channel_value( int index, adc_channel_value_t *channel_value );
+extern esp_err_t adc_get_channel_value( int index,
+                                        adc_channel_value_t *channel_value );
 
-extern esp_err_t
-adc_add_channel( uint8_t adc_channel, const char *name, uint8_t instance, uint8_t type, adc_value_converter converter );
+extern esp_err_t adc_add_channel( uint8_t adc_channel,
+                                  const char *name,
+                                  uint8_t instance,
+                                  uint8_t type,
+                                  adc_value_converter converter );
+
+extern void adc_read_all();
 
 #endif //HAJO_ADC_H

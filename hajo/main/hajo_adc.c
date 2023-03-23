@@ -41,7 +41,7 @@ void convert_fluid_level( uint32_t raw_value, uint32_t *display_value, uint32_t 
     } else if ( rmes >= fluid_rmes_max ) {
         value = 100;
     } else {
-        value = (uint32_t) (( rmes - fluid_rmes_min ) / ( fluid_rmes_max - fluid_rmes_min ) * 100 );
+        value = ( uint32_t )(( rmes - fluid_rmes_min ) / ( fluid_rmes_max - fluid_rmes_min ) * 100 );
     }
     *display_value = value;
     *correction = 0;
@@ -58,5 +58,5 @@ void hajo_adc_main( bool is_battery ) {
         adc_add_channel( 5, "viz bal", 0, N2K_TANK_TYPE_WATER, convert_fluid_level );
         adc_add_channel( 6, "viz jobb", 1, N2K_TANK_TYPE_WATER, convert_fluid_level );
     }
-    adc_main();
+//    adc_main();
 }

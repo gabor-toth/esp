@@ -57,7 +57,7 @@ static void read_one( adc_channel_data_t *channel ) {
               correction );
 }
 
-static void read_all() {
+void adc_read_all() {
     for ( int i = 0; i < channel_count; i++ ) {
         read_one( &channels[ i ] );
     }
@@ -69,7 +69,7 @@ _Noreturn static void timer_task_main( void *arg ) {
     for ( ;; ) {
         uint32_t dummy;
         if ( xQueueReceive( timer_event_queue, &dummy, portMAX_DELAY )) {
-            read_all();
+            adc_read_all();
         }
     }
 }
@@ -84,7 +84,7 @@ static void timer_callback( TimerHandle_t timer ) {
 
 static void timer_start() {
     timer_event_queue = xQueueCreate( 10, sizeof( uint32_t ));
-    xTaskCreate( timer_task_main, LOG, 2048, NULL, 5, NULL);
+    xTaskCreate( timer_task_main, LOG, 2048, NULL, 5, NULL );
 
     TimerHandle_t timer = xTimerCreate(
             LOG,
