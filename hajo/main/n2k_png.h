@@ -142,7 +142,7 @@ static_assert( sizeof( pgn_iso_address_claim_t ) == 8, "Size of pgn_iso_address_
  */
 
 #define N2K_PGN_FLUID_LEVEL 0x1F211
-#define N2K_PGN_FLUID_LEVEL_INTERVAL 2500
+#define N2K_PGN_FLUID_LEVEL_INTERVAL_MS 2500
 
 typedef struct __attribute__((packed)) {
     unsigned int instance: 4;
@@ -160,7 +160,7 @@ static_assert( sizeof( pgn_fluid_level_t ) == 8, "Size of pgn_fluid_level_t is n
  */
 
 #define N2K_PGN_BATTERY_STATUS 0x1F214
-#define N2K_PGN_BATTERY_STATUS_INTERVAL 5000 // 1500
+#define N2K_PGN_BATTERY_STATUS_INTERVAL_MS 5000 // 1500
 
 typedef struct __attribute__((packed)) {
     unsigned int instance: 8;

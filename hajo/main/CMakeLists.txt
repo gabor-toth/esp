@@ -17,10 +17,9 @@ idf_component_register(
         "display_main.c"
         "display_meter.c"
         "hajo_adc.c"
-        "hajo_main.c"
-        "hajo_nmea.cpp"
+        "hajo_main.cpp"
         "n2k_protocol.c"
-        "n2k_sender.c"
+        "n2k_sender.cpp"
 
         INCLUDE_DIRS
         "."
