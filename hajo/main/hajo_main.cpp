@@ -12,6 +12,7 @@ extern "C" {
 }
 
 #include "n2k_sender.h"
+#include "lib/nvs_main.h"
 
 #define ESP32_CAN_TX_PIN N2K_GPIO_NUM_TX
 #define ESP32_CAN_RX_PIN N2K_GPIO_NUM_RX
@@ -189,6 +190,30 @@ void N2kIncomingMessageHandler::HandleMsg( const tN2kMsg &N2kMsg ) {
 
 N2kIncomingMessageHandler incomingMessageHandler( &NMEA2000 );
 
+uint8_t load_n2k_address() {
+    uint32_t nvs_handle = nvs_open_storage();
+    char *s = nvs_read_string( nvs_handle, "address" );
+    uint address = 25;
+    if ( s != nullptr ) {
+        address = atoi( s );
+        ESP_LOGI( LOG, "Loaded address %02x", address );
+        free( s );
+    } else {
+        ESP_LOGI( LOG, "No address set yet, using default %02x", address );
+    }
+    nvs_close_storage( nvs_handle );
+    return address;
+}
+
+void save_n2k_address( uint8_t address ) {
+    ESP_LOGI( LOG, "Save new address %02x", address );
+    uint32_t nvs_handle = nvs_open_storage();
+    char s[8];
+    itoa( address, s, 10 );
+    nvs_write_string( nvs_handle, "address", s );
+    nvs_close_storage( nvs_handle );
+}
+
 void setup_n2k_display() {
 // List here messages your device will transmit.
     static const unsigned long TransmitMessages[] = {
@@ -226,7 +251,7 @@ void setup_n2k_display() {
                                    2046  // Just chosen free from code list on http://www.nmea.org/Assets/20121020%20nmea%202000%20registration%20list.pdf
     );
 
-    uint8_t sourceAddress = 26;
+    uint8_t sourceAddress = load_n2k_address();
     NMEA2000.SetMode( tNMEA2000::N2km_ListenAndNode, sourceAddress );
     // NMEA2000.EnableForward(false);                      // Disable all msg forwarding to USB (=Serial)
     // NMEA2000.SetN2kCANMsgBufSize(2);                    // For this simple example, limit buffer size to 2, since we are only sending data
@@ -277,7 +302,7 @@ void setup_n2k_battery() {
                                    2046  // Just chosen free from code list on http://www.nmea.org/Assets/20121020%20nmea%202000%20registration%20list.pdf
     );
 
-    uint8_t sourceAddress = 25;
+    uint8_t sourceAddress = load_n2k_address();
     NMEA2000.SetMode( tNMEA2000::N2km_ListenAndNode, sourceAddress );
     // NMEA2000.EnableForward(false);                      // Disable all msg forwarding to USB (=Serial)
     //  NMEA2000.SetN2kCANMsgBufSize(2);                    // For this simple example, limit buffer size to 2, since we are only sending data
@@ -303,6 +328,7 @@ static void initialize_twai_driver() {
 
 extern "C" {
 void app_main() {
+    nvs_init();
     determine_device_type();
     initialize_twai_driver();
 
