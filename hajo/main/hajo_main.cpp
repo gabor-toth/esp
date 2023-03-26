@@ -173,6 +173,9 @@ public:
 };
 
 void N2kIncomingMessageHandler::HandleMsg( const tN2kMsg &N2kMsg ) {
+    if ( device_type != DEVICE_TYPE_GAUGE_DISPLAY ) {
+        return;
+    }
     ESP_LOGI( LOG, "packet pgn %5lx", N2kMsg.PGN );
     switch ( N2kMsg.PGN ) {
         case N2K_PGN_FLUID_LEVEL:
@@ -274,7 +277,7 @@ void setup_n2k_battery() {
                                    2046  // Just chosen free from code list on http://www.nmea.org/Assets/20121020%20nmea%202000%20registration%20list.pdf
     );
 
-    uint8_t sourceAddress = 0; //25;
+    uint8_t sourceAddress = 25;
     NMEA2000.SetMode( tNMEA2000::N2km_ListenAndNode, sourceAddress );
     // NMEA2000.EnableForward(false);                      // Disable all msg forwarding to USB (=Serial)
     //  NMEA2000.SetN2kCANMsgBufSize(2);                    // For this simple example, limit buffer size to 2, since we are only sending data
