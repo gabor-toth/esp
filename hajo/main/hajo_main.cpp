@@ -339,8 +339,9 @@ void app_main() {
 //    };
 //
 //    ESP_ERROR_CHECK( esp_pm_configure( &pm_config ));
-//    ESP_ERROR_CHECK( esp_pm_get_configuration( &pm_config ));
-//    ESP_LOGI( LOG, "Clock min: %d max: %d", pm_config.min_freq_mhz, pm_config.max_freq_mhz );
+    esp_pm_config_esp32s2_t pm_config;
+    ESP_ERROR_CHECK( esp_pm_get_configuration( &pm_config ));
+    ESP_LOGI( LOG, "Clock min: %d max: %d", pm_config.min_freq_mhz, pm_config.max_freq_mhz );
 
     ESP_ERROR_CHECK( esp_event_loop_create_default());
 

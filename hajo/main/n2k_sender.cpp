@@ -40,7 +40,7 @@ void tN2kSendMessage::Enable( bool state ) {
     }
 }
 
-static vector <tN2kSendMessage> sendMessages;
+static vector<tN2kSendMessage> sendMessages;
 
 static QueueHandle_t timer_event_queue = nullptr;
 
@@ -81,9 +81,11 @@ static void timer_callback( TimerHandle_t ) {
 }
 
 void n2k_onOpen() {
+    ESP_LOGI( LOG, "n2k_onOpen" );
     vector<tN2kSendMessage>::iterator iterator;
     for ( iterator = sendMessages.begin(); iterator != sendMessages.end(); iterator++ ) {
         if ( iterator->Scheduler.IsEnabled()) {
+            ESP_LOGI( LOG, "starting scheduler %s", iterator->Description );
             iterator->Scheduler.UpdateNextTime();
         }
     }
