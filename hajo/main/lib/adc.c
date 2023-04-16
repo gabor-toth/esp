@@ -21,13 +21,13 @@ typedef struct {
     uint32_t converted_value;
 } adc_channel_data_t;
 
+// static variables
+
 static adc_channel_data_t channels[MAX_CHANNELS];
 static int channel_count = 0;
 static int number_of_samples = 16;  // Multisampling, was originally 64
 static int sampling_interval_seconds = 1;
-
-// static variables
-
+static bool is_timer_started = false;
 static adc_cali_handle_t scheme_handle = NULL;
 static adc_oneshot_unit_handle_t unit_handle = NULL;
 static QueueHandle_t timer_event_queue = NULL;
@@ -83,8 +83,9 @@ static void timer_callback( TimerHandle_t timer ) {
 }
 
 static void timer_start() {
+    is_timer_started = true;
     timer_event_queue = xQueueCreate( 10, sizeof( uint32_t ));
-    xTaskCreate( timer_task_main, LOG, 2048, NULL, 5, NULL );
+    xTaskCreate( timer_task_main, LOG, 2048, NULL, 5, NULL);
 
     TimerHandle_t timer = xTimerCreate(
             LOG,
@@ -105,6 +106,9 @@ int adc_number_of_channels() {
 extern esp_err_t adc_get_channel_value( int index, adc_channel_value_t *channel_value ) {
     if ( index < 0 || index > channel_count ) {
         return ESP_FAIL;
+    }
+    if ( !is_timer_started ) {
+        read_one( &channels[ index ] );
     }
     adc_channel_data_t *channel = &channels[ index ];
     channel_value->instance = channel->instance_id;
@@ -138,7 +142,7 @@ esp_err_t adc_add_channel( uint8_t adc_channel, const char *name, uint8_t instan
     return ESP_OK;
 }
 
-void adc_main( void ) {
+void adc_main( bool start_timer ) {
     ESP_LOGI( LOG, "adc start" );
 
     adc_cali_line_fitting_config_t cali_config = {
@@ -163,7 +167,10 @@ void adc_main( void ) {
         ESP_ERROR_CHECK( adc_oneshot_config_channel( unit_handle, channels[ i ].channel, &channel_config ));
     }
 
-    timer_start();
-
-    ESP_LOGI( LOG, "adc started" );
+    if ( start_timer ) {
+        timer_start();
+        ESP_LOGI( LOG, "adc started with timer" );
+    } else {
+        ESP_LOGI( LOG, "adc started without timer" );
+    }
 }

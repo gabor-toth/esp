@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <esp_err.h>
 
-extern void adc_main();
+extern void adc_main( bool start_timer );
 
 extern int adc_number_of_channels();
 

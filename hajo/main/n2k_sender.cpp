@@ -63,6 +63,7 @@ _Noreturn static void task_main( void *arg ) {
             }
             iterator->Scheduler.UpdateNextTime();
 
+            ESP_LOGI( LOG, "sending for %s", iterator->Description );
             int index;
             tN2kMsg N2kMsg;
             for ( index = 0; iterator->SendFunction( index, N2kMsg ); index++ ) {
