@@ -14,6 +14,7 @@ extern int adc_number_of_channels();
 
 typedef struct {
     uint32_t value;
+    uint32_t max_value;
     uint8_t instance;
     uint8_t type;
 } adc_channel_value_t;
@@ -29,6 +30,7 @@ extern esp_err_t adc_add_channel( uint8_t adc_channel,
                                   const char *name,
                                   uint8_t instance,
                                   uint8_t type,
+                                  uint32_t max_value,
                                   adc_value_converter converter );
 
 extern void adc_read_all();

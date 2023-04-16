@@ -27,9 +27,9 @@ static void convert_battery_voltage( uint32_t raw_value, uint32_t *display_value
 
 static void setup_adc() {
     battery_multiplier = ( battery_rmes + battery_rtop ) / (double) battery_rmes;
-    adc_add_channel( 0, "motor", 0, 0, convert_battery_voltage );
-    adc_add_channel( 1, "munka1", 1, 0, convert_battery_voltage );
-    adc_add_channel( 2, "munka2", 2, 0, convert_battery_voltage );
+    adc_add_channel( 0, "motor", 0, 0, 900, convert_battery_voltage );
+    adc_add_channel( 1, "munka1", 1, 0, 900, convert_battery_voltage );
+    adc_add_channel( 2, "munka2", 2, 0, 1100, convert_battery_voltage );
     adc_main( false );
 }
 
@@ -115,8 +115,8 @@ static bool send_dc_status( int index, tN2kMsg &message ) {
                     N2kUInt8NA, //StateOfCharge
                     N2kUInt8NA, // StateOfHealth,
                     N2kDoubleNA, // TimeRemaining,
-                    N2kDoubleNA, // RippleVoltage
-                    N2kDoubleNA // Capacity
+                    11.00, // RippleVoltage
+                    channel_data.max_value != 0 ? AhToCoulomb( channel_data.max_value ) : N2kDoubleNA // Capacity
     );
     return true;
 }
@@ -136,7 +136,7 @@ static bool send_battery_config( int index, tN2kMsg &message ) {
                    N2kDCES_No,
                    N2kDCbnv_12v,
                    N2kDCbc_LeadAcid,
-                   AhToCoulomb( 420 ),
+                   channel_data.max_value != 0 ? AhToCoulomb( channel_data.max_value ) : N2kDoubleNA,
                    N2kInt8NA,
                    N2kDoubleNA,
                    N2kInt8NA

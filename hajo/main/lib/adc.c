@@ -19,6 +19,7 @@ typedef struct {
     adc_value_converter converter;
     int raw_value;
     uint32_t converted_value;
+    uint32_t max_value;
 } adc_channel_data_t;
 
 // static variables
@@ -112,6 +113,7 @@ extern esp_err_t adc_get_channel_value( int index, adc_channel_value_t *channel_
     }
     adc_channel_data_t *channel = &channels[ index ];
     channel_value->instance = channel->instance_id;
+    channel_value->max_value = channel->max_value;
     channel_value->type = channel->instance_type;
     channel_value->value = channel->converter != NULL
                            ? channel->converted_value // channel->converter( channel->raw_value )
@@ -120,7 +122,7 @@ extern esp_err_t adc_get_channel_value( int index, adc_channel_value_t *channel_
 }
 
 esp_err_t adc_add_channel( uint8_t adc_channel, const char *name, uint8_t instance, uint8_t type,
-                           adc_value_converter converter ) {
+                           uint32_t max_value, adc_value_converter converter ) {
     if ( channel_count == MAX_CHANNELS ) {
 //        ESP_RETURN_ON_FALSE(handle && config, ESP_ERR_INVALID_ARG, TAG, "invalid argument: null pointer");
         ESP_ERROR_CHECK( ESP_ERR_INVALID_SIZE );
@@ -138,6 +140,7 @@ esp_err_t adc_add_channel( uint8_t adc_channel, const char *name, uint8_t instan
     channel->converter = converter;
     channel->instance_id = instance;
     channel->instance_type = type;
+    channel->max_value = max_value;
     channel->name = strdup( name );
     return ESP_OK;
 }

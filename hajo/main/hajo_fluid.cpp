@@ -25,9 +25,9 @@ static void convert_fluid_level( uint32_t raw_value, uint32_t *display_value, ui
 }
 
 static void setup_adc() {
-    adc_add_channel( 4, "uzemanyag", 0, N2K_TANK_TYPE_FUEL, convert_fluid_level );
-    adc_add_channel( 5, "viz bal", 0, N2K_TANK_TYPE_WATER, convert_fluid_level );
-    adc_add_channel( 6, "viz jobb", 1, N2K_TANK_TYPE_WATER, convert_fluid_level );
+    adc_add_channel( 4, "uzemanyag", 0, N2K_TANK_TYPE_FUEL, 60, convert_fluid_level );
+    adc_add_channel( 5, "viz bal", 0, N2K_TANK_TYPE_WATER, 85, convert_fluid_level );
+    adc_add_channel( 6, "viz jobb", 1, N2K_TANK_TYPE_WATER, 85, convert_fluid_level );
     adc_main( false );
 }
 
@@ -42,14 +42,14 @@ static void setup_n2k_device( int iDev ) {
     };
 
     static const tNMEA2000::tProductInformation ProductInformation = {
-            2100,                        // N2kVersion
-            101,                        // Manufacturer's product code
-            "Liquid level + display",    // Manufacturer's Model ID
-            "0.1.0 (2023-03-23)",        // Manufacturer's Software version code
-            "1.0.0 (2023-03-23)",    // Manufacturer's Model version
-            "00000001",            // Manufacturer's Model serial code
-            0,                       // CertificationLevel
-            1                         // LoadEquivalency
+            2100,                       // N2kVersion
+            101,                       // Manufacturer's product code
+            "Fluid level",              // Manufacturer's Model ID
+            "0.1.0 (2023-03-23)",       // Manufacturer's Software version code
+            "1.0.0 (2023-03-23)",   // Manufacturer's Model version
+            "00000001",           // Manufacturer's Model serial code
+            0,                      // CertificationLevel
+            1                        // LoadEquivalency
     };
 
     NMEA2000.SetProductInformation( &ProductInformation, iDev );
