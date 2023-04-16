@@ -60,5 +60,4 @@ void hajo_fluid_main( int iDev ) {
     setup_n2k_device( iDev );
     hajo_adc_main( false );
     nk2_register_sender( n2k_send_fluid_level, "fluids", N2K_PGN_FLUID_LEVEL_INTERVAL_MS, 250, true );
-//            n2k_register_sender_loopback( process_incoming_pgn );
 }

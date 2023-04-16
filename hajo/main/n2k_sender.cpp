@@ -11,6 +11,7 @@
 using namespace std;
 
 static const char *LOG = "n2k_loop";
+static n2k_loopback_callback loopback_callback = nullptr;
 
 // Structure for holding message sending information
 struct tN2kSendMessage {
@@ -69,6 +70,9 @@ _Noreturn static void task_main( void *arg ) {
             tN2kMsg N2kMsg;
             for ( index = 0; iterator->SendFunction( index, N2kMsg ); index++ ) {
                 NMEA2000.SendMsg( N2kMsg );
+                if ( loopback_callback != nullptr ) {
+                    loopback_callback( N2kMsg );
+                }
             }
             if ( index == 0 ) {
                 ESP_LOGI( LOG, "nothing to send for %s", iterator->Description );
@@ -146,4 +150,8 @@ void n2k_open() {
     NMEA2000.SetMode( tNMEA2000::N2km_ListenAndNode, sourceAddress );
     NMEA2000.SetOnOpen( n2k_on_open );
     NMEA2000.Open();
+}
+
+void n2k_register_sender_loopback( n2k_loopback_callback callback ) {
+    loopback_callback = callback;
 }

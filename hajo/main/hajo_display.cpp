@@ -88,7 +88,12 @@ void setup_n2k_device( int iDev ) {
     NMEA2000.AttachMsgHandler( &incomingMessageHandler );
 }
 
+void process_incoming_pgn( const tN2kMsg &message ) {
+    incomingMessageHandler.HandleMsg( message );
+}
+
 void hajo_display_main( int iDev ) {
     setup_n2k_device( iDev );
     display_main();
+    n2k_register_sender_loopback( process_incoming_pgn );
 }
