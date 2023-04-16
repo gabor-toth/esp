@@ -6,6 +6,7 @@
 #include <cstring>
 #include <N2kTimer.h>
 #include <vector>
+#include "lib/nvs_main.h"
 
 using namespace std;
 
@@ -81,8 +82,8 @@ static void timer_callback( TimerHandle_t ) {
     xQueueSend( timer_event_queue, &dummy, 0 );
 }
 
-void n2k_onOpen() {
-    ESP_LOGI( LOG, "n2k_onOpen" );
+void n2k_on_open() {
+    ESP_LOGI( LOG, "n2k_on_open" );
     vector<tN2kSendMessage>::iterator iterator;
     for ( iterator = sendMessages.begin(); iterator != sendMessages.end(); iterator++ ) {
         if ( iterator->Scheduler.IsEnabled()) {
@@ -115,3 +116,28 @@ void nk2_register_sender( tN2kSendFunction sendFunction,
         ESP_LOGI( LOG, "timer started for %s with %dms interval", LOG, interval_ms );
     }
 }
+
+uint8_t n2k_load_address() {
+    uint32_t nvs_handle = nvs_open_storage();
+    char *s = nvs_read_string( nvs_handle, "address" );
+    uint address = 25;
+    if ( s != nullptr ) {
+        address = atoi( s );
+        ESP_LOGI( LOG, "Loaded address %02x", address );
+        free( s );
+    } else {
+        ESP_LOGI( LOG, "No address set yet, using default %02x", address );
+    }
+    nvs_close_storage( nvs_handle );
+    return address;
+}
+
+void n2k_save_address( uint8_t address ) {
+    ESP_LOGI( LOG, "Save new address %02x", address );
+    uint32_t nvs_handle = nvs_open_storage();
+    char s[8];
+    itoa( address, s, 10 );
+    nvs_write_string( nvs_handle, "address", s );
+    nvs_close_storage( nvs_handle );
+}
+
