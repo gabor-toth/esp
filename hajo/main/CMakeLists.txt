@@ -21,7 +21,7 @@ idf_component_register(
         "hajo_display.cpp"
         "hajo_fluid.cpp"
         "hajo_main.cpp"
-        "n2k_protocol.c"
+        "lib/nmea2000/n2k_protocol.c"
         "n2k_sender.cpp"
 
         INCLUDE_DIRS

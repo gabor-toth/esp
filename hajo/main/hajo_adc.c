@@ -1,5 +1,5 @@
 #include "hajo_adc.h"
-#include "n2k_png.h"
+#include "lib/nmea2000/n2k_png.h"
 #include "lib/adc.h"
 
 static int battery_rmes = 16900;
