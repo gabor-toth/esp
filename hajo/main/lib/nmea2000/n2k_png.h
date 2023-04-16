@@ -160,7 +160,7 @@ static_assert( sizeof( pgn_fluid_level_t ) == 8, "Size of pgn_fluid_level_t is n
  */
 
 #define N2K_PGN_BATTERY_STATUS 0x1F214
-#define N2K_PGN_BATTERY_STATUS_INTERVAL_MS 5000 // 1500
+#define N2K_PGN_BATTERY_STATUS_INTERVAL_MS 1500
 
 typedef struct __attribute__((packed)) {
     unsigned int instance: 8;
@@ -171,3 +171,9 @@ typedef struct __attribute__((packed)) {
 } pgn_battery_status_t;
 
 static_assert( sizeof( pgn_battery_status_t ) == 8, "Size of pgn_battery_status_t is not correct" );
+
+#define N2K_PGN_DC_DETAILED_STATUS 0x1F212
+#define N2K_PGN_DC_DETAILED_STATUS_INTERVAL_MS 1500
+
+#define N2K_PGN_BATTERY_CONFIGURATION 0x1F219
+#define N2K_PGN_BATTERY_CONFIGURATION_INTERVAL_MS 5000
