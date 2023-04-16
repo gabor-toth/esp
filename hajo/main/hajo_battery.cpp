@@ -1,8 +1,37 @@
-#include "hajo_adc.h"
 #include "lib/nmea2000/n2k_png.h"
 #include "lib/adc.h"
 #include "n2k_sender.h"
 #include "hajo_battery.h"
+
+static int battery_rmes = 16900;
+static int battery_rtop = 316000;
+static int battery_offset = 0;
+static double battery_multiplier;
+
+static void convert_battery_voltage( uint32_t raw_value, uint32_t *display_value, uint32_t *correction ) {
+    // U=(Rtop+Rmes)/Rmes*Umes
+    *correction = battery_offset;
+    double value = raw_value * battery_multiplier;
+    if ( raw_value <= 20 ) {
+        value = 0.0;
+        *correction = 0;
+    } else {
+        value += battery_offset;
+    }
+    if ( value < 0.0 ) {
+        value = 0.0;
+    }
+    // PGN 127508 - Battery Status: voltage 0.01V
+    *display_value = (uint32_t) value * 100;
+}
+
+static void setup_adc() {
+    battery_multiplier = ( battery_rmes + battery_rtop ) / (double) battery_rmes;
+    adc_add_channel( 0, "motor", 0, 0, convert_battery_voltage );
+    adc_add_channel( 1, "munka1", 1, 0, convert_battery_voltage );
+    adc_add_channel( 2, "munka2", 2, 0, convert_battery_voltage );
+    adc_main( false );
+}
 
 static void setup_n2k_device( int iDev ) {
     static const unsigned long TransmitMessages[] = {
@@ -93,14 +122,9 @@ static bool send_dc_status( int index, tN2kMsg &message ) {
 }
 
 static bool send_battery_config( int index, tN2kMsg &message ) {
-    static uint8_t sid = 0;
-
     int channel_count = adc_number_of_channels();
     if ( index >= channel_count ) {
         return false;
-    }
-    if ( index == 0 ) {
-        sid++;
     }
 
     adc_channel_value_t channel_data;
@@ -121,7 +145,7 @@ static bool send_battery_config( int index, tN2kMsg &message ) {
 }
 
 void hajo_battery_main( int iDev ) {
-    hajo_adc_main( true );
+    setup_adc();
     setup_n2k_device( iDev );
     nk2_register_sender( send_battery_status, "battery", N2K_PGN_BATTERY_STATUS_INTERVAL_MS, 60, true );
     nk2_register_sender( send_dc_status, "battery", N2K_PGN_DC_DETAILED_STATUS_INTERVAL_MS, 70, true );

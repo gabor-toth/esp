@@ -1,8 +1,35 @@
-//#include "display_main.h"
-#include "hajo_adc.h"
 #include "lib/nmea2000/n2k_png.h"
 #include "lib/adc.h"
 #include "n2k_sender.h"
+
+static double fluid_u = 3.32;
+static double fluid_rtop = 680;
+//static double fluid_rtop = 634;
+static double fluid_rmes_min = 2;
+static double fluid_rmes_max = 180;
+
+static void convert_fluid_level( uint32_t raw_value, uint32_t *display_value, uint32_t *correction ) {
+    // Rmes=Rtop/(U/Umes-1)
+    // 0% = 2 Ohm, 100% = 180 Ohm
+    double rmes = fluid_rtop / ( fluid_u * 1000 / raw_value - 1 );
+    uint32_t value;
+    if ( rmes <= fluid_rmes_min ) {
+        value = 0;
+    } else if ( rmes >= fluid_rmes_max ) {
+        value = 100;
+    } else {
+        value = (uint32_t) (( rmes - fluid_rmes_min ) / ( fluid_rmes_max - fluid_rmes_min ) * 100 );
+    }
+    *display_value = value;
+    *correction = 0;
+}
+
+static void setup_adc() {
+    adc_add_channel( 4, "uzemanyag", 0, N2K_TANK_TYPE_FUEL, convert_fluid_level );
+    adc_add_channel( 5, "viz bal", 0, N2K_TANK_TYPE_WATER, convert_fluid_level );
+    adc_add_channel( 6, "viz jobb", 1, N2K_TANK_TYPE_WATER, convert_fluid_level );
+    adc_main( false );
+}
 
 static void setup_n2k_device( int iDev ) {
     static const unsigned long TransmitMessages[] = {
@@ -57,7 +84,7 @@ static bool n2k_send_fluid_level( int index, tN2kMsg &message ) {
 }
 
 void hajo_fluid_main( int iDev ) {
+    setup_adc();
     setup_n2k_device( iDev );
-    hajo_adc_main( false );
     nk2_register_sender( n2k_send_fluid_level, "fluids", N2K_PGN_FLUID_LEVEL_INTERVAL_MS, 250, true );
 }
