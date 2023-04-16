@@ -7,6 +7,7 @@
 #include "hajo_display.h"
 #include "hajo_fluid.h"
 #include "lib/nvs_main.h"
+#include "n2k_sender.h"
 
 #define ESP32_CAN_TX_PIN N2K_GPIO_NUM_TX
 #define ESP32_CAN_RX_PIN N2K_GPIO_NUM_RX
@@ -61,8 +62,7 @@ static void initialize_twai_driver() {
     gpio_set_level( N2K_GPIO_NUM_STANDBY, 0 );
 }
 
-extern "C" {
-void app_main() {
+void hajo_main() {
     nvs_init();
     determine_device_type();
     initialize_twai_driver();
@@ -80,13 +80,14 @@ void app_main() {
 
     ESP_ERROR_CHECK( esp_event_loop_create_default());
 
+    int iDev = 0;
     switch ( device_type ) {
         case DEVICE_TYPE_GAUGE_DISPLAY:
-            hajo_display_main();
-            hajo_fluid_main();
+            hajo_fluid_main( iDev++ );
+            hajo_display_main( iDev++ );
             break;
         case DEVICE_TYPE_BATTERY_MONITOR:
-            hajo_battery_main();
+            hajo_battery_main( iDev++ );
             break;
         default:
             // TODO fail
@@ -96,6 +97,11 @@ void app_main() {
                       device_type & 1 ? '1' : '0' );
             break;
     }
+    n2k_open();
 }
 
+extern "C" {
+void app_main() {
+    hajo_main();
+}
 }

@@ -2,7 +2,7 @@
 #include "esp_log.h"
 #include "freertos/timers.h"
 #include "n2k_sender.h"
-#include "n2k_png.h"
+#include "lib/nmea2000/n2k_png.h"
 #include <cstring>
 #include <N2kTimer.h>
 #include <vector>
@@ -141,3 +141,9 @@ void n2k_save_address( uint8_t address ) {
     nvs_close_storage( nvs_handle );
 }
 
+void n2k_open() {
+    uint8_t sourceAddress = n2k_load_address();
+    NMEA2000.SetMode( tNMEA2000::N2km_ListenAndNode, sourceAddress );
+    NMEA2000.SetOnOpen( n2k_on_open );
+    NMEA2000.Open();
+}

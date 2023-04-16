@@ -14,6 +14,8 @@ void nk2_register_sender( tN2kSendFunction sendFunction,
                           uint32_t offsetMs,
                           bool enabled );
 
+extern void n2k_open();
+
 extern void n2k_on_open();
 
 extern uint8_t n2k_load_address();
