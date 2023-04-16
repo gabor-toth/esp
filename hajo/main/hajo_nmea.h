@@ -1,4 +1,0 @@
-#ifndef HAJO_HAJO_NMEA_H
-#define HAJO_HAJO_NMEA_H
-
-#endif //HAJO_HAJO_NMEA_H

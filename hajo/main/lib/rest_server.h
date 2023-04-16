@@ -6,6 +6,10 @@
 #include <esp_http_server.h>
 #include <cJSON.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define REST_SCRATCH_BUFSIZE (10240)
 
 typedef struct rest_server_context {
@@ -22,5 +26,9 @@ extern esp_err_t rest_server_start(
  * Caller is responsible to call cJSON_Delete(root) and httpd_resp_sendstr()
  */
 extern esp_err_t rest_receive_json_body( httpd_req_t *req, rest_server_context_t *context, cJSON **root );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //LIB_REST_SERVER_H

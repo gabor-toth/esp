@@ -1,6 +1,10 @@
 #ifndef HAJO_N2K_PROTOCOL_H
 #define HAJO_N2K_PROTOCOL_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define FASTPACKET_INDEX (0)
 #define FASTPACKET_SIZE (1)
 #define FASTPACKET_BUCKET_0_SIZE (6)
@@ -28,5 +32,9 @@ extern void n2k_send( const can_message_t *message );
 extern void n2k_register_receiver( n2k_callback receiver );
 
 extern void n2k_register_sender_loopback( n2k_callback receiver );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //HAJO_N2K_PROTOCOL_H

@@ -6,6 +6,10 @@
 #include <hal/gpio_types.h>
 #include <driver/gpio.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern void gpio_init( void *user_context );
 
 #define PIN_ENABLED     1
@@ -56,5 +60,9 @@ extern void gpio_set_pin_state( bool is_input, int class, int index, bool state 
 extern void gpio_set_pin_state_forced( bool is_input, int class, int index, bool state );
 
 extern bool gpio_set_pin_data( bool is_input, int class, int index, PinData *pin_data );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //ONTOZO_GPIO_DEFINE_H

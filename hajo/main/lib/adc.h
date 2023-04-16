@@ -4,6 +4,10 @@
 #include <stdint.h>
 #include <esp_err.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern void adc_main( bool start_timer );
 
 extern int adc_number_of_channels();
@@ -28,5 +32,9 @@ extern esp_err_t adc_add_channel( uint8_t adc_channel,
                                   adc_value_converter converter );
 
 extern void adc_read_all();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //HAJO_ADC_H

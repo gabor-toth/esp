@@ -16,4 +16,8 @@ void nk2_register_sender( tN2kSendFunction sendFunction,
 
 extern void n2k_onOpen();
 
+extern uint8_t n2k_load_address();
+
+extern void n2k_save_address( uint8_t address );
+
 #endif //HAJO_N2K_SENDER_H

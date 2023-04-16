@@ -7,6 +7,10 @@
 
 #include <stddef.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern void sntp_init_before_wifi();
 
 extern void sntp_init_after_wifi();
@@ -14,5 +18,9 @@ extern void sntp_init_after_wifi();
 extern bool sntp_is_time_set();
 
 extern void local_time_to_buf( char *__restrict _s, size_t _maxsize );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //ONTOZO_SNTP_MAIN_H
