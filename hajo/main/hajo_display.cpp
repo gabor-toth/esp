@@ -4,7 +4,7 @@
 //#include "driver/gpio.h"
 //#include "esp_event.h"
 #include "esp_log.h"
-#include "n2k_png.h"
+#include "lib/nmea2000/n2k_png.h"
 //#include "lib/adc.h"
 #include "n2k_sender.h"
 #include "hajo_display.h"
@@ -63,7 +63,7 @@ void N2kIncomingMessageHandler::HandleMsg( const tN2kMsg &N2kMsg ) {
 
 N2kIncomingMessageHandler incomingMessageHandler( &NMEA2000 );
 
-void setup_n2k_display() {
+void setup_n2k_device( int iDev ) {
     static const unsigned long TransmitMessages[] = {
             0
     };
@@ -71,6 +71,8 @@ void setup_n2k_display() {
     static const unsigned long ReceiveMessages[] = {
             N2K_PGN_FLUID_LEVEL,
             N2K_PGN_BATTERY_STATUS,
+            N2K_PGN_DC_DETAILED_STATUS,
+            N2K_PGN_BATTERY_CONFIGURATION,
             0
     };
 
@@ -78,13 +80,15 @@ void setup_n2k_display() {
     NMEA2000.SetDeviceInformation( 1,      // Unique number. Use e.g. Serial number.
                                    120,    // Device function=Display
                                    120,       // Device class=Display
-                                   2046  // Just chosen free from code list on http://www.nmea.org/Assets/20121020%20nmea%202000%20registration%20list.pdf
+                                   2046, // Just chosen free from code list on http://www.nmea.org/Assets/20121020%20nmea%202000%20registration%20list.pdf
+                                   4,       // Marine
+                                   iDev
     );
 
     NMEA2000.AttachMsgHandler( &incomingMessageHandler );
 }
 
-void hajo_display_main() {
-    setup_n2k_display();
+void hajo_display_main( int iDev ) {
+    setup_n2k_device( iDev );
     display_main();
 }
