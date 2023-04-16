@@ -2223,7 +2223,7 @@
     (property "Value" "BC557" (at 247.65 125.095 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
-    (property "Footprint" "Package_TO_SOT_THT:TO-92_Inline" (at 247.65 125.095 0)
+    (property "Footprint" "Package_TO_SOT_THT:TO-92_Inline_Wide" (at 247.65 125.095 0)
       (effects (font (size 1.27 1.27) italic) (justify left) hide)
     )
     (property "Datasheet" "https://www.onsemi.com/pub/Collateral/BC556BTA-D.pdf" (at 242.57 123.19 0)
