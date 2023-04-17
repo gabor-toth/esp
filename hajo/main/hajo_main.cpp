@@ -18,11 +18,9 @@
 
 static const char *LOG = "hajo_main";
 
-// defined by pins 26/21
-#define DEVICE_TYPE_GAUGE_DISPLAY 0b111
+// defined by pins 10-12
+#define DEVICE_TYPE_GAUGE_DISPLAY 0b101
 #define DEVICE_TYPE_BATTERY_MONITOR 0b110
-#define DEVICE_TYPE_RESERVED_1 0b01
-#define DEVICE_TYPE_RESERVED_0 0b00
 
 static int device_type = 0xff;
 
