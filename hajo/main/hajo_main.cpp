@@ -1,5 +1,6 @@
 #include "config.h"
 #include "driver/gpio.h"
+#include "esp_private/esp_clk.h"
 #include "esp_event.h"
 #include "esp_log.h"
 #include "esp_pm.h"
@@ -62,27 +63,44 @@ static void initialize_twai_driver() {
     gpio_set_level( N2K_GPIO_NUM_STANDBY, 0 );
 }
 
+esp_pm_lock_handle_t pm_lock_handle_display;
+esp_pm_lock_handle_t pm_lock_handle_listen;
+
+static void clock_configure() {
+
+    static esp_pm_config_esp32s2_t pm_config = {
+            .max_freq_mhz = 240,
+            .min_freq_mhz = 80,
+            .light_sleep_enable = false
+    };
+
+    ESP_ERROR_CHECK( esp_pm_configure( &pm_config ));
+    ESP_ERROR_CHECK( esp_pm_lock_create( ESP_PM_APB_FREQ_MAX, 0, "listen mode", &pm_lock_handle_listen ));
+    ESP_ERROR_CHECK( esp_pm_lock_create( ESP_PM_CPU_FREQ_MAX, 0, "display mode", &pm_lock_handle_display ));
+    ESP_ERROR_CHECK( esp_pm_lock_acquire( pm_lock_handle_listen ));
+}
+
+static void clock_log_state() {
+    esp_pm_config_esp32s2_t pm_config;
+    ESP_ERROR_CHECK( esp_pm_get_configuration( &pm_config ));
+    int cpu_freq = esp_clk_cpu_freq();
+    ESP_LOGI( LOG, "Clock min: %d max: %d current: %d",
+              pm_config.min_freq_mhz,
+              pm_config.max_freq_mhz,
+              cpu_freq / 1000000 );
+}
+
 void hajo_main() {
     nvs_init();
     determine_device_type();
     initialize_twai_driver();
-
-//    esp_pm_config_esp32s2_t pm_config = {
-//            .max_freq_mhz = 80,
-//            .min_freq_mhz = 40,
-//            .light_sleep_enable = false
-//    };
-//
-//    ESP_ERROR_CHECK( esp_pm_configure( &pm_config ));
-    esp_pm_config_esp32s2_t pm_config;
-    ESP_ERROR_CHECK( esp_pm_get_configuration( &pm_config ));
-    ESP_LOGI( LOG, "Clock min: %d max: %d", pm_config.min_freq_mhz, pm_config.max_freq_mhz );
 
     ESP_ERROR_CHECK( esp_event_loop_create_default());
 
     int iDev = 0;
     switch ( device_type ) {
         case DEVICE_TYPE_GAUGE_DISPLAY:
+            clock_configure();
             hajo_fluid_main( iDev++ );
             hajo_display_main( iDev++ );
             break;
@@ -97,6 +115,9 @@ void hajo_main() {
                       device_type & 1 ? '1' : '0' );
             break;
     }
+
+    clock_log_state();
+
     n2k_open();
 }
 
