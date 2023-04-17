@@ -14,8 +14,6 @@ static const char *LOG = "adc";
 typedef struct {
     adc_channel_t channel;
     const char *name;
-    uint8_t instance_id;
-    uint8_t instance_type;
     adc_value_converter converter;
     int raw_value;
     uint32_t converted_value;
@@ -112,8 +110,6 @@ extern esp_err_t adc_get_channel_value( int index, adc_channel_value_t *channel_
         read_one( &channels[ index ] );
     }
     adc_channel_data_t *channel = &channels[ index ];
-    channel_value->instance = channel->instance_id;
-    channel_value->type = channel->instance_type;
     channel_value->user_data = channel->user_data;
     channel_value->value = channel->converter != NULL
                            ? channel->converted_value // channel->converter( channel->raw_value )
@@ -121,8 +117,8 @@ extern esp_err_t adc_get_channel_value( int index, adc_channel_value_t *channel_
     return ESP_OK;
 }
 
-esp_err_t adc_add_channel( uint8_t adc_channel, const char *name, uint8_t instance, uint8_t type,
-                           void *user_data, size_t user_data_bytes, adc_value_converter converter ) {
+esp_err_t adc_add_channel( uint8_t adc_channel, const char *name, void *user_data, size_t user_data_bytes,
+                           adc_value_converter converter ) {
     if ( channel_count == MAX_CHANNELS ) {
 //        ESP_RETURN_ON_FALSE(handle && config, ESP_ERR_INVALID_ARG, TAG, "invalid argument: null pointer");
         ESP_ERROR_CHECK( ESP_ERR_INVALID_SIZE );
@@ -138,8 +134,6 @@ esp_err_t adc_add_channel( uint8_t adc_channel, const char *name, uint8_t instan
     memset( channel, 0, sizeof( *channel ));
     channel->channel = (adc_channel_t) adc_channel;
     channel->converter = converter;
-    channel->instance_id = instance;
-    channel->instance_type = type;
     if ( user_data == NULL || user_data_bytes == 0 ) {
         channel->user_data = NULL;
     } else {

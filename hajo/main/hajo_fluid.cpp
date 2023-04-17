@@ -1,5 +1,6 @@
-#include "lib/nmea2000/n2k_png.h"
+#include "driver/gpio.h"
 #include "lib/adc.h"
+#include "lib/nmea2000/n2k_png.h"
 #include "n2k_sender.h"
 
 static double fluid_u = 3.32;
@@ -9,6 +10,9 @@ static double fluid_rmes_min = 2;
 static double fluid_rmes_max = 180;
 
 typedef struct {
+    uint8_t instance;
+    uint8_t type;
+    gpio_num_t drive_pin;
     uint32_t capacity;
 } fluid_user_data;
 
@@ -28,23 +32,47 @@ static void convert_fluid_level( uint32_t raw_value, uint32_t *display_value, ui
     *correction = 0;
 }
 
+static void setup_drive_pins() {
+    gpio_config_t io_conf = {};
+
+    io_conf.intr_type = GPIO_INTR_DISABLE;
+    io_conf.mode = GPIO_MODE_OUTPUT;
+    io_conf.pin_bit_mask = BIT( GPIO_NUM_1 ) | BIT( GPIO_NUM_3 ) | BIT( GPIO_NUM_5 );
+    io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
+    io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
+    gpio_config( &io_conf );
+}
+
 static void setup_adc() {
     fluid_user_data data;
 
+
     data = {
+            .instance = 0,
+            .type = N2K_TANK_TYPE_FUEL,
+            .drive_pin = GPIO_NUM_1,
             .capacity = 60
     };
-    adc_add_channel( 4, "uzemanyag", 0, N2K_TANK_TYPE_FUEL, &data, sizeof( data ), convert_fluid_level );
+    adc_add_channel( 1, "uzemanyag l", &data, sizeof( data ), convert_fluid_level );
+    adc_add_channel( 6, "uzemanyag h", &data, sizeof( data ), convert_fluid_level );
 
     data = {
+            .instance = 0,
+            .type = N2K_TANK_TYPE_WATER,
+            .drive_pin = GPIO_NUM_3,
             .capacity = 85
     };
-    adc_add_channel( 5, "viz bal", 0, N2K_TANK_TYPE_WATER, &data, sizeof( data ), convert_fluid_level );
+    adc_add_channel( 3, "viz bal l", &data, sizeof( data ), convert_fluid_level );
+    adc_add_channel( 7, "viz bal h", &data, sizeof( data ), convert_fluid_level );
 
     data = {
+            .instance = 1,
+            .type = N2K_TANK_TYPE_WATER,
+            .drive_pin = GPIO_NUM_5,
             .capacity = 85
     };
-    adc_add_channel( 6, "viz jobb", 1, N2K_TANK_TYPE_WATER, &data, sizeof( data ), convert_fluid_level );
+    adc_add_channel( 5, "viz jobb l", &data, sizeof( data ), convert_fluid_level );
+    adc_add_channel( 8, "viz jobb h", &data, sizeof( data ), convert_fluid_level );
 
     adc_main( false );
 }
@@ -91,12 +119,15 @@ static bool n2k_send_fluid_level( int index, tN2kMsg &message ) {
     }
 
     adc_channel_value_t channel_data;
+
     adc_get_channel_value( index, &channel_data );
     fluid_user_data *user_data = static_cast<fluid_user_data *>(channel_data.user_data);
+//    gpio_set_level( StandbyPin, 0 );
+
     double valueInPercent = channel_data.value / 100.0;
     SetN2kFluidLevel( message,
-                      channel_data.instance,
-                      (tN2kFluidType) channel_data.type,
+                      user_data->instance,
+                      (tN2kFluidType) user_data->type,
                       valueInPercent,
                       user_data->capacity != 0 ? user_data->capacity : N2kDoubleNA // capacity
     );
@@ -104,6 +135,7 @@ static bool n2k_send_fluid_level( int index, tN2kMsg &message ) {
 }
 
 void hajo_fluid_main( int iDev ) {
+    setup_drive_pins();
     setup_adc();
     setup_n2k_device( iDev );
     nk2_register_sender( n2k_send_fluid_level, "fluids", N2K_PGN_FLUID_LEVEL_INTERVAL_MS, 250, true );
