@@ -170,7 +170,7 @@ static bool send_battery_config( int index, tN2kMsg &message ) {
 void hajo_battery_main( int iDev ) {
     setup_adc();
     setup_n2k_device( iDev );
-    nk2_register_sender( send_battery_status, "battery", N2K_PGN_BATTERY_STATUS_INTERVAL_MS, 60, true );
-    nk2_register_sender( send_dc_status, "battery", N2K_PGN_DC_DETAILED_STATUS_INTERVAL_MS, 70, true );
-    nk2_register_sender( send_battery_config, "battery", N2K_PGN_BATTERY_CONFIGURATION_INTERVAL_MS, 80, true );
+    nk2_register_sender( send_battery_status, "battery_status", N2K_PGN_BATTERY_STATUS_INTERVAL_MS, 60, true );
+    nk2_register_sender( send_dc_status, "dc_status", N2K_PGN_DC_DETAILED_STATUS_INTERVAL_MS, 70, true );
+    nk2_register_sender( send_battery_config, "battery_config", N2K_PGN_BATTERY_CONFIGURATION_INTERVAL_MS, 80, true );
 }

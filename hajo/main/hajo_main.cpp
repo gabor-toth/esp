@@ -66,10 +66,10 @@ static void initialize_twai_driver() {
 esp_pm_lock_handle_t pm_lock_handle_display;
 esp_pm_lock_handle_t pm_lock_handle_listen;
 
-static void clock_configure() {
+static void clock_configure( int max_freq_mhz ) {
 
     static esp_pm_config_esp32s2_t pm_config = {
-            .max_freq_mhz = 240,
+            .max_freq_mhz = max_freq_mhz,
             .min_freq_mhz = 80,
             .light_sleep_enable = false
     };
@@ -100,11 +100,12 @@ void hajo_main() {
     int iDev = 0;
     switch ( device_type ) {
         case DEVICE_TYPE_GAUGE_DISPLAY:
-            clock_configure();
+            clock_configure( 240 );
             hajo_fluid_main( iDev++ );
             hajo_display_main( iDev++ );
             break;
         case DEVICE_TYPE_BATTERY_MONITOR:
+            clock_configure( 80 );
             hajo_battery_main( iDev++ );
             break;
         default:
