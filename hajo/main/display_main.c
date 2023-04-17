@@ -109,15 +109,14 @@ static void guiTask( void *pvParameter ) {
     backlight_handler = lvgl_driver_init();
     backlight_on();
 
-    lv_color_t *buf1 = heap_caps_malloc( DISP_BUF_SIZE * sizeof( lv_color_t ), MALLOC_CAP_DMA);
+    uint32_t size_in_px = DISP_BUF_SIZE;
+
+    lv_color_t *buf1 = heap_caps_malloc( size_in_px * sizeof( lv_color_t ), MALLOC_CAP_DMA);
     assert( buf1 != NULL );
-    lv_color_t *buf2 = heap_caps_malloc( DISP_BUF_SIZE * sizeof( lv_color_t ), MALLOC_CAP_DMA);
+    lv_color_t *buf2 = heap_caps_malloc( size_in_px * sizeof( lv_color_t ), MALLOC_CAP_DMA);
     assert( buf2 != NULL );
 
     static lv_disp_draw_buf_t disp_buf;
-
-    uint32_t size_in_px = DISP_BUF_SIZE;
-
     lv_disp_draw_buf_init( &disp_buf, buf1, buf2, size_in_px );
 
     lv_disp_drv_t disp_drv;
@@ -129,7 +128,7 @@ static void guiTask( void *pvParameter ) {
     /* Create and start a periodic timer interrupt to call lv_tick_inc */
     const esp_timer_create_args_t periodic_timer_args = {
             .callback = &lv_tick_task,
-            .name = "periodic_gui"
+            .name = "lvgl_gui"
     };
     esp_timer_handle_t periodic_timer;
     ESP_ERROR_CHECK( esp_timer_create( &periodic_timer_args, &periodic_timer ));
