@@ -5,8 +5,13 @@
 
 static int battery_rmes = 16900;
 static int battery_rtop = 316000;
-static int battery_offset = 0;
+static int battery_offset = -50;
 static double battery_multiplier;
+
+typedef struct {
+    uint32_t capacity_ah;
+    uint32_t ripple_voltage_mv;
+} battery_user_data;
 
 static void convert_battery_voltage( uint32_t raw_value, uint32_t *display_value, uint32_t *correction ) {
     // U=(Rtop+Rmes)/Rmes*Umes
@@ -21,15 +26,31 @@ static void convert_battery_voltage( uint32_t raw_value, uint32_t *display_value
     if ( value < 0.0 ) {
         value = 0.0;
     }
-    // PGN 127508 - Battery Status: voltage 0.01V
-    *display_value = (uint32_t) value * 100;
+    *display_value = (uint32_t) value;
 }
 
 static void setup_adc() {
     battery_multiplier = ( battery_rmes + battery_rtop ) / (double) battery_rmes;
-    adc_add_channel( 0, "motor", 0, 0, 900, convert_battery_voltage );
-    adc_add_channel( 1, "munka1", 1, 0, 900, convert_battery_voltage );
-    adc_add_channel( 2, "munka2", 2, 0, 1100, convert_battery_voltage );
+
+    battery_user_data data;
+    data = {
+            .capacity_ah = 900,
+            .ripple_voltage_mv = 11000
+    };
+    adc_add_channel( 0, "motor", 0, 0, &data, sizeof( data ), convert_battery_voltage );
+
+    data = {
+            .capacity_ah = 900,
+            .ripple_voltage_mv = 11000
+    };
+    adc_add_channel( 1, "munka1", 1, 0, &data, sizeof( data ), convert_battery_voltage );
+
+    data = {
+            .capacity_ah = 1100,
+            .ripple_voltage_mv = 11000
+    };
+    adc_add_channel( 2, "munka2", 2, 0, &data, sizeof( data ), convert_battery_voltage );
+
     adc_main( false );
 }
 
@@ -86,7 +107,7 @@ static bool send_battery_status( int index, tN2kMsg &message ) {
     adc_get_channel_value( index, &channel_data );
     SetN2kDCBatStatus( message,
                        channel_data.instance,
-                       channel_data.value,
+                       channel_data.value / 1000.0, // mV -> V
                        N2kDoubleNA, // current
                        N2kDoubleNA, // temperature
                        sid
@@ -107,6 +128,7 @@ static bool send_dc_status( int index, tN2kMsg &message ) {
 
     adc_channel_value_t channel_data;
     adc_get_channel_value( index, &channel_data );
+    battery_user_data *user_data = static_cast<battery_user_data *>(channel_data.user_data);
 //    SetN2kDCStatus( N2kMsg, 1, 1, N2kDCt_Battery, 56, 92, 38500, 0.012 );
     SetN2kDCStatus( message,
                     sid,
@@ -115,8 +137,8 @@ static bool send_dc_status( int index, tN2kMsg &message ) {
                     N2kUInt8NA, //StateOfCharge
                     N2kUInt8NA, // StateOfHealth,
                     N2kDoubleNA, // TimeRemaining,
-                    11.00, // RippleVoltage
-                    channel_data.max_value != 0 ? AhToCoulomb( channel_data.max_value ) : N2kDoubleNA // Capacity
+                    N2kDoubleNA, // RippleVoltage
+                    N2kDoubleNA // Remaining Capacity
     );
     return true;
 }
@@ -129,6 +151,7 @@ static bool send_battery_config( int index, tN2kMsg &message ) {
 
     adc_channel_value_t channel_data;
     adc_get_channel_value( index, &channel_data );
+    battery_user_data *user_data = static_cast<battery_user_data *>(channel_data.user_data);
 //    SetN2kBatConf( N2kMsg, 1, N2kDCbt_Gel, N2kDCES_Yes, N2kDCbnv_12v, N2kDCbc_LeadAcid, AhToCoulomb( 420 ), 53, 1.251, 75 );
     SetN2kBatConf( message,
                    channel_data.instance,
@@ -136,7 +159,7 @@ static bool send_battery_config( int index, tN2kMsg &message ) {
                    N2kDCES_No,
                    N2kDCbnv_12v,
                    N2kDCbc_LeadAcid,
-                   channel_data.max_value != 0 ? AhToCoulomb( channel_data.max_value ) : N2kDoubleNA,
+                   user_data->capacity_ah != 0 ? AhToCoulomb( user_data->capacity_ah ) : N2kDoubleNA,
                    N2kInt8NA,
                    N2kDoubleNA,
                    N2kInt8NA

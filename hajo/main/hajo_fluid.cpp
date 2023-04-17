@@ -8,6 +8,10 @@ static double fluid_rtop = 680;
 static double fluid_rmes_min = 2;
 static double fluid_rmes_max = 180;
 
+typedef struct {
+    uint32_t capacity;
+} fluid_user_data;
+
 static void convert_fluid_level( uint32_t raw_value, uint32_t *display_value, uint32_t *correction ) {
     // Rmes=Rtop/(U/Umes-1)
     // 0% = 2 Ohm, 100% = 180 Ohm
@@ -25,9 +29,23 @@ static void convert_fluid_level( uint32_t raw_value, uint32_t *display_value, ui
 }
 
 static void setup_adc() {
-    adc_add_channel( 4, "uzemanyag", 0, N2K_TANK_TYPE_FUEL, 60, convert_fluid_level );
-    adc_add_channel( 5, "viz bal", 0, N2K_TANK_TYPE_WATER, 85, convert_fluid_level );
-    adc_add_channel( 6, "viz jobb", 1, N2K_TANK_TYPE_WATER, 85, convert_fluid_level );
+    fluid_user_data data;
+
+    data = {
+            .capacity = 60
+    };
+    adc_add_channel( 4, "uzemanyag", 0, N2K_TANK_TYPE_FUEL, &data, sizeof( data ), convert_fluid_level );
+
+    data = {
+            .capacity = 85
+    };
+    adc_add_channel( 5, "viz bal", 0, N2K_TANK_TYPE_WATER, &data, sizeof( data ), convert_fluid_level );
+
+    data = {
+            .capacity = 85
+    };
+    adc_add_channel( 6, "viz jobb", 1, N2K_TANK_TYPE_WATER, &data, sizeof( data ), convert_fluid_level );
+
     adc_main( false );
 }
 
@@ -74,11 +92,13 @@ static bool n2k_send_fluid_level( int index, tN2kMsg &message ) {
 
     adc_channel_value_t channel_data;
     adc_get_channel_value( index, &channel_data );
+    fluid_user_data *user_data = static_cast<fluid_user_data *>(channel_data.user_data);
+    double valueInPercent = channel_data.value / 100.0;
     SetN2kFluidLevel( message,
                       channel_data.instance,
                       (tN2kFluidType) channel_data.type,
-                      channel_data.value,
-                      N2kDoubleNA // capacity
+                      valueInPercent,
+                      user_data->capacity != 0 ? user_data->capacity : N2kDoubleNA // capacity
     );
     return true;
 }
