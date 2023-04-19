@@ -13,7 +13,10 @@ extern void adc_main( bool start_timer );
 extern int adc_number_of_channels();
 
 typedef struct {
-    uint32_t value;
+    int channel;
+    const char *name;
+    uint32_t raw_value;
+    uint32_t display_value;
     void *user_data;
 } adc_channel_value_t;
 
@@ -23,6 +26,8 @@ typedef void (*adc_value_converter)( uint32_t raw_value,
 
 extern esp_err_t adc_get_channel_value( int index,
                                         adc_channel_value_t *channel_value );
+
+extern void *adc_get_channel_user_data( int index );
 
 extern esp_err_t adc_add_channel( uint8_t adc_channel,
                                   const char *name,

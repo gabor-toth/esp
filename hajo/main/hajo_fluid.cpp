@@ -1,11 +1,13 @@
+#include "cmath"
 #include "driver/gpio.h"
+#include "esp_log.h"
 #include "lib/adc.h"
 #include "lib/nmea2000/n2k_png.h"
 #include "n2k_sender.h"
 
-static double fluid_u = 3.32;
-static double fluid_rtop = 680;
-//static double fluid_rtop = 634;
+static double fluid_u = 3.20;
+static double fluid_rtop = 806;
+static double fluid_rbottom = 51.1;
 static double fluid_rmes_min = 2;
 static double fluid_rmes_max = 180;
 
@@ -16,20 +18,25 @@ typedef struct {
     uint32_t capacity;
 } fluid_user_data;
 
-static void convert_fluid_level( uint32_t raw_value, uint32_t *display_value, uint32_t *correction ) {
-    // Rmes=Rtop/(U/Umes-1)
+//static void convert_fluid_level( uint32_t raw_value, uint32_t *display_value, uint32_t *correction ) {
+static void convert_fluid_level( uint32_t raw_value, uint32_t *display_value, double *rmes_back ) {
+    // Rmes=Rtop/(U/Umes-1)-Rbottom
     // 0% = 2 Ohm, 100% = 180 Ohm
-    double rmes = fluid_rtop / ( fluid_u * 1000 / raw_value - 1 );
+    double rmes = fluid_rtop / ( fluid_u * 1000 / raw_value - 1 ) - fluid_rbottom;
     uint32_t value;
     if ( rmes <= fluid_rmes_min ) {
         value = 0;
     } else if ( rmes >= fluid_rmes_max ) {
         value = 100;
     } else {
-        value = (uint32_t) (( rmes - fluid_rmes_min ) / ( fluid_rmes_max - fluid_rmes_min ) * 100 );
+        value = lround(( rmes - fluid_rmes_min ) / ( fluid_rmes_max - fluid_rmes_min ) * 100 );
     }
     *display_value = value;
-    *correction = 0;
+//    if ( correction != nullptr ) {
+//        *correction = 0;
+    if ( rmes_back != nullptr ) {
+        *rmes_back = rmes;
+    }
 }
 
 static void setup_drive_pins() {
@@ -53,8 +60,9 @@ static void setup_adc() {
             .drive_pin = GPIO_NUM_1,
             .capacity = 60
     };
-    adc_add_channel( 1, "uzemanyag l", &data, sizeof( data ), convert_fluid_level );
-    adc_add_channel( 6, "uzemanyag h", &data, sizeof( data ), convert_fluid_level );
+    adc_add_channel( 1, "uzemanyag_l", &data, sizeof( data ), nullptr );
+    adc_add_channel( 6, "uzemanyag_h", &data, sizeof( data ), nullptr );
+    gpio_set_level( data.drive_pin, 1 );
 
     data = {
             .instance = 0,
@@ -62,8 +70,8 @@ static void setup_adc() {
             .drive_pin = GPIO_NUM_3,
             .capacity = 85
     };
-    adc_add_channel( 3, "viz bal l", &data, sizeof( data ), convert_fluid_level );
-    adc_add_channel( 7, "viz bal h", &data, sizeof( data ), convert_fluid_level );
+    adc_add_channel( 3, "viz_bal_l", &data, sizeof( data ), nullptr );
+    adc_add_channel( 7, "viz_bal_h", &data, sizeof( data ), nullptr );
 
     data = {
             .instance = 1,
@@ -71,8 +79,8 @@ static void setup_adc() {
             .drive_pin = GPIO_NUM_5,
             .capacity = 85
     };
-    adc_add_channel( 5, "viz jobb l", &data, sizeof( data ), convert_fluid_level );
-    adc_add_channel( 8, "viz jobb h", &data, sizeof( data ), convert_fluid_level );
+    adc_add_channel( 5, "viz_jobb_l", &data, sizeof( data ), nullptr );
+    adc_add_channel( 8, "viz_jobb_h", &data, sizeof( data ), nullptr );
 
     adc_main( false );
 }
@@ -113,18 +121,37 @@ static void setup_n2k_device( int iDev ) {
 }
 
 static bool n2k_send_fluid_level( int index, tN2kMsg &message ) {
-    int channel_count = adc_number_of_channels();
-    if ( index >= channel_count ) {
+//    int channel_count = adc_number_of_channels();
+//    if ( index >= channel_count / 2 ) {
+    if ( index >= 1 ) {
         return false;
     }
 
-    adc_channel_value_t channel_data;
+    adc_channel_value_t channel_data_l;
+    adc_channel_value_t channel_data_h;
 
-    adc_get_channel_value( index, &channel_data );
-    fluid_user_data *user_data = static_cast<fluid_user_data *>(channel_data.user_data);
-//    gpio_set_level( StandbyPin, 0 );
+    fluid_user_data *user_data = static_cast<fluid_user_data *>(adc_get_channel_user_data( index * 2 + 0 ));
+    if ( user_data == nullptr ) {
+        return true;
+    }
+//    gpio_set_level( user_data->drive_pin, 1 );
+    // TODO add a bit delay to stabilize voltage
+    adc_get_channel_value( index * 2 + 0, &channel_data_l );
+    adc_get_channel_value( index * 2 + 1, &channel_data_h );
+//    gpio_set_level( user_data->drive_pin, 0 );
 
-    double valueInPercent = channel_data.value / 100.0;
+    uint32_t display_value;
+    double rmes;
+    convert_fluid_level( channel_data_h.raw_value, &display_value, &rmes );
+
+    ESP_LOGI( "hajo_fluid", "Channel %d %-10s Raw: %4ld Rmes: %lf Display: %5ld",
+              channel_data_h.channel,
+              channel_data_h.name,
+              channel_data_h.raw_value,
+              rmes,
+              display_value );
+
+    double valueInPercent = display_value / 100.0;
     SetN2kFluidLevel( message,
                       user_data->instance,
                       (tN2kFluidType) user_data->type,

@@ -46,6 +46,8 @@ static void read_one( adc_channel_data_t *channel ) {
     uint32_t correction = 0;
     if ( channel->converter ) {
         channel->converter( channel->raw_value, &channel->converted_value, &correction );
+    } else {
+        channel->converted_value = channel->raw_value;
     }
     ESP_LOGI( LOG, "Channel %d %-10s Raw: %4ld Voltage: %4dmV Display: %5ld (%ld)",
               channel->channel,
@@ -102,7 +104,7 @@ int adc_number_of_channels() {
     return channel_count;
 }
 
-extern esp_err_t adc_get_channel_value( int index, adc_channel_value_t *channel_value ) {
+esp_err_t adc_get_channel_value( int index, adc_channel_value_t *channel_value ) {
     if ( index < 0 || index > channel_count ) {
         return ESP_FAIL;
     }
@@ -110,11 +112,22 @@ extern esp_err_t adc_get_channel_value( int index, adc_channel_value_t *channel_
         read_one( &channels[ index ] );
     }
     adc_channel_data_t *channel = &channels[ index ];
+    channel_value->channel = channel->channel;
+    channel_value->name = channel->name;
     channel_value->user_data = channel->user_data;
-    channel_value->value = channel->converter != NULL
-                           ? channel->converted_value // channel->converter( channel->raw_value )
-                           : channel->raw_value;
+    channel_value->raw_value = channel->raw_value;
+    channel_value->display_value = channel->converter != NULL
+                                   ? channel->converted_value
+                                   : channel->raw_value;
     return ESP_OK;
+}
+
+void *adc_get_channel_user_data( int index ) {
+    if ( index < 0 || index > channel_count ) {
+        ESP_LOGE( LOG, "Bad adc channel index %d", index );
+        return NULL;
+    }
+    return channels[ index ].user_data;
 }
 
 esp_err_t adc_add_channel( uint8_t adc_channel, const char *name, void *user_data, size_t user_data_bytes,

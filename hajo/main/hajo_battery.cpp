@@ -1,3 +1,4 @@
+#include "cmath"
 #include "lib/nmea2000/n2k_png.h"
 #include "lib/adc.h"
 #include "n2k_sender.h"
@@ -27,7 +28,7 @@ static void convert_battery_voltage( uint32_t raw_value, uint32_t *display_value
     if ( value < 0.0 ) {
         value = 0.0;
     }
-    *display_value = (uint32_t) value;
+    *display_value = lround( value );
 }
 
 static void setup_adc() {
@@ -112,7 +113,7 @@ static bool send_battery_status( int index, tN2kMsg &message ) {
     battery_user_data *user_data = static_cast<battery_user_data *>(channel_data.user_data);
     SetN2kDCBatStatus( message,
                        user_data->instance,
-                       channel_data.value / 1000.0, // mV -> V
+                       channel_data.display_value / 1000.0, // mV -> V
                        N2kDoubleNA, // current
                        N2kDoubleNA, // temperature
                        sid
