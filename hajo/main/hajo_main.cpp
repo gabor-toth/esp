@@ -7,6 +7,7 @@
 #include "hajo_battery.h"
 #include "hajo_display.h"
 #include "hajo_fluid.h"
+#include "hajo_logger.h"
 #include "lib/nvs_main.h"
 #include "n2k_sender.h"
 
@@ -19,6 +20,7 @@
 static const char *LOG = "hajo_main";
 
 // defined by pins 10-12
+#define DEVICE_TYPE_LOGGER 0b011
 #define DEVICE_TYPE_GAUGE_DISPLAY 0b101
 #define DEVICE_TYPE_BATTERY_MONITOR 0b110
 
@@ -105,6 +107,9 @@ void hajo_main() {
         case DEVICE_TYPE_BATTERY_MONITOR:
             clock_configure( 80 );
             hajo_battery_main( iDev++ );
+            break;
+        case DEVICE_TYPE_LOGGER:
+            hajo_logger_main();
             break;
         default:
             // TODO fail
