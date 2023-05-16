@@ -21,6 +21,7 @@ idf_component_register(
         "hajo_fluid.cpp"
         "hajo_logger.cpp"
         "hajo_main.cpp"
+        "n2k_parser.cpp"
         "n2k_receiver.cpp"
         "n2k_sender.cpp"
 
