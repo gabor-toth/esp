@@ -44,15 +44,15 @@ static void process_incoming_pgn_fluid_level( const tN2kMsg &N2kMsg ) {
     }
 }
 
-class N2kIncomingMessageHandler : public tNMEA2000::tMsgHandler {
+class DisplayIncomingMessageHandler : public tNMEA2000::tMsgHandler {
 public:
-    N2kIncomingMessageHandler( tNMEA2000 *_pNMEA2000 ) : tNMEA2000::tMsgHandler( 0, _pNMEA2000 ) {
+    explicit DisplayIncomingMessageHandler( tNMEA2000 *_pNMEA2000 ) : tNMEA2000::tMsgHandler( 0, _pNMEA2000 ) {
     }
 
-    void HandleMsg( const tN2kMsg &N2kMsg );
+    void HandleMsg( const tN2kMsg &N2kMsg ) override;
 };
 
-void N2kIncomingMessageHandler::HandleMsg( const tN2kMsg &N2kMsg ) {
+void DisplayIncomingMessageHandler::HandleMsg( const tN2kMsg &N2kMsg ) {
 //    if ( device_type != DEVICE_TYPE_GAUGE_DISPLAY ) {
 //        return;
 //    }
@@ -73,7 +73,7 @@ void N2kIncomingMessageHandler::HandleMsg( const tN2kMsg &N2kMsg ) {
     }
 }
 
-N2kIncomingMessageHandler incomingMessageHandler( &NMEA2000 );
+DisplayIncomingMessageHandler* incomingMessageHandler;
 
 void setup_n2k_device( int iDev ) {
     static const unsigned long TransmitMessages[] = {
@@ -99,11 +99,12 @@ void setup_n2k_device( int iDev ) {
 
     NMEA2000.ExtendTransmitMessages( TransmitMessages, iDev );
     NMEA2000.ExtendReceiveMessages( ReceiveMessages, iDev );
-    NMEA2000.AttachMsgHandler( &incomingMessageHandler );
+    incomingMessageHandler = new DisplayIncomingMessageHandler( &NMEA2000 );
+    NMEA2000.AttachMsgHandler( incomingMessageHandler );
 }
 
 void process_incoming_pgn( const tN2kMsg &message ) {
-    incomingMessageHandler.HandleMsg( message );
+    incomingMessageHandler->HandleMsg( message );
 }
 
 void hajo_display_main( int iDev ) {
