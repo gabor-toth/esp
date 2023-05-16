@@ -1,7 +1,7 @@
 #include "display_main.h"
 #include "display_meter.h"
 #include "esp_log.h"
-#include "lib/nmea2000/n2k_png.h"
+#include "n2k_parser.h"
 #include "n2k_sender.h"
 #include "hajo_display.h"
 

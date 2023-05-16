@@ -3,7 +3,7 @@
 #include "sys/stat.h"
 #include "cstring"
 #include "sdmmc_cmd.h"
-#include "lib/nmea2000/n2k_png.h"
+#include "n2k_parser.h"
 #include "n2k_sender.h"
 
 static const char *TAG = "sdcard";
@@ -150,9 +150,13 @@ static void open_sdcard() {
     spi_bus_free( static_cast<spi_host_device_t>(host.slot));
 }
 
+/*
+ * 0x1F801: PGN 129025 - Position, Rapid Update (100msec)
+ * 0x1F805: PGN 129029 - GNSS Position Data (1000msec)
+ * 0x1F809: PGN 129033 - Time & Date (1000msec)
+ */
 static void setup_n2k_device( int iDev ) {
     static const unsigned long TransmitMessages[] = {
-            N2K_PGN_BATTERY_STATUS,
             0
     };
 

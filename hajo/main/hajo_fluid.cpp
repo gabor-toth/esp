@@ -2,7 +2,7 @@
 #include "driver/gpio.h"
 #include "esp_log.h"
 #include "lib/adc.h"
-#include "lib/nmea2000/n2k_png.h"
+#include "n2k_parser.h"
 #include "n2k_sender.h"
 
 static double fluid_u = 3.20;
@@ -56,7 +56,7 @@ static void setup_adc() {
 
     data = {
             .instance = 0,
-            .type = N2K_TANK_TYPE_FUEL,
+            .type = N2kft_Fuel,
             .drive_pin = GPIO_NUM_1,
             .capacity = 60
     };
@@ -66,7 +66,7 @@ static void setup_adc() {
 
     data = {
             .instance = 0,
-            .type = N2K_TANK_TYPE_WATER,
+            .type = N2kft_Water,
             .drive_pin = GPIO_NUM_3,
             .capacity = 85
     };
@@ -75,7 +75,7 @@ static void setup_adc() {
 
     data = {
             .instance = 1,
-            .type = N2K_TANK_TYPE_WATER,
+            .type = N2kft_Water,
             .drive_pin = GPIO_NUM_5,
             .capacity = 85
     };

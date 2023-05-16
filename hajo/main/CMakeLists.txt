@@ -21,7 +21,6 @@ idf_component_register(
         "hajo_fluid.cpp"
         "hajo_logger.cpp"
         "hajo_main.cpp"
-        "lib/nmea2000/n2k_protocol.c"
         "n2k_receiver.cpp"
         "n2k_sender.cpp"
 
