@@ -6,11 +6,10 @@
 #include <cstring>
 #include <N2kTimer.h>
 #include <vector>
-#include "lib/nvs_main.h"
 
 using namespace std;
 
-static const char *LOG = "n2k_loop";
+static const char *LOG = "n2k_sender";
 static n2k_loopback_callback loopback_callback = nullptr;
 
 // Structure for holding message sending information
@@ -56,8 +55,6 @@ _Noreturn static void task_main( void *arg ) {
             continue;
         }
 
-        NMEA2000.ParseMessages();
-
         vector<tN2kSendMessage>::iterator iterator;
         for ( iterator = sendMessages.begin(); iterator != sendMessages.end(); iterator++ ) {
             if ( !iterator->Scheduler.IsTime()) {
@@ -86,7 +83,7 @@ static void timer_callback( TimerHandle_t ) {
     xQueueSend( timer_event_queue, &dummy, 0 );
 }
 
-void n2k_on_open() {
+void n2k_sender_on_open() {
     ESP_LOGI( LOG, "n2k_on_open" );
     vector<tN2kSendMessage>::iterator iterator;
     for ( iterator = sendMessages.begin(); iterator != sendMessages.end(); iterator++ ) {
@@ -121,37 +118,6 @@ void nk2_register_sender( tN2kSendFunction sendFunction,
     }
 }
 
-uint8_t n2k_load_address() {
-    uint32_t nvs_handle = nvs_open_storage();
-    char *s = nvs_read_string( nvs_handle, "address" );
-    uint address = 25;
-    if ( s != nullptr ) {
-        address = atoi( s );
-        ESP_LOGI( LOG, "Loaded address %02x", address );
-        free( s );
-    } else {
-        ESP_LOGI( LOG, "No address set yet, using default %02x", address );
-    }
-    nvs_close_storage( nvs_handle );
-    return address;
-}
-
-void n2k_save_address( uint8_t address ) {
-    ESP_LOGI( LOG, "Save new address %02x", address );
-    uint32_t nvs_handle = nvs_open_storage();
-    char s[8];
-    itoa( address, s, 10 );
-    nvs_write_string( nvs_handle, "address", s );
-    nvs_close_storage( nvs_handle );
-}
-
-void n2k_open() {
-    uint8_t sourceAddress = n2k_load_address();
-    NMEA2000.SetMode( tNMEA2000::N2km_ListenAndNode, sourceAddress );
-    NMEA2000.SetOnOpen( n2k_on_open );
-    NMEA2000.Open();
-}
-
-void n2k_register_sender_loopback( n2k_loopback_callback callback ) {
+void n2k_sender_register_loopback( n2k_loopback_callback callback ) {
     loopback_callback = callback;
 }

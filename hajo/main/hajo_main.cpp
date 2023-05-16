@@ -9,6 +9,7 @@
 #include "hajo_fluid.h"
 #include "hajo_logger.h"
 #include "lib/nvs_main.h"
+#include "n2k_receiver.h"
 #include "n2k_sender.h"
 
 #define ESP32_CAN_TX_PIN N2K_GPIO_NUM_TX
@@ -109,7 +110,7 @@ void hajo_main() {
             hajo_battery_main( iDev++ );
             break;
         case DEVICE_TYPE_LOGGER:
-            hajo_logger_main( iDev++ );
+            hajo_logger_main(iDev++);
             break;
         default:
             // TODO fail
@@ -122,7 +123,7 @@ void hajo_main() {
 
     clock_log_state();
 
-    n2k_open();
+    n2k_init();
 }
 
 extern "C" {
