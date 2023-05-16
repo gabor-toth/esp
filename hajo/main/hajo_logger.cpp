@@ -3,6 +3,8 @@
 #include "sys/stat.h"
 #include "cstring"
 #include "sdmmc_cmd.h"
+#include "lib/nmea2000/n2k_png.h"
+#include "n2k_sender.h"
 
 static const char *TAG = "sdcard";
 
@@ -26,7 +28,8 @@ static void open_sdcard() {
             .format_if_mount_failed = false,
 #endif // EXAMPLE_FORMAT_IF_MOUNT_FAILED
             .max_files = 5,
-            .allocation_unit_size = 16 * 1024
+            .allocation_unit_size = 16 * 1024,
+            .disk_status_check_enable = false
     };
     sdmmc_card_t *card;
     const char mount_point[] = MOUNT_POINT;
@@ -49,7 +52,14 @@ static void open_sdcard() {
             .sclk_io_num = PIN_NUM_CLK,
             .quadwp_io_num = -1,
             .quadhd_io_num = -1,
+            .data4_io_num = -1,
+            .data5_io_num = -1,
+            .data6_io_num = -1,
+            .data7_io_num = -1,
             .max_transfer_sz = SDMMC_FREQ_DEFAULT,
+            .flags = 0,
+            .isr_cpu_id = INTR_CPU_ID_AUTO,
+            .intr_flags = 0
     };
     ret = spi_bus_initialize( static_cast<spi_host_device_t>(host.slot), &bus_cfg, SDSPI_DEFAULT_DMA );
     if ( ret != ESP_OK ) {
@@ -140,6 +150,43 @@ static void open_sdcard() {
     spi_bus_free( static_cast<spi_host_device_t>(host.slot));
 }
 
-void hajo_logger_main() {
+static void setup_n2k_device( int iDev ) {
+    static const unsigned long TransmitMessages[] = {
+            N2K_PGN_BATTERY_STATUS,
+            0
+    };
+
+    static const unsigned long ReceiveMessages[] = {
+            0
+    };
+
+    static const tNMEA2000::tProductInformation ProductInformation = {
+            2100,                        // N2kVersion
+            100,                        // Manufacturer's product code
+            "Data logger",               // Manufacturer's Model ID
+            "0.1.0 (2023-03-23)",        // Manufacturer's Software version code
+            "1.0.0 (2023-03-23)",    // Manufacturer's Model version
+            "00000001",            // Manufacturer's Model serial code
+            0,                       // CertificationLevel
+            1                         // LoadEquivalency
+    };
+
+    NMEA2000.SetProductInformation( &ProductInformation, iDev );
+
+    // device class & function: https://manualzz.com/doc/12647142/nmea2000-class-and-function-codes
+    NMEA2000.SetDeviceInformation( 1,      // Unique number. Use e.g. Serial number.
+                                   140,    // Device function=Bus Traffic Logger
+                                   10,        // Device class=System Tools
+                                   2046,  // Just chosen free from code list on http://www.nmea.org/Assets/20121020%20nmea%202000%20registration%20list.pdf
+                                   4,       // Marine
+                                   iDev
+    );
+
+    NMEA2000.ExtendTransmitMessages( TransmitMessages, iDev );
+    NMEA2000.ExtendReceiveMessages( ReceiveMessages, iDev );
+}
+
+void hajo_logger_main( int iDev) {
     open_sdcard();
+    setup_n2k_device( iDev );
 }

@@ -109,7 +109,7 @@ void hajo_main() {
             hajo_battery_main( iDev++ );
             break;
         case DEVICE_TYPE_LOGGER:
-            hajo_logger_main();
+            hajo_logger_main( iDev++ );
             break;
         default:
             // TODO fail
