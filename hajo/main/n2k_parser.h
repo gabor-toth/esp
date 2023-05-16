@@ -120,22 +120,22 @@ extern bool ParseN2kBatConf( const tN2kMsg &N2kMsg, N2kBatConfData& data );
 #define N2K_PGN_GNSS_POSITION_DATA_INTERVAL_MS 1000
 
 typedef struct {
-    unsigned char SID;
-    uint16_t DaysSince1970;
-    double SecondsSinceMidnight;
-    double Latitude;
-    double Longitude;
-    double Altitude;
-    tN2kGNSStype GNSStype;
-    tN2kGNSSmethod GNSSmethod;
-    unsigned char nSatellites;
-    double HDOP;
-    double PDOP;
-    double GeoidalSeparation;
-    unsigned char nReferenceStations;
-    tN2kGNSStype ReferenceStationType;
-    uint16_t ReferenceStationID;
-    double AgeOfCorrection;
+    unsigned char sid;
+    uint16_t daysSince1970;
+    double secondsSinceMidnight;
+    double latitude;
+    double longitude;
+    double altitude;
+    tN2kGNSStype gnssType;
+    tN2kGNSSmethod gnssMethod;
+    unsigned char satellites;
+    double hdop;
+    double pdop;
+    double geoidalSeparation;
+    unsigned char referenceStations;
+    tN2kGNSStype referenceStationType;
+    uint16_t referenceStationID;
+    double ageOfCorrection;
 } N2kGNSSData;
 
 extern bool ParseN2kGNSS( const tN2kMsg &N2kMsg, N2kGNSSData& data );
@@ -144,11 +144,33 @@ extern bool ParseN2kGNSS( const tN2kMsg &N2kMsg, N2kGNSSData& data );
 #define N2K_PGN_LOCAL_OFFSET_INTERVAL_MS 1000
 
 typedef struct {
-    uint16_t DaysSince1970;
-    double SecondsSinceMidnight;
-    int16_t LocalOffset;
+    uint16_t daysSince1970;
+    double secondsSinceMidnight;
+    int16_t localOffset;
 } N2kLocalOffsetData;
 
 extern bool ParseN2kLocalOffset(const tN2kMsg &N2kMsg, N2kLocalOffsetData& data );
+
+#define N2K_PGN_PROPRIETARY_FAST_PACKET   0x1ef00 // 126720
+
+typedef struct {
+    unsigned int manufacturerCode:11;
+    unsigned int reserved:2;
+    unsigned int industryCode:3;
+    unsigned int proprietaryID:18;
+    unsigned int command:8;
+} N2kProprietaryFastPacketFrame;
+
+#define N2K_PGN_RUDDER 0x1F10D // 127245
+#define N2K_PGN_RUDDER_INTERVAL_MS 100
+
+typedef struct {
+    double rudderPosition;
+    unsigned char instance;
+    tN2kRudderDirectionOrder rudderDirectionOrder;
+    double angleOrder;
+} N2kRudderData;
+
+extern bool ParseN2kRudder(const tN2kMsg &N2kMsg, N2kRudderData& data );
 
 #endif //HAJO_N2K_PARSER_H

@@ -47,27 +47,35 @@ bool ParseN2kBatConf( const tN2kMsg &N2kMsg, N2kBatConfData &data ) {
 
 bool ParseN2kGNSS( const tN2kMsg &N2kMsg, N2kGNSSData &data ) {
     return ParseN2kGNSS( N2kMsg,
-                         data.SID,
-                         data.DaysSince1970,
-                         data.SecondsSinceMidnight,
-                         data.Latitude,
-                         data.Longitude,
-                         data.Altitude,
-                         data.GNSStype,
-                         data.GNSSmethod,
-                         data.nSatellites,
-                         data.HDOP,
-                         data.PDOP,
-                         data.GeoidalSeparation,
-                         data.nReferenceStations,
-                         data.ReferenceStationType,
-                         data.ReferenceStationID,
-                         data.AgeOfCorrection );
+                         data.sid,
+                         data.daysSince1970,
+                         data.secondsSinceMidnight,
+                         data.latitude,
+                         data.longitude,
+                         data.altitude,
+                         data.gnssType,
+                         data.gnssMethod,
+                         data.satellites,
+                         data.hdop,
+                         data.pdop,
+                         data.geoidalSeparation,
+                         data.referenceStations,
+                         data.referenceStationType,
+                         data.referenceStationID,
+                         data.ageOfCorrection );
 }
 
 bool ParseN2kLocalOffset( const tN2kMsg &N2kMsg, N2kLocalOffsetData &data ) {
     return ParseN2kLocalOffset( N2kMsg,
-                                data.DaysSince1970,
-                                data.SecondsSinceMidnight,
-                                data.LocalOffset );
+                                data.daysSince1970,
+                                data.secondsSinceMidnight,
+                                data.localOffset );
+}
+
+bool ParseN2kRudder(const tN2kMsg &N2kMsg, N2kRudderData& data ) {
+    return ParseN2kRudder( N2kMsg,
+                           data.rudderPosition,
+                           data.instance,
+                           data.rudderDirectionOrder,
+                           data.angleOrder );
 }
