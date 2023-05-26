@@ -24,6 +24,7 @@ idf_component_register(
         "n2k_parser.cpp"
         "n2k_receiver.cpp"
         "n2k_sender.cpp"
+        "N2kRaymarine.cpp"
 
         INCLUDE_DIRS
         "."
