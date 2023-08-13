@@ -1,6 +1,16 @@
 [submodule "hajo/components/NMEA2000"]
 	path = hajo/components/NMEA2000
 	url = https://github.com/ttlappalainen/NMEA2000
+	branch = master-old
 [submodule "hajo/components/NMEA2000_esp32"]
 	path = hajo/components/NMEA2000_esp32
 	url = https://github.com/ttlappalainen/NMEA2000_esp32
+	branch = master
+[submodule "hajo/components/lvgl"]
+	path = hajo/components/lvgl
+	url = https://github.com/lvgl/lvgl.git
+	branch = release/v8.3
+[submodule "hajo/components/lvgl_esp32_drivers"]
+	path = hajo/components/lvgl_esp32_drivers
+	url = https://github.com/lvgl/lvgl_esp32_drivers.git
+	branch = master
