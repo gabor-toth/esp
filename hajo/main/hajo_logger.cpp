@@ -220,6 +220,9 @@ void process_incoming_pgn_proprietary_fast_packet( const tN2kMsg &msg ) {
 // N2K_PGN_RAYMARINE_PILOT_MODE:
 // 3b 9f 00 00 02 00 01 ff
 
+//I (225529) hajo_logger: PGN local offset days 12326 seconds 76950.000000 offset 32767
+//I (225539) hajo_logger: PGN position data latitude 47.580750 longitude 19.060717 sats 4 type 0 method 1
+
 void process_incoming_pgn_dump( const tN2kMsg& msg ) {
     char buf[16*3+1];
     char* p= buf;
@@ -245,10 +248,10 @@ void LoggerIncomingMessageHandler::HandleMsg( const tN2kMsg &N2kMsg ) {
 //            process_incoming_pgn_battery_configuration( N2kMsg );
 //            break;
         case N2K_PGN_GNSS_POSITION_DATA:
-//            process_incoming_pgn_gnss_position_data( N2kMsg );
+            process_incoming_pgn_gnss_position_data( N2kMsg );
             break;
         case N2K_PGN_LOCAL_OFFSET:
-//            process_incoming_pgn_local_offset( N2kMsg );
+            process_incoming_pgn_local_offset( N2kMsg );
             break;
         case N2K_PGN_RUDDER:
             process_incoming_pgn_rudder( N2kMsg );
