@@ -104,7 +104,7 @@ Copy init.sh, run it
 ```
 . ./init.sh
 
-idf.py set-target esp32
+idf.py set-target esp32s2
 idf.py menuconfig
 idf.py -p /dev/ttyUSB0 flash monitor
 ```
