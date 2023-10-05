@@ -21,12 +21,27 @@
 static const char *LOG = "hajo_main";
 
 // defined by pins 10-12
-#define DEVICE_TYPE_LOGGER 0b011
+#define DEVICE_TYPE_UNKNOWN_0 0b000
+#define DEVICE_TYPE_LOGGER 0b001
+#define DEVICE_TYPE_UNKNOWN_2 0b010
+#define DEVICE_TYPE_UNKNOWN_3 0b011
+#define DEVICE_TYPE_UNKNOWN_4 0b100
 #define DEVICE_TYPE_GAUGE_DISPLAY 0b101
 #define DEVICE_TYPE_BATTERY_MONITOR 0b110
+#define DEVICE_TYPE_UNKNOWN_7 0b111
 
 static int device_type = 0xff;
 
+static const char* device_type_names[] = {
+    "unknown 0",
+    "logger",
+    "unknown 2",
+    "unknown 3",
+    "unknown 4",
+    "display",
+    "monitor",
+    "unknown 7",
+};
 static void determine_device_type() {
     gpio_config_t io_conf = {};
 
@@ -44,7 +59,8 @@ static void determine_device_type() {
     device_type = ( gpio_get_level( GPIO_NUM_DEVICE_TYPE_2 ) << 2 ) |
                   ( gpio_get_level( GPIO_NUM_DEVICE_TYPE_1 ) << 1 ) |
                   gpio_get_level( GPIO_NUM_DEVICE_TYPE_0 );
-    ESP_LOGI( LOG, "device type %d", device_type );
+    device_type &= 0b111;
+    ESP_LOGI( LOG, "device type %d %s", device_type, device_type_names[device_type] );
 
     io_conf.mode = GPIO_MODE_DISABLE;
     io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
@@ -69,7 +85,7 @@ esp_pm_lock_handle_t pm_lock_handle_listen;
 
 static void clock_configure( int max_freq_mhz ) {
 
-    static esp_pm_config_esp32s2_t pm_config = {
+    static esp_pm_config_t pm_config = {
             .max_freq_mhz = max_freq_mhz,
             .min_freq_mhz = 80,
             .light_sleep_enable = false
@@ -114,10 +130,7 @@ void hajo_main() {
             break;
         default:
             // TODO fail
-            ESP_LOGE( LOG, "Unhandled device type %c%c%c",
-                      device_type & 4 ? '1' : '0',
-                      device_type & 2 ? '1' : '0',
-                      device_type & 1 ? '1' : '0' );
+            ESP_LOGE( LOG, "Unhandled device type %s", device_type_names[device_type] );
             break;
     }
 
