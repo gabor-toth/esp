@@ -6,12 +6,16 @@ extern "C" {
 #endif
 
 #include <stdbool.h>
+#include "display_common.h"
 
 extern void display_main();
 
 extern bool display_start_task();
 
 extern void display_end_task();
+
+extern void display_set_value( display_type_t type, int instance, int value );
+
 
 #ifdef __cplusplus
 }

@@ -140,7 +140,8 @@ static void guiTask( void *pvParameter ) {
     indev_drv.type = LV_INDEV_TYPE_POINTER;
     indev = lv_indev_drv_register( &indev_drv );
 
-    display_meter_main();
+//    display_meter_main_single();
+    display_meter_main_tabbed();
 
     while ( 1 ) {
         /* Delay 1 tick (assumes FreeRTOS tick is 10ms */
@@ -152,6 +153,11 @@ static void guiTask( void *pvParameter ) {
             display_end_task();
         }
     }
+}
+
+void display_set_value( display_type_t type, int instance, int value ) {
+//    display_set_value_single( type, instance, value );
+    display_set_value_tabbed( type, instance, value );
 }
 
 static void lv_tick_task( void *arg ) {

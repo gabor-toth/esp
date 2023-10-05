@@ -82,7 +82,7 @@ static const lv_font_t *font_normal;
  *   GLOBAL FUNCTIONS
  **********************/
 
-void display_meter_main() {
+void display_meter_main_tabbed() {
     init_theme();
     create_tabs();
 //    set_values();
@@ -375,7 +375,7 @@ static void set_values() {
     meter_animation_callback( &arcs_voltage[ 2 ], 142 );
 }
 
-void display_set_value( display_type_t type, int instance, int value ) {
+void display_set_value_tabbed( display_type_t type, int instance, int value ) {
     arcs_data_t *arcs;
     int arcs_count;
     switch ( type ) {

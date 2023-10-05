@@ -5,15 +5,13 @@
 extern "C" {
 #endif
 
-typedef enum {
-    FUEL,
-    VOLTAGE,
-    WATER
-} display_type_t;
+#include "display_common.h"
 
-extern void display_meter_main();
+extern void display_meter_main_tabbed();
+extern void display_set_value_tabbed( display_type_t type, int instance, int value );
 
-extern void display_set_value( display_type_t type, int instance, int value );
+extern void display_meter_main_single();
+extern void display_set_value_single( display_type_t type, int instance, int value );
 
 #ifdef __cplusplus
 }
