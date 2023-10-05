@@ -10,10 +10,10 @@ static const char *LOG = "hajo_logger";
 
 #define MOUNT_POINT "/sdcard"
 
-#define PIN_NUM_MISO  GPIO_NUM_39
-#define PIN_NUM_MOSI  GPIO_NUM_41
-#define PIN_NUM_CLK   GPIO_NUM_40
-#define PIN_NUM_CS    GPIO_NUM_42
+#define PIN_NUM_MISO  GPIO_NUM_34
+#define PIN_NUM_MOSI  GPIO_NUM_26
+#define PIN_NUM_CLK   GPIO_NUM_33
+#define PIN_NUM_CS    GPIO_NUM_21
 
 static void open_sdcard() {
     esp_err_t ret;
