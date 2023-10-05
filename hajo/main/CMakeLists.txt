@@ -15,7 +15,7 @@ idf_component_register(
         "lib/wifi_connect.c"
         "lib/gpio_json.c"
         "display_main.c"
-        "display_meter.c"
+        "display_meter_single.c"
         "hajo_battery.cpp"
         "hajo_display.cpp"
         "hajo_fluid.cpp"
