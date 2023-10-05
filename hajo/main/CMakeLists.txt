@@ -16,6 +16,7 @@ idf_component_register(
         "lib/gpio_json.c"
         "display_main.c"
         "display_meter_single.c"
+        "display_meter_tabbed.c"
         "hajo_battery.cpp"
         "hajo_display.cpp"
         "hajo_fluid.cpp"

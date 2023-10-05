@@ -98,7 +98,7 @@ static void clock_configure( int max_freq_mhz ) {
 }
 
 static void clock_log_state() {
-    esp_pm_config_esp32s2_t pm_config;
+    esp_pm_config_t pm_config;
     ESP_ERROR_CHECK( esp_pm_get_configuration( &pm_config ));
     int cpu_freq = esp_clk_cpu_freq();
     ESP_LOGI( LOG, "Clock min: %d max: %d current: %d",
