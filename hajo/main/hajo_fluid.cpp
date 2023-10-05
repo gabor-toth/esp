@@ -11,12 +11,35 @@ static double fluid_rbottom = 51.1;
 static double fluid_rmes_min = 2;
 static double fluid_rmes_max = 180;
 
+static const char* LOG = "hajo_fluid";
+
+// new PCB design
+//#define WATER_PIN_0 GPIO_NUM_4
+//#define WATER_PIN_1 GPIO_NUM_5
+//#define WATER_PIN_2 GPIO_NUM_7
+//#define WATER_PIN_3 GPIO_NUM_8
+// old PCB design
+#define PIN_WATER_0 GPIO_NUM_1
+#define PIN_WATER_1 GPIO_NUM_2
+#define PIN_WATER_2 GPIO_NUM_3
+#define PIN_WATER_3 GPIO_NUM_4
+#define PIN_ADC_3_DRIVE GPIO_NUM_5
+#define PIN_ADC_3_HIGH  GPIO_NUM_6
+#define PIN_ADC_3_LOW   GPIO_NUM_7
+
+#define MAX_FLUID_COUNT 3
+
 typedef struct {
     uint8_t instance;
     uint8_t type;
     gpio_num_t drive_pin;
     uint32_t capacity;
+    uint8_t adc_low;
+    uint8_t adc_high;
 } fluid_user_data;
+
+int fluid_count = 0;
+fluid_user_data fluid_data[MAX_FLUID_COUNT];
 
 //static void convert_fluid_level( uint32_t raw_value, uint32_t *display_value, uint32_t *correction ) {
 static void convert_fluid_level( uint32_t raw_value, uint32_t *display_value, double *rmes_back ) {
@@ -39,12 +62,12 @@ static void convert_fluid_level( uint32_t raw_value, uint32_t *display_value, do
     }
 }
 
-static void setup_drive_pins() {
+static void setup_adc_drive_pins() {
     gpio_config_t io_conf = {};
 
     io_conf.intr_type = GPIO_INTR_DISABLE;
     io_conf.mode = GPIO_MODE_OUTPUT;
-    io_conf.pin_bit_mask = BIT( GPIO_NUM_1 ) | BIT( GPIO_NUM_3 ) | BIT( GPIO_NUM_5 );
+    io_conf.pin_bit_mask = BIT( PIN_ADC_3_DRIVE );
     io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
     io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
     gpio_config( &io_conf );
@@ -52,37 +75,53 @@ static void setup_drive_pins() {
 
 static void setup_adc() {
     fluid_user_data data;
-
+    uint8_t adc_index = 0;
 
     data = {
             .instance = 0,
             .type = N2kft_Fuel,
-            .drive_pin = GPIO_NUM_1,
-            .capacity = 60
+            .drive_pin = PIN_ADC_3_DRIVE,
+            .capacity = 60,
+            .adc_low =static_cast<uint8_t>(adc_index+1),
+            .adc_high =static_cast<uint8_t>(adc_index+0),
     };
-    adc_add_channel( 1, "uzemanyag_l", &data, sizeof( data ), nullptr );
-    adc_add_channel( 6, "uzemanyag_h", &data, sizeof( data ), nullptr );
+    fluid_data[fluid_count++] = data;
+    adc_index+=2;
+
+    adc_add_channel( PIN_ADC_3_LOW-1, "uzemanyag_l", nullptr, 0, nullptr );
+    adc_add_channel( PIN_ADC_3_HIGH-1, "uzemanyag_h", nullptr, 0, nullptr );
     gpio_set_level( data.drive_pin, 1 );
 
-    data = {
-            .instance = 0,
-            .type = N2kft_Water,
-            .drive_pin = GPIO_NUM_3,
-            .capacity = 85
-    };
-    adc_add_channel( 3, "viz_bal_l", &data, sizeof( data ), nullptr );
-    adc_add_channel( 7, "viz_bal_h", &data, sizeof( data ), nullptr );
-
-    data = {
-            .instance = 1,
-            .type = N2kft_Water,
-            .drive_pin = GPIO_NUM_5,
-            .capacity = 85
-    };
-    adc_add_channel( 5, "viz_jobb_l", &data, sizeof( data ), nullptr );
-    adc_add_channel( 8, "viz_jobb_h", &data, sizeof( data ), nullptr );
+//    data = {
+//            .instance = 0,
+//            .type = N2kft_Water,
+//            .drive_pin = GPIO_NUM_3,
+//            .capacity = 85
+//    };
+//    adc_add_channel( 3, "viz_bal_l", &data, sizeof( data ), nullptr );
+//    adc_add_channel( 4/*7*/, "viz_bal_h", &data, sizeof( data ), nullptr );
+//
+//    data = {
+//            .instance = 1,
+//            .type = N2kft_Water,
+//            .drive_pin = GPIO_NUM_5,
+//            .capacity = 85
+//    };
+//    adc_add_channel( 5, "viz_jobb_l", &data, sizeof( data ), nullptr );
+//    adc_add_channel( 6/*8*/, "viz_jobb_h", &data, sizeof( data ), nullptr );
 
     adc_main( false );
+}
+
+static void setup_water_drive_pins() {
+    gpio_config_t io_conf = {};
+
+    io_conf.intr_type = GPIO_INTR_DISABLE;
+    io_conf.mode = GPIO_MODE_INPUT;
+    io_conf.pin_bit_mask = BIT( PIN_WATER_0 ) | BIT( PIN_WATER_1 ) | BIT( PIN_WATER_2 ) | BIT( PIN_WATER_3 );
+    io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
+    io_conf.pull_up_en = GPIO_PULLUP_ENABLE;
+    gpio_config( &io_conf );
 }
 
 static void setup_n2k_device( int iDev ) {
@@ -120,31 +159,30 @@ static void setup_n2k_device( int iDev ) {
     NMEA2000.ExtendReceiveMessages( ReceiveMessages, iDev );
 }
 
-static bool n2k_send_fluid_level( int index, tN2kMsg &message ) {
+static bool send_adc_fluid_level( int index, tN2kMsg &message ) {
 //    int channel_count = adc_number_of_channels();
 //    if ( index >= channel_count / 2 ) {
-    if ( index >= 1 ) {
-        return false;
-    }
+//    if ( index >= 1 ) {
+//        ESP_LOGI( LOG, "index %d false", index);
+//        return false;
+//    }
 
     adc_channel_value_t channel_data_l;
     adc_channel_value_t channel_data_h;
 
-    fluid_user_data *user_data = static_cast<fluid_user_data *>(adc_get_channel_user_data( index * 2 + 0 ));
-    if ( user_data == nullptr ) {
-        return true;
-    }
-//    gpio_set_level( user_data->drive_pin, 1 );
+    fluid_user_data *data = fluid_data + index;
+    ESP_LOGI( LOG, "adc %d driver %d low %d high %d", index, data->drive_pin,  data->adc_low,  data->adc_high);
+//    gpio_set_level( data->drive_pin, 1 );
     // TODO add a bit delay to stabilize voltage
-    adc_get_channel_value( index * 2 + 0, &channel_data_l );
-    adc_get_channel_value( index * 2 + 1, &channel_data_h );
-//    gpio_set_level( user_data->drive_pin, 0 );
+    adc_get_channel_value( data->adc_low, &channel_data_l );
+    adc_get_channel_value( data->adc_high, &channel_data_h );
+//    gpio_set_level( data->drive_pin, 0 );
 
     uint32_t display_value;
     double rmes;
-    convert_fluid_level( channel_data_h.raw_value, &display_value, &rmes );
+    convert_fluid_level( channel_data_h.display_value, &display_value, &rmes );
 
-    ESP_LOGI( "hajo_fluid", "Channel %d %-10s Raw: %4ld Rmes: %lf Display: %5ld",
+    ESP_LOGI( LOG, "Channel %d %-10s Raw: %4ld Rmes: %lf Display: %5ld",
               channel_data_h.channel,
               channel_data_h.name,
               channel_data_h.raw_value,
@@ -153,17 +191,60 @@ static bool n2k_send_fluid_level( int index, tN2kMsg &message ) {
 
     double valueInPercent = display_value / 100.0;
     SetN2kFluidLevel( message,
-                      user_data->instance,
-                      (tN2kFluidType) user_data->type,
+                      data->instance,
+                      (tN2kFluidType) data->type,
                       valueInPercent,
-                      user_data->capacity != 0 ? user_data->capacity : N2kDoubleNA // capacity
+                      data->capacity != 0 ? data->capacity : N2kDoubleNA // capacity
     );
     return true;
 }
 
+static bool send_water_fluid_level( int index, tN2kMsg &message ) {
+    double valueInPercent;
+
+    ESP_LOGI( LOG, "water %d", index);
+
+    if ( gpio_get_level( PIN_WATER_0) == 0 ) {
+        valueInPercent = 1.00;
+    } else if ( gpio_get_level( PIN_WATER_1) == 0 ) {
+        valueInPercent = 0.75;
+    } else if ( gpio_get_level( PIN_WATER_2) == 0 ) {
+        valueInPercent = 0.50;
+    } else if ( gpio_get_level( PIN_WATER_3) == 0 ) {
+        valueInPercent = 0.25;
+    } else {
+        valueInPercent = 0.0;
+    }
+
+    ESP_LOGI( LOG, "Water %5lf",              valueInPercent );
+
+    int capacity = 85;
+    SetN2kFluidLevel( message,
+                      index-1,
+                      N2kft_Water,
+                      valueInPercent,
+                      capacity != 0 ? capacity : N2kDoubleNA // capacity
+    );
+    return true;
+}
+
+static bool n2k_send_fluid_level( int index, tN2kMsg &message ) {
+    switch ( index ) {
+        case 0:
+            return send_adc_fluid_level(index, message);
+        case 1:
+            return send_water_fluid_level(index, message);
+        default:
+            return false;
+    }
+}
+
 void hajo_fluid_main( int iDev ) {
-    setup_drive_pins();
+    setup_adc_drive_pins();
     setup_adc();
+
+    setup_water_drive_pins();
+
     setup_n2k_device( iDev );
     nk2_register_sender( n2k_send_fluid_level, "fluids", N2K_PGN_FLUID_LEVEL_INTERVAL_MS, 250, true );
 }

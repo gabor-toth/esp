@@ -49,11 +49,11 @@ static void read_one( adc_channel_data_t *channel ) {
     } else {
         channel->converted_value = channel->raw_value;
     }
-    ESP_LOGI( LOG, "Channel %d %-10s Raw: %4ld Voltage: %4dmV Display: %5ld (%ld)",
+    ESP_LOGI( LOG, "Channel %d %-10s Raw: %4ld Voltage: %4dmV Display: %5ld (corr %ld)",
               channel->channel,
               channel->name,
               adc_reading,
-              voltage,
+              channel->raw_value,
               channel->converted_value,
               correction );
 }

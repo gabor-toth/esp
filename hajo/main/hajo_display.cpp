@@ -1,5 +1,4 @@
 #include "display_main.h"
-#include "display_meter.h"
 #include "esp_log.h"
 #include "n2k_parser.h"
 #include "n2k_sender.h"
@@ -34,7 +33,7 @@ static void process_incoming_pgn_battery_configuration( const tN2kMsg &N2kMsg ) 
 static void process_incoming_pgn_fluid_level( const tN2kMsg &N2kMsg ) {
     N2kFluidLevelData data;
     if ( ParseN2kFluidLevel( N2kMsg, data)) {
-        double levelInPercent = data.level * 100;
+        int levelInPercent = (int)(data.level * 100);
         ESP_LOGI( LOG, "packet fluid level %d/%d = %lf", data.fluidType, data.instance, data.level );
         if ( data.fluidType == tN2kFluidType::N2kft_Fuel || data.fluidType == tN2kFluidType::N2kft_FuelGasoline ) {
             display_set_value( FUEL, data.instance, levelInPercent );
