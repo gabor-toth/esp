@@ -1,3 +1,19 @@
+Short term
+==========
+
+- víz
+  - ellenállás üzemanyaghoz
+  - átkötés vízhez
+  - csatlakozó-aljzat vízhez 
+- kijelző 
+  - kábelezésremm
+  - új kinézet
+  - 
+- logger
+  - meglévő hardveren
+  - SD kártya
+  - gyroscope (MPU6050)
+
 Before go live
 ==============
 
@@ -8,13 +24,13 @@ Before go live
 + own 3.3V regulator
 + shared SPI bus on display
 + turn display off (timer/touch) / on (touch irq)
++ schematics
++ can transceiver standby?
++ 160MHz for drawing display
 
 - fluid level power source
 - adc read on timer only
-- schematics
 - round up/down when displaying data
-- can transceiver standby?
-- 160MHz for drawing display
 
 Long term plans
 ===============
