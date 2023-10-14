@@ -322,7 +322,7 @@ static void setup_gyroscope() {
     conf.master.clk_speed = 100000;
 
     i2c_param_config(i2c_master_port, &conf);
-é    ESP_ERROR_CHECK(i2c_driver_install(i2c_master_port, conf.mode, 0, 0, 0));
+    ESP_ERROR_CHECK(i2c_driver_install(i2c_master_port, conf.mode, 0, 0, 0));
 
     gyroscope = mpu6050_create( i2c_master_port, 0b1101000);
     mpu6050_wake_up(gyroscope);
