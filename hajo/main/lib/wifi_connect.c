@@ -1,6 +1,7 @@
+#include "sdkconfig.h"
+
 #if defined(CONFIG_EXAMPLE_CONNECT_WIFI)
 #include <string.h>
-#include "sdkconfig.h"
 #include "esp_event.h"
 #include "esp_wifi.h"
 #include "esp_wifi_default.h"

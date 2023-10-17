@@ -1,3 +1,5 @@
+#include "sdkconfig.h"
+
 #if defined(CONFIG_EXAMPLE_CONNECT_WIFI)
 /* HTTP Restful API Server
 

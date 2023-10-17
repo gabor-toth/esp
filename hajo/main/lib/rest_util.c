@@ -1,3 +1,5 @@
+#include "sdkconfig.h"
+
 #if defined(CONFIG_EXAMPLE_CONNECT_WIFI)
 #include "cJSON.h"
 #include "rest_util.h"
