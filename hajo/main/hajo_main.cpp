@@ -4,13 +4,13 @@
 #include "esp_event.h"
 #include "esp_log.h"
 #include "esp_pm.h"
-#include "hajo_battery.h"
-#include "hajo_display.h"
-#include "hajo_fluid.h"
-#include "hajo_logger.h"
+#include "devices/battery/hajo_battery.h"
+#include "devices/display/hajo_display.h"
+#include "devices/display/hajo_fluid.h"
+#include "devices/logger/hajo_logger.h"
 #include "lib/nvs_main.h"
-#include "n2k_receiver.h"
-#include "n2k_sender.h"
+#include "n2k/n2k_receiver.h"
+#include "n2k/n2k_sender.h"
 
 #define ESP32_CAN_TX_PIN N2K_GPIO_NUM_TX
 #define ESP32_CAN_RX_PIN N2K_GPIO_NUM_RX
@@ -30,19 +30,22 @@ static const char *LOG = "hajo_main";
 #define DEVICE_TYPE_BATTERY_MONITOR 0b110
 #define DEVICE_TYPE_UNKNOWN_7 0b111
 
-static int device_type = 0xff;
+#define DEVICE_TYPE DEVICE_TYPE_LOGGER
 
-static const char* device_type_names[] = {
-    "unknown 0",
-    "logger",
-    "unknown 2",
-    "unknown 3",
-    "unknown 4",
-    "display",
-    "monitor",
-    "unknown 7",
+static int hardware_device_type = 0xff;
+
+static const char *device_type_names[] = {
+        "unknown 0",
+        "logger",
+        "unknown 2",
+        "unknown 3",
+        "unknown 4",
+        "display",
+        "monitor",
+        "unknown 7",
 };
-static void determine_device_type() {
+
+static void determine_device_type( int firmware_device_type ) {
     gpio_config_t io_conf = {};
 
     io_conf.intr_type = GPIO_INTR_DISABLE;
@@ -56,11 +59,17 @@ static void determine_device_type() {
     gpio_config( &io_conf );
     vTaskDelay(pdMS_TO_TICKS( 10 ));
 
-    device_type = ( gpio_get_level( GPIO_NUM_DEVICE_TYPE_2 ) << 2 ) |
-                  ( gpio_get_level( GPIO_NUM_DEVICE_TYPE_1 ) << 1 ) |
-                  gpio_get_level( GPIO_NUM_DEVICE_TYPE_0 );
-    device_type &= 0b111;
-    ESP_LOGI( LOG, "device type %d %s", device_type, device_type_names[device_type] );
+    hardware_device_type = ( gpio_get_level( GPIO_NUM_DEVICE_TYPE_2 ) << 2 ) |
+                           ( gpio_get_level( GPIO_NUM_DEVICE_TYPE_1 ) << 1 ) |
+                           gpio_get_level( GPIO_NUM_DEVICE_TYPE_0 );
+    hardware_device_type &= 0b111;
+    if ( hardware_device_type != firmware_device_type ) {
+        ESP_LOGE( LOG, "Firmware %s does not match hardware %s",
+                  device_type_names[ firmware_device_type],
+                  device_type_names[ hardware_device_type ]);
+        ESP_ERROR_CHECK( ESP_ERR_NOT_SUPPORTED );
+    }
+    ESP_LOGI( LOG, "device type %d %s", hardware_device_type, device_type_names[ hardware_device_type ] );
 
     io_conf.mode = GPIO_MODE_DISABLE;
     io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
@@ -97,44 +106,27 @@ static void clock_configure( int max_freq_mhz ) {
     ESP_ERROR_CHECK( esp_pm_lock_acquire( pm_lock_handle_listen ));
 }
 
-static void clock_log_state() {
-    esp_pm_config_t pm_config;
-    ESP_ERROR_CHECK( esp_pm_get_configuration( &pm_config ));
-    int cpu_freq = esp_clk_cpu_freq();
-    ESP_LOGI( LOG, "Clock min: %d max: %d current: %d",
-              pm_config.min_freq_mhz,
-              pm_config.max_freq_mhz,
-              cpu_freq / 1000000 );
-}
-
 void hajo_main() {
     nvs_init();
-    determine_device_type();
+    determine_device_type( DEVICE_TYPE );
     initialize_twai_driver();
 
     ESP_ERROR_CHECK( esp_event_loop_create_default());
 
     int iDev = 0;
-    switch ( device_type ) {
-        case DEVICE_TYPE_GAUGE_DISPLAY:
-            clock_configure( 240 );
-            hajo_fluid_main( iDev++ );
-            hajo_display_main( iDev++ );
-            break;
-        case DEVICE_TYPE_BATTERY_MONITOR:
-            clock_configure( 80 );
-            hajo_battery_main( iDev++ );
-            break;
-        case DEVICE_TYPE_LOGGER:
-            hajo_logger_main(iDev++);
-            break;
-        default:
-            // TODO fail
-            ESP_LOGE( LOG, "Unhandled device type %s", device_type_names[device_type] );
-            break;
-    }
-
-    clock_log_state();
+#if DEVICE_TYPE == DEVICE_TYPE_GAUGE_DISPLAY
+    hajo_fluid_main( iDev++ );
+    hajo_display_main( iDev++ );
+    clock_configure( 240 );
+#elif DEVICE_TYPE == DEVICE_TYPE_BATTERY_MONITOR
+    hajo_battery_main( iDev++ );
+    clock_configure( 80 );
+#elif DEVICE_TYPE == DEVICE_TYPE_LOGGER
+    hajo_logger_main( iDev++ );
+    clock_configure( 240 );
+#else
+    #error Unhandled device type ## DEVICE_TYPE
+#endif
 
     n2k_init();
 }
