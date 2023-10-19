@@ -1,12 +1,12 @@
 #include "esp_vfs_fat.h"
 #include "unistd.h"
 #include "sys/stat.h"
-#include "cstring"
 #include "sdmmc_cmd.h"
-#include "n2k_parser.h"
-#include "n2k_sender.h"
+#include "n2k/n2k_parser.h"
+#include "n2k/n2k_sender.h"
 #include "mpu6050.h"
 #include "driver/i2c.h"
+#include "wifi_connect.h"
 
 static const char *LOG = "hajo_logger";
 
@@ -58,7 +58,7 @@ static void open_sdcard() {
             .data5_io_num = -1,
             .data6_io_num = -1,
             .data7_io_num = -1,
-            .max_transfer_sz = SDMMC_FREQ_DEFAULT,
+            .max_transfer_sz = 0,
             .flags = 0,
             .isr_cpu_id = INTR_CPU_ID_AUTO,
             .intr_flags = 0
@@ -100,11 +100,14 @@ static void open_sdcard() {
 
     ESP_LOGI( LOG, "Opening file %s", file_hello );
     FILE *f = fopen( file_hello, "w" );
+    ESP_LOGI( LOG, "Opened" );
     if ( f == nullptr ) {
         ESP_LOGE( LOG, "Failed to open file for writing" );
         return;
     }
+    ESP_LOGI( LOG, "Writing" );
     fprintf( f, "Hello %s!\n", card->cid.name );
+    ESP_LOGI( LOG, "Written" );
     fclose( f );
     ESP_LOGI( LOG, "File written" );
 
@@ -333,6 +336,8 @@ static void setup_gyroscope() {
 
 void hajo_logger_main( int iDev ) {
     open_sdcard();
-    setup_n2k_device( iDev );
-    setup_gyroscope();
+//    setup_n2k_device( iDev );
+//    setup_gyroscope();
+//    ESP_ERROR_CHECK( wifi_connect() );
+    ESP_LOGI(LOG,"init finished");
 }

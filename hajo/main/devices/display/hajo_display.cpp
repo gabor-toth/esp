@@ -1,7 +1,7 @@
 #include "display_main.h"
 #include "esp_log.h"
-#include "n2k_parser.h"
-#include "n2k_sender.h"
+#include "n2k/n2k_parser.h"
+#include "n2k/n2k_sender.h"
 #include "hajo_display.h"
 
 static const char *LOG = "hajo_display";
