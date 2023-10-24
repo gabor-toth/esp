@@ -17,9 +17,11 @@ typedef struct rest_server_context {
     char scratch[REST_SCRATCH_BUFSIZE];
 } rest_server_context_t;
 
+typedef void (*rest_register_handlers_t)( httpd_handle_t, rest_server_context_t * );
+
 extern esp_err_t rest_server_start(
         const char *static_files_base_path,
-        void (*rest_register_handlers)( httpd_handle_t, rest_server_context_t * ));
+        rest_register_handlers_t rest_register_handlers );
 
 /**
  * Receive JSON body.

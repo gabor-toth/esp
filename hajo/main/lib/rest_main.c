@@ -14,7 +14,6 @@
 #include "lwip/apps/mdns.h"
 #include "lwip/apps/netbiosns.h"
 #include "lib/rest_server.h"
-//#include "rest_handler.h"
 
 static const char *LOG_TAG = "rest-main";
 
@@ -80,9 +79,9 @@ void rest_init_before_wifi( void ) {
     initialise_netbios();
 }
 
-void rest_init_after_wifi( void ) {
+void rest_init_after_wifi( rest_register_handlers_t rest_register_handlers ) {
     ESP_ERROR_CHECK( init_fs());
-    // TODO ESP-IDF 5.1
-//    ESP_ERROR_CHECK( rest_server_start( CONFIG_EXAMPLE_WEB_MOUNT_POINT, rest_register_handlers ));
+    ESP_ERROR_CHECK( rest_server_start( CONFIG_EXAMPLE_WEB_MOUNT_POINT, rest_register_handlers ));
 }
+
 #endif
