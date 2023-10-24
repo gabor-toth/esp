@@ -31,6 +31,8 @@ static const char *LOG = "hajo_main";
 #define DEVICE_TYPE_UNKNOWN_7 0b111
 
 #define DEVICE_TYPE DEVICE_TYPE_LOGGER
+//#define DEVICE_TYPE DEVICE_TYPE_GAUGE_DISPLAY
+//#define DEVICE_TYPE DEVICE_TYPE_BATTERY_MONITOR
 
 static int hardware_device_type = 0xff;
 

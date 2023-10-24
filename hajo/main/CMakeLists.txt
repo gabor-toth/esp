@@ -63,14 +63,14 @@ idf_component_register(
         "."
         "lib"
 
-        #        REQUIRES
-        #        "driver"
-        #        "esp_adc"
-        #        "esp_event"
-        #        "json"
-        #        "lvgl"
-        #        "NMEA2000"
-        #        "nvs_flash"
+        # REQUIRES
+        # "driver"
+        # "esp_adc"
+        # "esp_event"
+        # "json"
+        # "lvgl"
+        # "NMEA2000"
+        # "nvs_flash"
 )
 
 if (CONFIG_EXAMPLE_WEB_DEPLOY_SF)
