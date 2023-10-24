@@ -30,7 +30,8 @@ if ((DEVICE_TYPE EQUAL DEVICE_TYPE_LOGGER) OR (DEVICE_TYPE EQUAL DEVICE_TYPE_ALL
             "lib/rest_util.c"
             "lib/sntp_main.c"
             "lib/system_info_rest.c"
-            "lib/wifi_connect.c"
+            "lib/wifi/connect.c"
+            "lib/wifi/wifi_connect.c"
     )
 endif ()
 

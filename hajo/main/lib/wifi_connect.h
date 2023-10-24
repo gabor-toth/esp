@@ -9,6 +9,8 @@ extern "C" {
 
 extern esp_err_t wifi_connect();
 
+extern void wifi_shutdown( void );
+
 #ifdef __cplusplus
 }
 #endif

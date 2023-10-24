@@ -1,3 +1,5 @@
+#include "sdkconfig.h"
+
 #if defined(CONFIG_EXAMPLE_CONNECT_WIFI)
 /* HTTP Restful API Server Example
 
@@ -7,10 +9,9 @@
    software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
    CONDITIONS OF ANY KIND, either express or implied.
 */
-#include "sdkconfig.h"
 #include "esp_spiffs.h"
 #include "esp_log.h"
-#include "mdns.h"
+#include "lwip/apps/mdns.h"
 #include "lwip/apps/netbiosns.h"
 #include "lib/rest_server.h"
 //#include "rest_handler.h"
@@ -18,7 +19,9 @@
 static const char *LOG_TAG = "rest-main";
 
 static void initialise_mdns( void ) {
-    mdns_init();
+    // TODO ESP-IDF 5.1
+    /*
+    mdns_resp_init();
     mdns_hostname_set( CONFIG_EXAMPLE_MDNS_HOST_NAME );
     mdns_instance_name_set( CONFIG_MDNS_INSTANCE_NAME );
 
@@ -30,10 +33,11 @@ static void initialise_mdns( void ) {
     ESP_ERROR_CHECK( mdns_service_add(
             "ESP32-WebServer",
             "_http",
-            "_tcp",
+            DNSSD_PROTO_TCP,
             80,
             serviceTxtData,
             sizeof( serviceTxtData ) / sizeof( serviceTxtData[ 0 ] )));
+            */
 }
 
 static void initialise_netbios( void ) {
@@ -78,6 +82,7 @@ void rest_init_before_wifi( void ) {
 
 void rest_init_after_wifi( void ) {
     ESP_ERROR_CHECK( init_fs());
-    ESP_ERROR_CHECK( rest_server_start( CONFIG_EXAMPLE_WEB_MOUNT_POINT, rest_register_handlers ));
+    // TODO ESP-IDF 5.1
+//    ESP_ERROR_CHECK( rest_server_start( CONFIG_EXAMPLE_WEB_MOUNT_POINT, rest_register_handlers ));
 }
 #endif
