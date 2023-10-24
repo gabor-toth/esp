@@ -34,7 +34,6 @@ static void open_sdcard() {
             .disk_status_check_enable = false
     };
     sdmmc_card_t *card;
-    const char mount_point[] = MOUNT_POINT;
     ESP_LOGI( LOG, "Initializing SD card" );
 
     // Use settings defined above to initialize SD card and mount FAT filesystem.
@@ -76,7 +75,7 @@ static void open_sdcard() {
     slot_config.host_id = static_cast<spi_host_device_t>(host.slot);
 
     ESP_LOGI( LOG, "Mounting filesystem" );
-    ret = esp_vfs_fat_sdspi_mount( mount_point, &host, &slot_config, &mount_config, &card );
+    ret = esp_vfs_fat_sdspi_mount( MOUNT_POINT, &host, &slot_config, &mount_config, &card );
 
     if ( ret != ESP_OK ) {
         if ( ret == ESP_FAIL ) {
@@ -148,11 +147,12 @@ static void open_sdcard() {
     ESP_LOGI( LOG, "Read from file: '%s'", line );
 
     // All done, unmount partition and disable SPI peripheral
-    esp_vfs_fat_sdcard_unmount( mount_point, card );
+    esp_vfs_fat_sdcard_unmount( MOUNT_POINT, card );
     ESP_LOGI( LOG, "Card unmounted" );
 
     //deinitialize the bus after all devices are removed
     spi_bus_free( static_cast<spi_host_device_t>(host.slot));
+    ESP_LOGI( LOG, "Card freed" );
 }
 
 /*
@@ -335,9 +335,9 @@ static void setup_gyroscope() {
 }
 
 void hajo_logger_main( int iDev ) {
-    open_sdcard();
+//    open_sdcard();
 //    setup_n2k_device( iDev );
 //    setup_gyroscope();
-//    ESP_ERROR_CHECK( wifi_connect() );
+    ESP_ERROR_CHECK( wifi_connect() );
     ESP_LOGI(LOG,"init finished");
 }
