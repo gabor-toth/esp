@@ -23,7 +23,9 @@ set(SOURCES
 if ((DEVICE_TYPE EQUAL DEVICE_TYPE_LOGGER) OR (DEVICE_TYPE EQUAL DEVICE_TYPE_ALL))
     set(SOURCES ${SOURCES}
             "devices/logger/EspSigK.cpp"
+            "devices/logger/gyroscope.c"
             "devices/logger/hajo_logger.cpp"
+            "devices/logger/sdcard.c"
             "lib/gpio_json.c"
             "lib/rest_main.c"
             "lib/rest_server.c"

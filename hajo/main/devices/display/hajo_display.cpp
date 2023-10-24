@@ -4,7 +4,7 @@
 #include "n2k/n2k_sender.h"
 #include "hajo_display.h"
 
-static const char *LOG = "hajo_display";
+static const char *LOG = "display";
 
 static void process_incoming_pgn_battery_status( const tN2kMsg &N2kMsg ) {
     N2kDCBatStatusData data;
