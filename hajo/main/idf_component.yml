@@ -1,5 +1,6 @@
 ## IDF Component Manager Manifest File
 dependencies:
+  espressif/mdns: "*"
   espressif/mpu6050: "^1.2.0"
   ## Required IDF version
   idf:

@@ -124,6 +124,14 @@ idf.py fullclean
 
 Reload CMake project in CLion
 
+Add managed components
+
+```
+idf.py add-dependency espressif/mdns
+idf.py add-dependency espressif/mpu6050
+idf.py build
+```
+
 Git
 ===
 

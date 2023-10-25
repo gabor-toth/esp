@@ -11,6 +11,7 @@
 */
 #include "esp_spiffs.h"
 #include "esp_log.h"
+#include "mdns.h"
 #include "lwip/apps/mdns.h"
 #include "lwip/apps/netbiosns.h"
 #include "lib/rest_server.h"
@@ -19,10 +20,9 @@ static const char *LOG_TAG = "rest-main";
 
 static void initialise_mdns( void ) {
     // TODO ESP-IDF 5.1
-    /*
-    mdns_resp_init();
-    mdns_hostname_set( CONFIG_EXAMPLE_MDNS_HOST_NAME );
-    mdns_instance_name_set( CONFIG_MDNS_INSTANCE_NAME );
+    ESP_ERROR_CHECK( mdns_init());
+    ESP_ERROR_CHECK( mdns_hostname_set( CONFIG_EXAMPLE_MDNS_HOST_NAME ));
+    ESP_ERROR_CHECK( mdns_instance_name_set( CONFIG_MDNS_INSTANCE_NAME ));
 
     mdns_txt_item_t serviceTxtData[] = {
             { "board", "esp32" },
@@ -30,13 +30,20 @@ static void initialise_mdns( void ) {
     };
 
     ESP_ERROR_CHECK( mdns_service_add(
-            "ESP32-WebServer",
+            CONFIG_MDNS_INSTANCE_NAME,
             "_http",
-            DNSSD_PROTO_TCP,
+            "_tcp",
             80,
             serviceTxtData,
             sizeof( serviceTxtData ) / sizeof( serviceTxtData[ 0 ] )));
-            */
+    /*
+    ESP_ERROR_CHECK( mdns_service_subtype_add_for_host(
+            CONFIG_MDNS_INSTANCE_NAME,
+            "_http",
+            "_tcp",
+            NULL,
+            "_server" ));
+    */
 }
 
 static void initialise_netbios( void ) {

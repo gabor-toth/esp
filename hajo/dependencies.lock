@@ -1,4 +1,10 @@
 dependencies:
+  espressif/mdns:
+    component_hash: d6665090cf41eb399c184aab6f34234251a773e052fb53ca044dcb576264c646
+    source:
+      service_url: https://api.components.espressif.com/
+      type: service
+    version: 1.2.1
   espressif/mpu6050:
     component_hash: d69219ccb141372b863c511749ffbeab28417ac71c205d7ed7030c308e1b6832
     source:
@@ -10,6 +16,6 @@ dependencies:
     source:
       type: idf
     version: 5.1.1
-manifest_hash: 87338865c4ba9683a49efd7082ebf052073ebae522f21d2b9ee2cf4515f85ebd
+manifest_hash: 3e723cbef46f6812d5850cc9465714e46f697c85c37caf921d97b90227399d9a
 target: esp32s2
 version: 1.0.0
