@@ -9,6 +9,12 @@ extern "C" {
 
 extern esp_err_t wifi_connect();
 
+#ifdef _ESP_NETIF_TYPES_H_
+
+extern esp_netif_t *wifi_get_esp_netif();
+
+#endif
+
 extern void wifi_shutdown( void );
 
 #ifdef __cplusplus

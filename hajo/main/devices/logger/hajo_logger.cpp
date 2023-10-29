@@ -1,10 +1,11 @@
 #include "esp_log.h"
 #include "sys/stat.h"
-#include "n2k/n2k_parser.h"
-#include "n2k/n2k_sender.h"
-#include "wifi_connect.h"
 #include "gyroscope.h"
 #include "sdcard.h"
+#include "rest_main.h"
+#include "wifi_connect.h"
+#include "n2k/n2k_parser.h"
+#include "n2k/n2k_sender.h"
 
 static const char *LOG = "logger";
 
@@ -165,6 +166,7 @@ void hajo_logger_main( int iDev ) {
 //    test_sdcard();
     setup_n2k_device( iDev );
     setup_gyroscope();
+    rest_init_before_wifi();
     ESP_ERROR_CHECK( wifi_connect() );
     ESP_LOGI(LOG,"init finished");
 }

@@ -189,7 +189,9 @@ rest_server_start( const char *static_files_base_path,
     REST_CHECK( httpd_start( &server, &config ) == ESP_OK, "Start server failed", err_start );
 
     rest_register_system_info_handler( server, rest_context );
-    rest_register_handlers( server, rest_context );
+    if ( rest_register_handlers != NULL) {
+        rest_register_handlers( server, rest_context );
+    }
     rest_register_all_handler( server, rest_context );
 
     return ESP_OK;
@@ -199,4 +201,5 @@ rest_server_start( const char *static_files_base_path,
     err:
     return ESP_FAIL;
 }
+
 #endif

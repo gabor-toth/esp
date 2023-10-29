@@ -15,7 +15,7 @@
 
 // OWN see esp-idf/examples/common_components/protocol_examples_common/wifi_connect.c
 
-static const char *TAG = "wifi";
+static const char *TAG = "wifi_connect";
 static esp_netif_t *s_example_sta_netif = NULL;
 static SemaphoreHandle_t s_semph_get_ip_addrs = NULL;
 #if CONFIG_EXAMPLE_CONNECT_IPV6
@@ -60,9 +60,8 @@ static int s_retry_num = 0;
 #define EXAMPLE_NETIF_DESC_STA    "mywifi"
 
 // OWN start
-static void wifi_scan( void );
 
-extern bool example_is_our_netif( const char *prefix, esp_netif_t *netif );
+// Wifi scan
 
 typedef struct {
     char *ssid;
@@ -78,11 +77,22 @@ static known_wifi_network_t known_wifi_networks[] = {
 static int selected_network_index;
 static int selected_channel;
 
+static void wifi_scan( void );
+
+static void handler_on_wifi_scan_done( void *sta_netif, esp_event_base_t event_base,
+                                       int32_t event_id, void *event_data );
+
+// own hostname
+static void set_hostname();
+
+// is in connect.c
+extern bool example_is_our_netif( const char *prefix, esp_netif_t *netif );
+
 #define ASYNC_WIFI_INIT 1
 
 // OWN end
 
-static void example_handler_on_wifi_disconnect( void *arg, esp_event_base_t event_base,
+static void example_handler_on_wifi_disconnect( void *dummy, esp_event_base_t event_base,
                                                 int32_t event_id, void *event_data ) {
     s_retry_num++;
     if ( s_retry_num > CONFIG_EXAMPLE_WIFI_CONN_MAX_RETRY ) {
@@ -115,7 +125,7 @@ static void example_handler_on_wifi_connect( void *esp_netif, esp_event_base_t e
 #endif // CONFIG_EXAMPLE_CONNECT_IPV6
 }
 
-static void example_handler_on_sta_got_ip( void *arg, esp_event_base_t event_base,
+static void example_handler_on_sta_got_ip( void *dummy, esp_event_base_t event_base,
                                            int32_t event_id, void *event_data ) {
     s_retry_num = 0;
     ip_event_got_ip_t *event = (ip_event_got_ip_t *) event_data;
@@ -166,6 +176,8 @@ void example_wifi_start( void ) {
     esp_netif_config.if_desc = EXAMPLE_NETIF_DESC_STA;
     esp_netif_config.route_prio = 128;
     s_example_sta_netif = esp_netif_create_wifi( WIFI_IF_STA, &esp_netif_config );
+    // OWN added
+    set_hostname();
     esp_wifi_set_default_wifi_sta_handlers();
 
     ESP_ERROR_CHECK( esp_wifi_set_storage( WIFI_STORAGE_RAM ));
@@ -306,6 +318,57 @@ esp_err_t example_wifi_connect( void ) {
     return example_wifi_sta_do_connect( wifi_config, !ASYNC_WIFI_INIT );
 }
 
+// see esp-idf/examples/wifi/scan/main/scan.c
+
+static void wifi_scan( void ) {
+    ESP_ERROR_CHECK( esp_netif_init());
+//    esp_netif_t *netif = esp_netif_get_default_netif();
+    // OWN commented out
+    // ESP_ERROR_CHECK(esp_event_loop_create_default());
+    esp_netif_t *sta_netif = esp_netif_create_default_wifi_sta();
+    assert( sta_netif );
+
+    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+    ESP_ERROR_CHECK( esp_wifi_init( &cfg ));
+
+    ESP_ERROR_CHECK( esp_wifi_set_mode( WIFI_MODE_STA ));
+    ESP_ERROR_CHECK( esp_wifi_start());
+
+#if ASYNC_WIFI_INIT
+    ESP_ERROR_CHECK( esp_event_handler_register( WIFI_EVENT, WIFI_EVENT_SCAN_DONE, &handler_on_wifi_scan_done,
+                                                 sta_netif ));
+    esp_wifi_scan_start(NULL, false );
+#else
+    uint16_t number = DEFAULT_SCAN_LIST_SIZE;
+    uint16_t mem_size = DEFAULT_SCAN_LIST_SIZE * sizeof( wifi_ap_record_t );
+    wifi_ap_record_t *ap_info = malloc( mem_size );
+    uint16_t ap_count = 0;
+    memset( ap_info, 0, mem_size );
+
+    esp_wifi_scan_start(NULL, true );
+    ESP_ERROR_CHECK( esp_wifi_scan_get_ap_records( &number, ap_info ));
+    ESP_ERROR_CHECK( esp_wifi_scan_get_ap_num( &ap_count ));
+    ESP_LOGI( TAG, "Total APs scanned = %u", ap_count );
+    for ( int i = 0; ( i < DEFAULT_SCAN_LIST_SIZE ) && ( i < ap_count ); i++ ) {
+        // OWN
+        ESP_LOGI( TAG, "SSID %-16s channel %2d signal %3ddB", ap_info[ i ].ssid, ap_info[ i ].primary,
+                  ap_info[ i ].rssi );
+//        ESP_LOGI(TAG, "SSID \t\t%s", ap_info[i].ssid);
+//        ESP_LOGI(TAG, "RSSI \t\t%d", ap_info[i].rssi);
+//        print_auth_mode(ap_info[i].authmode);
+//        if (ap_info[i].authmode != WIFI_AUTH_WEP) {
+//            print_cipher_type(ap_info[i].pairwise_cipher, ap_info[i].group_cipher);
+//        }
+//        ESP_LOGI(TAG, "Channel \t\t%d\n", ap_info[i].primary);
+    }
+    find_known_wifi( ap_info, ap_count );
+    free( ap_info );
+
+    esp_wifi_stop();
+    esp_netif_destroy_default_wifi( sta_netif );
+#endif
+}
+
 // OWN start
 
 #define DEFAULT_SCAN_LIST_SIZE 16
@@ -368,56 +431,14 @@ esp_err_t wifi_connect( void ) {
 #endif
 }
 
-// OWN end
-
-// see esp-idf/examples/wifi/scan/main/scan.c
-
-static void wifi_scan( void ) {
-    ESP_ERROR_CHECK( esp_netif_init());
-    // OWN commented out
-    // ESP_ERROR_CHECK(esp_event_loop_create_default());
-    esp_netif_t *sta_netif = esp_netif_create_default_wifi_sta();
-    assert( sta_netif );
-
-    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-    ESP_ERROR_CHECK( esp_wifi_init( &cfg ));
-
-    ESP_ERROR_CHECK( esp_wifi_set_mode( WIFI_MODE_STA ));
-    ESP_ERROR_CHECK( esp_wifi_start());
-
-#if ASYNC_WIFI_INIT
-    ESP_ERROR_CHECK( esp_event_handler_register( WIFI_EVENT, WIFI_EVENT_SCAN_DONE, &handler_on_wifi_scan_done,
-                                                 sta_netif ));
-    esp_wifi_scan_start(NULL, false );
-#else
-    uint16_t number = DEFAULT_SCAN_LIST_SIZE;
-    uint16_t mem_size = DEFAULT_SCAN_LIST_SIZE * sizeof( wifi_ap_record_t );
-    wifi_ap_record_t *ap_info = malloc( mem_size );
-    uint16_t ap_count = 0;
-    memset( ap_info, 0, mem_size );
-
-    esp_wifi_scan_start(NULL, true );
-    ESP_ERROR_CHECK( esp_wifi_scan_get_ap_records( &number, ap_info ));
-    ESP_ERROR_CHECK( esp_wifi_scan_get_ap_num( &ap_count ));
-    ESP_LOGI( TAG, "Total APs scanned = %u", ap_count );
-    for ( int i = 0; ( i < DEFAULT_SCAN_LIST_SIZE ) && ( i < ap_count ); i++ ) {
-        // OWN
-        ESP_LOGI( TAG, "SSID %-16s channel %2d signal %3ddB", ap_info[ i ].ssid, ap_info[ i ].primary,
-                  ap_info[ i ].rssi );
-//        ESP_LOGI(TAG, "SSID \t\t%s", ap_info[i].ssid);
-//        ESP_LOGI(TAG, "RSSI \t\t%d", ap_info[i].rssi);
-//        print_auth_mode(ap_info[i].authmode);
-//        if (ap_info[i].authmode != WIFI_AUTH_WEP) {
-//            print_cipher_type(ap_info[i].pairwise_cipher, ap_info[i].group_cipher);
-//        }
-//        ESP_LOGI(TAG, "Channel \t\t%d\n", ap_info[i].primary);
-    }
-    find_known_wifi( ap_info, ap_count );
-    free( ap_info );
-
-    esp_wifi_stop();
-    esp_netif_destroy_default_wifi( sta_netif );
-#endif
+esp_netif_t *wifi_get_esp_netif() {
+    return s_example_sta_netif;
 }
+
+static void set_hostname() {
+    // TODO hostname should be read from flash
+    ESP_ERROR_CHECK( esp_netif_set_hostname( s_example_sta_netif, "n2k-gw-sol" ));
+}
+// OWN end
 
 #endif /* CONFIG_EXAMPLE_CONNECT_WIFI */
