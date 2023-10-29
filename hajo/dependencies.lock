@@ -16,6 +16,6 @@ dependencies:
     source:
       type: idf
     version: 5.1.1
-manifest_hash: 3e723cbef46f6812d5850cc9465714e46f697c85c37caf921d97b90227399d9a
+manifest_hash: 82861d4068f409c7eb36acb7210f9861500b966d65270fee38cf90de4e7fe5db
 target: esp32s2
 version: 1.0.0

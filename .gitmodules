@@ -14,3 +14,6 @@
 	path = hajo/components/lvgl_esp32_drivers
 	url = https://github.com/gabor-toth/lvgl_esp32_drivers.git
 	branch = master
+[submodule "hajo/components/SSDP_IDF"]
+	path = hajo/components/SSDP_IDF
+	url = https://github.com/luc-github/SSDP_IDF.git
