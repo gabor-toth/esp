@@ -19,17 +19,7 @@
 #include "rest_util.h"
 #include "system_info_rest.h"
 
-static const char *LOG_TAG = "rest-server";
-
-#define REST_CHECK( a, str, goto_tag, ... )                                              \
-    do                                                                                 \
-    {                                                                                  \
-        if (!(a))                                                                      \
-        {                                                                              \
-            ESP_LOGE(LOG_TAG, "%s(%d): " str, __FUNCTION__, __LINE__, ##__VA_ARGS__); \
-            goto goto_tag;                                                             \
-        }                                                                              \
-    } while (0)
+static const char *TAG = "rest-server";
 
 #define FILE_PATH_MAX (ESP_VFS_PATH_MAX + 128)
 
@@ -39,7 +29,7 @@ static const char *LOG_TAG = "rest-server";
 esp_err_t set_content_type_from_file( httpd_req_t *req, const char *filepath ) {
     const char *type = "text/plain";
     if ( CHECK_FILE_EXTENSION( filepath, ".html" )) {
-        type = "text/html";
+        type = HTTPD_TYPE_TEXT;
     } else if ( CHECK_FILE_EXTENSION( filepath, ".js" )) {
         type = "application/javascript";
     } else if ( CHECK_FILE_EXTENSION( filepath, ".css" )) {
@@ -61,7 +51,7 @@ static bool has_2_dots_in_file_name( char *filepath ) {
 }
 
 static void set_cache_forever( httpd_req_t *req, char *filepath ) {
-    ESP_LOGI( LOG_TAG, "Set cache forever for %s", filepath );
+    ESP_LOGI( TAG, "Set cache forever for %s", filepath );
     /*
     Last-Modified: Mon, 08 Dec 2014 19:23:51 GMT
     ETag: "5485fac7-ae74"
@@ -82,7 +72,7 @@ static void set_cache_forever( httpd_req_t *req, char *filepath ) {
 }
 
 /* Send HTTP response with the contents of the requested file */
-static esp_err_t rest_common_get_handler( httpd_req_t *req ) {
+static esp_err_t rest_file_get_handler( httpd_req_t *req ) {
     char filepath[FILE_PATH_MAX];
     char error_message[255];
 
@@ -96,13 +86,13 @@ static esp_err_t rest_common_get_handler( httpd_req_t *req ) {
     }
     int fd = open( filepath, O_RDONLY, 0 );
     if ( fd == -1 ) {
-        ESP_LOGW( LOG_TAG, "Failed to open file : %s", filepath );
+        ESP_LOGW( TAG, "Failed to open file : %s", filepath );
         snprintf( error_message, sizeof( error_message ), "Failed to read file: %d", errno);
         httpd_resp_send_err( req, HTTPD_404_NOT_FOUND, error_message );
         return ESP_FAIL;
     }
 
-    ESP_LOGI( LOG_TAG, "Sending file %s", filepath );
+    ESP_LOGI( TAG, "Sending file %s", filepath );
     if ( has_2_dots_in_file_name( filepath )) {
         set_cache_forever( req, filepath );
     }
@@ -114,12 +104,12 @@ static esp_err_t rest_common_get_handler( httpd_req_t *req ) {
         /* Read file in chunks into the scratch buffer */
         read_bytes = read( fd, chunk, REST_SCRATCH_BUFSIZE);
         if ( read_bytes == -1 ) {
-            ESP_LOGE( LOG_TAG, "Failed to read file : %s", filepath );
+            ESP_LOGE( TAG, "Failed to read file : %s", filepath );
         } else if ( read_bytes > 0 ) {
             /* Send the buffer contents as HTTP response chunk */
             if ( httpd_resp_send_chunk( req, chunk, read_bytes ) != ESP_OK ) {
                 close( fd );
-                ESP_LOGE( LOG_TAG, "File sending failed!" );
+                ESP_LOGE( TAG, "File sending failed!" );
                 /* Abort sending file */
                 httpd_resp_sendstr_chunk( req, NULL);
                 /* Respond with 500 Internal Server Error */
@@ -130,7 +120,7 @@ static esp_err_t rest_common_get_handler( httpd_req_t *req ) {
     } while ( read_bytes > 0 );
     /* Close file after sending complete */
     close( fd );
-    ESP_LOGI( LOG_TAG, "File sending complete" );
+    ESP_LOGI( TAG, "File sending complete" );
     /* Respond with an empty chunk to signal HTTP response completion */
     httpd_resp_send_chunk( req, NULL, 0 );
     return ESP_OK;
@@ -142,13 +132,12 @@ esp_err_t rest_receive_json_body( httpd_req_t *req, rest_server_context_t *conte
     int total_len = req->content_len;
     int cur_len = 0;
     char *buf = context->scratch;
-    int received = 0;
     if ( total_len >= REST_SCRATCH_BUFSIZE) {
         httpd_resp_send_err( req, HTTPD_400_BAD_REQUEST, "content too long" );
         return ESP_FAIL;
     }
     while ( cur_len < total_len ) {
-        received = httpd_req_recv( req, buf + cur_len, total_len );
+        int received = httpd_req_recv( req, buf + cur_len, total_len );
         if ( received <= 0 ) {
             httpd_resp_send_err( req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to post control value" );
             return ESP_FAIL;
@@ -161,45 +150,47 @@ esp_err_t rest_receive_json_body( httpd_req_t *req, rest_server_context_t *conte
     return ESP_OK;
 }
 
-static void rest_register_all_handler( httpd_handle_t server, rest_server_context_t *rest_context ) {
+esp_err_t rest_register_static_files_handler( httpd_handle_t server, rest_server_context_t *rest_context,
+                                              const char *static_files_base_path ) {
+    if ( static_files_base_path == NULL) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    strlcpy( rest_context->base_path, static_files_base_path, sizeof( rest_context->base_path ));
     /* URI handler for getting web server files */
     httpd_uri_t common_get_uri = {
             .uri = "/*",
             .method = HTTP_GET,
-            .handler = rest_common_get_handler,
+            .handler = rest_file_get_handler,
             .user_ctx = rest_context
     };
-    httpd_register_uri_handler( server, &common_get_uri );
+    return httpd_register_uri_handler( server, &common_get_uri );
 }
 
-esp_err_t
-rest_server_start( const char *static_files_base_path,
-                   void (*rest_register_handlers)( httpd_handle_t, rest_server_context_t * )) {
-    REST_CHECK( static_files_base_path, "wrong base path", err );
+esp_err_t rest_server_start( esp_err_t (*rest_register_handlers)( httpd_handle_t, rest_server_context_t * )) {
     rest_server_context_t *rest_context = calloc( 1, sizeof( rest_server_context_t ));
-    REST_CHECK( rest_context, "No memory for rest context", err );
-    strlcpy( rest_context->base_path, static_files_base_path, sizeof( rest_context->base_path ));
+    if ( rest_context == NULL) {
+        ESP_LOGE( TAG, "No memory for rest_context" );
+        return ESP_ERR_NO_MEM;
+    }
 
     httpd_handle_t server = NULL;
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.uri_match_fn = httpd_uri_match_wildcard;
     config.max_uri_handlers = 16;
 
-    ESP_LOGI( LOG_TAG, "Starting HTTP Server" );
-    REST_CHECK( httpd_start( &server, &config ) == ESP_OK, "Start server failed", err_start );
-
-    rest_register_system_info_handler( server, rest_context );
-    if ( rest_register_handlers != NULL) {
-        rest_register_handlers( server, rest_context );
+    ESP_LOGI( TAG, "Starting HTTP Server" );
+    esp_err_t result = httpd_start( &server, &config );
+    if ( result == ESP_OK ) {
+        // rest_register_system_info_handler( server, rest_context );
+        if ( rest_register_handlers != NULL) {
+            result = rest_register_handlers( server, rest_context );
+        }
+        // rest_register_static_files_handler( server, rest_context, static_files_base_path );
     }
-    rest_register_all_handler( server, rest_context );
-
-    return ESP_OK;
-
-    err_start:
-    free( rest_context );
-    err:
-    return ESP_FAIL;
+    if ( result != ESP_OK ) {
+        free( rest_context );
+    }
+    return result;
 }
 
 #endif

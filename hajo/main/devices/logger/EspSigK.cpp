@@ -1,6 +1,38 @@
+#include "esp_log.h"
 #include "EspSigK.h"
 #include "NMEA2000_esp32_stream.h"
 #include "cJSON.h"
+#include "ssdp.h"
+#include "string.h"
+
+static const char* TAG ="signalk";
+
+#define MAX_DELTA_VALUES 10
+
+static char *myHostname = NULL;
+static const char *signalKServerHost;
+static uint16_t signalKServerPort;
+static const char *signalKServerToken;
+
+typedef struct delta_t{
+    delta_t* next;
+    const char* path;
+    char* value;
+} delta_t;
+
+static delta_t* delta_head = NULL;
+static delta_t* delta_tail = NULL;
+
+static uint32_t wsClientReconnectInterval;
+static bool wsClientConnected;
+
+static uint32_t timerReconnect;
+
+void setupHTTP(httpd_handle_t server);
+esp_err_t htmlHandleNotFound(httpd_req_t *r);
+esp_err_t htmlSignalKEndpoints(httpd_req_t *r);
+esp_err_t htmlIndexContents(httpd_req_t *r);
+esp_err_t htmlDescriptionXml(httpd_req_t *r);
 
 #if 0
 // see https://github.com/AK-Homberger/NMEA2000-SignalK-Gateway
@@ -14,8 +46,6 @@ WebSocketsClient webSocketClient;
 
 static bool printDeltaSerial;
 static bool printDebugSerial;
-
-static bool wsClientConnected;
 
 // Simple web page to view deltas
 static const char *EspSigKIndexContents = R"foo(
@@ -57,92 +87,36 @@ static const char *EspSigKIndexContents = R"foo(
 </html>
 )foo";
 
-
-
-
-
-
-
-
-
-/* ******************************************************************** */
-/* ******************************************************************** */
-/* ******************************************************************** */
-/* Constructor/Settings                                                 */
-/* ******************************************************************** */
-/* ******************************************************************** */
-/* ******************************************************************** */
-EspSigK::EspSigK( string& hostname, string& ssid, string& ssidPass ) {
-    myHostname = hostname;
-    mySSID = ssid;
-    mySSIDPass = ssidPass;
-
-
+void EspSigK_init() {
 //    webSocketServer = WebSocketsServer( 81 );
     wsClientConnected = false;
 
-    signalKServerHost = "";
+    signalKServerToken = signalKServerHost = NULL;
     signalKServerPort = 80;
-    signalKServerToken = "";
 
     printDeltaSerial = false;
     printDebugSerial = false;
 
     wsClientReconnectInterval = 10000;
-
-    timerReconnect = millis();
-
-    idxDeltaValues = 0; // init deltas
-    for ( uint8_t i = 0; i < MAX_DELTA_VALUES; i++ ) {
-        deltaPaths[ i ] = "";
-        deltaValues[ i ] = "";
-    }
 }
 
-void EspSigK::setServerHost( string& newServer ) {
-    signalKServerHost = newServer;
-}
+//void EspSigK::setServerPort( uint16_t newPort ) {
+//    signalKServerPort = newPort;
+//}
+//
+//void EspSigK::setServerToken( string &token ) {
+//    signalKServerToken = token;
+//}
 
-void EspSigK::setServerPort( uint16_t newPort ) {
-    signalKServerPort = newPort;
-}
-
-void EspSigK::setServerToken( string& token ) {
-    signalKServerToken = token;
-}
-
-void EspSigK::setPrintDeltaSerial( bool v ) {
+void EspSigK_setPrintDeltaSerial( bool v ) {
     printDeltaSerial = v;
 }
 
-void EspSigK::setPrintDebugSerial( bool v ) {
+void EspSigK_setPrintDebugSerial( bool v ) {
     printDebugSerial = v;
 }
 
-/* ******************************************************************** */
-/* ******************************************************************** */
-/* ******************************************************************** */
-/* Setup                                                                */
-/* ******************************************************************** */
-/* ******************************************************************** */
-/* ******************************************************************** */
-
-
-void EspSigK::connectWifi() {
-    if ( printDebugSerial ) Serial.print( "SIGK: Connecting to Wifi" );
-//    WiFi.begin( mySSID.c_str(), mySSIDPass.c_str());
-//    while ( WiFi.status() != WL_CONNECTED ) {
-//        delay( 200 );
-//        if ( printDebugSerial ) Serial.print( "." );
-//    }
-//    if ( printDebugSerial ) {
-//        Serial.println();
-//        Serial.print( "SIGK: Connected to Wifi!. IP: " );
-//        Serial.println( WiFi.localIP());
-//    }
-}
-
-void EspSigK::setupDiscovery() {
+static void EspSigK_setupDiscovery( const char *hostname ) {
 //    if ( !MDNS.begin( myHostname.c_str())) {             // Start the mDNS responder for esp8266.local
 //        if ( printDebugSerial ) Serial.println( "SIGK: Error setting up MDNS responder!" );
 //    } else {
@@ -153,54 +127,56 @@ void EspSigK::setupDiscovery() {
 //            Serial.println( "" );
 //        }
 //    }
-//
-//    if ( printDebugSerial ) Serial.println( "SIGK: Starting SSDP..." );
-//    SSDP.setSchemaURL( "description.xml" );
-//    SSDP.setHTTPPort( 80 );
+
+    ESP_ERROR_CHECK( ssdp_init());
+    ssdp_config_t config = {
+            .task_priority       = tskIDLE_PRIORITY + 5,
+            .stack_size          = 4096,
+            .core_id             = tskNO_AFFINITY,
+            .ttl                 = 2,
+            .port                = 80,
+            .interval            = 1200,
+            .mx_max_delay        = 10000,
+            .uuid_root           = NULL,
+            .uuid                = NULL,
+            .schema_url          = "description.xml",
+            .device_type         = "upnp:rootdevice",
+            .friendly_name       = "N2K Gateway",
+            .serial_number       = "000000",
+            .presentation_url    = "/index.html",
+            .manufacturer_name   = "Espressif Systems",
+            .manufacturer_url    = "https://www.signalk.org",
+            .model_name          = "N2K Gateway",
+            .model_url           = "https://www.signalk.org",
+            .model_number         = "1.0",
+            .model_description    = NULL,
+            .server_name          = "SSDPServer-IDF/1.0",
+            .services_description = NULL,
+            .icons_description    = NULL
+    };
+    ESP_ERROR_CHECK( ssdp_start( &config ));
 //    SSDP.setName( myHostname );
-//    SSDP.setSerialNumber( "12345" );
-//    SSDP.setURL( "index.html" );
-//    SSDP.setModelName( "WifiSensorNode" );
-//    SSDP.setModelNumber( "12345" );
-//    SSDP.setModelURL( "http://www.signalk.org" );
-//    SSDP.setManufacturer( "SigK" );
-//    SSDP.setManufacturerURL( "http://www.signalk.org" );
-//    SSDP.setDeviceType( "upnp:rootdevice" );
-//    SSDP.begin();
+}
+
+void EspSigK_start( const char *hostname, httpd_handle_t server ) {
+    if ( printDebugSerial ) {
+        ESP_LOGI( TAG,"SIGK: Starting as host %s", hostname );
+    }
+    if ( myHostname != NULL) {
+        free(myHostname);
+    }
+    myHostname= strdup(hostname);
+
+    EspSigK_setupDiscovery( hostname );
+    setupHTTP(server);
+//    setupWebSocket();
+}
+
+void EspSigK_stop( httpd_handle_t server ) {
 }
 
 #if 0
-/* ******************************************************************** */
-/* ******************************************************************** */
-/* ******************************************************************** */
-/* Run                                                                  */
-/* ******************************************************************** */
-/* ******************************************************************** */
-/* ******************************************************************** */
-void EspSigK::begin() {
-    if ( printDebugSerial ) {
-        Serial.print( "SIGK: Starting as host: " );
-        Serial.println( myHostname );
-    }
-
-    /* Explicitly set the ESP8266 to be a WiFi-client, otherwise, it by default,
-       would try to act as both a client and an access-point and could cause
-       network-issues with your other WiFi-devices on your WiFi-network. */
-//    WiFi.mode( WIFI_STA );
-    connectWifi();
-    setupDiscovery();
-    setupHTTP();
-    setupWebSocket();
-}
-
 void EspSigK::handle() {
-//    yield(); //let the ESP do whatever it needs to...
-
-    //Timers
-    uint32_t currentMilis = millis();
-    //Overflow handle
-    if ( timerReconnect > currentMilis ) { timerReconnect = currentMilis; }
-
     // reconnect timers, make sure wifi connected and websocket connected
     if (( timerReconnect + wsClientReconnectInterval ) < currentMilis ) {
         if ( WiFi.status() != WL_CONNECTED ) {
@@ -211,86 +187,96 @@ void EspSigK::handle() {
         }
         timerReconnect = currentMilis;
     }
-
-
-    //HTTP
-    server.handleClient();
-    //WS
-    webSocketServer.loop();
-    if ( wsClientConnected ) {
-        webSocketClient.loop();
-    }
 }
+#endif
 
-// our delay function will let stuff like websocket/http etc run instead of blocking
-void EspSigK::safeDelay( unsigned long ms ) {
-    uint32_t start = millis();
-
-    while ( millis() < ( start + ms )) {
-        handle();
-    }
-}
-
-
-/* ******************************************************************** */
-/* ******************************************************************** */
 /* ******************************************************************** */
 /* HTTP                                                                 */
 /* ******************************************************************** */
-/* ******************************************************************** */
-/* ******************************************************************** */
-void EspSigK::setupHTTP() {
-    if ( printDebugSerial ) Serial.println( "SIGK: Starting HTTP Server" );
-    server.onNotFound( htmlHandleNotFound );
 
-    server.on( "/description.xml", HTTP_GET, []() { SSDP.schema( server.client()); } );
-    server.on( "/signalk", HTTP_GET, htmlSignalKEndpoints );
-    server.on( "/signalk/", HTTP_GET, htmlSignalKEndpoints );
+void setupHTTP(httpd_handle_t server) {
+    ESP_LOGI(TAG, "Registering handlers" );
 
-    server.on( "/", []() {
-        server.send( 200, "text/html", EspSigKIndexContents );
-    } );
-    server.on( "/index.html", []() {
-        server.send( 200, "text/html", EspSigKIndexContents );
-    } );
-    server.begin();
+    httpd_uri_t uri = {
+            .uri = "/description.xml",
+            .method = HTTP_GET,
+            .handler = htmlDescriptionXml,
+            .user_ctx = NULL
+    };
+    httpd_register_uri_handler( server, &uri );
+
+    uri.uri = "/signalk";
+    httpd_register_uri_handler( server, &uri );
+    uri.uri = "/signalk/";
+    httpd_register_uri_handler( server, &uri );
+
+    uri.handler = htmlIndexContents;
+    uri.uri = "/";
+    httpd_register_uri_handler( server, &uri );
+    uri.uri = "/index.html";
+    httpd_register_uri_handler( server, &uri );
+
+    uri.handler = htmlHandleNotFound;
+    uri.uri = "/*";
+    httpd_register_uri_handler( server, &uri );
 }
 
-void EspSigK::htmlHandleNotFound() {
-    server.send( 404, "text/plain",
-                 "404: Not found" ); // Send HTTP status 404 (Not Found) when there's no handler for the URI in the request
+esp_err_t htmlHandleNotFound(httpd_req_t *r) {
+    ESP_LOGW(TAG,"Not found '%s'", r->uri);
+    httpd_resp_send_err(r,HTTPD_404_NOT_FOUND, "Not found" );
+    return ESP_OK;
 }
 
-void EspSigK::htmlSignalKEndpoints() {
-    IPAddress ip;
-    //DynamicJsonBuffer jsonBuffer;
-    DynamicJsonDocument jsonBuffer( 300 );
-    char response[2048];
-    string wsURL;
-    ip = WiFi.localIP();
-
-    //JsonObject& json = jsonBuffer.createObject();
-
-    JsonObject json = jsonBuffer.to<JsonObject>();
-    string ipString = string( ip[ 0 ] );
-    for ( uint8_t octet = 1; octet < 4; ++octet ) {
-        ipString += '.' + string( ip[ octet ] );
-    }
-
-
-    wsURL = "ws://" + ipString + ":81/";
-
-    JsonObject endpoints = json.createNestedObject( "endpoints" );
-    JsonObject v1 = endpoints.createNestedObject( "v1" );
-    v1[ "version" ] = "1.alpha1";
-    v1[ "signalk-ws" ] = wsURL;
-    JsonObject serverInfo = json.createNestedObject( "server" );
-    serverInfo[ "id" ] = "ESP-SigKSen";
-    //json.printTo(response);
-    serializeJson( jsonBuffer, response );
-    server.send( 200, "application/json", response );
+esp_err_t htmlDescriptionXml(httpd_req_t *r) {
+    ESP_LOGD(TAG,"Serving htmlDescriptionXml");
+    httpd_resp_set_type( r, "text/xml" );
+    const char * schema = get_ssdp_schema_str();
+    httpd_resp_send(r, schema, strlen(schema));
+    return ESP_OK;
 }
 
+esp_err_t htmlIndexContents(httpd_req_t *r) {
+    ESP_LOGD(TAG,"Serving htmlIndexContents");
+    httpd_resp_set_type( r, HTTPD_TYPE_TEXT );
+    httpd_resp_send(r, EspSigKIndexContents, strlen(EspSigKIndexContents));
+    return ESP_OK;
+}
+
+esp_err_t htmlSignalKEndpoints(httpd_req_t *r) {
+    ESP_LOGD(TAG,"Serving htmlSignalKEndpoints");
+//    IPAddress ip;
+//    //DynamicJsonBuffer jsonBuffer;
+//    DynamicJsonDocument jsonBuffer( 300 );
+//    char response[2048];
+//    string wsURL;
+//    ip = WiFi.localIP();
+//
+//    //JsonObject& json = jsonBuffer.createObject();
+//
+//    JsonObject json = jsonBuffer.to<JsonObject>();
+//    string ipString = string( ip[ 0 ] );
+//    for ( uint8_t octet = 1; octet < 4; ++octet ) {
+//        ipString += '.' + string( ip[ octet ] );
+//    }
+//
+//
+//    wsURL = "ws://" + ipString + ":81/";
+//
+//    JsonObject endpoints = json.createNestedObject( "endpoints" );
+//    JsonObject v1 = endpoints.createNestedObject( "v1" );
+//    v1[ "version" ] = "1.alpha1";
+//    v1[ "signalk-ws" ] = wsURL;
+//    JsonObject serverInfo = json.createNestedObject( "server" );
+//    serverInfo[ "id" ] = "ESP-SigKSen";
+//    //json.printTo(response);
+//    serializeJson( jsonBuffer, response );
+//    server.send( 200, "application/json", response );
+    httpd_resp_set_type( r, HTTPD_TYPE_JSON );
+    httpd_resp_send(r, "{}", 2);
+    return ESP_OK;
+}
+
+#if 0
 /* ******************************************************************** */
 /* ******************************************************************** */
 /* ******************************************************************** */
@@ -397,101 +383,81 @@ void webSocketServerEvent( uint8_t num, WStype_t type, uint8_t *payload, size_t 
             break;
     }
 }
+#endif
 
 
 
-/* ******************************************************************** */
-/* ******************************************************************** */
 /* ******************************************************************** */
 /* SignalK                                                              */
 /* ******************************************************************** */
-/* ******************************************************************** */
-/* ******************************************************************** */
 
-void EspSigK::addDeltaValue( string& path, string& value ) {
-    deltaPaths[ idxDeltaValues ] = path;
-    deltaValues[ idxDeltaValues ] = value;
-    idxDeltaValues++;
+void EspSigK_addDeltaValue(const char* path, char* value) {
+    delta_t *delta = (delta_t*)calloc( 1, sizeof( delta_t ));
+    delta->path = path;
+    delta->value = strdup(value);
+    delta->next = NULL;
+    if ( delta_head != NULL) {
+        delta_tail->next = delta;
+        delta_tail = delta;
+    } else {
+        delta_head = delta_tail = delta;
+    }
 }
 
-void EspSigK::addDeltaValue( string& path, int value ) {
-    string v = string( value );
-    deltaPaths[ idxDeltaValues ] = path;
-    deltaValues[ idxDeltaValues ] = v;
-    idxDeltaValues++;
+void EspSigK_addDeltaValue(const char* path, int value) {
+    char buf[16];
+    itoa(value,buf,  10);
+    EspSigK_addDeltaValue(path, buf);
 }
 
-void EspSigK::addDeltaValue( string& path, double value ) {
-    string v = string( value );
-    deltaPaths[ idxDeltaValues ] = path;
-    deltaValues[ idxDeltaValues ] = v;
-    idxDeltaValues++;
+//void EspSigK::addDeltaValue( string& path, double value ) {
+//void EspSigK::addDeltaValue( string& path, bool value ) {
+
+void EspSigK_freeDelta() {
+    delta_t *delta = delta_head;
+    delta_head = delta_tail = NULL;
+    while ( delta != NULL) {
+        delta_t* next = delta->next;
+        free(delta->value);
+        free(delta);
+        delta= next;
+    }
 }
 
-void EspSigK::addDeltaValue( string& path, bool value ) {
-    string v;
-    if ( value ) { v = "true"; } else { v = "false"; }
-    deltaPaths[ idxDeltaValues ] = path;
-    deltaValues[ idxDeltaValues ] = v;
-    idxDeltaValues++;
-}
-
-void EspSigK::sendDelta( string& path, string& value ) {
-    addDeltaValue( path, value );
-    sendDelta();
-}
-
-void EspSigK::sendDelta( string& path, int value ) {
-    addDeltaValue( path, value );
-    sendDelta();
-}
-
-void EspSigK::sendDelta( string& path, double value ) {
-    addDeltaValue( path, value );
-    sendDelta();
-}
-
-void EspSigK::sendDelta( string& path, bool value ) {
-    addDeltaValue( path, value );
-    sendDelta();
-}
-
-void EspSigK::sendDelta() {
-    cJSON *delta = cJSON_CreateObject();
+void EspSigK_sendDelta() {
+    cJSON *result = cJSON_CreateObject();
 
     //updated array
-    cJSON *updatesArr = cJSON_AddArrayToObject( delta, "updates" );
+    cJSON *updatesArr = cJSON_AddArrayToObject( result, "updates" );
 
     cJSON *thisUpdate = cJSON_CreateObject();
     cJSON_AddItemToArray(updatesArr,thisUpdate );
     cJSON *source = cJSON_AddObjectToObject(thisUpdate,"source");
     cJSON_AddStringToObject(source, "label",  "ESP" );
-    cJSON_AddStringToObject(source, "src",  myHostname.c_str() );
+    cJSON_AddStringToObject(source, "src",  myHostname );
 
     cJSON *values = cJSON_AddArrayToObject( thisUpdate, "values" );
-    for ( uint8_t i = 0; i < idxDeltaValues; i++ ) {
+    delta_t *delta = delta_head;
+    while ( delta != NULL) {
         cJSON *thisValue = cJSON_CreateObject();
         cJSON_AddItemToArray(values,thisValue );
-        cJSON_AddStringToObject(thisValue, "path",  deltaPaths[ i ].c_str() );
-        cJSON_AddStringToObject(thisValue, "value", deltaValues[ i ].c_str()); // serialized(?)
+        cJSON_AddStringToObject(thisValue, "path",  delta->path );
+        cJSON_AddStringToObject(thisValue, "value", delta->value);
+        delta= delta->next;
     }
 
-    char *deltaText = cJSON_Print( delta );
+    char *deltaText = cJSON_Print( result );
 
     if ( printDeltaSerial ) {
         Serial.println( deltaText );
     }
-    webSocketServer.broadcastTXT( deltaText );
-    if ( wsClientConnected ) { // client
-        webSocketClient.sendTXT( deltaText );
-    }
+    // TODO
+//    webSocketServer.broadcastTXT( deltaText );
+//    if ( wsClientConnected ) { // client
+//        webSocketClient.sendTXT( deltaText );
+//    }
     free(deltaText);
 
     //reset delta info
-    idxDeltaValues = 0; // init deltas
-    for ( uint8_t i = 0; i < MAX_DELTA_VALUES; i++ ) {
-        deltaPaths[ i ] = "";
-        deltaValues[ i ] = "";
-    }
+    EspSigK_freeDelta();
 }
-#endif

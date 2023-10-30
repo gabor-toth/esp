@@ -85,6 +85,9 @@ esp_err_t init_fs( void ) {
 
 static void handler_on_wifi_connect( void *dummy, esp_event_base_t event_base,
                                      int32_t event_id, void *event_data ) {
+    ESP_ERROR_CHECK(
+            esp_event_handler_unregister( WIFI_EVENT, WIFI_EVENT_STA_START, &handler_on_wifi_connect ));
+
     rest_init_after_wifi(NULL);
 }
 

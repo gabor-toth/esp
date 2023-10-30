@@ -1,11 +1,11 @@
 #include "esp_log.h"
-#include "sys/stat.h"
+#include "EspSigK.h"
 #include "gyroscope.h"
-#include "sdcard.h"
 #include "rest_main.h"
 #include "wifi_connect.h"
 #include "n2k/n2k_parser.h"
 #include "n2k/n2k_sender.h"
+#include "esp_wifi.h"
 
 static const char *LOG = "logger";
 
@@ -162,10 +162,27 @@ static void setup_n2k_device( int iDev ) {
     NMEA2000.AttachMsgHandler( incomingMessageHandler );
 }
 
+static esp_err_t rest_register_handlers( httpd_handle_t server, rest_server_context_t * ) {
+    EspSigK_init();
+    EspSigK_start("n2k-gw",server);
+    return ESP_OK;
+}
+
+static void handler_on_wifi_connect( void *dummy, esp_event_base_t event_base,
+                                     int32_t event_id, void *event_data ) {
+    ESP_ERROR_CHECK( rest_server_start( rest_register_handlers));
+}
+
 void hajo_logger_main( int iDev ) {
-//    test_sdcard();
+    ESP_ERROR_CHECK(
+            esp_event_handler_register( IP_EVENT, IP_EVENT_STA_GOT_IP, &handler_on_wifi_connect, NULL ));
+//    ESP_ERROR_CHECK(
+//            esp_event_handler_register( IP_EVENT, IP_EVENT_ETH_LOST_IP, &handler_on_wifi_connect, NULL ));
+
+    // test_sdcard();
     setup_n2k_device( iDev );
     setup_gyroscope();
+    EspSigK_init();
     rest_init_before_wifi();
     ESP_ERROR_CHECK( wifi_connect() );
     ESP_LOGI(LOG,"init finished");
