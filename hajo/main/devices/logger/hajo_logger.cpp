@@ -163,8 +163,8 @@ static void setup_n2k_device( int iDev ) {
 }
 
 static esp_err_t rest_register_handlers( httpd_handle_t server, rest_server_context_t * ) {
-    EspSigK_init();
-    EspSigK_start("n2k-gw",server);
+//    EspSigK_init();
+//    EspSigK_start("n2k-gw",server);
     return ESP_OK;
 }
 
@@ -182,7 +182,7 @@ void hajo_logger_main( int iDev ) {
     // test_sdcard();
     setup_n2k_device( iDev );
     setup_gyroscope();
-    EspSigK_init();
+//    EspSigK_init();
     rest_init_before_wifi();
     ESP_ERROR_CHECK( wifi_connect() );
     ESP_LOGI(LOG,"init finished");

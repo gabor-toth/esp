@@ -4,10 +4,14 @@
 #include "esp_event.h"
 #include "esp_log.h"
 #include "esp_pm.h"
-#include "devices/battery/hajo_battery.h"
+#if DEVICE_TYPE == DEVICE_TYPE_GAUGE_DISPLAY
 #include "devices/display/hajo_display.h"
 #include "devices/display/hajo_fluid.h"
+#elif DEVICE_TYPE == DEVICE_TYPE_BATTERY_MONITOR
+#include "devices/battery/hajo_battery.h"
+#elif DEVICE_TYPE == DEVICE_TYPE_LOGGER
 #include "devices/logger/hajo_logger.h"
+#endif
 #include "lib/nvs_main.h"
 #include "n2k/n2k_receiver.h"
 #include "n2k/n2k_sender.h"
@@ -19,20 +23,6 @@
 #include "NMEA2000_CAN.h"
 
 static const char *LOG = "hajo_main";
-
-// defined by pins 10-12
-#define DEVICE_TYPE_UNKNOWN_0 0b000
-#define DEVICE_TYPE_LOGGER 0b001
-#define DEVICE_TYPE_UNKNOWN_2 0b010
-#define DEVICE_TYPE_UNKNOWN_3 0b011
-#define DEVICE_TYPE_UNKNOWN_4 0b100
-#define DEVICE_TYPE_GAUGE_DISPLAY 0b101
-#define DEVICE_TYPE_BATTERY_MONITOR 0b110
-#define DEVICE_TYPE_UNKNOWN_7 0b111
-
-#define DEVICE_TYPE DEVICE_TYPE_LOGGER
-//#define DEVICE_TYPE DEVICE_TYPE_GAUGE_DISPLAY
-//#define DEVICE_TYPE DEVICE_TYPE_BATTERY_MONITOR
 
 static int hardware_device_type = 0xff;
 
