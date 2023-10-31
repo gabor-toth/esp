@@ -9,7 +9,10 @@
 
 static const char *LOG = "logger";
 
-static EspSigK signalkClient;
+// see EspSigK.cpp
+extern EspSigK sigK;
+// see NMEA2000-SignalK-Gateway.cpp
+extern void sendN2KMessageToSignalK( const tN2kMsg &N2kMsg ) ;
 
 /*
  * 0x1F801: PGN 129025 - Position, Rapid Update (100msec)
@@ -94,6 +97,8 @@ void process_incoming_pgn_dump( const tN2kMsg& msg ) {
 }
 
 void LoggerIncomingMessageHandler::HandleMsg( const tN2kMsg &N2kMsg ) {
+    sendN2KMessageToSignalK(N2kMsg);
+
 //    ESP_LOGI( LOG, "PGN %5lx len %2d", N2kMsg.PGN, N2kMsg.DataLen );
     switch ( N2kMsg.PGN ) {
 //        case N2K_PGN_FLUID_LEVEL:
@@ -150,13 +155,23 @@ static void setup_n2k_device( int iDev ) {
     NMEA2000.SetProductInformation( &ProductInformation, iDev );
 
     // device class & function: https://manualzz.com/doc/12647142/nmea2000-class-and-function-codes
-    NMEA2000.SetDeviceInformation( 1,      // Unique number. Use e.g. Serial number.
+    NMEA2000.SetDeviceInformation( n2k_get_device_id(),      // Unique number. Use e.g. Serial number.
                                    140,    // Device function=Bus Traffic Logger
                                    10,        // Device class=System Tools
                                    2046,  // Just chosen free from code list on http://www.nmea.org/Assets/20121020%20nmea%202000%20registration%20list.pdf
                                    4,       // Marine
                                    iDev
     );
+//    NMEA2000.SetDeviceInformation( n2k_get_device_id(),      // Unique number. Use e.g. Serial number.
+//                                   131,    // Device function=NMEA 2000 to Analog Gateway
+//                                   25,        // Inter/Intranetwork Device
+//                                   2047,  // Just chosen free from code list on http://www.nmea.org/Assets/20121020%20nmea%202000%20registration%20list.pdf
+//                                   4,       // Marine
+//                                   iDev
+//    );
+
+    // If you also want to see all traffic on the bus use N2km_ListenAndNode instead of N2km_NodeOnly below
+//    NMEA2000.SetMode( tNMEA2000::N2km_ListenOnly, NodeAddress );
 
     NMEA2000.ExtendTransmitMessages( TransmitMessages, iDev );
     NMEA2000.ExtendReceiveMessages( ReceiveMessages, iDev );
@@ -165,7 +180,13 @@ static void setup_n2k_device( int iDev ) {
 }
 
 static esp_err_t rest_register_handlers( httpd_handle_t server, rest_server_context_t * ) {
-    signalkClient.start("n2k-gw",server);
+//    sigK.setPrintDebugSerial(true);       // Default false, causes debug messages to be printed to Serial (connecting etc)
+//    sigK.setPrintDeltaSerial(false);       // Default false, prints deltas to Serial.
+    //sigK.setServerHost("192.168.0.20");    // Optional. Sets the ip of the SignalKServer to connect to. If not set we try to discover server with mDNS
+    //sigK.setServerPort(80);                // If manually setting host, this sets the port for the signalK Server (default 80);
+    //sigK.setServerToken("secret"); // if you have security enabled in node server, it wont accept deltas unles you auth
+    sigK.start("n2k-gw",server);
+
     return ESP_OK;
 }
 
