@@ -4,17 +4,12 @@
 #include "cJSON.h"
 #include "ssdp.h"
 #include "string.h"
+#include "wifi_connect.h"
 
 static const char* TAG ="signalk";
 
-static const char *signalKServerHost;
-static uint16_t signalKServerPort;
-static const char *signalKServerToken;
 
-static uint32_t wsClientReconnectInterval;
-static bool wsClientConnected;
-
-static uint32_t timerReconnect;
+EspSigK sigK;
 
 #if 0
 // see https://github.com/AK-Homberger/NMEA2000-SignalK-Gateway
@@ -67,16 +62,12 @@ static const char *EspSigKIndexContents = R"foo(
 )foo";
 
 EspSigK::EspSigK() {
-//    webSocketServer = WebSocketsServer( 81 );
-    wsClientConnected = false;
-
-    signalKServerToken = signalKServerHost = nullptr;
-    signalKServerPort = 80;
-
     printDeltaSerial = false;
     printDebugSerial = false;
-
-    wsClientReconnectInterval = 10000;
+//    signalKServerPort = 80;
+//    webSocketServer = WebSocketsServer( 81 );
+//    wsClientConnected = false;
+//    wsClientReconnectInterval = 10000;
 }
 
 EspSigK::~EspSigK() {
@@ -86,7 +77,7 @@ EspSigK::~EspSigK() {
 //void EspSigK::setServerPort( uint16_t newPort ) {
 //    signalKServerPort = newPort;
 //}
-//
+
 //void EspSigK::setServerToken( string &token ) {
 //    signalKServerToken = token;
 //}
@@ -100,17 +91,6 @@ void EspSigK::setPrintDebugSerial( bool v ) {
 }
 
 void EspSigK::setupDiscovery( ) {
-//    if ( !MDNS.begin( myHostname.c_str())) {             // Start the mDNS responder for esp8266.local
-//        if ( printDebugSerial ) Serial.println( "SIGK: Error setting up MDNS responder!" );
-//    } else {
-//        MDNS.addService( "http", "tcp", 80 );
-//        if ( printDebugSerial ) {
-//            Serial.print( "SIGK: mDNS responder started at " );
-//            Serial.print( myHostname.c_str() );
-//            Serial.println( "" );
-//        }
-//    }
-
     ESP_ERROR_CHECK( ssdp_init());
     ssdp_config_t config = {
             .task_priority       = tskIDLE_PRIORITY + 5,
@@ -151,7 +131,7 @@ void EspSigK::start( const char *hostname, httpd_handle_t server ) {
 
     setupDiscovery();
     setupHTTP();
-//    setupWebSocket();
+    setupWebSocket();
 }
 
 void EspSigK::stop() {
@@ -226,55 +206,43 @@ esp_err_t EspSigK::htmlIndexContents(httpd_req_t *r) {
 
 esp_err_t EspSigK::htmlSignalKEndpoints(httpd_req_t *r) {
     ESP_LOGD(TAG,"Serving htmlSignalKEndpoints");
-//    IPAddress ip;
-//    //DynamicJsonBuffer jsonBuffer;
-//    DynamicJsonDocument jsonBuffer( 300 );
-//    char response[2048];
-//    string wsURL;
-//    ip = WiFi.localIP();
-//
-//    //JsonObject& json = jsonBuffer.createObject();
-//
-//    JsonObject json = jsonBuffer.to<JsonObject>();
-//    string ipString = string( ip[ 0 ] );
-//    for ( uint8_t octet = 1; octet < 4; ++octet ) {
-//        ipString += '.' + string( ip[ octet ] );
-//    }
-//
-//
-//    wsURL = "ws://" + ipString + ":81/";
-//
-//    JsonObject endpoints = json.createNestedObject( "endpoints" );
-//    JsonObject v1 = endpoints.createNestedObject( "v1" );
-//    v1[ "version" ] = "1.alpha1";
-//    v1[ "signalk-ws" ] = wsURL;
-//    JsonObject serverInfo = json.createNestedObject( "server" );
-//    serverInfo[ "id" ] = "ESP-SigKSen";
-//    //json.printTo(response);
-//    serializeJson( jsonBuffer, response );
-//    server.send( 200, "application/json", response );
+
+    esp_netif_t *netif = wifi_get_esp_netif();
+    esp_netif_ip_info_t ip_info;
+    esp_netif_get_ip_info( netif, &ip_info);
+
+    char wsUrl[64];
+    uint32_t ip = ip_info.ip.addr;
+    snprintf(wsUrl, sizeof (wsUrl), "ws://%d.%d.%d.%d:81/",(int)((ip>>24)&0xff), (int)((ip>>16)&0xff), (int)((ip>>8)&0xff), (int)(ip&0xff) );
+
+    cJSON *result = cJSON_CreateObject();
+
+    cJSON *endpoints = cJSON_AddObjectToObject(result,"endpoints");
+    cJSON *v1 = cJSON_AddObjectToObject(endpoints,"v1" );
+    cJSON_AddStringToObject(v1, "version",  "1.alpha1" );
+    cJSON_AddStringToObject(v1, "signalk-ws",  wsUrl);
+
+    cJSON *server = cJSON_AddObjectToObject( endpoints,"server" );
+    cJSON_AddStringToObject(server, "id",  "ESP-SigKSen");
+
+    char *jsonText = cJSON_Print( result );
+    cJSON_Delete(result);
+
     httpd_resp_set_type( r, HTTPD_TYPE_JSON );
-    httpd_resp_send(r, "{}", 2);
+    httpd_resp_send(r, jsonText, strlen(jsonText));
+    free(jsonText);
     return ESP_OK;
 }
 
-#if 0
-/* ******************************************************************** */
-/* ******************************************************************** */
-/* ******************************************************************** */
-/* Websocket                                                            */
-/* ******************************************************************** */
-/* ******************************************************************** */
-/* ******************************************************************** */
 void EspSigK::setupWebSocket() {
-
-    webSocketServer.begin();
-    webSocketServer.onEvent( webSocketServerEvent );
-    webSocketClient.onEvent( webSocketClientEvent );
-
-    connectWebSocketClient();
+//    webSocketServer.begin();
+//    webSocketServer.onEvent( webSocketServerEvent );
+//    webSocketClient.onEvent( webSocketClientEvent );
+//
+//    connectWebSocketClient();
 }
 
+#if 0
 bool EspSigK::getMDNSService( string &host, uint16_t &port ) {
     // get IP address using an mDNS query
     if ( printDebugSerial ) Serial.println( "SIGK: Searching for server via mDNS" );
@@ -373,7 +341,7 @@ void webSocketServerEvent( uint8_t num, WStype_t type, uint8_t *payload, size_t 
 /* SignalK                                                              */
 /* ******************************************************************** */
 
-void EspSigK::addDeltaValue(const char* path, char* value) {
+void EspSigK::addDeltaValue(const char* path, const char* value) {
     if ( path== nullptr || value ==nullptr) {
         return;
     }
@@ -387,8 +355,15 @@ void EspSigK::addDeltaValue(const char* path, int value) {
     addDeltaValue(path, buf);
 }
 
-//void EspSigK::addDeltaValue( string& path, double value ) {
-//void EspSigK::addDeltaValue( string& path, bool value ) {
+void EspSigK::addDeltaValue( const char* path, double value ) {
+    char buf[24];
+    snprintf(buf, sizeof (buf), "%lf", value);
+    addDeltaValue(path, buf);
+}
+
+void EspSigK::addDeltaValue( const char* path, bool value ) {
+    addDeltaValue(path, value? "true":"false");
+}
 
 void EspSigK::sendDelta() {
     cJSON *result = cJSON_CreateObject();
@@ -412,6 +387,7 @@ void EspSigK::sendDelta() {
     }
 
     char *deltaText = cJSON_Print( result );
+    cJSON_Delete(result);
 
     if ( printDeltaSerial ) {
         Serial.println( deltaText );
@@ -426,7 +402,7 @@ void EspSigK::sendDelta() {
     deltas.clear();
 }
 
-EspSigK::Delta::Delta(const char *path, char *value ) {
+EspSigK::Delta::Delta(const char *path, const char *value ) {
     this->path= path;
     this->value = value;
 }
