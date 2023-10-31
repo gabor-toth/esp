@@ -20,4 +20,6 @@ extern void n2k_sender_on_open();
 
 extern void n2k_sender_register_loopback( n2k_loopback_callback callback );
 
+extern uint32_t n2k_get_device_id();
+
 #endif //HAJO_N2K_SENDER_H

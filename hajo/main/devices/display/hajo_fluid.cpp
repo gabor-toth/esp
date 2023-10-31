@@ -147,7 +147,7 @@ static void setup_n2k_device( int iDev ) {
 
     NMEA2000.SetProductInformation( &ProductInformation, iDev );
 
-    NMEA2000.SetDeviceInformation( 1,      // Unique number. Use e.g. Serial number.
+    NMEA2000.SetDeviceInformation( n2k_get_device_id(),      // Unique number. Use e.g. Serial number.
                                    150,    // Device function=Fluid level
                                    75,        // Device class=Sensor Communication Interface
                                    2046, // Just chosen free from code list on http://www.nmea.org/Assets/20121020%20nmea%202000%20registration%20list.pdf

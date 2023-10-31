@@ -88,7 +88,7 @@ void setup_n2k_device( int iDev ) {
     };
 
     // Set device information
-    NMEA2000.SetDeviceInformation( 1,      // Unique number. Use e.g. Serial number.
+    NMEA2000.SetDeviceInformation( n2k_get_device_id(),      // Unique number. Use e.g. Serial number.
                                    120,    // Device function=Display
                                    120,       // Device class=Display
                                    2046, // Just chosen free from code list on http://www.nmea.org/Assets/20121020%20nmea%202000%20registration%20list.pdf

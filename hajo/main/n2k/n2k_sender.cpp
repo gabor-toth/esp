@@ -1,5 +1,6 @@
 #include "esp_event.h"
 #include "esp_log.h"
+#include "esp_mac.h"
 #include "freertos/timers.h"
 #include "n2k_sender.h"
 #include "n2k_parser.h"
@@ -120,4 +121,15 @@ void nk2_register_sender( tN2kSendFunction sendFunction,
 
 void n2k_sender_register_loopback( n2k_loopback_callback callback ) {
     loopback_callback = callback;
+}
+
+uint32_t n2k_get_device_id() {
+    // Generate unique number from chip id
+    uint8_t chipid[6];
+    esp_efuse_mac_get_default(chipid);
+    uint32_t id = 0;
+    for (int i = 0; i < 6; i++) {
+        id += (chipid[i] << (7 * i));
+    }
+    return id;
 }

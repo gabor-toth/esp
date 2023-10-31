@@ -85,7 +85,7 @@ static void setup_n2k_device( int iDev ) {
     NMEA2000.SetProductInformation( &ProductInformation, iDev );
 
     // device class & function: https://manualzz.com/doc/12647142/nmea2000-class-and-function-codes
-    NMEA2000.SetDeviceInformation( 1,      // Unique number. Use e.g. Serial number.
+    NMEA2000.SetDeviceInformation( n2k_get_device_id(),      // Unique number. Use e.g. Serial number.
                                    170,    // Device function=Battery.
                                    35,        // Device class=Electrical Generation.
                                    2046,  // Just chosen free from code list on http://www.nmea.org/Assets/20121020%20nmea%202000%20registration%20list.pdf
