@@ -7,32 +7,14 @@
 
 static const char* TAG ="signalk";
 
-#define MAX_DELTA_VALUES 10
-
-static char *myHostname = NULL;
 static const char *signalKServerHost;
 static uint16_t signalKServerPort;
 static const char *signalKServerToken;
-
-typedef struct delta_t{
-    delta_t* next;
-    const char* path;
-    char* value;
-} delta_t;
-
-static delta_t* delta_head = NULL;
-static delta_t* delta_tail = NULL;
 
 static uint32_t wsClientReconnectInterval;
 static bool wsClientConnected;
 
 static uint32_t timerReconnect;
-
-void setupHTTP(httpd_handle_t server);
-esp_err_t htmlHandleNotFound(httpd_req_t *r);
-esp_err_t htmlSignalKEndpoints(httpd_req_t *r);
-esp_err_t htmlIndexContents(httpd_req_t *r);
-esp_err_t htmlDescriptionXml(httpd_req_t *r);
 
 #if 0
 // see https://github.com/AK-Homberger/NMEA2000-SignalK-Gateway
@@ -43,9 +25,6 @@ WebServer server( 80 );
 WebSocketsServer webSocketServer = WebSocketsServer( 81 );
 WebSocketsClient webSocketClient;
 #endif
-
-static bool printDeltaSerial;
-static bool printDebugSerial;
 
 // Simple web page to view deltas
 static const char *EspSigKIndexContents = R"foo(
@@ -87,17 +66,21 @@ static const char *EspSigKIndexContents = R"foo(
 </html>
 )foo";
 
-void EspSigK_init() {
+EspSigK::EspSigK() {
 //    webSocketServer = WebSocketsServer( 81 );
     wsClientConnected = false;
 
-    signalKServerToken = signalKServerHost = NULL;
+    signalKServerToken = signalKServerHost = nullptr;
     signalKServerPort = 80;
 
     printDeltaSerial = false;
     printDebugSerial = false;
 
     wsClientReconnectInterval = 10000;
+}
+
+EspSigK::~EspSigK() {
+    stop();
 }
 
 //void EspSigK::setServerPort( uint16_t newPort ) {
@@ -108,15 +91,15 @@ void EspSigK_init() {
 //    signalKServerToken = token;
 //}
 
-void EspSigK_setPrintDeltaSerial( bool v ) {
+void EspSigK::setPrintDeltaSerial( bool v ) {
     printDeltaSerial = v;
 }
 
-void EspSigK_setPrintDebugSerial( bool v ) {
+void EspSigK::setPrintDebugSerial( bool v ) {
     printDebugSerial = v;
 }
 
-static void EspSigK_setupDiscovery( const char *hostname ) {
+void EspSigK::setupDiscovery( ) {
 //    if ( !MDNS.begin( myHostname.c_str())) {             // Start the mDNS responder for esp8266.local
 //        if ( printDebugSerial ) Serial.println( "SIGK: Error setting up MDNS responder!" );
 //    } else {
@@ -137,8 +120,8 @@ static void EspSigK_setupDiscovery( const char *hostname ) {
             .port                = 80,
             .interval            = 1200,
             .mx_max_delay        = 10000,
-            .uuid_root           = NULL,
-            .uuid                = NULL,
+            .uuid_root           = nullptr,
+            .uuid                = nullptr,
             .schema_url          = "description.xml",
             .device_type         = "upnp:rootdevice",
             .friendly_name       = "N2K Gateway",
@@ -149,30 +132,29 @@ static void EspSigK_setupDiscovery( const char *hostname ) {
             .model_name          = "N2K Gateway",
             .model_url           = "https://www.signalk.org",
             .model_number         = "1.0",
-            .model_description    = NULL,
+            .model_description    = nullptr,
             .server_name          = "SSDPServer-IDF/1.0",
-            .services_description = NULL,
-            .icons_description    = NULL
+            .services_description = nullptr,
+            .icons_description    = nullptr
     };
     ESP_ERROR_CHECK( ssdp_start( &config ));
 //    SSDP.setName( myHostname );
 }
 
-void EspSigK_start( const char *hostname, httpd_handle_t server ) {
+void EspSigK::start( const char *hostname, httpd_handle_t server ) {
+    stop();
     if ( printDebugSerial ) {
         ESP_LOGI( TAG,"SIGK: Starting as host %s", hostname );
     }
-    if ( myHostname != NULL) {
-        free(myHostname);
-    }
-    myHostname= strdup(hostname);
+    this->hostname = hostname;
+    this->http_server = server;
 
-    EspSigK_setupDiscovery( hostname );
-    setupHTTP(server);
+    setupDiscovery();
+    setupHTTP();
 //    setupWebSocket();
 }
 
-void EspSigK_stop( httpd_handle_t server ) {
+void EspSigK::stop() {
 }
 
 #if 0
@@ -194,40 +176,40 @@ void EspSigK::handle() {
 /* HTTP                                                                 */
 /* ******************************************************************** */
 
-void setupHTTP(httpd_handle_t server) {
+void EspSigK::setupHTTP() {
     ESP_LOGI(TAG, "Registering handlers" );
 
     httpd_uri_t uri = {
             .uri = "/description.xml",
             .method = HTTP_GET,
             .handler = htmlDescriptionXml,
-            .user_ctx = NULL
+            .user_ctx = nullptr
     };
-    httpd_register_uri_handler( server, &uri );
+    httpd_register_uri_handler( http_server, &uri );
 
     uri.uri = "/signalk";
-    httpd_register_uri_handler( server, &uri );
+    httpd_register_uri_handler( http_server, &uri );
     uri.uri = "/signalk/";
-    httpd_register_uri_handler( server, &uri );
+    httpd_register_uri_handler( http_server, &uri );
 
     uri.handler = htmlIndexContents;
     uri.uri = "/";
-    httpd_register_uri_handler( server, &uri );
+    httpd_register_uri_handler( http_server, &uri );
     uri.uri = "/index.html";
-    httpd_register_uri_handler( server, &uri );
+    httpd_register_uri_handler( http_server, &uri );
 
     uri.handler = htmlHandleNotFound;
     uri.uri = "/*";
-    httpd_register_uri_handler( server, &uri );
+    httpd_register_uri_handler( http_server, &uri );
 }
 
-esp_err_t htmlHandleNotFound(httpd_req_t *r) {
+esp_err_t EspSigK::htmlHandleNotFound(httpd_req_t *r) {
     ESP_LOGW(TAG,"Not found '%s'", r->uri);
     httpd_resp_send_err(r,HTTPD_404_NOT_FOUND, "Not found" );
     return ESP_OK;
 }
 
-esp_err_t htmlDescriptionXml(httpd_req_t *r) {
+esp_err_t EspSigK::htmlDescriptionXml(httpd_req_t *r) {
     ESP_LOGD(TAG,"Serving htmlDescriptionXml");
     httpd_resp_set_type( r, "text/xml" );
     const char * schema = get_ssdp_schema_str();
@@ -235,14 +217,14 @@ esp_err_t htmlDescriptionXml(httpd_req_t *r) {
     return ESP_OK;
 }
 
-esp_err_t htmlIndexContents(httpd_req_t *r) {
+esp_err_t EspSigK::htmlIndexContents(httpd_req_t *r) {
     ESP_LOGD(TAG,"Serving htmlIndexContents");
     httpd_resp_set_type( r, HTTPD_TYPE_TEXT );
     httpd_resp_send(r, EspSigKIndexContents, strlen(EspSigKIndexContents));
     return ESP_OK;
 }
 
-esp_err_t htmlSignalKEndpoints(httpd_req_t *r) {
+esp_err_t EspSigK::htmlSignalKEndpoints(httpd_req_t *r) {
     ESP_LOGD(TAG,"Serving htmlSignalKEndpoints");
 //    IPAddress ip;
 //    //DynamicJsonBuffer jsonBuffer;
@@ -391,40 +373,24 @@ void webSocketServerEvent( uint8_t num, WStype_t type, uint8_t *payload, size_t 
 /* SignalK                                                              */
 /* ******************************************************************** */
 
-void EspSigK_addDeltaValue(const char* path, char* value) {
-    delta_t *delta = (delta_t*)calloc( 1, sizeof( delta_t ));
-    delta->path = path;
-    delta->value = strdup(value);
-    delta->next = NULL;
-    if ( delta_head != NULL) {
-        delta_tail->next = delta;
-        delta_tail = delta;
-    } else {
-        delta_head = delta_tail = delta;
+void EspSigK::addDeltaValue(const char* path, char* value) {
+    if ( path== nullptr || value ==nullptr) {
+        return;
     }
+    Delta delta = Delta(path, value);
+    deltas.push_back(delta);
 }
 
-void EspSigK_addDeltaValue(const char* path, int value) {
+void EspSigK::addDeltaValue(const char* path, int value) {
     char buf[16];
     itoa(value,buf,  10);
-    EspSigK_addDeltaValue(path, buf);
+    addDeltaValue(path, buf);
 }
 
 //void EspSigK::addDeltaValue( string& path, double value ) {
 //void EspSigK::addDeltaValue( string& path, bool value ) {
 
-void EspSigK_freeDelta() {
-    delta_t *delta = delta_head;
-    delta_head = delta_tail = NULL;
-    while ( delta != NULL) {
-        delta_t* next = delta->next;
-        free(delta->value);
-        free(delta);
-        delta= next;
-    }
-}
-
-void EspSigK_sendDelta() {
+void EspSigK::sendDelta() {
     cJSON *result = cJSON_CreateObject();
 
     //updated array
@@ -434,16 +400,15 @@ void EspSigK_sendDelta() {
     cJSON_AddItemToArray(updatesArr,thisUpdate );
     cJSON *source = cJSON_AddObjectToObject(thisUpdate,"source");
     cJSON_AddStringToObject(source, "label",  "ESP" );
-    cJSON_AddStringToObject(source, "src",  myHostname );
+    cJSON_AddStringToObject(source, "src",  hostname.c_str() );
 
     cJSON *values = cJSON_AddArrayToObject( thisUpdate, "values" );
-    delta_t *delta = delta_head;
-    while ( delta != NULL) {
+    for( std::list<Delta>::const_iterator it = deltas.cbegin(); it != deltas.cend(); ++it ) {
+        const Delta& delta = *it;
         cJSON *thisValue = cJSON_CreateObject();
         cJSON_AddItemToArray(values,thisValue );
-        cJSON_AddStringToObject(thisValue, "path",  delta->path );
-        cJSON_AddStringToObject(thisValue, "value", delta->value);
-        delta= delta->next;
+        cJSON_AddStringToObject(thisValue, "path",  delta.path.c_str() );
+        cJSON_AddStringToObject(thisValue, "value", delta.value.c_str());
     }
 
     char *deltaText = cJSON_Print( result );
@@ -458,6 +423,10 @@ void EspSigK_sendDelta() {
 //    }
     free(deltaText);
 
-    //reset delta info
-    EspSigK_freeDelta();
+    deltas.clear();
+}
+
+EspSigK::Delta::Delta(const char *path, char *value ) {
+    this->path= path;
+    this->value = value;
 }
