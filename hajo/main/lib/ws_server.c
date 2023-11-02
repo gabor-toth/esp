@@ -23,6 +23,7 @@
 struct async_resp_arg {
     httpd_handle_t hd;
     int fd;
+    char *message;
 };
 
 static const char *TAG = "ws_server";
@@ -96,22 +97,22 @@ static esp_err_t ws_handler( httpd_req_t *req ) {
 }
 
 esp_err_t wss_open_fd( httpd_handle_t hd, int sockfd ) {
-    ESP_LOGI( TAG, "New client connected %d", sockfd );
-    if ( httpd_ws_get_fd_info( hd, sockfd ) == HTTPD_WS_CLIENT_WEBSOCKET ) {
-        wss_keep_alive_t h = httpd_get_global_user_ctx( hd );
-        return wss_keep_alive_add_client( h, sockfd );
-    } else {
+    if ( httpd_ws_get_fd_info( hd, sockfd ) != HTTPD_WS_CLIENT_WEBSOCKET ) {
         return ESP_OK;
     }
+    ESP_LOGI( TAG, "New client connected %d", sockfd );
+    wss_keep_alive_t h = httpd_get_global_user_ctx( hd );
+    return wss_keep_alive_add_client( h, sockfd );
 }
 
 void wss_close_fd( httpd_handle_t hd, int sockfd ) {
-    ESP_LOGI( TAG, "Client disconnected %d", sockfd );
-    if ( httpd_ws_get_fd_info( hd, sockfd ) == HTTPD_WS_CLIENT_WEBSOCKET ) {
-        wss_keep_alive_t h = httpd_get_global_user_ctx( hd );
-        wss_keep_alive_remove_client( h, sockfd );
-        close( sockfd );
+    if ( httpd_ws_get_fd_info( hd, sockfd ) != HTTPD_WS_CLIENT_WEBSOCKET ) {
+        return;
     }
+    ESP_LOGI( TAG, "Client disconnected %d", sockfd );
+    wss_keep_alive_t h = httpd_get_global_user_ctx( hd );
+    wss_keep_alive_remove_client( h, sockfd );
+    close( sockfd );
 }
 
 static const httpd_uri_t ws = {
@@ -125,17 +126,17 @@ static const httpd_uri_t ws = {
 
 
 static void send_hello( void *arg ) {
-    static const char *data = "Hello client";
     struct async_resp_arg *resp_arg = arg;
     httpd_handle_t hd = resp_arg->hd;
     int fd = resp_arg->fd;
     httpd_ws_frame_t ws_pkt;
     memset( &ws_pkt, 0, sizeof( httpd_ws_frame_t ));
-    ws_pkt.payload = (uint8_t *) data;
-    ws_pkt.len = strlen( data );
+    ws_pkt.payload = (uint8_t *) resp_arg->message;
+    ws_pkt.len = strlen( resp_arg->message );
     ws_pkt.type = HTTPD_WS_TYPE_TEXT;
 
     httpd_ws_send_frame_async( hd, fd, &ws_pkt );
+    free( resp_arg->message );
     free( resp_arg );
 }
 
@@ -195,36 +196,26 @@ esp_err_t wss_register_handler( httpd_handle_t hd ) {
 }
 
 // Get all clients and send async message
-static void wss_server_send_messages( httpd_handle_t *server ) {
-    bool send_messages = true;
-
-    // Send async message to all connected clients that use websocket protocol every 10 seconds
-    while ( send_messages ) {
-        vTaskDelay( 10000 / portTICK_PERIOD_MS);
-
-        if ( !*server ) { // httpd might not have been created by now
+void wss_server_send_message( httpd_handle_t server, const char *message ) {
+    size_t clients = max_clients;
+    int client_fds[max_clients];
+    if ( httpd_get_client_list( server, &clients, client_fds ) != ESP_OK ) {
+        ESP_LOGE( TAG, "httpd_get_client_list failed!" );
+        return;
+    }
+    for ( size_t i = 0; i < clients; ++i ) {
+        int sock = client_fds[ i ];
+        if ( httpd_ws_get_fd_info( server, sock ) != HTTPD_WS_CLIENT_WEBSOCKET ) {
             continue;
         }
-        size_t clients = max_clients;
-        int client_fds[max_clients];
-        if ( httpd_get_client_list( *server, &clients, client_fds ) == ESP_OK ) {
-            for ( size_t i = 0; i < clients; ++i ) {
-                int sock = client_fds[ i ];
-                if ( httpd_ws_get_fd_info( *server, sock ) == HTTPD_WS_CLIENT_WEBSOCKET ) {
-                    ESP_LOGI( TAG, "Active client (fd=%d) -> sending async message", sock );
-                    struct async_resp_arg *resp_arg = malloc( sizeof( struct async_resp_arg ));
-                    resp_arg->hd = *server;
-                    resp_arg->fd = sock;
-                    if ( httpd_queue_work( resp_arg->hd, send_hello, resp_arg ) != ESP_OK ) {
-                        ESP_LOGE( TAG, "httpd_queue_work failed!" );
-                        send_messages = false;
-                        break;
-                    }
-                }
-            }
-        } else {
-            ESP_LOGE( TAG, "httpd_get_client_list failed!" );
-            return;
+        ESP_LOGI( TAG, "Active client (fd=%d) -> sending async message", sock );
+        struct async_resp_arg *resp_arg = malloc( sizeof( struct async_resp_arg ));
+        resp_arg->hd = server;
+        resp_arg->fd = sock;
+        resp_arg->message = strdup( message );
+        if ( httpd_queue_work( resp_arg->hd, send_hello, resp_arg ) != ESP_OK ) {
+            ESP_LOGE( TAG, "httpd_queue_work failed!" );
+            break;
         }
     }
 }

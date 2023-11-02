@@ -13,6 +13,8 @@ extern esp_err_t wss_open_fd( httpd_handle_t hd, int sockfd );
 
 extern void wss_close_fd( httpd_handle_t hd, int sockfd );
 
+extern void wss_server_send_message( httpd_handle_t hd, const char *message );
+
 #ifdef __cplusplus
 }
 #endif
