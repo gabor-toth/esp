@@ -19,7 +19,8 @@ typedef struct rest_server_context {
 
 typedef esp_err_t (*rest_register_handlers_t)( httpd_handle_t, rest_server_context_t * );
 
-extern esp_err_t rest_server_start( rest_register_handlers_t rest_register_handlers );
+extern esp_err_t rest_server_main( rest_register_handlers_t rest_register_handlers, httpd_open_func_t open_fn,
+                                   httpd_close_func_t close_fn );
 
 extern esp_err_t rest_register_static_files_handler( httpd_handle_t server, rest_server_context_t *rest_context,
                                                      const char *static_files_base_path );

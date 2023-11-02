@@ -14,12 +14,17 @@
 #include <errno.h>
 #include <esp_log.h>
 #include <esp_vfs.h>
+#include "esp_wifi.h"
 #include <cJSON.h>
 #include "rest_server.h"
 #include "rest_util.h"
-#include "system_info_rest.h"
+//#include "system_info_rest.h"
 
 static const char *TAG = "rest-server";
+static httpd_handle_t http_server = NULL;
+static rest_register_handlers_t register_handlers_callback = NULL;
+static httpd_open_func_t open_fn = NULL;
+static httpd_close_func_t close_fn = NULL;
 
 #define FILE_PATH_MAX (ESP_VFS_PATH_MAX + 128)
 
@@ -166,31 +171,69 @@ esp_err_t rest_register_static_files_handler( httpd_handle_t server, rest_server
     return httpd_register_uri_handler( server, &common_get_uri );
 }
 
-esp_err_t rest_server_start( esp_err_t (*rest_register_handlers)( httpd_handle_t, rest_server_context_t * )) {
+static esp_err_t rest_server_start() {
     rest_server_context_t *rest_context = calloc( 1, sizeof( rest_server_context_t ));
     if ( rest_context == NULL) {
         ESP_LOGE( TAG, "No memory for rest_context" );
         return ESP_ERR_NO_MEM;
     }
 
-    httpd_handle_t server = NULL;
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.uri_match_fn = httpd_uri_match_wildcard;
     config.max_uri_handlers = 16;
+    config.global_user_ctx = rest_context;
+    config.open_fn = open_fn;
+    config.close_fn = close_fn;
 
     ESP_LOGI( TAG, "Starting HTTP Server" );
-    esp_err_t result = httpd_start( &server, &config );
-    if ( result == ESP_OK ) {
-        // rest_register_system_info_handler( server, rest_context );
-        if ( rest_register_handlers != NULL) {
-            result = rest_register_handlers( server, rest_context );
-        }
-        // rest_register_static_files_handler( server, rest_context, static_files_base_path );
-    }
+    esp_err_t result = httpd_start( &http_server, &config );
     if ( result != ESP_OK ) {
         free( rest_context );
+        return result;
     }
+    // rest_register_system_info_handler( server, rest_context );
+    if ( register_handlers_callback != NULL) {
+        /*result = */register_handlers_callback( http_server, rest_context );
+    }
+    // rest_register_static_files_handler( server, rest_context, static_files_base_path );
     return result;
 }
+
+static esp_err_t rest_server_stop() {
+    return httpd_stop( http_server );
+}
+
+static void handler_on_wifi_connect( void *dummy, esp_event_base_t event_base,
+                                     int32_t event_id, void *event_data ) {
+    if ( http_server == NULL) {
+        ESP_ERROR_CHECK( rest_server_start());
+    }
+}
+
+static void handler_on_wifi_disconnect( void *dummy, esp_event_base_t event_base,
+                                        int32_t event_id, void *event_data ) {
+    if ( http_server ) {
+        if ( rest_server_stop() == ESP_OK ) {
+            http_server = NULL;
+        } else {
+            ESP_LOGE( TAG, "Failed to stop https server" );
+        }
+    }
+}
+
+esp_err_t rest_server_main( rest_register_handlers_t rest_register_handlers, httpd_open_func_t _open_fn,
+                            httpd_close_func_t _close_fn ) {
+    register_handlers_callback = rest_register_handlers;
+    open_fn = _open_fn;
+    close_fn = _close_fn;
+
+    ESP_ERROR_CHECK(
+            esp_event_handler_register( IP_EVENT, IP_EVENT_STA_GOT_IP, &handler_on_wifi_connect, NULL ));
+    ESP_ERROR_CHECK(
+            esp_event_handler_register( WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &handler_on_wifi_disconnect, NULL ));
+
+    return ESP_OK;
+}
+
 
 #endif

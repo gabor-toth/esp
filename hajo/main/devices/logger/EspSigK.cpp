@@ -8,6 +8,9 @@
 
 static const char* TAG ="signalk";
 
+#if !CONFIG_HTTPD_WS_SUPPORT
+#error This example cannot be used unless HTTPD_WS_SUPPORT is enabled in esp-http-server component configuration
+#endif
 
 EspSigK sigK;
 
@@ -30,7 +33,7 @@ static const char *EspSigKIndexContents = R"foo(
   <script type="text/javascript">
     var WebSocket = WebSocket || MozWebSocket;
     var lastDelta = Date.now();
-    var serverUrl = "ws://" + window.location.hostname + ":81";
+    var serverUrl = "ws://" + window.location.hostname + ":80/ws";
 
     connection = new WebSocket(serverUrl);
 
@@ -167,6 +170,7 @@ void EspSigK::setupHTTP() {
     };
     httpd_register_uri_handler( http_server, &uri );
 
+    uri.handler = htmlSignalKEndpoints;
     uri.uri = "/signalk";
     httpd_register_uri_handler( http_server, &uri );
     uri.uri = "/signalk/";

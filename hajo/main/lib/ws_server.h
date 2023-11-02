@@ -1,0 +1,20 @@
+#ifndef HAJO_WS_SERVER_H
+#define HAJO_WS_SERVER_H
+
+#include <esp_http_server.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+extern esp_err_t wss_register_handler( httpd_handle_t hd );
+
+extern esp_err_t wss_open_fd( httpd_handle_t hd, int sockfd );
+
+extern void wss_close_fd( httpd_handle_t hd, int sockfd );
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif //HAJO_WS_SERVER_H

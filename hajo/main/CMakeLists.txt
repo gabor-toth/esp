@@ -35,6 +35,8 @@ if ((DEVICE_TYPE EQUAL DEVICE_TYPE_LOGGER) OR (DEVICE_TYPE EQUAL DEVICE_TYPE_ALL
             "lib/system_info_rest.c"
             "lib/wifi/connect.c"
             "lib/wifi/wifi_connect.c"
+            "lib/ws_keep_alive.c"
+            "lib/ws_server.c"
     )
 endif ()
 

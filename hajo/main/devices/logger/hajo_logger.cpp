@@ -1,11 +1,13 @@
 #include "esp_log.h"
+#include "esp_wifi.h"
 #include "EspSigK.h"
 #include "gyroscope.h"
 #include "rest_main.h"
+#include "rest_server.h"
 #include "wifi_connect.h"
+#include "ws_server.h"
 #include "n2k/n2k_parser.h"
 #include "n2k/n2k_sender.h"
-#include "esp_wifi.h"
 
 static const char *LOG = "logger";
 
@@ -185,26 +187,18 @@ static esp_err_t rest_register_handlers( httpd_handle_t server, rest_server_cont
     //sigK.setServerHost("192.168.0.20");    // Optional. Sets the ip of the SignalKServer to connect to. If not set we try to discover server with mDNS
     //sigK.setServerPort(80);                // If manually setting host, this sets the port for the signalK Server (default 80);
     //sigK.setServerToken("secret"); // if you have security enabled in node server, it wont accept deltas unles you auth
+    wss_register_handler(server);
     sigK.start("n2k-gw",server);
 
     return ESP_OK;
 }
 
-static void handler_on_wifi_connect( void *dummy, esp_event_base_t event_base,
-                                     int32_t event_id, void *event_data ) {
-    ESP_ERROR_CHECK( rest_server_start( rest_register_handlers));
-}
-
 void hajo_logger_main( int iDev ) {
-    ESP_ERROR_CHECK(
-            esp_event_handler_register( IP_EVENT, IP_EVENT_STA_GOT_IP, &handler_on_wifi_connect, NULL ));
-//    ESP_ERROR_CHECK(
-//            esp_event_handler_register( IP_EVENT, IP_EVENT_ETH_LOST_IP, &handler_on_wifi_connect, NULL ));
-
     // test_sdcard();
     setup_n2k_device( iDev );
     setup_gyroscope();
     rest_init_before_wifi();
+    rest_server_main( rest_register_handlers, wss_open_fd, wss_close_fd);
     ESP_ERROR_CHECK( wifi_connect() );
     ESP_LOGI(LOG,"init finished");
 }

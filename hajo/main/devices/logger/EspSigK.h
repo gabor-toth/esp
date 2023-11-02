@@ -1,6 +1,10 @@
 #ifndef EspSigK_H
 #define EspSigK_H
 
+/**
+ * see https://github.com/AK-Homberger/NMEA2000-SignalK-Gateway
+ */
+
 #include "esp_http_server.h"
 #include <list>
 #include <string>
