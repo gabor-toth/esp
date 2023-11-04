@@ -14,19 +14,21 @@ set(SOURCES
         "lib/main_main.c"
         "lib/nvs_main.c"
         "hajo_main.cpp"
-        "n2k/n2k_parser.cpp"
+        "n2k/n2k_struct_parser.cpp"
         "n2k/n2k_receiver.cpp"
         "n2k/n2k_sender.cpp"
+        "n2k/n2k_util.cpp"
         "n2k/N2kRaymarine.cpp"
 )
 
 if ((DEVICE_TYPE EQUAL DEVICE_TYPE_LOGGER) OR (DEVICE_TYPE EQUAL DEVICE_TYPE_ALL))
     set(SOURCES ${SOURCES}
-            "devices/logger/EspSigK.cpp"
-            "devices/logger/gyroscope.c"
+            "devices/attitude/hajo_attitude.cpp"
             "devices/logger/hajo_logger.cpp"
-            "devices/logger/NMEA2000-SignalK-Gateway.cpp"
             "devices/logger/sdcard.c"
+            "devices/signalk/EspSigK.cpp"
+            "devices/signalk/hajo_signalk.cpp"
+            "devices/signalk/NMEA2000-SignalK-Gateway.cpp"
             "lib/gpio_json.c"
             "lib/rest_main.c"
             "lib/rest_server.c"
@@ -50,7 +52,7 @@ if ((DEVICE_TYPE EQUAL DEVICE_TYPE_GAUGE_DISPLAY) OR (DEVICE_TYPE EQUAL DEVICE_T
             "devices/display/display_meter_single.c"
             "devices/display/display_meter_tabbed.c"
             "devices/display/hajo_display.cpp"
-            "devices/display/hajo_fluid.cpp"
+            "devices/fluid/hajo_fluid.cpp"
             "lib/adc.c"
     )
 endif ()

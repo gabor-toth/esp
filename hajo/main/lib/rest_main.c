@@ -23,7 +23,14 @@ static const char *TAG = "rest-main";
 
 static void initialise_mdns( void ) {
     ESP_ERROR_CHECK( mdns_init());
-    ESP_ERROR_CHECK( mdns_hostname_set( CONFIG_EXAMPLE_MDNS_HOST_NAME ));
+    esp_netif_t *netif = wifi_get_esp_netif();
+    if ( netif != NULL) {
+        const char *hostname;
+        ESP_ERROR_CHECK( esp_netif_get_hostname( netif, &hostname ));
+        ESP_ERROR_CHECK( mdns_hostname_set( hostname ));
+    } else {
+        ESP_ERROR_CHECK( mdns_hostname_set( CONFIG_EXAMPLE_MDNS_HOST_NAME ));
+    }
     ESP_ERROR_CHECK( mdns_instance_name_set( CONFIG_MDNS_INSTANCE_NAME ));
 
     mdns_txt_item_t serviceTxtData[] = {
@@ -83,32 +90,26 @@ esp_err_t init_fs( void ) {
     return ESP_OK;
 }
 
-static void handler_on_wifi_connect( void *dummy, esp_event_base_t event_base,
-                                     int32_t event_id, void *event_data ) {
-    ESP_ERROR_CHECK(
-            esp_event_handler_unregister( WIFI_EVENT, WIFI_EVENT_STA_START, &handler_on_wifi_connect ));
-
-    rest_init_after_wifi(NULL);
-}
-
-void rest_init_before_wifi( void ) {
+err_enum_t on_wifi_connect( httpd_handle_t server ) {
     initialise_mdns();
-    initialise_netbios();
-
-    ESP_ERROR_CHECK(
-            esp_event_handler_register( WIFI_EVENT, WIFI_EVENT_STA_START, &handler_on_wifi_connect, NULL ));
+//    initialise_netbios();
+    return ESP_OK;
 }
 
-void rest_init_after_wifi( rest_register_handlers_t rest_register_handlers ) {
-    esp_netif_t *netif = wifi_get_esp_netif();
-    if ( netif != NULL) {
-        const char *hostname;
-        ESP_ERROR_CHECK( esp_netif_get_hostname( netif, &hostname ));
-        ESP_ERROR_CHECK( mdns_hostname_set( hostname ));
-    }
+void on_wifi_disconnect( httpd_handle_t server ) {
+    mdns_free();
+//    netbiosns_stop();
+}
 
-//    ESP_ERROR_CHECK( init_fs());
-//    ESP_ERROR_CHECK( rest_server_start( CONFIG_EXAMPLE_WEB_MOUNT_POINT, rest_register_handlers ));
+static rest_callbacks_t callbacks = {
+        .wifi_connect_fn = on_wifi_connect,
+        .wifi_disconnect_fn= on_wifi_disconnect,
+        .open_fn=NULL,
+        .close_fn = NULL
+};
+
+void discovery_register() {
+    rest_register_callbacks( &callbacks );
 }
 
 #endif

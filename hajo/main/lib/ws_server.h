@@ -7,11 +7,9 @@
 extern "C" {
 #endif
 
-extern esp_err_t wss_register_handler( httpd_handle_t hd );
+extern void wss_register();
 
-extern esp_err_t wss_open_fd( httpd_handle_t hd, int sockfd );
-
-extern void wss_close_fd( httpd_handle_t hd, int sockfd );
+extern esp_err_t wss_wifi_connect( httpd_handle_t hd );
 
 extern void wss_server_send_message( httpd_handle_t hd, const char *message );
 

@@ -5,11 +5,7 @@
 extern "C" {
 #endif
 
-#include "rest_server.h"
-
-extern void rest_init_before_wifi( void );
-
-extern void rest_init_after_wifi( rest_register_handlers_t rest_register_handlers );
+extern void discovery_register();
 
 #ifdef __cplusplus
 }

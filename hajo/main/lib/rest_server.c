@@ -23,8 +23,13 @@
 static const char *TAG = "rest-server";
 static httpd_handle_t http_server = NULL;
 static rest_register_handlers_t register_handlers_callback = NULL;
-static httpd_open_func_t open_fn = NULL;
-static httpd_close_func_t close_fn = NULL;
+
+typedef struct rest_callbacks_node_t {
+    struct rest_callbacks_node_t *next;
+    rest_callbacks_t callbacks;
+} rest_callbacks_node_t;
+
+static rest_callbacks_node_t *registered_callbacks = NULL;
 
 #define FILE_PATH_MAX (ESP_VFS_PATH_MAX + 128)
 
@@ -171,35 +176,62 @@ esp_err_t rest_register_static_files_handler( httpd_handle_t server, rest_server
     return httpd_register_uri_handler( server, &common_get_uri );
 }
 
-static esp_err_t rest_server_start() {
-    rest_server_context_t *rest_context = calloc( 1, sizeof( rest_server_context_t ));
-    if ( rest_context == NULL) {
-        ESP_LOGE( TAG, "No memory for rest_context" );
-        return ESP_ERR_NO_MEM;
+static esp_err_t open_fn_callback( httpd_handle_t hd, int sockfd ) {
+    for ( rest_callbacks_node_t *node = registered_callbacks; node != NULL; node = node->next ) {
+        if ( node->callbacks.open_fn ) {
+            esp_err_t result = node->callbacks.open_fn( hd, sockfd );
+            if ( result != ESP_OK ) {
+                return result;
+            }
+        }
     }
+    return ESP_OK;
+}
+
+static void close_fn_callback( httpd_handle_t hd, int sockfd ) {
+    for ( rest_callbacks_node_t *node = registered_callbacks; node != NULL; node = node->next ) {
+        if ( node->callbacks.close_fn ) {
+            node->callbacks.close_fn( hd, sockfd );
+        }
+    }
+}
+
+static esp_err_t rest_server_start() {
+//    rest_server_context_t *rest_context = calloc( 1, sizeof( rest_server_context_t ));
+//    if ( rest_context == NULL) {
+//        ESP_LOGE( TAG, "No memory for rest_context" );
+//        return ESP_ERR_NO_MEM;
+//    }
 
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.uri_match_fn = httpd_uri_match_wildcard;
     config.max_uri_handlers = 16;
-    config.global_user_ctx = rest_context;
-    config.open_fn = open_fn;
-    config.close_fn = close_fn;
+//    config.global_user_ctx = rest_context;
+    config.open_fn = open_fn_callback;
+    config.close_fn = close_fn_callback;
 
     ESP_LOGI( TAG, "Starting HTTP Server" );
     esp_err_t result = httpd_start( &http_server, &config );
     if ( result != ESP_OK ) {
-        free( rest_context );
+//        free( rest_context );
         return result;
     }
-    // rest_register_system_info_handler( server, rest_context );
-    if ( register_handlers_callback != NULL) {
-        /*result = */register_handlers_callback( http_server, rest_context );
+
+    for ( rest_callbacks_node_t *node = registered_callbacks; node != NULL; node = node->next ) {
+        if ( node->callbacks.wifi_disconnect_fn ) {
+            node->callbacks.wifi_disconnect_fn( http_server );
+        }
     }
-    // rest_register_static_files_handler( server, rest_context, static_files_base_path );
+
     return result;
 }
 
 static esp_err_t rest_server_stop() {
+    for ( rest_callbacks_node_t *node = registered_callbacks; node != NULL; node = node->next ) {
+        if ( node->callbacks.wifi_disconnect_fn ) {
+            node->callbacks.wifi_disconnect_fn( http_server );
+        }
+    }
     return httpd_stop( http_server );
 }
 
@@ -221,12 +253,17 @@ static void handler_on_wifi_disconnect( void *dummy, esp_event_base_t event_base
     }
 }
 
-esp_err_t rest_server_main( rest_register_handlers_t rest_register_handlers, httpd_open_func_t _open_fn,
-                            httpd_close_func_t _close_fn ) {
-    register_handlers_callback = rest_register_handlers;
-    open_fn = _open_fn;
-    close_fn = _close_fn;
+esp_err_t rest_register_callbacks( const rest_callbacks_t *callbacks ) {
+    rest_callbacks_node_t *node = malloc( sizeof( rest_callbacks_node_t ));
+    if ( node == NULL) {
+        return ESP_ERR_NO_MEM;
+    }
+    node->next = registered_callbacks;
+    node->callbacks = *callbacks;
+    return ESP_OK;
+}
 
+esp_err_t rest_server_main() {
     ESP_ERROR_CHECK(
             esp_event_handler_register( IP_EVENT, IP_EVENT_STA_GOT_IP, &handler_on_wifi_connect, NULL ));
     ESP_ERROR_CHECK(

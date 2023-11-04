@@ -12,6 +12,7 @@
 #include <esp_system.h>
 #include <sys/param.h>
 #include "lwip/sockets.h"
+#include "rest_server.h"
 #include "ws_keep_alive.h"
 #include "ws_server.h"
 #include "sdkconfig.h"
@@ -184,15 +185,25 @@ static void start_wss_echo_server( httpd_handle_t hd ) {
     wss_keep_alive_set_user_ctx( keep_alive, hd );
 }
 
-static esp_err_t stop_wss_echo_server( httpd_handle_t server ) {
+static void stop_wss_echo_server( httpd_handle_t server ) {
     // Stop keep alive thread
     wss_keep_alive_stop( httpd_get_global_user_ctx( server ));
-    return ESP_OK;
 }
 
-esp_err_t wss_register_handler( httpd_handle_t hd ) {
-    // start_wss_echo_server(hd);
+esp_err_t wss_wifi_connect( httpd_handle_t hd ) {
+    start_wss_echo_server( hd );
     return httpd_register_uri_handler( hd, &ws );
+}
+
+static rest_callbacks_t callbacks = {
+        .wifi_connect_fn = wss_wifi_connect,
+        .wifi_disconnect_fn= stop_wss_echo_server,
+        .open_fn=wss_open_fd,
+        .close_fn = wss_close_fd
+};
+
+void wss_register() {
+    rest_register_callbacks( &callbacks );
 }
 
 // Get all clients and send async message

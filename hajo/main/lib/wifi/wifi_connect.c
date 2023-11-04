@@ -72,6 +72,7 @@ static known_wifi_network_t known_wifi_networks[] = {
         { .ssid = "TothKiss", .password = "ToThKiSs" },
         { .ssid ="P92WG_E", .password ="Newmexicobrother08" },
         { .ssid ="TGA", .password ="ToThKiSs01" },
+        { .ssid ="DIGI-02300875", .password ="qnZFucU6" },
 };
 
 static int selected_network_index;
