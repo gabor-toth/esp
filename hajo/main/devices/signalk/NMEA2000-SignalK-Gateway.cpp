@@ -19,7 +19,7 @@
 #include "N2kMsg.h"
 #include "N2kTypes.h"
 
-#include "EspSigK.h"        // For SignalK handling
+#include "devices/signalk/EspSigK.h"        // For SignalK handling
 
 extern EspSigK sigK;
 
