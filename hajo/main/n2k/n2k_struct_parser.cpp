@@ -1,4 +1,4 @@
-#include "n2k_parser.h"
+#include "n2k_struct_parser.h"
 #include "N2kMessages.h"
 
 bool ParseN2kFluidLevel( const tN2kMsg &N2kMsg, N2kFluidLevelData &data ) {
@@ -72,10 +72,18 @@ bool ParseN2kLocalOffset( const tN2kMsg &N2kMsg, N2kLocalOffsetData &data ) {
                                 data.localOffset );
 }
 
-bool ParseN2kRudder(const tN2kMsg &N2kMsg, N2kRudderData& data ) {
+bool ParseN2kRudder( const tN2kMsg &N2kMsg, N2kRudderData &data ) {
     return ParseN2kRudder( N2kMsg,
                            data.rudderPosition,
                            data.instance,
                            data.rudderDirectionOrder,
                            data.angleOrder );
+}
+
+bool ParseN2kAttitude( const tN2kMsg &N2kMsg, N2kAttitudeData &data ) {
+    return ParseN2kAttitude( N2kMsg,
+                             data.instance,
+                             data.yaw,
+                             data.pitch,
+                             data.roll );
 }

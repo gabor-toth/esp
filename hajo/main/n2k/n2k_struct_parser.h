@@ -1,5 +1,5 @@
-#ifndef HAJO_N2K_PARSER_H
-#define HAJO_N2K_PARSER_H
+#ifndef HAJO_N2K_STRUCT_PARSER_H
+#define HAJO_N2K_STRUCT_PARSER_H
 
 #include "N2kMsg.h"
 #include "N2kTypes.h"
@@ -68,7 +68,7 @@ typedef struct {
     double capacity;
 } N2kFluidLevelData;
 
-extern bool ParseN2kFluidLevel( const tN2kMsg &N2kMsg, N2kFluidLevelData& data );
+extern bool ParseN2kFluidLevel( const tN2kMsg &N2kMsg, N2kFluidLevelData &data );
 
 #define N2K_PGN_DC_DETAILED_STATUS 0x1F212  // 127506
 #define N2K_PGN_DC_DETAILED_STATUS_INTERVAL_MS 1500
@@ -84,7 +84,7 @@ typedef struct {
     double capacity;
 } ParseN2kDCStatusData;
 
-extern bool ParseN2kDCStatus( const tN2kMsg &N2kMsg, ParseN2kDCStatusData& data );
+extern bool ParseN2kDCStatus( const tN2kMsg &N2kMsg, ParseN2kDCStatusData &data );
 
 #define N2K_PGN_BATTERY_STATUS 0x1F214 // 127508
 #define N2K_PGN_BATTERY_STATUS_INTERVAL_MS 1500
@@ -97,7 +97,7 @@ typedef struct {
     unsigned char sid;
 } N2kDCBatStatusData;
 
-extern bool ParseN2kDCBatStatus( const tN2kMsg &N2kMsg, N2kDCBatStatusData& data );
+extern bool ParseN2kDCBatStatus( const tN2kMsg &N2kMsg, N2kDCBatStatusData &data );
 
 #define N2K_PGN_BATTERY_CONFIGURATION 0x1F219 // 127513
 #define N2K_PGN_BATTERY_CONFIGURATION_INTERVAL_MS 5000
@@ -114,7 +114,7 @@ typedef struct {
     int8_t chargeEfficiencyFactor;
 } N2kBatConfData;
 
-extern bool ParseN2kBatConf( const tN2kMsg &N2kMsg, N2kBatConfData& data );
+extern bool ParseN2kBatConf( const tN2kMsg &N2kMsg, N2kBatConfData &data );
 
 #define N2K_PGN_GNSS_POSITION_DATA 0x1F805 // 129029
 #define N2K_PGN_GNSS_POSITION_DATA_INTERVAL_MS 1000
@@ -138,7 +138,7 @@ typedef struct {
     double ageOfCorrection;
 } N2kGNSSData;
 
-extern bool ParseN2kGNSS( const tN2kMsg &N2kMsg, N2kGNSSData& data );
+extern bool ParseN2kGNSS( const tN2kMsg &N2kMsg, N2kGNSSData &data );
 
 #define N2K_PGN_LOCAL_OFFSET 0x1F809 // 129029
 #define N2K_PGN_LOCAL_OFFSET_INTERVAL_MS 1000
@@ -149,16 +149,16 @@ typedef struct {
     int16_t localOffset;
 } N2kLocalOffsetData;
 
-extern bool ParseN2kLocalOffset(const tN2kMsg &N2kMsg, N2kLocalOffsetData& data );
+extern bool ParseN2kLocalOffset( const tN2kMsg &N2kMsg, N2kLocalOffsetData &data );
 
 #define N2K_PGN_PROPRIETARY_FAST_PACKET   0x1ef00 // 126720
 
 typedef struct {
-    unsigned int manufacturerCode:11;
-    unsigned int reserved:2;
-    unsigned int industryCode:3;
-    unsigned int proprietaryID:18;
-    unsigned int command:8;
+    unsigned int manufacturerCode: 11;
+    unsigned int reserved: 2;
+    unsigned int industryCode: 3;
+    unsigned int proprietaryID: 18;
+    unsigned int command: 8;
 } N2kProprietaryFastPacketFrame;
 
 #define N2K_PGN_RUDDER 0x1F10D // 127245
@@ -171,6 +171,18 @@ typedef struct {
     double angleOrder;
 } N2kRudderData;
 
-extern bool ParseN2kRudder(const tN2kMsg &N2kMsg, N2kRudderData& data );
+extern bool ParseN2kRudder( const tN2kMsg &N2kMsg, N2kRudderData &data );
 
-#endif //HAJO_N2K_PARSER_H
+#define N2K_PGN_ATTITUDE 0x1F119 // 127257
+#define N2K_PGN_ATTITUDE_INTERVAL_MS 1000
+
+typedef struct {
+    unsigned char instance;
+    double yaw;
+    double pitch;
+    double roll;
+} N2kAttitudeData;
+
+extern bool ParseN2kAttitude( const tN2kMsg &N2kMsg, N2kAttitudeData &data );
+
+#endif //HAJO_N2K_STRUCT_PARSER_H
