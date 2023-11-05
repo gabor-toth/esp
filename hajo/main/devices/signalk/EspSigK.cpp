@@ -6,6 +6,8 @@
 #include "string.h"
 #include "wifi_connect.h"
 #include "rest_server.h"
+#include "ws_server.h"
+#include "N2kTimer.h"
 
 static const char* TAG ="signalk";
 
@@ -35,21 +37,36 @@ static const char *EspSigKIndexContents = R"foo(
     var WebSocket = WebSocket || MozWebSocket;
     var lastDelta = Date.now();
     var serverUrl = "ws://" + window.location.hostname + ":80/ws";
+    var timerId;
 
-    connection = new WebSocket(serverUrl);
+    function connect() {
+      console.log("Create new connection");
+      var connection = new WebSocket(serverUrl);
 
-    connection.onopen = function(evt) {
-      console.log("Connected!");
-      document.getElementById("box").innerHTML = "Connected!";
-      document.getElementById("last").innerHTML = "Last: N/A";
-    };
+      connection.onopen = function(evt) {
+        clearInterval(timerId);
+        console.log("Connected");
+        document.getElementById("box").innerHTML = "Connected!";
+        document.getElementById("last").innerHTML = "Last: N/A";
+      };
 
-    connection.onmessage = function(evt) {
-      var msg = JSON.parse(evt.data);
-      document.getElementById("box").innerHTML = JSON.stringify(msg, null, 2);
-      document.getElementById("last").innerHTML = "Last: " + ((Date.now() - lastDelta)/1000).toFixed(2) + " seconds";
-      lastDelta = Date.now();
-    };
+      connection.onmessage = function(evt) {
+        var msg = JSON.parse(evt.data);
+        document.getElementById("box").innerHTML = JSON.stringify(msg, null, 2);
+        document.getElementById("last").innerHTML = "Last: " + ((Date.now() - lastDelta)/1000).toFixed(2) + " seconds";
+        lastDelta = Date.now();
+      };
+
+      connection.onclose = function(evt) {
+        console.log("Disconnected");
+        document.getElementById("box").innerHTML = "Lost connection";
+        timerId = setInterval(function(){
+          connect();
+        }, 1000);
+      };
+    }
+
+    connect();
 
     setInterval(function(){
       document.getElementById("age").innerHTML = "Age: " + ((Date.now() - lastDelta)/1000).toFixed(1) + " seconds";
@@ -69,8 +86,6 @@ EspSigK::EspSigK() {
     printDeltaSerial = false;
     printDebugSerial = false;
 //    signalKServerPort = 80;
-//    webSocketServer = WebSocketsServer( 81 );
-//    wsClientConnected = false;
 //    wsClientReconnectInterval = 10000;
 }
 
@@ -132,7 +147,7 @@ void EspSigK::start( const char *hostname, httpd_handle_t server ) {
     this->hostname = hostname;
     this->http_server = server;
 
-    setupDiscovery();
+//    setupDiscovery();
     setupHTTP();
     setupWebSocket();
 }
@@ -346,8 +361,13 @@ void webSocketServerEvent( uint8_t num, WStype_t type, uint8_t *payload, size_t 
 /* SignalK                                                              */
 /* ******************************************************************** */
 
+void EspSigK::startDelta( unsigned char source, unsigned long pgn ) {
+    deltaSource = source;
+    deltaPgn = pgn;
+}
+
 void EspSigK::addDeltaValue(const char* path, const char* value) {
-    ESP_LOGI(TAG,"add value %s=%s", path, value);
+    ESP_LOGD(TAG,"add value %s=%s", path, value);
     if ( path== nullptr || value ==nullptr) {
         return;
     }
@@ -372,17 +392,31 @@ void EspSigK::addDeltaValue( const char* path, bool value ) {
 }
 
 void EspSigK::sendDelta() {
+    if ( http_server == nullptr) {
+        deltas.clear();
+        return;
+    }
+
     ESP_LOGI(TAG,"send %d delta values", deltas.size());
     cJSON *result = cJSON_CreateObject();
 
     //updated array
     cJSON *updatesArr = cJSON_AddArrayToObject( result, "updates" );
 
+    char bufSrc[16], bufPgn[16], bufTimestamp[16];
+    itoa(deltaSource, bufSrc, 10);
+    utoa(deltaPgn, bufPgn, 10);
+    snprintf( bufTimestamp, sizeof(bufTimestamp), "%ld", N2kMillis() );
+
     cJSON *thisUpdate = cJSON_CreateObject();
     cJSON_AddItemToArray(updatesArr,thisUpdate );
     cJSON *source = cJSON_AddObjectToObject(thisUpdate,"source");
-    cJSON_AddStringToObject(source, "label",  "ESP" );
-    cJSON_AddStringToObject(source, "src",  hostname.c_str() );
+    cJSON_AddStringToObject(source, "label",  hostname.c_str() );
+    cJSON_AddStringToObject(source, "type",  "NMEA2000" );
+    cJSON_AddStringToObject(source, "src",  bufSrc );
+    cJSON_AddStringToObject(source, "pgn", bufPgn  );
+
+    cJSON_AddStringToObject(thisUpdate,"$timestamp", bufTimestamp);
 
     cJSON *values = cJSON_AddArrayToObject( thisUpdate, "values" );
     for( std::list<Delta>::const_iterator it = deltas.cbegin(); it != deltas.cend(); ++it ) {
@@ -399,11 +433,11 @@ void EspSigK::sendDelta() {
     if ( printDeltaSerial ) {
         Serial.println( deltaText );
     }
-    // TODO
 //    webSocketServer.broadcastTXT( deltaText );
 //    if ( wsClientConnected ) { // client
 //        webSocketClient.sendTXT( deltaText );
 //    }
+    wss_server_send_message( http_server, deltaText);
     free(deltaText);
 
     deltas.clear();

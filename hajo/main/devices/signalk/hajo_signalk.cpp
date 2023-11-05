@@ -1,4 +1,5 @@
 #include "hajo_signalk.h"
+#include "esp_log.h"
 #include "esp_wifi.h"
 #include "EspSigK.h"
 #include "rest_main.h"
@@ -9,6 +10,11 @@
 #include "n2k/n2k_sender.h"
 #include "n2k/n2k_util.h"
 
+static const char* TAG = "hajo_signalk";
+
+// see NMEA2000-SignalK-Gateway.cpp
+extern void sendN2KMessageToSignalK( const tN2kMsg &N2kMsg );
+
 class SignalkIncomingMessageHandler : public tNMEA2000::tMsgHandler {
 public:
     explicit SignalkIncomingMessageHandler( tNMEA2000 *_pNMEA2000 ) : tNMEA2000::tMsgHandler( 0, _pNMEA2000 ) {
@@ -16,8 +22,6 @@ public:
 
     void HandleMsg( const tN2kMsg &N2kMsg ) override;
 };
-
-static SignalkIncomingMessageHandler *incomingMessageHandler;
 
 static void setup_n2k_device( int iDev ) {
     static const unsigned long TransmitMessages[] = {
@@ -55,21 +59,25 @@ static void setup_n2k_device( int iDev ) {
 
     NMEA2000.ExtendTransmitMessages( TransmitMessages, iDev );
     NMEA2000.ExtendReceiveMessages( ReceiveMessages, iDev );
-    incomingMessageHandler = new SignalkIncomingMessageHandler( &NMEA2000 );
+    ESP_LOGI(TAG,"Registering SignalkIncomingMessageHandler");
+    SignalkIncomingMessageHandler *incomingMessageHandler = new SignalkIncomingMessageHandler( &NMEA2000 );
     NMEA2000.AttachMsgHandler( incomingMessageHandler );
 }
 
 static esp_err_t signalk_start( httpd_handle_t server ) {
+    ESP_LOGI( TAG, "signalk_start" );
     sigK.start( "n2k-gw", server );
 
     return ESP_OK;
 }
 
 static void signalk_stop( httpd_handle_t server ) {
+    ESP_LOGI( TAG, "signalk_stop" );
     sigK.stop();
 }
 
-static rest_callbacks_t callbacks = {
+static const rest_callbacks_t callbacks = {
+        .name= TAG,
         .wifi_connect_fn =signalk_start,
         .wifi_disconnect_fn=signalk_stop,
         .open_fn=nullptr,
@@ -77,14 +85,16 @@ static rest_callbacks_t callbacks = {
 };
 
 static void signalk_register() {
+    ESP_LOGI( TAG, "signalk_register" );
     rest_register_callbacks( &callbacks );
 }
 
-static void process_incoming_pgn( const tN2kMsg &message ) {
-    incomingMessageHandler->HandleMsg( message );
+static void process_incoming_pgn( const tN2kMsg &N2kMsg ) {
+    sendN2KMessageToSignalK( N2kMsg );
 }
 
 void SignalkIncomingMessageHandler::HandleMsg( const tN2kMsg &N2kMsg ) {
+    sendN2KMessageToSignalK( N2kMsg );
 }
 
 void hajo_signalk_main( int iDev ) {

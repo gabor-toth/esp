@@ -39,6 +39,8 @@ public:
 
     void setPrintDebugSerial( bool v );
 
+    void startDelta( unsigned char source, unsigned long pgn );
+
     void addDeltaValue( const char *path, const char *value );
 
     void addDeltaValue( const char *path, int value );
@@ -71,6 +73,8 @@ private:
     bool printDeltaSerial;
     bool printDebugSerial;
     std::list<Delta> deltas;
+    unsigned char deltaSource;
+    unsigned long deltaPgn;
 
     /*
     const char *signalKServerHost;

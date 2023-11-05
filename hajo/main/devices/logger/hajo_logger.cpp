@@ -1,15 +1,9 @@
 #include "esp_log.h"
-#include "devices/signalk/EspSigK.h"
 #include "n2k/n2k_struct_parser.h"
 #include "n2k/n2k_sender.h"
 #include "n2k/n2k_util.h"
 
-static const char *LOG = "logger";
-
-// see EspSigK.cpp
-extern EspSigK sigK;
-// see NMEA2000-SignalK-Gateway.cpp
-extern void sendN2KMessageToSignalK( const tN2kMsg &N2kMsg ) ;
+static const char *LOG = "hajo_logger";
 
 /*
  * 0x1F801: PGN 129025 - Position, Rapid Update (100msec)
@@ -54,14 +48,14 @@ static void process_incoming_pgn_rudder( const tN2kMsg &msg ) {
     counter = 0;
     if ( ParseN2kRudder( msg, data )) {
         ESP_LOGI( LOG, "PGN rudder pos %lf instance %d",
-                  RadToDeg(data.rudderPosition), data.instance );
+                  RadToDeg( data.rudderPosition ), data.instance );
     }
 }
 
 static void process_incoming_pgn_proprietary_fast_packet( const tN2kMsg &msg ) {
     int index = 0;
-    int vb = msg.Get2ByteUInt(index );
-    int manufacturerCode = vb & ((1<<12)-1);
+    int vb = msg.Get2ByteUInt( index );
+    int manufacturerCode = vb & (( 1 << 12 ) - 1 );
     int industryCode = vb >> 12;
     int proprietaryId = msg.Get2ByteUInt( index );
     int command = msg.GetByte( index );
@@ -86,18 +80,16 @@ static void process_incoming_pgn_proprietary_fast_packet( const tN2kMsg &msg ) {
 //I (225529) hajo_logger: PGN local offset days 12326 seconds 76950.000000 offset 32767
 //I (225539) hajo_logger: PGN position data latitude 47.580750 longitude 19.060717 sats 4 type 0 method 1
 
-static void process_incoming_pgn_dump( const tN2kMsg& msg ) {
-    char buf[16*3+1];
-    char* p= buf;
-    for( int i = 0; i < msg.DataLen; i++, p+= 3) {
-        sprintf( p, "%02x ", msg.Data[i]);
+static void process_incoming_pgn_dump( const tN2kMsg &msg ) {
+    char buf[16 * 3 + 1];
+    char *p = buf;
+    for ( int i = 0; i < msg.DataLen; i++, p += 3 ) {
+        sprintf( p, "%02x ", msg.Data[ i ] );
     }
     ESP_LOGI( LOG, "PGN %5lx len %2d data %s", msg.PGN, msg.DataLen, buf );
 }
 
 void LoggerIncomingMessageHandler::HandleMsg( const tN2kMsg &N2kMsg ) {
-    sendN2KMessageToSignalK(N2kMsg);
-
 //    ESP_LOGI( LOG, "PGN %5lx len %2d", N2kMsg.PGN, N2kMsg.DataLen );
     switch ( N2kMsg.PGN ) {
 //        case N2K_PGN_FLUID_LEVEL:
