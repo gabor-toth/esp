@@ -6,7 +6,7 @@
 #include "n2k/n2k_sender.h"
 #include "n2k/n2k_util.h"
 
-static const char *TAG = "Gyro";
+static const char *TAG = "hajo_atti";
 
 static mpu6050_handle_t gyroscope;
 
@@ -28,6 +28,7 @@ void setup_gyroscope() {
     ESP_ERROR_CHECK( i2c_driver_install( i2c_master_port, conf.mode, 0, 0, 0 ));
 
     gyroscope = mpu6050_create( i2c_master_port, 0b1101000 );
+    mpu6050_config( gyroscope, ACCE_FS_2G, GYRO_FS_250DPS);
     mpu6050_wake_up( gyroscope );
 }
 
@@ -36,7 +37,10 @@ static bool send_attitude( int index, tN2kMsg &msg ) {
     mpu6050_get_gyro( gyroscope, &gyro_value );
     mpu6050_acce_value_t acce_value;
     mpu6050_get_acce( gyroscope, &acce_value );
-    ESP_LOGI( TAG, "gyro x=%lf y=%lf z=%lf   acce x=%lf y=%lf z=%lf",
+    complimentary_angle_t angle = complimentary_angle_t();
+    mpu6050_complimentory_filter( gyroscope, &acce_value, &gyro_value, &angle );
+    ESP_LOGI( TAG, "angle pitch=%lf roll=%lf  gyro x=%lf y=%lf z=%lf   acce x=%lf y=%lf z=%lf",
+              angle.pitch, angle.roll,
               gyro_value.gyro_x, gyro_value.gyro_y, gyro_value.gyro_z ,
               acce_value.acce_x, acce_value.acce_y, acce_value.acce_z
               );
@@ -97,5 +101,5 @@ void hajo_attitude_main(  int iDev ) {
     setup_gyroscope();
 
     setup_n2k_device( iDev);
-    nk2_register_sender( n2k_send_attitude, "attitude", N2K_PGN_ATTITUDE_INTERVAL_MS, 300, true );
+    nk2_register_sender( n2k_send_attitude, "attitude", N2K_PGN_ATTITUDE_INTERVAL_MS*20, 300, true );
 }
