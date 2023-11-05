@@ -22,7 +22,6 @@
 
 static const char *TAG = "rest-server";
 static httpd_handle_t http_server = NULL;
-static rest_register_handlers_t register_handlers_callback = NULL;
 
 typedef struct rest_callbacks_node_t {
     struct rest_callbacks_node_t *next;
@@ -30,6 +29,7 @@ typedef struct rest_callbacks_node_t {
 } rest_callbacks_node_t;
 
 static rest_callbacks_node_t *registered_callbacks = NULL;
+static rest_callbacks_node_t *registered_callbacks_tail = NULL;
 
 #define FILE_PATH_MAX (ESP_VFS_PATH_MAX + 128)
 
@@ -173,7 +173,7 @@ esp_err_t rest_register_static_files_handler( httpd_handle_t server, rest_server
             .handler = rest_file_get_handler,
             .user_ctx = rest_context
     };
-    return httpd_register_uri_handler( server, &common_get_uri );
+    return rest_register_uri_handler( server, TAG, &common_get_uri );
 }
 
 static esp_err_t open_fn_callback( httpd_handle_t hd, int sockfd ) {
@@ -213,15 +213,21 @@ static esp_err_t rest_server_start() {
     ESP_LOGI( TAG, "Starting HTTP Server" );
     esp_err_t result = httpd_start( &http_server, &config );
     if ( result != ESP_OK ) {
+        ESP_LOGE( TAG, "Error %d starting HTTP Server", result );
 //        free( rest_context );
         return result;
     }
 
+    ESP_LOGI( TAG, "Calling callbacks" );
     for ( rest_callbacks_node_t *node = registered_callbacks; node != NULL; node = node->next ) {
-        if ( node->callbacks.wifi_disconnect_fn ) {
-            node->callbacks.wifi_disconnect_fn( http_server );
+        if ( node->callbacks.wifi_connect_fn ) {
+            ESP_LOGI( TAG, "Callback for %s", node->callbacks.name );
+            node->callbacks.wifi_connect_fn( http_server );
+        } else {
+            ESP_LOGI( TAG, "No callback for %s", node->callbacks.name );
         }
     }
+    ESP_LOGI( TAG, "Done callbacks" );
 
     return result;
 }
@@ -248,7 +254,7 @@ static void handler_on_wifi_disconnect( void *dummy, esp_event_base_t event_base
         if ( rest_server_stop() == ESP_OK ) {
             http_server = NULL;
         } else {
-            ESP_LOGE( TAG, "Failed to stop https server" );
+            ESP_LOGE( TAG, "Failed to stop HTTP server" );
         }
     }
 }
@@ -258,9 +264,22 @@ esp_err_t rest_register_callbacks( const rest_callbacks_t *callbacks ) {
     if ( node == NULL) {
         return ESP_ERR_NO_MEM;
     }
-    node->next = registered_callbacks;
     node->callbacks = *callbacks;
+    node->next = NULL;
+    if ( registered_callbacks_tail == NULL) {
+        registered_callbacks_tail = registered_callbacks = node;
+    } else {
+        registered_callbacks_tail->next = node;
+        registered_callbacks_tail = node;
+    }
     return ESP_OK;
+}
+
+esp_err_t rest_register_uri_handler( httpd_handle_t handle,
+                                     const char *log_tag,
+                                     const httpd_uri_t *uri_handler ) {
+    ESP_LOGI( log_tag, "Register URL %s", uri_handler->uri );
+    return httpd_register_uri_handler( handle, uri_handler );
 }
 
 esp_err_t rest_server_main() {

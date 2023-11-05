@@ -101,7 +101,8 @@ void on_wifi_disconnect( httpd_handle_t server ) {
 //    netbiosns_stop();
 }
 
-static rest_callbacks_t callbacks = {
+static const rest_callbacks_t callbacks = {
+        .name= "rest-main",
         .wifi_connect_fn = on_wifi_connect,
         .wifi_disconnect_fn= on_wifi_disconnect,
         .open_fn=NULL,

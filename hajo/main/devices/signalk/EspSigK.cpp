@@ -5,6 +5,7 @@
 #include "ssdp.h"
 #include "string.h"
 #include "wifi_connect.h"
+#include "rest_server.h"
 
 static const char* TAG ="signalk";
 
@@ -116,18 +117,17 @@ void EspSigK::setupDiscovery( ) {
             .model_url           = "https://www.signalk.org",
             .model_number         = "1.0",
             .model_description    = nullptr,
-            .server_name          = "SSDPServer-IDF/1.0",
+            .server_name          = hostname.c_str(),
             .services_description = nullptr,
             .icons_description    = nullptr
     };
     ESP_ERROR_CHECK( ssdp_start( &config ));
-//    SSDP.setName( myHostname );
 }
 
 void EspSigK::start( const char *hostname, httpd_handle_t server ) {
     stop();
     if ( printDebugSerial ) {
-        ESP_LOGI( TAG,"SIGK: Starting as host %s", hostname );
+        ESP_LOGI( TAG,"Starting as host %s", hostname );
     }
     this->hostname = hostname;
     this->http_server = server;
@@ -169,23 +169,23 @@ void EspSigK::setupHTTP() {
             .handler = htmlDescriptionXml,
             .user_ctx = nullptr
     };
-    httpd_register_uri_handler( http_server, &uri );
+    rest_register_uri_handler( http_server, TAG, &uri );
 
     uri.handler = htmlSignalKEndpoints;
     uri.uri = "/signalk";
-    httpd_register_uri_handler( http_server, &uri );
+    rest_register_uri_handler( http_server, TAG, &uri );
     uri.uri = "/signalk/";
-    httpd_register_uri_handler( http_server, &uri );
+    rest_register_uri_handler( http_server, TAG, &uri );
 
     uri.handler = htmlIndexContents;
     uri.uri = "/";
-    httpd_register_uri_handler( http_server, &uri );
+    rest_register_uri_handler( http_server, TAG, &uri );
     uri.uri = "/index.html";
-    httpd_register_uri_handler( http_server, &uri );
+    rest_register_uri_handler( http_server, TAG, &uri );
 
     uri.handler = htmlHandleNotFound;
     uri.uri = "/*";
-    httpd_register_uri_handler( http_server, &uri );
+    rest_register_uri_handler( http_server, TAG, &uri );
 }
 
 esp_err_t EspSigK::htmlHandleNotFound(httpd_req_t *r) {
@@ -195,7 +195,7 @@ esp_err_t EspSigK::htmlHandleNotFound(httpd_req_t *r) {
 }
 
 esp_err_t EspSigK::htmlDescriptionXml(httpd_req_t *r) {
-    ESP_LOGD(TAG,"Serving htmlDescriptionXml");
+    ESP_LOGI(TAG,"Serving htmlDescriptionXml");
     httpd_resp_set_type( r, "text/xml" );
     const char * schema = get_ssdp_schema_str();
     httpd_resp_send(r, schema, strlen(schema));
@@ -203,14 +203,14 @@ esp_err_t EspSigK::htmlDescriptionXml(httpd_req_t *r) {
 }
 
 esp_err_t EspSigK::htmlIndexContents(httpd_req_t *r) {
-    ESP_LOGD(TAG,"Serving htmlIndexContents");
+    ESP_LOGI(TAG,"Serving htmlIndexContents");
     httpd_resp_set_type( r, HTTPD_TYPE_TEXT );
     httpd_resp_send(r, EspSigKIndexContents, strlen(EspSigKIndexContents));
     return ESP_OK;
 }
 
 esp_err_t EspSigK::htmlSignalKEndpoints(httpd_req_t *r) {
-    ESP_LOGD(TAG,"Serving htmlSignalKEndpoints");
+    ESP_LOGI(TAG,"Serving htmlSignalKEndpoints");
 
     esp_netif_t *netif = wifi_get_esp_netif();
     esp_netif_ip_info_t ip_info;
@@ -347,6 +347,7 @@ void webSocketServerEvent( uint8_t num, WStype_t type, uint8_t *payload, size_t 
 /* ******************************************************************** */
 
 void EspSigK::addDeltaValue(const char* path, const char* value) {
+    ESP_LOGI(TAG,"add value %s=%s", path, value);
     if ( path== nullptr || value ==nullptr) {
         return;
     }
@@ -371,6 +372,7 @@ void EspSigK::addDeltaValue( const char* path, bool value ) {
 }
 
 void EspSigK::sendDelta() {
+    ESP_LOGI(TAG,"send %d delta values", deltas.size());
     cJSON *result = cJSON_CreateObject();
 
     //updated array

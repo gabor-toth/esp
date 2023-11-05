@@ -9,6 +9,8 @@
 #include <esp_chip_info.h>
 #include "system_info_rest.h"
 
+static const char *TAG = "rest_sysinfo";
+
 static void add_task_list( cJSON *root ) {
     UBaseType_t numberOfTasks = uxTaskGetNumberOfTasks();
     unsigned long ulTotalRunTime, ulStatsAsPercentage;
@@ -24,7 +26,7 @@ static void add_task_list( cJSON *root ) {
     /* Avoid divide by zero errors. */
     if ( ulTotalRunTime > 0 ) {
         /* For each populated position in the pxTaskStatusArray array,
-        format the raw data as human readable ASCII data. */
+        format the raw data as human-readable ASCII data. */
         for ( UBaseType_t x = 0; x < numberOfTasks; x++ ) {
             /* What percentage of the total run time has the task used?
             This will always be rounded down to the nearest integer.
@@ -104,7 +106,7 @@ void rest_register_system_info_handler( httpd_handle_t server, rest_server_conte
             .handler = system_info_get_handler,
             .user_ctx = rest_context
     };
-    httpd_register_uri_handler( server, &system_info_get_uri );
+    rest_register_uri_handler( server, TAG, &system_info_get_uri );
 }
 
 #endif

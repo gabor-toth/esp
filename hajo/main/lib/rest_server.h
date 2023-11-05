@@ -22,6 +22,7 @@ typedef esp_err_t (*rest_wifi_connect_func_t)( httpd_handle_t server );
 typedef void (*rest_wifi_disconnect_func_t)( httpd_handle_t server );
 
 typedef struct {
+    const char *name;
     rest_wifi_connect_func_t wifi_connect_fn;
     rest_wifi_disconnect_func_t wifi_disconnect_fn;
     httpd_open_func_t open_fn;
@@ -38,6 +39,10 @@ extern esp_err_t rest_server_main();
 extern esp_err_t rest_register_static_files_handler( httpd_handle_t server,
                                                      rest_server_context_t *rest_context,
                                                      const char *static_files_base_path );
+
+extern esp_err_t rest_register_uri_handler( httpd_handle_t handle,
+                                            const char *log_tag,
+                                            const httpd_uri_t *uri_handler );
 
 /**
  * Receive JSON body.

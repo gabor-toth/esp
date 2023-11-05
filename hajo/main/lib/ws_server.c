@@ -65,7 +65,7 @@ static esp_err_t ws_handler( httpd_req_t *req ) {
     }
     // If it was a PONG, update the keep-alive
     if ( ws_pkt.type == HTTPD_WS_TYPE_PONG ) {
-        ESP_LOGD( TAG, "Received PONG message" );
+        ESP_LOGI( TAG, "Received PONG message" );
         free( buf );
         return wss_keep_alive_client_is_active( httpd_get_global_user_ctx( req->handle ),
                                                 httpd_req_to_sockfd( req ));
@@ -192,10 +192,11 @@ static void stop_wss_echo_server( httpd_handle_t server ) {
 
 esp_err_t wss_wifi_connect( httpd_handle_t hd ) {
     start_wss_echo_server( hd );
-    return httpd_register_uri_handler( hd, &ws );
+    return rest_register_uri_handler( hd, TAG, &ws );
 }
 
-static rest_callbacks_t callbacks = {
+static const rest_callbacks_t callbacks = {
+        .name= "ws_server",
         .wifi_connect_fn = wss_wifi_connect,
         .wifi_disconnect_fn= stop_wss_echo_server,
         .open_fn=wss_open_fd,
@@ -203,6 +204,7 @@ static rest_callbacks_t callbacks = {
 };
 
 void wss_register() {
+    ESP_LOGI( TAG, "wss_register" );
     rest_register_callbacks( &callbacks );
 }
 
