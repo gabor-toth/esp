@@ -80,7 +80,7 @@ static void signalk_register() {
     rest_register_callbacks( &callbacks );
 }
 
-void process_incoming_pgn( const tN2kMsg &message ) {
+static void process_incoming_pgn( const tN2kMsg &message ) {
     incomingMessageHandler->HandleMsg( message );
 }
 

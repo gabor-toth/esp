@@ -103,7 +103,7 @@ void setup_n2k_device( int iDev ) {
     NMEA2000.AttachMsgHandler( incomingMessageHandler );
 }
 
-void process_incoming_pgn( const tN2kMsg &message ) {
+static void process_incoming_pgn( const tN2kMsg &message ) {
     incomingMessageHandler->HandleMsg( message );
 }
 

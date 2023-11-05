@@ -29,7 +29,7 @@ public:
 
 static LoggerIncomingMessageHandler *incomingMessageHandler;
 
-void process_incoming_pgn_gnss_position_data( const tN2kMsg &msg ) {
+static void process_incoming_pgn_gnss_position_data( const tN2kMsg &msg ) {
     N2kGNSSData data;
     if ( ParseN2kGNSS( msg, data )) {
         ESP_LOGI( LOG, "PGN position data latitude %lf longitude %lf sats %d type %d method %d",
@@ -37,7 +37,7 @@ void process_incoming_pgn_gnss_position_data( const tN2kMsg &msg ) {
     }
 }
 
-void process_incoming_pgn_local_offset( const tN2kMsg &msg ) {
+static void process_incoming_pgn_local_offset( const tN2kMsg &msg ) {
     N2kLocalOffsetData data;
     if ( ParseN2kLocalOffset( msg, data )) {
         ESP_LOGI( LOG, "PGN local offset days %d seconds %lf offset %d",
@@ -45,7 +45,7 @@ void process_incoming_pgn_local_offset( const tN2kMsg &msg ) {
     }
 }
 
-void process_incoming_pgn_rudder( const tN2kMsg &msg ) {
+static void process_incoming_pgn_rudder( const tN2kMsg &msg ) {
     N2kRudderData data;
     static int counter = 0;
     if ( ++counter < 10 ) {
@@ -58,7 +58,7 @@ void process_incoming_pgn_rudder( const tN2kMsg &msg ) {
     }
 }
 
-void process_incoming_pgn_proprietary_fast_packet( const tN2kMsg &msg ) {
+static void process_incoming_pgn_proprietary_fast_packet( const tN2kMsg &msg ) {
     int index = 0;
     int vb = msg.Get2ByteUInt(index );
     int manufacturerCode = vb & ((1<<12)-1);
@@ -86,7 +86,7 @@ void process_incoming_pgn_proprietary_fast_packet( const tN2kMsg &msg ) {
 //I (225529) hajo_logger: PGN local offset days 12326 seconds 76950.000000 offset 32767
 //I (225539) hajo_logger: PGN position data latitude 47.580750 longitude 19.060717 sats 4 type 0 method 1
 
-void process_incoming_pgn_dump( const tN2kMsg& msg ) {
+static void process_incoming_pgn_dump( const tN2kMsg& msg ) {
     char buf[16*3+1];
     char* p= buf;
     for( int i = 0; i < msg.DataLen; i++, p+= 3) {
@@ -178,7 +178,7 @@ static void setup_n2k_device( int iDev ) {
     NMEA2000.AttachMsgHandler( incomingMessageHandler );
 }
 
-void process_incoming_pgn( const tN2kMsg &message ) {
+static void process_incoming_pgn( const tN2kMsg &message ) {
     incomingMessageHandler->HandleMsg( message );
 }
 
