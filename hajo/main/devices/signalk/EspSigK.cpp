@@ -138,6 +138,7 @@ void EspSigK::start( const char *hostname, httpd_handle_t server ) {
 }
 
 void EspSigK::stop() {
+    ssdp_stop();
 }
 
 #if 0

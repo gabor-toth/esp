@@ -9,7 +9,12 @@
 using namespace std;
 
 static const char *LOG = "n2k_sender";
-static n2k_loopback_callback loopback_callback = nullptr;
+typedef struct loopback_callback_node_t {
+    struct loopback_callback_node_t* next;
+    n2k_loopback_callback callback;
+} loopback_callback_node_t;
+
+static loopback_callback_node_t* loopback_callbacks = nullptr;
 
 // Structure for holding message sending information
 struct tN2kSendMessage {
@@ -66,8 +71,10 @@ _Noreturn static void task_main( void *arg ) {
             tN2kMsg N2kMsg;
             for ( index = 0; iterator->SendFunction( index, N2kMsg ); index++ ) {
                 NMEA2000.SendMsg( N2kMsg );
-                if ( loopback_callback != nullptr ) {
-                    loopback_callback( N2kMsg );
+                loopback_callback_node_t * node = loopback_callbacks;
+                while ( node != nullptr ) {
+                    node->callback( N2kMsg );
+                    node=node->next;
                 }
             }
             if ( index == 0 ) {
@@ -118,5 +125,8 @@ void nk2_register_sender( tN2kSendFunction sendFunction,
 }
 
 void n2k_sender_register_loopback( n2k_loopback_callback callback ) {
-    loopback_callback = callback;
+    loopback_callback_node_t * node = (loopback_callback_node_t*)malloc(sizeof(loopback_callback_node_t));
+    node->next = loopback_callbacks;
+    node->callback = callback;
+    loopback_callbacks = node;
 }

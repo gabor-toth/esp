@@ -1,10 +1,5 @@
 #include "esp_log.h"
-#include "esp_wifi.h"
 #include "devices/signalk/EspSigK.h"
-#include "rest_main.h"
-#include "rest_server.h"
-#include "wifi_connect.h"
-#include "ws_server.h"
 #include "n2k/n2k_struct_parser.h"
 #include "n2k/n2k_sender.h"
 #include "n2k/n2k_util.h"
@@ -179,20 +174,8 @@ static void setup_n2k_device( int iDev ) {
 
     NMEA2000.ExtendTransmitMessages( TransmitMessages, iDev );
     NMEA2000.ExtendReceiveMessages( ReceiveMessages, iDev );
-    LoggerIncomingMessageHandler *incomingMessageHandler = new LoggerIncomingMessageHandler( &NMEA2000 );
+    incomingMessageHandler = new LoggerIncomingMessageHandler( &NMEA2000 );
     NMEA2000.AttachMsgHandler( incomingMessageHandler );
-}
-
-static esp_err_t rest_register_handlers( httpd_handle_t server, rest_server_context_t * ) {
-//    sigK.setPrintDebugSerial(true);       // Default false, causes debug messages to be printed to Serial (connecting etc)
-//    sigK.setPrintDeltaSerial(false);       // Default false, prints deltas to Serial.
-    //sigK.setServerHost("192.168.0.20");    // Optional. Sets the ip of the SignalKServer to connect to. If not set we try to discover server with mDNS
-    //sigK.setServerPort(80);                // If manually setting host, this sets the port for the signalK Server (default 80);
-    //sigK.setServerToken("secret"); // if you have security enabled in node server, it wont accept deltas unles you auth
-    wss_wifi_connect( server );
-    sigK.start("n2k-gw",server);
-
-    return ESP_OK;
 }
 
 void process_incoming_pgn( const tN2kMsg &message ) {
@@ -202,14 +185,6 @@ void process_incoming_pgn( const tN2kMsg &message ) {
 void hajo_logger_main( int iDev ) {
     // test_sdcard();
     setup_n2k_device( iDev );
-    hajo_attitude_main();
 
     n2k_sender_register_loopback( process_incoming_pgn );
-
-    discovery_register();
-    wss_register();
-    rest_server_main( );
-
-    ESP_ERROR_CHECK( wifi_connect() );
-    ESP_LOGI(LOG,"init finished");
 }

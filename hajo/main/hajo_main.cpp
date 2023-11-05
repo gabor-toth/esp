@@ -14,7 +14,8 @@
 #endif
 #include "lib/nvs_main.h"
 #include "n2k/n2k_receiver.h"
-#include "n2k/n2k_sender.h"
+#include "devices/attitude/hajo_attitude.h"
+#include "devices/signalk/hajo_signalk.h"
 
 #define ESP32_CAN_TX_PIN N2K_GPIO_NUM_TX
 #define ESP32_CAN_RX_PIN N2K_GPIO_NUM_RX
@@ -107,6 +108,7 @@ void hajo_main() {
 
     int iDev = 0;
 #if DEVICE_TYPE == DEVICE_TYPE_GAUGE_DISPLAY
+    NMEA2000.SetDeviceCount(2);
     hajo_fluid_main( iDev++ );
     hajo_display_main( iDev++ );
     clock_configure( 240 );
@@ -114,8 +116,11 @@ void hajo_main() {
     hajo_battery_main( iDev++ );
     clock_configure( 80 );
 #elif DEVICE_TYPE == DEVICE_TYPE_LOGGER
-    hajo_logger_main( iDev++ );
     clock_configure( 240 );
+    NMEA2000.SetDeviceCount(3);
+    hajo_logger_main( iDev++ );
+    hajo_signalk_main( iDev++ );
+    hajo_attitude_main( iDev++ );
 #else
     #error Unhandled device type ## DEVICE_TYPE
 #endif

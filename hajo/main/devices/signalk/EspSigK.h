@@ -82,6 +82,8 @@ private:
      */
 };
 
+extern EspSigK sigK;
+
 //html stuff
 
 //void webSocketClientEvent(WStype_t type, uint8_t * payload, size_t length);
