@@ -14,6 +14,7 @@
 #include "freertos/task.h"
 #include "ws_keep_alive.h"
 #include "esp_timer.h"
+#include "rest_server.h"
 
 typedef enum {
     NO_CLIENT = 0,
@@ -36,7 +37,7 @@ typedef struct wss_keep_alive_storage {
     wss_check_client_alive_cb_t client_not_alive_cb;
     size_t keep_alive_period_ms;
     size_t not_alive_after_ms;
-    void *user_ctx;
+    httpd_handle_t http_server;
     QueueHandle_t q;
     client_fd_action_t clients[];
 } wss_keep_alive_storage_t;
@@ -140,7 +141,7 @@ static void keep_alive_task( void *arg ) {
                                   keep_alive_storage->clients[ i ].fd );
                         if ( keep_alive_storage->clients[ i ].last_seen + keep_alive_storage->not_alive_after_ms <=
                              _tick_get_ms()) {
-                            ESP_LOGE( TAG, "Client (fd=%d) not alive!", keep_alive_storage->clients[ i ].fd );
+                            ESP_LOGI( TAG, "Client (fd=%d) not alive!", keep_alive_storage->clients[ i ].fd );
                             keep_alive_storage->client_not_alive_cb( keep_alive_storage,
                                                                      keep_alive_storage->clients[ i ].fd );
                         } else {
@@ -158,7 +159,7 @@ static void keep_alive_task( void *arg ) {
     vTaskDelete(NULL);
 }
 
-wss_keep_alive_t wss_keep_alive_start( wss_keep_alive_config_t *config ) {
+wss_keep_alive_t wss_keep_alive_start( wss_keep_alive_config_t *config, httpd_handle_t http_server ) {
     size_t queue_size = config->max_clients / 2;
     size_t client_list_size = config->max_clients + queue_size;
     wss_keep_alive_t keep_alive_storage = calloc( 1,
@@ -172,13 +173,15 @@ wss_keep_alive_t wss_keep_alive_start( wss_keep_alive_config_t *config ) {
     keep_alive_storage->max_clients = config->max_clients;
     keep_alive_storage->not_alive_after_ms = config->not_alive_after_ms;
     keep_alive_storage->keep_alive_period_ms = config->keep_alive_period_ms;
-    keep_alive_storage->user_ctx = config->user_ctx;
+    keep_alive_storage->http_server = http_server;
     keep_alive_storage->q = xQueueCreate( queue_size, sizeof( client_fd_action_t ));
     if ( xTaskCreate( keep_alive_task, "keep_alive_task", config->task_stack_size,
                       keep_alive_storage, config->task_prio, NULL) != pdTRUE) {
         wss_keep_alive_stop( keep_alive_storage );
         return false;
     }
+    void **guc = httpd_get_global_user_ctx( http_server );
+    guc[ GLOBAL_USER_CONTEXT_WS_KEEP_ALIVE ] = keep_alive_storage;
     return keep_alive_storage;
 }
 
@@ -214,10 +217,11 @@ esp_err_t wss_keep_alive_client_is_active( wss_keep_alive_t h, int fd ) {
 
 }
 
-void wss_keep_alive_set_user_ctx( wss_keep_alive_t h, void *ctx ) {
-    h->user_ctx = ctx;
+wss_keep_alive_t wss_keep_alive_get_keep_alive( httpd_handle_t server ) {
+    void **guc = httpd_get_global_user_ctx( server );
+    return guc[ GLOBAL_USER_CONTEXT_WS_KEEP_ALIVE ];
 }
 
-void *wss_keep_alive_get_user_ctx( wss_keep_alive_t h ) {
-    return h->user_ctx;
+httpd_handle_t wss_keep_alive_get_http_server( wss_keep_alive_t h ) {
+    return h->http_server;
 }

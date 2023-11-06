@@ -28,7 +28,7 @@ struct async_resp_arg {
 };
 
 static const char *TAG = "ws_server";
-static const size_t max_clients = 4;
+#define MAX_CLIENTS 16
 
 static esp_err_t ws_handler( httpd_req_t *req ) {
     if ( req->method == HTTP_GET ) {
@@ -67,7 +67,7 @@ static esp_err_t ws_handler( httpd_req_t *req ) {
     if ( ws_pkt.type == HTTPD_WS_TYPE_PONG ) {
         ESP_LOGI( TAG, "Received PONG message" );
         free( buf );
-        return wss_keep_alive_client_is_active( httpd_get_global_user_ctx( req->handle ),
+        return wss_keep_alive_client_is_active( wss_keep_alive_get_keep_alive( req->handle ),
                                                 httpd_req_to_sockfd( req ));
 
         // If it was a TEXT message, just echo it back
@@ -81,6 +81,7 @@ static esp_err_t ws_handler( httpd_req_t *req ) {
             ws_pkt.type = HTTPD_WS_TYPE_PONG;
         } else if ( ws_pkt.type == HTTPD_WS_TYPE_CLOSE ) {
             // Response CLOSE packet with no payload to peer
+            ESP_LOGI( TAG, "Closed connection %d", httpd_req_to_sockfd( req ));
             ws_pkt.len = 0;
             ws_pkt.payload = NULL;
         }
@@ -88,8 +89,8 @@ static esp_err_t ws_handler( httpd_req_t *req ) {
         if ( ret != ESP_OK ) {
             ESP_LOGE( TAG, "httpd_ws_send_frame failed with %d", ret );
         }
-        ESP_LOGI( TAG, "ws_handler: httpd_handle_t=%p, sockfd=%d, client_info:%d", req->handle,
-                  httpd_req_to_sockfd( req ), httpd_ws_get_fd_info( req->handle, httpd_req_to_sockfd( req )));
+//        ESP_LOGI( TAG, "ws_handler: httpd_handle_t=%p, sockfd=%d, client_info:%d", req->handle,
+//                  httpd_req_to_sockfd( req ), httpd_ws_get_fd_info( req->handle, httpd_req_to_sockfd( req )));
         free( buf );
         return ret;
     }
@@ -98,20 +99,15 @@ static esp_err_t ws_handler( httpd_req_t *req ) {
 }
 
 esp_err_t wss_open_fd( httpd_handle_t hd, int sockfd ) {
-    if ( httpd_ws_get_fd_info( hd, sockfd ) != HTTPD_WS_CLIENT_WEBSOCKET ) {
-        return ESP_OK;
-    }
     ESP_LOGI( TAG, "New client connected %d", sockfd );
-    wss_keep_alive_t h = httpd_get_global_user_ctx( hd );
+    wss_keep_alive_t h = wss_keep_alive_get_keep_alive( hd );
     return wss_keep_alive_add_client( h, sockfd );
 }
 
 void wss_close_fd( httpd_handle_t hd, int sockfd ) {
-    if ( httpd_ws_get_fd_info( hd, sockfd ) != HTTPD_WS_CLIENT_WEBSOCKET ) {
-        return;
-    }
-    ESP_LOGI( TAG, "Client disconnected %d", sockfd );
-    wss_keep_alive_t h = httpd_get_global_user_ctx( hd );
+    httpd_ws_client_info_t info = httpd_ws_get_fd_info( hd, sockfd );
+    ESP_LOGI( TAG, "Client disconnected %d type %d", sockfd, info );
+    wss_keep_alive_t h = wss_keep_alive_get_keep_alive( hd );
     wss_keep_alive_remove_client( h, sockfd );
     close( sockfd );
 }
@@ -156,15 +152,15 @@ static void send_ping( void *arg ) {
 }
 
 bool client_not_alive_cb( wss_keep_alive_t h, int fd ) {
-    ESP_LOGE( TAG, "Client not alive, closing fd %d", fd );
-    httpd_sess_trigger_close( wss_keep_alive_get_user_ctx( h ), fd );
+    ESP_LOGI( TAG, "Client not alive, closing fd %d", fd );
+    httpd_sess_trigger_close( wss_keep_alive_get_http_server( h ), fd );
     return true;
 }
 
 bool check_client_alive_cb( wss_keep_alive_t h, int fd ) {
     ESP_LOGD( TAG, "Checking if client (fd=%d) is alive", fd );
     struct async_resp_arg *resp_arg = malloc( sizeof( struct async_resp_arg ));
-    resp_arg->hd = wss_keep_alive_get_user_ctx( h );
+    resp_arg->hd = wss_keep_alive_get_http_server( h );
     resp_arg->fd = fd;
 
     if ( httpd_queue_work( resp_arg->hd, send_ping, resp_arg ) == ESP_OK ) {
@@ -176,18 +172,17 @@ bool check_client_alive_cb( wss_keep_alive_t h, int fd ) {
 static void start_wss_echo_server( httpd_handle_t hd ) {
     // Prepare keep-alive engine
     wss_keep_alive_config_t keep_alive_config = KEEP_ALIVE_CONFIG_DEFAULT();
-    keep_alive_config.max_clients = max_clients;
+    keep_alive_config.max_clients = MAX_CLIENTS;
     keep_alive_config.client_not_alive_cb = client_not_alive_cb;
     keep_alive_config.check_client_alive_cb = check_client_alive_cb;
-    wss_keep_alive_t keep_alive = wss_keep_alive_start( &keep_alive_config );
+    wss_keep_alive_start( &keep_alive_config, hd );
 //    conf.open_fn = wss_open_fd;
 //    conf.close_fn = wss_close_fd;
-    wss_keep_alive_set_user_ctx( keep_alive, hd );
 }
 
 static void stop_wss_echo_server( httpd_handle_t server ) {
     // Stop keep alive thread
-    wss_keep_alive_stop( httpd_get_global_user_ctx( server ));
+    wss_keep_alive_stop( wss_keep_alive_get_keep_alive( server ));
 }
 
 esp_err_t wss_wifi_connect( httpd_handle_t hd ) {
@@ -210,8 +205,8 @@ void wss_register() {
 
 // Get all clients and send async message
 void wss_server_send_message( httpd_handle_t server, const char *message ) {
-    size_t clients = max_clients;
-    int client_fds[max_clients];
+    size_t clients = MAX_CLIENTS;
+    int client_fds[MAX_CLIENTS];
     if ( httpd_get_client_list( server, &clients, client_fds ) != ESP_OK ) {
         ESP_LOGE( TAG, "httpd_get_client_list failed!" );
         return;

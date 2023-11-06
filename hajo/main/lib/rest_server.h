@@ -12,6 +12,10 @@ extern "C" {
 
 #define REST_SCRATCH_BUFSIZE (10240)
 
+#define GLOBAL_USER_CONTEXT_REST_CONTEXT 0
+#define GLOBAL_USER_CONTEXT_WS_KEEP_ALIVE 1
+#define GLOBAL_USER_CONTEXT_COUNT 2
+
 typedef struct rest_server_context {
     char base_path[ESP_VFS_PATH_MAX + 1];
     char scratch[REST_SCRATCH_BUFSIZE];

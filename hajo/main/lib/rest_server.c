@@ -206,7 +206,7 @@ static esp_err_t rest_server_start() {
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.uri_match_fn = httpd_uri_match_wildcard;
     config.max_uri_handlers = 16;
-//    config.global_user_ctx = rest_context;
+    config.global_user_ctx = calloc( GLOBAL_USER_CONTEXT_COUNT, sizeof( void * ));
     config.open_fn = open_fn_callback;
     config.close_fn = close_fn_callback;
 

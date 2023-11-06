@@ -12,6 +12,8 @@
 extern "C" {
 #endif
 
+#include "esp_http_server.h"
+
 #define KEEP_ALIVE_CONFIG_DEFAULT() \
     { \
     .max_clients = 10,                      \
@@ -39,7 +41,6 @@ typedef struct {
     size_t not_alive_after_ms;                               /*!< consider client not alive after this time */
     wss_check_client_alive_cb_t check_client_alive_cb;       /*!< callback function to check if client is alive */
     wss_client_not_alive_cb_t client_not_alive_cb;           /*!< callback function to notify that the client is not alive */
-    void *user_ctx;                                          /*!< user context available in the keep-alive handle */
 } wss_keep_alive_config_t;
 
 /**
@@ -76,7 +77,7 @@ esp_err_t wss_keep_alive_client_is_active( wss_keep_alive_t h, int fd );
  * @param config keep-alive configuration
  * @return keep alive handle
  */
-wss_keep_alive_t wss_keep_alive_start( wss_keep_alive_config_t *config );
+wss_keep_alive_t wss_keep_alive_start( wss_keep_alive_config_t *config, httpd_handle_t http_server );
 
 /**
  * @brief Stops keep-alive engine
@@ -85,21 +86,9 @@ wss_keep_alive_t wss_keep_alive_start( wss_keep_alive_config_t *config );
  */
 void wss_keep_alive_stop( wss_keep_alive_t h );
 
-/**
- * @brief Sets user defined context
- *
- * @param h keep-alive handle
- * @param ctx user context
- */
-void wss_keep_alive_set_user_ctx( wss_keep_alive_t h, void *ctx );
+extern wss_keep_alive_t wss_keep_alive_get_keep_alive( httpd_handle_t server );
 
-/**
- * @brief Gets user defined context
- *
- * @param h keep-alive handle
- * @return ctx user context
- */
-void *wss_keep_alive_get_user_ctx( wss_keep_alive_t h );
+extern httpd_handle_t wss_keep_alive_get_http_server( wss_keep_alive_t h );
 
 #ifdef __cplusplus
 }
