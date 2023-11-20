@@ -8,6 +8,8 @@
 #include "rest_server.h"
 #include "ws_server.h"
 #include "N2kTimer.h"
+#include "lwip/apps/mdns.h"
+#include "mdns.h"
 
 static const char* TAG ="signalk";
 
@@ -147,7 +149,7 @@ void EspSigK::start( const char *hostname, httpd_handle_t server ) {
     this->hostname = hostname;
     this->http_server = server;
 
-//    setupDiscovery();
+    setupDiscovery();
     setupHTTP();
     setupWebSocket();
 }
@@ -262,32 +264,33 @@ void EspSigK::setupWebSocket() {
 //    connectWebSocketClient();
 }
 
-#if 0
-bool EspSigK::getMDNSService( string &host, uint16_t &port ) {
+bool EspSigK::getMDNSService(std::string& host, uint16_t& port ) {
     // get IP address using an mDNS query
     if ( printDebugSerial ) Serial.println( "SIGK: Searching for server via mDNS" );
-    int n = MDNS.queryService( "signalk-ws", "tcp" );
-    if ( n == 0 ) {
-        // no service found
+    mdns_result_t *results = nullptr;
+    mdns_query_ptr( "_signalk-ws", "_tcp", 1000, 1, &results );
+    if ( results == nullptr) {
         return false;
-    } else {
-        host = MDNS.IP( 0 ).toString();
-        port = MDNS.port( 0 );
-        if ( printDebugSerial ) {
-            Serial.print( "SIGK: Found SignalK Server via mDNS at: " );
-            Serial.print( host.c_str() );
-            Serial.print( ":" );
-            Serial.println( port );
-        }
-        return true;
     }
+//    host = results->hostname;
+    esp_ip4_addr_t* ip = &results->addr->addr.u_addr.ip4;
+    char s[32];
+    snprintf(s, sizeof(s), "%d.%d.%d.%d",
+            esp_ip4_addr4_16(ip), esp_ip4_addr3_16(ip),
+            esp_ip4_addr2_16(ip), esp_ip4_addr1_16(ip) );
+    mdns_query_results_free( results );
+
+    host = s;
+    port = results->port;
+    ESP_LOGI(TAG, "Found SignalK Server via mDNS at %s:%d", signalKServerHost.c_str(), signalKServerPort );
+    return true;
 }
 
 
 void EspSigK::connectWebSocketClient() {
-    string host = "";
-    uint16_t port = 80;
-    string url = "/signalk/v1/stream?subscribe=none";
+    std::string host;
+    uint16_t port = 0;
+    const char* url = "/signalk/v1/stream?subscribe=none";
 
     if ( signalKServerHost.length() == 0 ) {
         getMDNSService( host, port );
@@ -296,21 +299,19 @@ void EspSigK::connectWebSocketClient() {
         port = signalKServerPort;
     }
 
-    if (( host.length() > 0 ) &&
-        ( port > 0 )) {
-        if ( printDebugSerial ) Serial.println( "SIGK: Websocket client attempting to connect!" );
-    } else {
-        if ( printDebugSerial ) Serial.println( "SIGK: No server for websocket client" );
+    if ( host.length() == 0 || port == 0 ) {
+        ESP_LOGW( TAG, "No server for websocket client" );
         return;
     }
-    if ( signalKServerToken != "" ) {
-        url = url + "&token=" + signalKServerToken;
-    }
+//    if ( signalKServerToken != "" ) {
+//        url = url + "&token=" + signalKServerToken;
+//    }
 
     webSocketClient.begin( host, port, url );
     wsClientConnected = true;
 }
 
+#if 0
 void webSocketClientEvent( WStype_t type, uint8_t *payload, size_t length ) {
     switch ( type ) {
         case WStype_DISCONNECTED: {
@@ -330,26 +331,6 @@ void webSocketClientEvent( WStype_t type, uint8_t *payload, size_t length ) {
         case WStype_BIN:
             //Serial.printf("[WSc] get binary length: %u\n", length);
             //hexdump(payload, length);
-            break;
-    }
-}
-
-void webSocketServerEvent( uint8_t num, WStype_t type, uint8_t *payload, size_t length ) {
-    switch ( type ) {
-        case WStype_DISCONNECTED: {
-            if ( printDebugSerial ) Serial.printf( "SIGK: Websocket Server [%u] Disconnected!\n", num );
-            break;
-        }
-        case WStype_CONNECTED: {
-            IPAddress ip = webSocketServer.remoteIP( num );
-            if ( printDebugSerial )
-                Serial.printf( "SIGK: Websocket Server [%u] Connected from %d.%d.%d.%d url: %s\n", num, ip[ 0 ],
-                               ip[ 1 ], ip[ 2 ], ip[ 3 ], payload );
-            break;
-        }
-        case WStype_TEXT:
-            break;
-        case WStype_BIN:
             break;
     }
 }
@@ -433,11 +414,10 @@ void EspSigK::sendDelta() {
     if ( printDeltaSerial ) {
         Serial.println( deltaText );
     }
-//    webSocketServer.broadcastTXT( deltaText );
-//    if ( wsClientConnected ) { // client
-//        webSocketClient.sendTXT( deltaText );
-//    }
     wss_server_send_message( http_server, deltaText);
+    if ( wsClientConnected ) { // client
+//        webSocketClient.sendTXT( deltaText );
+    }
     free(deltaText);
 
     deltas.clear();

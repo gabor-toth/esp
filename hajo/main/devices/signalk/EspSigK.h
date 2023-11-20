@@ -58,7 +58,9 @@ private:
 
     void setupWebSocket();
 
-//    void connectWebSocketClient();
+    void connectWebSocketClient();
+
+    bool getMDNSService( std::string &host, uint16_t &port );
 
     static esp_err_t htmlSignalKEndpoints( httpd_req_t *r );
 
@@ -76,12 +78,14 @@ private:
     unsigned char deltaSource;
     unsigned long deltaPgn;
 
+    std::string signalKServerHost;
+    uint16_t signalKServerPort;
+    bool wsClientConnected;
+
     /*
     const char *signalKServerHost;
-    uint16_t signalKServerPort;
     const char *signalKServerToken;
     uint32_t wsClientReconnectInterval;
-    bool wsClientConnected;
     uint32_t timerReconnect;
      */
 };
