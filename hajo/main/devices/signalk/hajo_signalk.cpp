@@ -99,7 +99,6 @@ void SignalkIncomingMessageHandler::HandleMsg( const tN2kMsg &N2kMsg ) {
 
 void hajo_signalk_main( int iDev ) {
     setup_n2k_device( iDev );
-    setup_n2k_device( iDev );
     n2k_sender_register_loopback( process_incoming_pgn );
 
     discovery_register();

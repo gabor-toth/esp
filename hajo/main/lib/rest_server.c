@@ -18,7 +18,6 @@
 #include <cJSON.h>
 #include "rest_server.h"
 #include "rest_util.h"
-//#include "system_info_rest.h"
 
 static const char *TAG = "rest-server";
 static httpd_handle_t http_server = NULL;

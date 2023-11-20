@@ -30,7 +30,7 @@ static void timer_gpio_callback( TimerHandle_t timer ) {
     int current_state = gpio_get_level( io_num );
     if ( current_state != timer_data->last_reported_state ) {
         timer_data->last_reported_state = current_state;
-        xQueueSend( gpio_evt_queue, &io_num, 0 );
+        xQueueSendToBack( gpio_evt_queue, &io_num, 0 );
     }
 }
 

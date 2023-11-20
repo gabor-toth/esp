@@ -80,7 +80,7 @@ static void timer_callback( TimerHandle_t timer ) {
 
     uint32_t dummy = 0;
     ESP_LOGI( LOG, "tick" );
-    xQueueSend( timer_event_queue, &dummy, 0 );
+    xQueueSendToBack( timer_event_queue, &dummy, 0 );
 }
 
 static void timer_start() {
@@ -97,7 +97,7 @@ static void timer_start() {
     xTimerStart( timer, portMAX_DELAY );
 
     uint32_t dummy = 0;
-    xQueueSend( timer_event_queue, &dummy, 0 );
+    xQueueSendToBack( timer_event_queue, &dummy, 0 );
 }
 
 int adc_number_of_channels() {
