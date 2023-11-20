@@ -397,7 +397,7 @@ void EspSigK::sendDelta() {
         return;
     }
 
-    ESP_LOGI(TAG,"send %d delta values", deltas.size());
+    ESP_LOGD(TAG,"send %d delta values", deltas.size());
     cJSON *result = cJSON_CreateObject();
 
     //updated array

@@ -47,8 +47,6 @@ static void process_incoming_pgn_rudder( const tN2kMsg &msg ) {
     }
     counter = 0;
     if ( ParseN2kRudder( msg, data )) {
-        ESP_LOGI( LOG, "PGN rudder pos %lf instance %d",
-                  RadToDeg( data.rudderPosition ), data.instance );
     }
 }
 
