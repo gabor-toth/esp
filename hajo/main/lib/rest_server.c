@@ -1,4 +1,5 @@
 #include "sdkconfig.h"
+#include "logger.h"
 
 #if defined(CONFIG_EXAMPLE_CONNECT_WIFI)
 /* HTTP Restful API Server
@@ -217,7 +218,7 @@ static esp_err_t rest_server_start() {
         return result;
     }
 
-    ESP_LOGI( TAG, "Calling callbacks" );
+    ESP_LOGI( TAG, "[%s] Calling callbacks", currentTaskName());
     for ( rest_callbacks_node_t *node = registered_callbacks; node != NULL; node = node->next ) {
         if ( node->callbacks.wifi_connect_fn ) {
             ESP_LOGI( TAG, "Callback for %s", node->callbacks.name );

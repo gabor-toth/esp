@@ -30,6 +30,7 @@ if ((DEVICE_TYPE EQUAL DEVICE_TYPE_LOGGER) OR (DEVICE_TYPE EQUAL DEVICE_TYPE_ALL
             "devices/signalk/hajo_signalk.cpp"
             "devices/signalk/NMEA2000-SignalK-Gateway.cpp"
             "lib/gpio_json.c"
+            "lib/logger.c"
             "lib/rest_main.c"
             "lib/rest_server.c"
             "lib/rest_util.c"
