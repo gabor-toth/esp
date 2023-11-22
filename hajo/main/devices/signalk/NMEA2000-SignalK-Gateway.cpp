@@ -44,15 +44,28 @@ static const char* TAG = "n2k-gw";
 //*****************************************************************************
 void HandleHeading( const tN2kMsg &N2kMsg ) {
     unsigned char SID;
-    tN2kHeadingReference ref;
+    tN2kHeadingReference reference;
     double Deviation = 0;
     double Variation;
     double Heading;
 
-    if ( ParseN2kHeading( N2kMsg, SID, Heading, Deviation, Variation, ref )) {
-        sigK.startDelta(N2kMsg.Source, N2kMsg.PGN);
-        sigK.addDeltaValue( "navigation.headingTrue", Heading + Variation + Deviation );
-        sigK.sendDelta();
+    if ( ParseN2kHeading( N2kMsg, SID, Heading, Deviation, Variation, reference )) {
+        //ESP_LOGI( TAG, "PGN Heading head %f dev %f var %f ref %d", Heading, Deviation, Variation, reference );
+        double value;
+        if ( reference == N2khr_magnetic) {
+            if ( Deviation == -1000000000.000000 ) {
+                Deviation = 0.0;
+            }
+            if ( Variation == -1000000000.000000 ) {
+                Variation = 0.0;
+            }
+            value = Heading + Variation + Deviation;
+        } else {
+            value = Heading;
+        }
+        DeltaSet deltaSet(N2kMsg.Source, N2kMsg.PGN);
+        deltaSet.addValue( "navigation.headingTrue", value );
+        deltaSet.send( sigK );
     }
 }
 
@@ -65,10 +78,10 @@ void HandleBoatSpeed( const tN2kMsg &N2kMsg ) {
     tN2kSpeedWaterReferenceType SWRT;
 
     if ( ParseN2kBoatSpeed( N2kMsg, SID, WaterReferenced, GroundReferenced, SWRT )) {
-        sigK.startDelta(N2kMsg.Source, N2kMsg.PGN);
-        sigK.addDeltaValue( "navigation.speedThroughWater", WaterReferenced );
-        sigK.addDeltaValue( "navigation.speedOverGround", GroundReferenced );
-        sigK.sendDelta();
+        DeltaSet deltaSet(N2kMsg.Source, N2kMsg.PGN);
+        deltaSet.addValue( "navigation.speedThroughWater", WaterReferenced );
+        deltaSet.addValue( "navigation.speedOverGround", GroundReferenced );
+        deltaSet.send( sigK );
     }
 }
 
@@ -83,10 +96,10 @@ void HandleDepth( const tN2kMsg &N2kMsg ) {
 
     if ( ParseN2kWaterDepth( N2kMsg, SID, DepthBelowTransducer, Offset, Range )) {
         WaterDepth = DepthBelowTransducer + Offset;
-        sigK.startDelta(N2kMsg.Source, N2kMsg.PGN);
-        sigK.addDeltaValue( "environment.depth.belowTransducer", DepthBelowTransducer );
-        sigK.addDeltaValue( "environment.depth.belowSurface", WaterDepth );
-        sigK.sendDelta();
+        DeltaSet deltaSet(N2kMsg.Source, N2kMsg.PGN);
+        deltaSet.addValue( "environment.depth.belowTransducer", DepthBelowTransducer );
+        deltaSet.addValue( "environment.depth.belowSurface", WaterDepth );
+        deltaSet.send( sigK );
     }
 }
 
@@ -98,10 +111,10 @@ void HandlePosition( const tN2kMsg &N2kMsg ) {
     char buf[100];
 
     if ( ParseN2kPGN129025( N2kMsg, Latitude, Longitude )) {
-        snprintf( buf, sizeof( buf ), "{\"altitude\":%f,\"latitude\":%f,\"longitude\":%f}", 0.0, Latitude, Longitude );
-        sigK.startDelta(N2kMsg.Source, N2kMsg.PGN);
-        sigK.addDeltaValue( "navigation.position", buf );
-        sigK.sendDelta();
+        snprintf( buf, sizeof( buf ), R"({"altitude":%f,"latitude":%f,"longitude":%f})", 0.0, Latitude, Longitude );
+        DeltaSet deltaSet(N2kMsg.Source, N2kMsg.PGN);
+        deltaSet.addValue( "navigation.position", buf );
+        deltaSet.send( sigK );
     }
 }
 
@@ -114,10 +127,10 @@ void HandleCOG_SOG( const tN2kMsg &N2kMsg ) {
     double SOG;
 
     if ( ParseN2kPGN129026( N2kMsg, SID, ref, COG, SOG )) {
-        sigK.startDelta(N2kMsg.Source, N2kMsg.PGN);
-        sigK.addDeltaValue( "navigation.courseOverGroundTrue", COG );
-        sigK.addDeltaValue( "navigation.speedOverGround", SOG );
-        sigK.sendDelta();
+        DeltaSet deltaSet(N2kMsg.Source, N2kMsg.PGN);
+        deltaSet.addValue( "navigation.courseOverGroundTrue", COG );
+        deltaSet.addValue( "navigation.speedOverGround", SOG );
+        deltaSet.send( sigK );
     }
 }
 
@@ -130,18 +143,18 @@ void HandleWind( const tN2kMsg &N2kMsg ) {
     double WindAngle, WindSpeed;
 
     if ( ParseN2kWindSpeed( N2kMsg, SID, WindSpeed, WindAngle, WindReference )) {
-        sigK.startDelta(N2kMsg.Source, N2kMsg.PGN);
+        DeltaSet deltaSet(N2kMsg.Source, N2kMsg.PGN);
         if ( WindReference == N2kWind_Apparent ) {
-            sigK.addDeltaValue( "environment.wind.angleApparent", WindAngle );
-            sigK.addDeltaValue( "environment.wind.speedApparent", WindSpeed );
+            deltaSet.addValue( "environment.wind.angleApparent", WindAngle );
+            deltaSet.addValue( "environment.wind.speedApparent", WindSpeed );
         } else if ( WindReference == N2kWind_True_boat ) {
-            sigK.addDeltaValue( "environment.wind.angleTrueGround", WindAngle );
-            sigK.addDeltaValue( "environment.wind.speedTrue", WindSpeed );
+            deltaSet.addValue( "environment.wind.angleTrueGround", WindAngle );
+            deltaSet.addValue( "environment.wind.speedTrue", WindSpeed );
         } else if ( WindReference == N2kWind_True_water ) {
-            sigK.addDeltaValue( "environment.wind.angleTrueWater", WindAngle );
-            sigK.addDeltaValue( "environment.wind.speedTrue", WindSpeed );
+            deltaSet.addValue( "environment.wind.angleTrueWater", WindAngle );
+            deltaSet.addValue( "environment.wind.speedTrue", WindSpeed );
         }
-        sigK.sendDelta();
+        deltaSet.send( sigK );
     }
 }
 
@@ -155,10 +168,10 @@ void HandleLog( const tN2kMsg &N2kMsg ) {
     uint32_t TripLog;
 
     if ( ParseN2kDistanceLog( N2kMsg, DaysSince1970, SecondsSinceMidnight, Log, TripLog )) {
-        sigK.startDelta(N2kMsg.Source, N2kMsg.PGN);
-        sigK.addDeltaValue( "navigation.trip.log", (int) TripLog );
-        sigK.addDeltaValue( "navigation.log", (int) Log );
-        sigK.sendDelta();
+        DeltaSet deltaSet(N2kMsg.Source, N2kMsg.PGN);
+        deltaSet.addValue( "navigation.trip.log", (int) TripLog );
+        deltaSet.addValue( "navigation.log", (int) Log );
+        deltaSet.send( sigK );
     }
 }
 
@@ -172,11 +185,11 @@ void HandleWaterTemp( const tN2kMsg &N2kMsg ) {
     double WaterTemperature;
 
     if ( ParseN2kPGN130310( N2kMsg, SID, WaterTemperature, OutsideAmbientAirTemperature, AtmosphericPressure )) {
-        sigK.startDelta(N2kMsg.Source, N2kMsg.PGN);
-        // sigK.addDeltaValue("environment.outside.temperature", OutsideAmbientAirTemperature);
-        // sigK.addDeltaValue("environment.outside.pressure", AtmosphericPressure);
-        sigK.addDeltaValue( "environment.water.temperature", WaterTemperature );
-        sigK.sendDelta();
+        DeltaSet deltaSet(N2kMsg.Source, N2kMsg.PGN);
+        // deltaSet.addDeltaValue("environment.outside.temperature", OutsideAmbientAirTemperature);
+        // deltaSet.addDeltaValue("environment.outside.pressure", AtmosphericPressure);
+        deltaSet.addValue( "environment.water.temperature", WaterTemperature );
+        deltaSet.send( sigK );
     }
 }
 
@@ -190,9 +203,9 @@ void HandleRudder( const tN2kMsg &N2kMsg ) {
     double AngleOrder;
 
     if ( ParseN2kRudder( N2kMsg, RudderPosition, Instance, RudderDirectionOrder, AngleOrder )) {
-        sigK.startDelta(N2kMsg.Source, N2kMsg.PGN);
-        sigK.addDeltaValue( "steering.rudderAngle", RudderPosition );
-        sigK.sendDelta();
+        DeltaSet deltaSet(N2kMsg.Source, N2kMsg.PGN);
+        deltaSet.addValue( "steering.rudderAngle", RudderPosition );
+        deltaSet.send( sigK );
     }
 }
 
@@ -223,25 +236,25 @@ void HandleGNSS( const tN2kMsg &N2kMsg ) {
                        nSatellites, HDOP, PDOP, GeoidalSeparation,
                        nReferenceStations, ReferenceStationType, ReferenceStationID, AgeOfCorrection )) {
 
-        sigK.startDelta(N2kMsg.Source, N2kMsg.PGN);
-        sigK.addDeltaValue( "navigation.gnss.type", GNSSType );
-        sigK.addDeltaValue( "navigation.gnss.horizontalDilution", HDOP );
-        sigK.addDeltaValue( "navigation.gnss.positionDilution", PDOP );
+        DeltaSet deltaSet(N2kMsg.Source, N2kMsg.PGN);
+        deltaSet.addValue( "navigation.gnss.type", GNSSType );
+        deltaSet.addValue( "navigation.gnss.horizontalDilution", HDOP );
+        deltaSet.addValue( "navigation.gnss.positionDilution", PDOP );
 
-//        sigK.sendDelta();
+//        deltaSet.send( sigK );
 
-        sigK.addDeltaValue( "navigation.gnss.satellites", nSatellites );
-        sigK.addDeltaValue( "navigation.gnss.geoidalSeparation", GeoidalSeparation );
-        sigK.addDeltaValue( "navigation.gnss.differentialAge", AgeOfCorrection );
+        deltaSet.addValue( "navigation.gnss.satellites", nSatellites );
+        deltaSet.addValue( "navigation.gnss.geoidalSeparation", GeoidalSeparation );
+        deltaSet.addValue( "navigation.gnss.differentialAge", AgeOfCorrection );
 
-//        sigK.sendDelta();
+//        deltaSet.send( sigK );
 
-        sigK.addDeltaValue( "navigation.gnss.differentialReference", ReferenceStationID );
+        deltaSet.addValue( "navigation.gnss.differentialReference", ReferenceStationID );
         snprintf( buf, sizeof( buf ), R"({"altitude":%f,"latitude":%f,"longitude":%f})", Altitude, Latitude,
                   Longitude );
-        sigK.addDeltaValue( "navigation.position", buf );
+        deltaSet.addValue( "navigation.position", buf );
 
-        sigK.sendDelta();
+        deltaSet.send( sigK );
     }
 }
 
@@ -253,11 +266,11 @@ void HandleAttitude( const tN2kMsg &N2kMsg ) {
     double roll ;
 
     if ( ParseN2kAttitude( N2kMsg, sid, yaw, pitch, roll)) {
-        sigK.startDelta(N2kMsg.Source, N2kMsg.PGN);
-        sigK.addDeltaValue( "navigation.attitude.pitch", pitch );
-        sigK.addDeltaValue( "navigation.attitude.roll", roll );
-        sigK.addDeltaValue( "navigation.attitude.yaw", yaw );
-        sigK.sendDelta();
+        DeltaSet deltaSet(N2kMsg.Source, N2kMsg.PGN);
+        deltaSet.addValue( "navigation.attitude.pitch", pitch );
+        deltaSet.addValue( "navigation.attitude.roll", roll );
+        deltaSet.addValue( "navigation.attitude.yaw", yaw );
+        deltaSet.send( sigK );
     }
 }
 

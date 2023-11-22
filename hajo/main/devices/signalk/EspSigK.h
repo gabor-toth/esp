@@ -11,15 +11,50 @@
 #include <list>
 #include <string>
 
+class EspSigK;
+
+class DeltaValue {
+public:
+    DeltaValue( const char *path, const char *value );
+
+    std::string path;
+    std::string value;
+};
+
+class DeltaSet {
+public:
+    DeltaSet( unsigned char source, unsigned long pgn );
+
+    void addValue( const char *path, const char *value );
+
+    void addValue( const char *path, int value );
+
+    void addValue( const char *path, double value );
+
+    void addValue( const char *path, bool value );
+
+    [[nodiscard]] const std::list<DeltaValue> &getDeltas() const {
+        return deltas;
+    };
+
+    [[nodiscard]] unsigned char getSource() const {
+        return source;
+    }
+
+    [[nodiscard]] unsigned long getPgn() const {
+        return pgn;
+    }
+
+    void send( EspSigK &espSigk );
+
+private:
+    std::list<DeltaValue> deltas;
+    unsigned char source;
+    unsigned long pgn;
+};
+
 class EspSigK {
 private:
-    class Delta {
-    public:
-        Delta( const char *path, const char *value );
-
-        std::string path;
-        std::string value;
-    };
 
 
 public:
@@ -37,17 +72,7 @@ public:
 
     void setPrintDebugSerial( bool v );
 
-    void startDelta( unsigned char source, unsigned long pgn );
-
-    void addDeltaValue( const char *path, const char *value );
-
-    void addDeltaValue( const char *path, int value );
-
-    void addDeltaValue( const char *path, double value );
-
-    void addDeltaValue( const char *path, bool value );
-
-    void sendDelta();
+    void sendDeltaSet( DeltaSet &deltaSet );
 
 private:
     void setupDiscovery();
@@ -81,9 +106,6 @@ private:
     std::string hostname;
     bool printDeltaSerial;
     bool printDebugSerial;
-    std::list<Delta> deltas;
-    unsigned char deltaSource;
-    unsigned long deltaPgn;
 
     std::string signalKServerHost;
     std::string signalKServerToken;

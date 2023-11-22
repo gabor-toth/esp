@@ -95,7 +95,7 @@ EspSigK::EspSigK() {
     printDebugSerial = false;
 //    signalKServerHost = "10.128.65.180";
     signalKServerPort = 3000;
-    wsClientReconnectInterval = 10000;
+    wsClientReconnectInterval = 12000;
 }
 
 EspSigK::~EspSigK() {
@@ -302,10 +302,16 @@ bool EspSigK::getMDNSService(std::string& host, uint16_t& port ) {
     mdns_result_t *result = results;
     ESP_LOGI( TAG_WSCLIENT, "mDNS dump services" );
     while ( result != nullptr)    {
-        esp_ip4_addr_t *ip = &result->addr->addr.u_addr.ip4;
-        snprintf( s, sizeof( s ), IPSTR, IP2STR(ip));
-        ESP_LOGI(TAG_WSCLIENT,"- host %s ip %s instance %s",
-                 result->hostname ? result->hostname : "null", s, result->instance_name ? result->instance_name : "null");
+        if ( result->addr != nullptr) {
+            esp_ip4_addr_t *ip = &result->addr->addr.u_addr.ip4;
+            snprintf( s, sizeof( s ), IPSTR, IP2STR( ip ));
+        } else {
+            strncpy(s, "null",  sizeof( s ));
+        }
+        ESP_LOGI( TAG_WSCLIENT, "- host %s ip %s instance %s",
+                  result->hostname ? result->hostname : "null",
+                  s,
+                  result->instance_name ? result->instance_name : "null" );
         result = result->next;
     }
     mdns_query_results_free( results );
@@ -375,6 +381,11 @@ bool EspSigK::connectWebSocketClient() {
     std::string host;
     uint16_t port = 0;
 
+    if ( wsClientHandle != nullptr) {
+        esp_websocket_client_destroy(wsClientHandle);
+        wsClientHandle = nullptr;
+    }
+
     ESP_LOGI(TAG_WSCLIENT, "starting");
 
     if ( !getMDNSService( host, port ) && signalKServerHost.length() != 0) {
@@ -411,6 +422,7 @@ bool EspSigK::connectWebSocketClient() {
     if (err) {
         ESP_LOGE(TAG_WSCLIENT, "esp_websocket_client_start failed with %s", esp_err_to_name(err));
         esp_websocket_client_destroy(wsClientHandle);
+        wsClientHandle = nullptr;
         return false;
     }
 
@@ -427,41 +439,42 @@ bool EspSigK::connectWebSocketClient() {
 /* SignalK                                                              */
 /* ******************************************************************** */
 
-void EspSigK::startDelta( unsigned char source, unsigned long pgn ) {
-    deltaSource = source;
-    deltaPgn = pgn;
+DeltaSet::DeltaSet( unsigned char source, unsigned long pgn ) {
+    this->source = source;
+    this->pgn = pgn;
 }
 
-void EspSigK::addDeltaValue(const char* path, const char* value) {
+void DeltaSet::addValue( const char* path, const char* value) {
     ESP_LOGD(TAG,"add value %s=%s", path, value);
     if ( path== nullptr || value ==nullptr) {
         return;
     }
-    Delta delta = Delta(path, value);
+    DeltaValue delta = DeltaValue( path, value);
     deltas.push_back(delta);
 }
 
-void EspSigK::addDeltaValue(const char* path, int value) {
+void DeltaSet::addValue( const char* path, int value) {
     char buf[16];
     itoa(value,buf,  10);
-    addDeltaValue(path, buf);
+    addValue( path, buf );
 }
 
-void EspSigK::addDeltaValue( const char* path, double value ) {
+void DeltaSet::addValue( const char* path, double value ) {
     char buf[24];
     snprintf(buf, sizeof (buf), "%lf", value);
-    addDeltaValue(path, buf);
+    addValue( path, buf );
 }
 
-void EspSigK::addDeltaValue( const char* path, bool value ) {
-    addDeltaValue(path, value? "true":"false");
+void DeltaSet::addValue( const char* path, bool value ) {
+    addValue( path, value ? "true" : "false" );
 }
 
-void EspSigK::sendDelta() {
+void EspSigK::sendDeltaSet( DeltaSet& deltaSet) {
     if ( http_server == nullptr) {
-        deltas.clear();
         return;
     }
+
+    const std::list<DeltaValue>& deltas = deltaSet.getDeltas();
 
     ESP_LOGD(TAG,"send %d delta values", deltas.size());
     cJSON *result = cJSON_CreateObject();
@@ -470,8 +483,8 @@ void EspSigK::sendDelta() {
     cJSON *updatesArr = cJSON_AddArrayToObject( result, "updates" );
 
     char bufSrc[16], bufPgn[16], bufTimestamp[16];
-    itoa(deltaSource, bufSrc, 10);
-    utoa(deltaPgn, bufPgn, 10);
+    itoa( deltaSet.getSource(), bufSrc, 10);
+    utoa( deltaSet.getPgn(), bufPgn, 10);
     snprintf( bufTimestamp, sizeof(bufTimestamp), "%ld", N2kMillis() );
 
     cJSON *thisUpdate = cJSON_CreateObject();
@@ -485,19 +498,19 @@ void EspSigK::sendDelta() {
     cJSON_AddStringToObject(thisUpdate,"$timestamp", bufTimestamp);
 
     cJSON *values = cJSON_AddArrayToObject( thisUpdate, "values" );
-    for( std::list<Delta>::const_iterator it = deltas.cbegin(); it != deltas.cend(); ++it ) {
-        const Delta& delta = *it;
+    for( std::list<DeltaValue>::const_iterator it = deltas.cbegin(); it != deltas.cend(); ++it ) {
+        const DeltaValue& delta = *it;
         cJSON *thisValue = cJSON_CreateObject();
         cJSON_AddItemToArray(values,thisValue );
         cJSON_AddStringToObject(thisValue, "path",  delta.path.c_str() );
         cJSON_AddStringToObject(thisValue, "value", delta.value.c_str());
     }
 
-    char *deltaText = cJSON_Print( result );
+    char *deltaText = cJSON_PrintUnformatted( result );
     cJSON_Delete(result);
 
     if ( printDeltaSerial ) {
-        ESP_LOGD(TAG, "%s", deltaText );
+        ESP_LOGI(TAG, "%s", deltaText );
     }
     wss_server_send_message( http_server, deltaText);
     if ( wsClientConnected ) {
@@ -506,11 +519,13 @@ void EspSigK::sendDelta() {
         }
     }
     free(deltaText);
-
-    deltas.clear();
 }
 
-EspSigK::Delta::Delta(const char *path, const char *value ) {
+void DeltaSet::send(EspSigK& espSigk) {
+    espSigk.sendDeltaSet(*this);
+}
+
+DeltaValue::DeltaValue( const char *path, const char *value ) {
     this->path= path;
     this->value = value;
 }

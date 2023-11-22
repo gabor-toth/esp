@@ -4,14 +4,15 @@
 #include "lib/nvs_main.h"
 #include "n2k_receiver.h"
 #include "n2k_sender.h"
-#include "NMEA2000_esp32.h"
-#include <stdatomic.h>
 
 static const char *TAG = "n2k_recv";
 
-static QueueHandle_t event_queue = nullptr;
-static TimerHandle_t timer;
+#if 0
+#include "NMEA2000_esp32.h"
+#include <stdatomic.h>
 
+static TimerHandle_t timer;
+static QueueHandle_t event_queue = nullptr;
 static int minimal_check_interval = 1000;
 static std::atomic_int eventCounter = 0;
 
@@ -65,6 +66,11 @@ _Noreturn static void task_main_event( void *arg ) {
     }
 }
 
+void n2k_wake_receiver() {
+    timer_callback( "n2k_wake_receiver");
+}
+#endif
+
 _Noreturn static void task_main_pull( void *arg ) {
     (void) arg;
 
@@ -103,11 +109,8 @@ static void n2k_on_open() {
     n2k_sender_on_open();
 }
 
-void n2k_wake_receiver() {
-    timer_callback( "n2k_wake_receiver");
-}
-
 void n2k_init() {
+    /*
     event_queue = xQueueCreate( 20, sizeof( int ));
     timer = xTimerCreate(
             TAG,
@@ -116,6 +119,7 @@ void n2k_init() {
             nullptr,
             timer_callback );
     ESP_LOGI(TAG,"Timer %p created", timer);
+    */
     xTaskCreate( task_main_pull, TAG, 3072, nullptr, tskIDLE_PRIORITY, nullptr );
     //n2k_wake_receiver();
 
