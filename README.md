@@ -129,6 +129,7 @@ Add managed components
 ```
 idf.py add-dependency espressif/mdns
 idf.py add-dependency espressif/mpu6050
+idf.py add-dependency espressif/esp_websocket_client
 idf.py build
 ```
 
