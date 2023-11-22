@@ -1,10 +1,16 @@
 dependencies:
-  espressif/mdns:
-    component_hash: d6665090cf41eb399c184aab6f34234251a773e052fb53ca044dcb576264c646
+  espressif/esp_websocket_client:
+    component_hash: 3f3b04c060ca52c8a06b96b39f22f50086f2bb41d9e9a2411e809cf6b7edfa60
     source:
       service_url: https://api.components.espressif.com/
       type: service
-    version: 1.2.1
+    version: 1.1.0
+  espressif/mdns:
+    component_hash: 810ec139689ae93bf42520d05de4855fbb68f7140ef67797d91d8d61829589cb
+    source:
+      service_url: https://api.components.espressif.com/
+      type: service
+    version: 1.2.2
   espressif/mpu6050:
     component_hash: d69219ccb141372b863c511749ffbeab28417ac71c205d7ed7030c308e1b6832
     source:
@@ -16,6 +22,6 @@ dependencies:
     source:
       type: idf
     version: 5.1.1
-manifest_hash: 82861d4068f409c7eb36acb7210f9861500b966d65270fee38cf90de4e7fe5db
+manifest_hash: bc10a8615f2d0cc9f85b1a1abcc966fd877247689c8ad7f3fa40f1b9c7d14cfc
 target: esp32s2
 version: 1.0.0
