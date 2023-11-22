@@ -1,4 +1,5 @@
 #include "esp_log.h"
+#include "esp_netif_ip_addr.h"
 #include "EspSigK.h"
 #include "NMEA2000_esp32_stream.h"
 #include "cJSON.h"
@@ -10,8 +11,11 @@
 #include "N2kTimer.h"
 #include "lwip/apps/mdns.h"
 #include "mdns.h"
+#include "logger.h"
+#include "adc.h"
 
 static const char* TAG ="signalk";
+static const char* TAG_WSCLIENT ="wsclient";
 
 #if !CONFIG_HTTPD_WS_SUPPORT
 #error This example cannot be used unless HTTPD_WS_SUPPORT is enabled in esp-http-server component configuration
@@ -84,24 +88,19 @@ static const char *EspSigKIndexContents = R"foo(
 </html>
 )foo";
 
+QueueHandle_t EspSigK::event_queue = nullptr;
+
 EspSigK::EspSigK() {
     printDeltaSerial = false;
     printDebugSerial = false;
-//    signalKServerPort = 80;
-//    wsClientReconnectInterval = 10000;
+//    signalKServerHost = "10.128.65.180";
+    signalKServerPort = 3000;
+    wsClientReconnectInterval = 10000;
 }
 
 EspSigK::~EspSigK() {
     stop();
 }
-
-//void EspSigK::setServerPort( uint16_t newPort ) {
-//    signalKServerPort = newPort;
-//}
-
-//void EspSigK::setServerToken( string &token ) {
-//    signalKServerToken = token;
-//}
 
 void EspSigK::setPrintDeltaSerial( bool v ) {
     printDeltaSerial = v;
@@ -143,35 +142,29 @@ void EspSigK::setupDiscovery( ) {
 
 void EspSigK::start( const char *hostname, httpd_handle_t server ) {
     stop();
-    if ( printDebugSerial ) {
-        ESP_LOGI( TAG,"Starting as host %s", hostname );
-    }
+    ESP_LOGI( TAG,"Starting as host %s", hostname );
     this->hostname = hostname;
     this->http_server = server;
 
-    setupDiscovery();
+//    setupDiscovery();
     setupHTTP();
     setupWebSocket();
 }
 
 void EspSigK::stop() {
     ssdp_stop();
-}
-
-#if 0
-void EspSigK::handle() {
-    // reconnect timers, make sure wifi connected and websocket connected
-    if (( timerReconnect + wsClientReconnectInterval ) < currentMilis ) {
-        if ( WiFi.status() != WL_CONNECTED ) {
-            connectWifi();
-        }
-        if ( !wsClientConnected ) {
-            connectWebSocketClient();
-        }
-        timerReconnect = currentMilis;
+    if ( wsClientHandle ) {
+        esp_websocket_client_stop(wsClientHandle);
+        esp_websocket_client_destroy(wsClientHandle);
+        wsClientHandle = nullptr;
+    }
+    // TODO guard this
+    if ( timer ) {
+        xTimerStop( timer, portMAX_DELAY );
+        xTimerDelete( timer, portMAX_DELAY );
+        timer = nullptr;
     }
 }
-#endif
 
 /* ******************************************************************** */
 /* HTTP                                                                 */
@@ -234,8 +227,7 @@ esp_err_t EspSigK::htmlSignalKEndpoints(httpd_req_t *r) {
     esp_netif_get_ip_info( netif, &ip_info);
 
     char wsUrl[64];
-    uint32_t ip = ip_info.ip.addr;
-    snprintf(wsUrl, sizeof (wsUrl), "ws://%d.%d.%d.%d:81/",(int)((ip>>24)&0xff), (int)((ip>>16)&0xff), (int)((ip>>8)&0xff), (int)(ip&0xff) );
+    snprintf(wsUrl, sizeof (wsUrl), "ws://" IPSTR ":81/", IP2STR(&ip_info.ip));
 
     cJSON *result = cJSON_CreateObject();
 
@@ -256,87 +248,180 @@ esp_err_t EspSigK::htmlSignalKEndpoints(httpd_req_t *r) {
     return ESP_OK;
 }
 
+void EspSigK::triggerWsClientConnect(TimerHandle_t timer) {
+    (void)timer;
+
+    int dummy = 0;
+    xQueueSend(event_queue, &dummy, portMAX_DELAY);
+}
+
+_Noreturn void EspSigK::taskWsClientConnect( void *arg ) {
+    (void) arg;
+
+    EspSigK* _this = static_cast<EspSigK *>(arg);
+    for ( ;; ) {
+        uint32_t dummy;
+        if ( xQueueReceive( event_queue, &dummy, portMAX_DELAY ) ) {
+            if ( !_this->connectWebSocketClient() ) {
+                xTimerStart( _this->timer, portMAX_DELAY );
+            }
+        }
+    }
+}
+
 void EspSigK::setupWebSocket() {
-//    webSocketServer.begin();
-//    webSocketServer.onEvent( webSocketServerEvent );
-//    webSocketClient.onEvent( webSocketClientEvent );
-//
-//    connectWebSocketClient();
+    if ( !event_queue ) {
+        event_queue  = xQueueCreate( 10, sizeof( int ));
+        if ( xTaskCreate( taskWsClientConnect, TAG_WSCLIENT, 3072, this, tskIDLE_PRIORITY, nullptr ) != pdTRUE ) {
+            ESP_LOGE(TAG_WSCLIENT, "Error create websocket task");
+        }
+        timer = xTimerCreate(
+                TAG,
+                pdMS_TO_TICKS(wsClientReconnectInterval),
+                0,
+                nullptr,
+                triggerWsClientConnect );
+    }
+    triggerWsClientConnect(timer);
 }
 
 bool EspSigK::getMDNSService(std::string& host, uint16_t& port ) {
-    // get IP address using an mDNS query
-    if ( printDebugSerial ) Serial.println( "SIGK: Searching for server via mDNS" );
+    ESP_LOGI( TAG_WSCLIENT, "mDNS start lookup" );
+
     mdns_result_t *results = nullptr;
-    mdns_query_ptr( "_signalk-ws", "_tcp", 1000, 1, &results );
-    if ( results == nullptr) {
+    esp_err_t err = mdns_query_ptr( "_signalk-ws", "_tcp", 3000, 20, &results );
+    if (err) {
+        ESP_LOGE(TAG_WSCLIENT, "mDNS query failed: %s", esp_err_to_name(err));
         return false;
     }
-//    host = results->hostname;
-    esp_ip4_addr_t* ip = &results->addr->addr.u_addr.ip4;
+    if ( results == nullptr) {
+        ESP_LOGI( TAG_WSCLIENT, "mDNS no service found" );
+        return false;
+    }
     char s[32];
-    snprintf(s, sizeof(s), "%d.%d.%d.%d",
-            esp_ip4_addr4_16(ip), esp_ip4_addr3_16(ip),
-            esp_ip4_addr2_16(ip), esp_ip4_addr1_16(ip) );
+    mdns_result_t *result = results;
+    ESP_LOGI( TAG_WSCLIENT, "mDNS dump services" );
+    while ( result != nullptr)    {
+        esp_ip4_addr_t *ip = &result->addr->addr.u_addr.ip4;
+        snprintf( s, sizeof( s ), IPSTR, IP2STR(ip));
+        ESP_LOGI(TAG_WSCLIENT,"- host %s ip %s instance %s",
+                 result->hostname ? result->hostname : "null", s, result->instance_name ? result->instance_name : "null");
+        result = result->next;
+    }
     mdns_query_results_free( results );
 
     host = s;
     port = results->port;
-    ESP_LOGI(TAG, "Found SignalK Server via mDNS at %s:%d", signalKServerHost.c_str(), signalKServerPort );
+    ESP_LOGI(TAG_WSCLIENT, "Found SignalK Server via mDNS at %s:%d", host.c_str(), port );
     return true;
 }
 
+void EspSigK::setSignalkServer( const char* host, uint16_t port, const char* token ) {
+    signalKServerHost = host;
+    signalKServerPort = port;
+    signalKServerToken = token;
+}
 
-void EspSigK::connectWebSocketClient() {
+void EspSigK::onWebSocketClientEvent( esp_event_base_t event_base, int32_t event_id, void* event_data ) {
+    esp_websocket_event_data_t *data = (esp_websocket_event_data_t *)event_data;
+    switch ( event_id ) {
+        case WEBSOCKET_EVENT_CONNECTED:
+            wsClientConnected = true;
+            ESP_LOGI(TAG_WSCLIENT,"event connected");
+            break;
+        case WEBSOCKET_EVENT_DISCONNECTED:
+            wsClientConnected = false;
+            ESP_LOGI(TAG_WSCLIENT,"event disconnected");
+            triggerWsClientConnect( nullptr);
+            break;
+        case WEBSOCKET_EVENT_ERROR:
+            wsClientConnected = false;
+            ESP_LOGW(TAG_WSCLIENT,"event error type %d", data->error_handle.error_type);
+            // transport_error=ESP_OK, tls_error_code=0, tls_flags=0, errno=119
+//            if (data->error_handle.error_type == WEBSOCKET_ERROR_TYPE_TCP_TRANSPORT) {
+                ESP_LOGI( TAG_WSCLIENT,"reported from esp-tls %d", data->error_handle.esp_tls_last_esp_err);
+                ESP_LOGI( TAG_WSCLIENT,"reported from tls stack %d", data->error_handle.esp_tls_stack_err);
+                ESP_LOGI( TAG_WSCLIENT,"captured as transport's socket errno %d",  data->error_handle.esp_transport_sock_errno);
+//            }
+            triggerWsClientConnect( nullptr);
+            break;
+        case WEBSOCKET_EVENT_DATA: {
+            if ( data->op_code & 0x08 ) {
+                // Websocket control frame
+                break;
+            }
+            if ( data->op_code == 1 ) {
+                char *buf = static_cast<char *>(malloc( data->data_len + 1 ));
+                memcpy( buf, data->data_ptr, data->data_len );
+                buf[ data->data_len ] = 0;
+                ESP_LOGI( TAG_WSCLIENT, "received %s", buf );
+                free( buf );
+            } else if ( data->op_code == 1 ) {
+                ESP_LOGI( TAG_WSCLIENT, "received binary len %d", data->data_len );
+            }
+            break;
+        }
+        default:
+            ESP_LOGI( TAG_WSCLIENT, "ignored event %ld", event_id );
+            break;
+    }
+}
+
+void EspSigK::webSocketClientEventHandler( void* event_handler_arg, esp_event_base_t event_base, int32_t event_id, void* event_data ) {
+    ((EspSigK*)event_handler_arg)->onWebSocketClientEvent(event_base, event_id, event_data);
+}
+
+bool EspSigK::connectWebSocketClient() {
     std::string host;
     uint16_t port = 0;
-    const char* url = "/signalk/v1/stream?subscribe=none";
 
-    if ( signalKServerHost.length() == 0 ) {
-        getMDNSService( host, port );
-    } else {
+    ESP_LOGI(TAG_WSCLIENT, "starting");
+
+    if ( !getMDNSService( host, port ) && signalKServerHost.length() != 0) {
         host = signalKServerHost;
         port = signalKServerPort;
+        ESP_LOGW( TAG_WSCLIENT, "using configured host %s", host.c_str() );
     }
 
     if ( host.length() == 0 || port == 0 ) {
-        ESP_LOGW( TAG, "No server for websocket client" );
-        return;
+        ESP_LOGW( TAG_WSCLIENT, "no server found" );
+        return false;
     }
-//    if ( signalKServerToken != "" ) {
-//        url = url + "&token=" + signalKServerToken;
-//    }
 
-    webSocketClient.begin( host, port, url );
-    wsClientConnected = true;
-}
+    const esp_websocket_client_config_t ws_cfg = {
+            .host = host.c_str(),
+            .port = port,
+            .path = "/signalk/v1/stream?subscribe=none",
+            .disable_auto_reconnect = true,
+            .transport = WEBSOCKET_TRANSPORT_OVER_TCP,
+            .keep_alive_enable = true,
+            .reconnect_timeout_ms = 10000,
+            .network_timeout_ms = 10000,
+    };
 
-#if 0
-void webSocketClientEvent( WStype_t type, uint8_t *payload, size_t length ) {
-    switch ( type ) {
-        case WStype_DISCONNECTED: {
-            wsClientConnected = false;
-            if ( printDebugSerial ) Serial.println( "SIGK: Websocket Client Disconnected!" );
-            break;
-        }
-        case WStype_CONNECTED: {
-            wsClientConnected = true;
-            if ( printDebugSerial ) Serial.printf( "SIGK: Client Connected to url: %s\n", payload );
-            break;
-        }
-        case WStype_TEXT:
-            //Serial.printf("[WSc] get text: %s\n", payload);
-            //receiveDelta(payload);
-            break;
-        case WStype_BIN:
-            //Serial.printf("[WSc] get binary length: %u\n", length);
-            //hexdump(payload, length);
-            break;
+    // https://docs.espressif.com/projects/esp-idf/en/v4.1/api-reference/protocols/esp_websocket_client.html
+
+    esp_err_t err;
+    wsClientHandle = esp_websocket_client_init(&ws_cfg);
+    if (wsClientHandle == nullptr) {
+        ESP_LOGE(TAG_WSCLIENT, "esp_websocket_client_init failed");
+        return false;
     }
+    err = esp_websocket_client_start(wsClientHandle);
+    if (err) {
+        ESP_LOGE(TAG_WSCLIENT, "esp_websocket_client_start failed with %s", esp_err_to_name(err));
+        esp_websocket_client_destroy(wsClientHandle);
+        return false;
+    }
+
+    err = esp_websocket_register_events( wsClientHandle, WEBSOCKET_EVENT_ANY, webSocketClientEventHandler, this);
+    if (err) {
+        ESP_LOGE(TAG_WSCLIENT, "failed to register event WEBSOCKET_EVENT_CONNECTED: %s", esp_err_to_name(err));
+    }
+
+    ESP_LOGI(TAG_WSCLIENT, "started");
+    return true;
 }
-#endif
-
-
 
 /* ******************************************************************** */
 /* SignalK                                                              */
@@ -412,11 +497,13 @@ void EspSigK::sendDelta() {
     cJSON_Delete(result);
 
     if ( printDeltaSerial ) {
-        Serial.println( deltaText );
+        ESP_LOGD(TAG, "%s", deltaText );
     }
     wss_server_send_message( http_server, deltaText);
-    if ( wsClientConnected ) { // client
-//        webSocketClient.sendTXT( deltaText );
+    if ( wsClientConnected ) {
+        if ( esp_websocket_client_send_text(wsClientHandle, deltaText, strlen(deltaText), 10) == ESP_FAIL ) {
+            ESP_LOGE(TAG_WSCLIENT,"error sending delta");
+        }
     }
     free(deltaText);
 

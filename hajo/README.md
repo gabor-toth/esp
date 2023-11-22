@@ -6,9 +6,35 @@ Signal K
 - https://github.com/SignalK/signalk-server#how-to-get-signal-k-server
 - https://github.com/SignalK/signalk-server/blob/master/docker/README.md#quickstart
 
+Docker
+------
+
 ```
 docker run -d --init  --name signalk-server -p 3000:3000 -v $(pwd):/home/node/.signalk cr.signalk.io/signalk/signalk-server
 ```
+
+Local
+-----
+
+```
+sudo apt isntall libavahi-compat-libdnssd-dev
+sudo npm install -g mdns
+sudo npm install -g signalk-server
+
+```
+
+Reuqetss
+---------
+
+curl -X GET http://10.128.65.180:3000/signalk
+{"endpoints":{"v1":{"version":"2.4.1","signalk-http":"http://10.128.65.180:3000/signalk/v1/api/","signalk-ws":"ws://10.128.65.180:3000/signalk/v1/stream","signalk-tcp":"tcp://10.128.65.180:8375"}},"server":{"id":"signalk-server-node","version":"2.4.1"}}
+
+
+wscat -c "ws://10.128.65.180:3000/signalk/v1/stream?subscribe=all"
+Connected (press CTRL+C to quit)
+< {"name":"signalk-server","version":"2.4.1","self":"vessels.urn:mrn:signalk:uuid:59e1f1c9-9e32-4340-a1d0-656512c48f0a","roles":["master","main"],"timestamp":"2023-11-22T12:55:47.852Z"}
+< {"context":"vessels.urn:mrn:signalk:uuid:59e1f1c9-9e32-4340-a1d0-656512c48f0a","updates":[{"$source":"defaults","timestamp":"2023-11-22T12:43:36.969Z","values":[{"path":"","value":{"uuid":"urn:mrn:signalk:uuid:59e1f1c9-9e32-4340-a1d0-656512c48f0a"}}]}]}
+
 
 Service Sniffer
 ===============

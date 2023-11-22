@@ -6,6 +6,8 @@
  */
 
 #include "esp_http_server.h"
+#include "esp_websocket_client.h"
+#include "freertos/timers.h"
 #include <list>
 #include <string>
 
@@ -29,11 +31,7 @@ public:
 
     void stop();
 
-//    void setServerHost( string &newServer );
-//
-//    void setServerPort( uint16_t newPort );
-//
-//    void setServerToken( string &token );
+    void setSignalkServer( const char *host, uint16_t port, const char *token = nullptr );
 
     void setPrintDeltaSerial( bool v );
 
@@ -58,7 +56,7 @@ private:
 
     void setupWebSocket();
 
-    void connectWebSocketClient();
+    bool connectWebSocketClient();
 
     bool getMDNSService( std::string &host, uint16_t &port );
 
@@ -70,6 +68,15 @@ private:
 
     static esp_err_t htmlDescriptionXml( httpd_req_t *r );
 
+    void onWebSocketClientEvent( esp_event_base_t event_base, int32_t event_id, void *event_data );
+
+    static void webSocketClientEventHandler( void *event_handler_arg, esp_event_base_t event_base, int32_t event_id,
+                                             void *event_data );
+
+    _Noreturn static void taskWsClientConnect( void *arg );
+
+    static void triggerWsClientConnect( TimerHandle_t timer );
+
     httpd_handle_t http_server;
     std::string hostname;
     bool printDeltaSerial;
@@ -79,13 +86,15 @@ private:
     unsigned long deltaPgn;
 
     std::string signalKServerHost;
+    std::string signalKServerToken;
     uint16_t signalKServerPort;
-    bool wsClientConnected;
-
-    /*
-    const char *signalKServerHost;
-    const char *signalKServerToken;
+    esp_websocket_client_handle_t wsClientHandle;
     uint32_t wsClientReconnectInterval;
+    static QueueHandle_t event_queue;
+    TimerHandle_t timer;
+
+    bool wsClientConnected;
+    /*
     uint32_t timerReconnect;
      */
 };

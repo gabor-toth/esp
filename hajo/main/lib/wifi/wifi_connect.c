@@ -70,7 +70,7 @@ typedef struct {
 
 static known_wifi_network_t known_wifi_networks[] = {
         { .ssid = "TothKiss", .password = "ToThKiSs" },
-        { .ssid ="P92WG_E", .password ="Newmexicobrother08" },
+        { .ssid ="P92WG_E", .password ="22Dailymuffintime77" },
         { .ssid ="TGA", .password ="ToThKiSs01" },
         { .ssid ="DIGI-02300875", .password ="qnZFucU6" },
 };
