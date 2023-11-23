@@ -23,18 +23,27 @@ sudo npm install -g signalk-server
 
 ```
 
-Reuqetss
+Requests
 ---------
 
 curl -X GET http://10.128.65.180:3000/signalk
-{"endpoints":{"v1":{"version":"2.4.1","signalk-http":"http://10.128.65.180:3000/signalk/v1/api/","signalk-ws":"ws://10.128.65.180:3000/signalk/v1/stream","signalk-tcp":"tcp://10.128.65.180:8375"}},"server":{"id":"signalk-server-node","version":"2.4.1"}}
-
+{"endpoints":{"v1":{"version":"2.4.1","
+signalk-http":"http://10.128.65.180:3000/signalk/v1/api/","signalk-ws":"ws://10.128.65.180:3000/signalk/v1/stream","signalk-tcp":"tcp://10.128.65.180:8375"}},"server":{"id":"signalk-server-node","version":"2.4.1"}}
 
 wscat -c "ws://10.128.65.180:3000/signalk/v1/stream?subscribe=all"
 Connected (press CTRL+C to quit)
-< {"name":"signalk-server","version":"2.4.1","self":"vessels.urn:mrn:signalk:uuid:59e1f1c9-9e32-4340-a1d0-656512c48f0a","roles":["master","main"],"timestamp":"2023-11-22T12:55:47.852Z"}
-< {"context":"vessels.urn:mrn:signalk:uuid:59e1f1c9-9e32-4340-a1d0-656512c48f0a","updates":[{"$source":"defaults","timestamp":"2023-11-22T12:43:36.969Z","values":[{"path":"","value":{"uuid":"urn:mrn:signalk:uuid:59e1f1c9-9e32-4340-a1d0-656512c48f0a"}}]}]}
+< {"name":"signalk-server","version":"2.4.1","self":"vessels.urn:mrn:signalk:uuid:
+59e1f1c9-9e32-4340-a1d0-656512c48f0a","roles":["master","main"],"timestamp":"2023-11-22T12:55:47.852Z"}
+< {"context":"vessels.urn:mrn:signalk:uuid:59e1f1c9-9e32-4340-a1d0-656512c48f0a","updates":[{"$source":"defaults","
+timestamp":"2023-11-22T12:43:36.969Z","
+values":[{"path":"","value":{"uuid":"urn:mrn:signalk:uuid:59e1f1c9-9e32-4340-a1d0-656512c48f0a"}}]}]}
 
+Other links
+-----------
+
+- [Discovery and Connection Establishment](https://signalk.org/specification/1.7.0/doc/connection.html)
+- [Streaming API](https://signalk.org/specification/1.7.0/doc/streaming_api.html)
+- [KIP](https://github.com/mxtommy/Kip)
 
 Service Sniffer
 ===============
