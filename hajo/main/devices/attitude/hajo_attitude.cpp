@@ -5,6 +5,9 @@
 #include "n2k/n2k_struct_parser.h"
 #include "n2k/n2k_sender.h"
 #include "n2k/n2k_util.h"
+#include <math.h>
+
+#define RAD_TO_DEG                  57.27272727f /*!< Radians to degrees */
 
 static const char *TAG = "hajo_atti";
 
@@ -28,26 +31,40 @@ void setup_gyroscope() {
     ESP_ERROR_CHECK( i2c_driver_install( i2c_master_port, conf.mode, 0, 0, 0 ));
 
     gyroscope = mpu6050_create( i2c_master_port, 0b1101000 );
-    mpu6050_config( gyroscope, ACCE_FS_2G, GYRO_FS_250DPS);
+    mpu6050_config( gyroscope, ACCE_FS_2G, GYRO_FS_250DPS );
     mpu6050_wake_up( gyroscope );
 }
 
 static bool send_attitude( int index, tN2kMsg &msg ) {
-    mpu6050_gyro_value_t gyro_value;
-    mpu6050_get_gyro( gyroscope, &gyro_value );
+//    mpu6050_gyro_value_t gyro_value;
+//    mpu6050_get_gyro( gyroscope, &gyro_value );
     mpu6050_acce_value_t acce_value;
     mpu6050_get_acce( gyroscope, &acce_value );
-    complimentary_angle_t angle = complimentary_angle_t();
-    mpu6050_complimentory_filter( gyroscope, &acce_value, &gyro_value, &angle );
-    ESP_LOGI( TAG, "angle pitch=%lf roll=%lf  gyro x=%lf y=%lf z=%lf   acce x=%lf y=%lf z=%lf",
-              angle.pitch, angle.roll,
-              gyro_value.gyro_x, gyro_value.gyro_y, gyro_value.gyro_z ,
-              acce_value.acce_x, acce_value.acce_y, acce_value.acce_z
-              );
-    double yaw = 0;
-    double pitch =  gyro_value.gyro_y;
-    double roll =  gyro_value.gyro_z;
-    SetN2kAttitude( msg, index, yaw, pitch, roll);
+    complimentary_angle_t angle;
+//    mpu6050_complimentory_filter( gyroscope, &acce_value, &gyro_value, &angle );
+    // see https://howthingsfly.si.edu/flight-dynamics/roll-pitch-and-yaw
+    // roll = left - right (around x axis)
+    // pitch = front - back (around y axis)
+    // yaw = turning  (around z axis)
+
+    // board mounted horizontally
+    // angle.roll = (atan2(acce_value.acce_y, acce_value.acce_z) * RAD_TO_DEG);
+    // angle.pitch = (atan2(acce_value.acce_x, acce_value.acce_z) * RAD_TO_DEG);
+    // board mounted vertically
+    angle.roll = ( atan2( acce_value.acce_y, acce_value.acce_x ));
+    angle.pitch = ( atan2( acce_value.acce_z, acce_value.acce_x ));
+
+//    ESP_LOGD( TAG, "angle roll=%lf pitch=%lf  acce x=%lf y=%lf z=%lf",
+//              angle.roll* RAD_TO_DEG, angle.pitch * RAD_TO_DEG,
+//              acce_value.acce_x, acce_value.acce_y, acce_value.acce_z
+//              );
+//    ESP_LOGD( TAG, "angle roll=%lf pitch=%lf  gyro x=%lf y=%lf z=%lf   acce x=%lf y=%lf z=%lf",
+//              angle.roll, angle.pitch,
+//              gyro_value.gyro_x, gyro_value.gyro_y, gyro_value.gyro_z ,
+//              acce_value.acce_x, acce_value.acce_y, acce_value.acce_z
+//              );
+    // values are in rad, see https://signalk.org/specification/1.5.0/doc/vesselsBranch.html#vesselsregexpnavigationattitude
+    SetN2kAttitude( msg, index, 0.0, angle.pitch, angle.roll );
     return true;
 }
 
@@ -91,15 +108,15 @@ static void setup_n2k_device( int iDev ) {
 static bool n2k_send_attitude( int index, tN2kMsg &message ) {
     switch ( index ) {
         case 0:
-            return send_attitude(index, message);
+            return send_attitude( index, message );
         default:
             return false;
     }
 }
 
-void hajo_attitude_main(  int iDev ) {
+void hajo_attitude_main( int iDev ) {
     setup_gyroscope();
 
-    setup_n2k_device( iDev);
-    nk2_register_sender( n2k_send_attitude, "attitude", N2K_PGN_ATTITUDE_INTERVAL_MS*20, 300, true );
+    setup_n2k_device( iDev );
+    nk2_register_sender( n2k_send_attitude, "attitude", N2K_PGN_ATTITUDE_INTERVAL_MS, 320, true );
 }
