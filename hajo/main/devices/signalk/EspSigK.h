@@ -5,9 +5,12 @@
  * see https://github.com/AK-Homberger/NMEA2000-SignalK-Gateway
  */
 
+#include "cJSON.h"
 #include "esp_http_server.h"
 #include "esp_websocket_client.h"
+#include "esp_http_client.h"
 #include "freertos/timers.h"
+#include "HttpRequest.h"
 #include <list>
 #include <string>
 
@@ -62,11 +65,9 @@ public:
 
     ~EspSigK();
 
-    void start( const char *hostname, httpd_handle_t server );
+    void start( const char *deviceName, const char *hostname, httpd_handle_t server, const char *wifi_ssid );
 
     void stop();
-
-    void setSignalkServer( const char *host, uint16_t port, const char *token = nullptr );
 
     void setPrintDeltaSerial( bool v );
 
@@ -81,9 +82,19 @@ private:
 
     void setupWebSocket();
 
-    bool connectWebSocketClient();
+    bool connectWsClient();
 
-    bool getMDNSService( std::string &host, uint16_t &port );
+    void stopWsClient();
+
+    void onClientConnected();
+
+    void onClientDisconnected();
+
+    void onClientTextReceived( const char *buf );
+
+    void processFrameHello( cJSON *o );
+
+    bool findMDNSService();
 
     static esp_err_t htmlSignalKEndpoints( httpd_req_t *r );
 
@@ -100,33 +111,48 @@ private:
 
     _Noreturn static void taskWsClientConnect( void *arg );
 
-    static void triggerWsClientConnect( TimerHandle_t timer );
+    void triggerWsClientConnect();
+
+    static void timerCallback( TimerHandle_t timer );
+
+    bool loadSetting( const char *name, std::string &value );
+
+    void setUuid();
+
+    void sendAccessRequest();
+
+    void prepareAccessRequest();
+
+    void prepareCheckAccessRequest( const char *href );
+
+    void onTokenTimer();
+
+    void sendAndHandleAccessRequest();
+
+    void saveSetting( const char *name, const std::string &value );
 
     httpd_handle_t http_server;
     std::string hostname;
     bool printDeltaSerial;
     bool printDebugSerial;
 
+    std::string deviceName;
     std::string signalKServerHost;
-    std::string signalKServerToken;
     uint16_t signalKServerPort;
+    std::string signalKServerToken;
+    std::string signalKUuid;
+    std::string authHeader;
     esp_websocket_client_handle_t wsClientHandle;
     uint32_t wsClientReconnectInterval;
     static QueueHandle_t event_queue;
-    TimerHandle_t timer;
-
     bool wsClientConnected;
-    /*
-    uint32_t timerReconnect;
-     */
+    TimerHandle_t wsClientConnectTimer;
+    bool pendingTokenState;
+    TimerHandle_t pendingTokenTimer;
+
+    HttpRequest httpClientData;
 };
 
 extern EspSigK sigK;
-
-//html stuff
-
-//void webSocketClientEvent(WStype_t type, uint8_t * payload, size_t length);
-//void webSocketServerEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length);
-
 
 #endif

@@ -82,10 +82,15 @@ extern void nvs_open_and_write_string( const char *key, const char *value ) {
 }
 
 void nvs_write_string( nvs_handle_t nvs_handle, const char *key, const char *value ) {
-    ESP_LOGI( LOG_TAG, "Writing key %s", key );
-//    ESP_LOGI( LOG_TAG, "Writing key %s: %s", key, value );
-
-    esp_err_t err = nvs_set_str( nvs_handle, key, value );
+    esp_err_t err;
+    if ( value != NULL && *value != 0 ) {
+        ESP_LOGI( LOG_TAG, "Writing key %s", key );
+        //ESP_LOGI( LOG_TAG, "Writing key %s: %s", key, value );
+        err = nvs_set_str( nvs_handle, key, value );
+    } else {
+        ESP_LOGI( LOG_TAG, "Deleting key %s", key );
+        err = nvs_erase_key( nvs_handle, key );
+    }
     if ( err != ESP_OK ) {
         ESP_LOGE( LOG_TAG, "Error writing of key %s: %s", key, esp_err_to_name( err ));
     } else {
