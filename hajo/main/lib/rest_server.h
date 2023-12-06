@@ -21,7 +21,7 @@ typedef struct rest_server_context {
     char scratch[REST_SCRATCH_BUFSIZE];
 } rest_server_context_t;
 
-typedef esp_err_t (*rest_wifi_connect_func_t)( httpd_handle_t server );
+typedef esp_err_t (*rest_wifi_connect_func_t)( httpd_handle_t server, const char *wifi_ssid );
 
 typedef void (*rest_wifi_disconnect_func_t)( httpd_handle_t server );
 

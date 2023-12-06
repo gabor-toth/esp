@@ -30,6 +30,7 @@ typedef struct rest_callbacks_node_t {
 
 static rest_callbacks_node_t *registered_callbacks = NULL;
 static rest_callbacks_node_t *registered_callbacks_tail = NULL;
+static char *wifi_ssid = NULL;
 
 #define FILE_PATH_MAX (ESP_VFS_PATH_MAX + 128)
 
@@ -196,7 +197,7 @@ static void close_fn_callback( httpd_handle_t hd, int sockfd ) {
     }
 }
 
-static esp_err_t rest_server_start() {
+static esp_err_t rest_server_start( const char *wifi_ssid ) {
 //    rest_server_context_t *rest_context = calloc( 1, sizeof( rest_server_context_t ));
 //    if ( rest_context == NULL) {
 //        ESP_LOGE( TAG, "No memory for rest_context" );
@@ -222,7 +223,7 @@ static esp_err_t rest_server_start() {
     for ( rest_callbacks_node_t *node = registered_callbacks; node != NULL; node = node->next ) {
         if ( node->callbacks.wifi_connect_fn ) {
             ESP_LOGI( TAG, "Callback for %s", node->callbacks.name );
-            node->callbacks.wifi_connect_fn( http_server );
+            node->callbacks.wifi_connect_fn( http_server, wifi_ssid );
         } else {
             ESP_LOGI( TAG, "No callback for %s", node->callbacks.name );
         }
@@ -243,8 +244,18 @@ static esp_err_t rest_server_stop() {
 
 static void handler_on_wifi_connect( void *dummy, esp_event_base_t event_base,
                                      int32_t event_id, void *event_data ) {
-    if ( http_server == NULL) {
-        ESP_ERROR_CHECK( rest_server_start());
+    if ( event_id == IP_EVENT_STA_GOT_IP ) {
+        if ( http_server == NULL) {
+            ESP_ERROR_CHECK( rest_server_start( wifi_ssid ));
+        }
+    } else if ( event_id == WIFI_EVENT_STA_CONNECTED ) {
+        wifi_event_sta_connected_t *wifi_event = event_data;
+        if ( wifi_ssid != NULL) {
+            free( wifi_ssid );
+        }
+        wifi_ssid = malloc( wifi_event->ssid_len + 1 );
+        memcpy( wifi_ssid, wifi_event->ssid, wifi_event->ssid_len );
+        wifi_ssid[ wifi_event->ssid_len ] = 0;
     }
 }
 
@@ -285,6 +296,8 @@ esp_err_t rest_register_uri_handler( httpd_handle_t handle,
 esp_err_t rest_server_main() {
     ESP_ERROR_CHECK(
             esp_event_handler_register( IP_EVENT, IP_EVENT_STA_GOT_IP, &handler_on_wifi_connect, NULL ));
+    ESP_ERROR_CHECK(
+            esp_event_handler_register( WIFI_EVENT, WIFI_EVENT_STA_CONNECTED, &handler_on_wifi_connect, NULL ));
     ESP_ERROR_CHECK(
             esp_event_handler_register( WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &handler_on_wifi_disconnect, NULL ));
 

@@ -35,7 +35,7 @@ static void setup_n2k_device( int iDev ) {
     static const tNMEA2000::tProductInformation ProductInformation = {
             2100,                        // N2kVersion
             100,                        // Manufacturer's product code
-            "N2K Gateway",               // Manufacturer's Model ID
+            DEVICE_NAME,               // Manufacturer's Model ID
             "0.1.0 (2023-03-23)",        // Manufacturer's Software version code
             "1.0.0 (2023-03-23)",    // Manufacturer's Model version
             "00000001",            // Manufacturer's Model serial code
@@ -64,9 +64,9 @@ static void setup_n2k_device( int iDev ) {
     NMEA2000.AttachMsgHandler( incomingMessageHandler );
 }
 
-static esp_err_t signalk_start( httpd_handle_t server ) {
+static esp_err_t signalk_start( httpd_handle_t server, const char* wifi_ssid ) {
     ESP_LOGI( TAG, "signalk_start" );
-    sigK.start( "n2k-gw", server );
+    sigK.start( DEVICE_NAME, "n2k-gw", server, wifi_ssid );
 
     return ESP_OK;
 }
