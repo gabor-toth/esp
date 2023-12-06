@@ -27,6 +27,7 @@ if ((DEVICE_TYPE EQUAL DEVICE_TYPE_LOGGER) OR (DEVICE_TYPE EQUAL DEVICE_TYPE_ALL
             "devices/logger/hajo_logger.cpp"
             "devices/logger/sdcard.c"
             "devices/signalk/EspSigK.cpp"
+            "devices/signalk/HttpRequest.cpp"
             "devices/signalk/hajo_signalk.cpp"
             "devices/signalk/NMEA2000-SignalK-Gateway.cpp"
             "lib/gpio_json.c"
