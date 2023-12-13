@@ -71,7 +71,7 @@ void n2k_wake_receiver() {
 }
 #endif
 
-_Noreturn static void task_main_pull( void *arg ) {
+_Noreturn static void task_main_poll( void *arg ) {
     (void) arg;
 
     ESP_LOGI(TAG,"receive loop starting");
@@ -120,7 +120,7 @@ void n2k_init() {
             timer_callback );
     ESP_LOGI(TAG,"Timer %p created", timer);
     */
-    xTaskCreate( task_main_pull, TAG, 3072, nullptr, tskIDLE_PRIORITY, nullptr );
+    xTaskCreate( task_main_poll, TAG, 3072, nullptr, tskIDLE_PRIORITY, nullptr );
     //n2k_wake_receiver();
 
     uint8_t sourceAddress = n2k_load_address();

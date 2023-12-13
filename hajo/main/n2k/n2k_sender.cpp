@@ -90,7 +90,7 @@ static void timer_callback( TimerHandle_t ) {
 }
 
 void n2k_sender_on_open() {
-    ESP_LOGI( TAG, "n2k_on_open" );
+    ESP_LOGI( TAG, "n2k_sender_on_open" );
     vector<tN2kSendMessage>::iterator iterator;
     for ( iterator = sendMessages.begin(); iterator != sendMessages.end(); iterator++ ) {
         if ( iterator->Scheduler.IsEnabled()) {
