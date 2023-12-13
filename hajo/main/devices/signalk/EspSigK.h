@@ -151,6 +151,12 @@ private:
     TimerHandle_t pendingTokenTimer;
 
     HttpRequest httpClientData;
+
+    void startPendingTokenTimer() const;
+
+    void startWsClientConnectTimer();
+
+    void clearRequestIdAndRequestNew();
 };
 
 extern EspSigK sigK;

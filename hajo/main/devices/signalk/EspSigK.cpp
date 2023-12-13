@@ -16,6 +16,7 @@
 
 #define NVS_KEY_TOKEN "signalk.token"
 #define NVS_KEY_UUID "signalk.uuid"
+#define NVS_KEY_REQUEST_ID "sk.requestId"
 
 #define TIMER_WS_CONNECT    1
 #define TIMER_TOKEN_CHECK   2
@@ -147,6 +148,9 @@ void EspSigK::setupDiscovery() {
 }
 
 void EspSigK::start( const char *deviceName, const char *hostname, httpd_handle_t server, const char* wifi_ssid ) {
+//    signalKServerToken.clear();
+//    saveSetting(NVS_KEY_TOKEN, signalKServerToken);
+
     stop();
     ESP_LOGI( TAG, "Starting as host %s on network %s", hostname, wifi_ssid );
     this->hostname = hostname;
@@ -155,8 +159,9 @@ void EspSigK::start( const char *deviceName, const char *hostname, httpd_handle_
 
     if ( strcmp( wifi_ssid, "TothKiss") == 0 ) {
         signalKServerHost = "192.168.72.189";
-    } else if ( strcmp( wifi_ssid, "P92WG_E") == 0 ) {
-        signalKServerHost = "10.128.65.20";
+    } else if ( strcmp( wifi_ssid, "P92WG_E") == 0 || strcmp( wifi_ssid, "TGA") == 0 ) {
+        // signalKServerHost = "10.128.65.20";
+        signalKServerHost = "79.122.115.7";
     }
 
 //    setupDiscovery();
@@ -269,7 +274,7 @@ void EspSigK::timerCallback( TimerHandle_t timer ) {
     xQueueSend( event_queue, &timerId, portMAX_DELAY );
 }
 
-_Noreturn void EspSigK::taskWsClientConnect( void *arg ) {
+void EspSigK::taskWsClientConnect( void *arg ) {
     (void) arg;
 
     EspSigK *_this = static_cast<EspSigK *>(arg);
@@ -282,8 +287,7 @@ _Noreturn void EspSigK::taskWsClientConnect( void *arg ) {
             } else if ( timerId == TIMER_WS_CONNECT ) {
                 ESP_LOGI(TAG,"On wsClientConnectTimer");
                 if ( !_this->connectWsClient()) {
-                    ESP_LOGI(TAG,"Start wsClientConnectTimer");
-                    xTimerStart( _this->wsClientConnectTimer, portMAX_DELAY );
+                    _this ->startWsClientConnectTimer( );
                 }
             }
         }
@@ -356,22 +360,29 @@ void EspSigK::onWebSocketClientEvent( esp_event_base_t event_base, int32_t event
     esp_websocket_event_data_t *data = (esp_websocket_event_data_t *) event_data;
     switch ( event_id ) {
         case WEBSOCKET_EVENT_CONNECTED:
+            ESP_LOGI( TAG_WSCLIENT, "event connected" );
             onClientConnected();
             break;
         case WEBSOCKET_EVENT_DISCONNECTED:
+            ESP_LOGI( TAG_WSCLIENT, "event disconnected" );
             onClientDisconnected();
             break;
         case WEBSOCKET_EVENT_ERROR:
+            ESP_LOGW( TAG_WSCLIENT, "event error type %d esp_tls_last_esp_err=%d esp_tls_stack_err=%d esp_transport_sock_errno=%d esp_ws_handshake_status_code=%d",
+                      data->error_handle.error_type,
+                      data->error_handle.esp_tls_last_esp_err,
+                      data->error_handle.esp_tls_stack_err,
+                      data->error_handle.esp_transport_sock_errno,
+                      data->error_handle.esp_ws_handshake_status_code );
             wsClientConnected = false;
-            ESP_LOGW( TAG_WSCLIENT, "event error type %d", data->error_handle.error_type );
-            // transport_error=ESP_OK, tls_error_code=0, tls_flags=0, errno=119
-//            if (data->error_handle.error_type == WEBSOCKET_ERROR_TYPE_TCsiP_TRANSPORT) {
-            ESP_LOGI( TAG_WSCLIENT, "reported from esp-tls %d", data->error_handle.esp_tls_last_esp_err );
-            ESP_LOGI( TAG_WSCLIENT, "reported from tls stack %d", data->error_handle.esp_tls_stack_err );
-            ESP_LOGI( TAG_WSCLIENT, "captured as transport's socket errno %d",
-                      data->error_handle.esp_transport_sock_errno );
-//            }
-            xTimerStart( wsClientConnectTimer, portMAX_DELAY );
+            if ( data->error_handle.esp_ws_handshake_status_code == 401 ) {
+                ESP_LOGW(TAG_WSCLIENT,"Token invalid, requesting new one");
+                signalKServerToken.clear();
+                saveSetting(NVS_KEY_TOKEN, signalKServerToken);
+                triggerWsClientConnect();
+            } else {
+                startWsClientConnectTimer();
+            }
             break;
         case WEBSOCKET_EVENT_DATA: {
             if ( data->op_code & 0x08 ) {
@@ -389,6 +400,12 @@ void EspSigK::onWebSocketClientEvent( esp_event_base_t event_base, int32_t event
             }
             break;
         }
+        case WEBSOCKET_EVENT_CLOSED:
+            //ESP_LOGI( TAG_WSCLIENT, "event closed" );
+            break;
+        case WEBSOCKET_EVENT_BEFORE_CONNECT:
+            //ESP_LOGI( TAG_WSCLIENT, "event before_connect" );
+            break;
         default:
             ESP_LOGI( TAG_WSCLIENT, "ignored event %ld", event_id );
             break;
@@ -419,7 +436,7 @@ bool EspSigK::connectWsClient() {
         // do not retry to connect ws until we get the token
         return true;
     }
-    authHeader = "Authorization: Bearer "+ signalKServerToken;
+    authHeader = "Authorization: Bearer "+ signalKServerToken + "\r\n";
 
     const esp_websocket_client_config_t ws_cfg = {
             .host = signalKServerHost.c_str(),
@@ -431,6 +448,7 @@ bool EspSigK::connectWsClient() {
             .keep_alive_enable = true,
             .reconnect_timeout_ms = 10000,
             .network_timeout_ms = 10000,
+            // .task_stack =  ,
     };
 
     // https://docs.espressif.com/projects/esp-idf/en/v4.1/api-reference/protocols/esp_websocket_client.html
@@ -441,17 +459,18 @@ bool EspSigK::connectWsClient() {
         ESP_LOGE( TAG_WSCLIENT, "esp_websocket_client_init failed" );
         return false;
     }
+
+    err = esp_websocket_register_events( wsClientHandle, WEBSOCKET_EVENT_ANY, webSocketClientEventHandler, this );
+    if ( err ) {
+        ESP_LOGE( TAG_WSCLIENT, "failed to register event WEBSOCKET_EVENT_CONNECTED: %s", esp_err_to_name( err ));
+    }
+
     err = esp_websocket_client_start( wsClientHandle );
     if ( err ) {
         ESP_LOGE( TAG_WSCLIENT, "esp_websocket_client_start failed with %s", esp_err_to_name( err ));
         esp_websocket_client_destroy( wsClientHandle );
         wsClientHandle = nullptr;
         return false;
-    }
-
-    err = esp_websocket_register_events( wsClientHandle, WEBSOCKET_EVENT_ANY, webSocketClientEventHandler, this );
-    if ( err ) {
-        ESP_LOGE( TAG_WSCLIENT, "failed to register event WEBSOCKET_EVENT_CONNECTED: %s", esp_err_to_name( err ));
     }
 
     ESP_LOGI( TAG_WSCLIENT, "started" );
@@ -562,14 +581,12 @@ DeltaValue::DeltaValue( const char *path, const char *value ) {
 }
 
 void EspSigK::onClientConnected() {
-    ESP_LOGI( TAG_WSCLIENT, "event connected" );
 }
 
 void EspSigK::onClientDisconnected() {
     wsClientConnected = false;
     signalKServerToken.clear();
-    ESP_LOGI( TAG_WSCLIENT, "event disconnected" );
-    xTimerStart( wsClientConnectTimer, portMAX_DELAY );
+    startWsClientConnectTimer();
 }
 
 void EspSigK::onClientTextReceived( const char *buf ) {
@@ -586,7 +603,7 @@ void EspSigK::onClientTextReceived( const char *buf ) {
         cJSON_Delete( result );
     }
     if ( !processed ) {
-        ESP_LOGW( TAG_WSCLIENT, "skipped %s", buf );
+        ESP_LOGW( TAG_WSCLIENT, "skipped message %s", buf );
     }
 }
 
@@ -609,6 +626,9 @@ void EspSigK::processFrameHello( cJSON *o ) {
 
 bool EspSigK::loadSetting( const char *name, std::string &value ) {
     uint32_t nvs_handle = nvs_open_storage();
+    if ( nvs_handle == 0) {
+        return false;
+    }
     char *s = nvs_read_string( nvs_handle, name );
     if ( s != nullptr ) {
         value = s;
@@ -625,6 +645,9 @@ bool EspSigK::loadSetting( const char *name, std::string &value ) {
 void EspSigK::saveSetting( const char *name, const std::string &value ) {
     ESP_LOGI( TAG, "Save %s", name );
     uint32_t nvs_handle = nvs_open_storage();
+    if ( nvs_handle == 0) {
+        return;
+    }
     nvs_write_string( nvs_handle, name, value.c_str());
     nvs_close_storage( nvs_handle );
 }
@@ -640,80 +663,92 @@ void EspSigK::setUuid() {
 }
 
  void EspSigK::sendAndHandleAccessRequest() {
-     cJSON *result;
-     char *state;
-     int statusCode;
+    cJSON *result = nullptr;
+    char *state;
+    int statusCode;
+    char *buffer;
 
-    ESP_LOGI( TAG_HTTPCLIENT, "httpClientData.send" );
+    ESP_LOGI( TAG_HTTPCLIENT, "request" );
     esp_err_t  err = httpClientData.send();
     if ( err != ESP_OK ) {
         ESP_LOGE( TAG_HTTPCLIENT, "HTTP POST request failed: %s", esp_err_to_name( err ));
         goto retry;
     }
 
-    if ( httpClientData.buffer == nullptr || httpClientData.length == 0 ) {
+     buffer = httpClientData.getBuffer();
+     if ( buffer == nullptr || httpClientData.getBufferLength() == 0 ) {
         ESP_LOGW( TAG_HTTPCLIENT, "no data received, check log" );
         goto retry;
     }
 
-//    ESP_LOGI(TAG_HTTPCLIENT, "HTTP POST Status = %d, content_length = %" PRIu64,
-//             esp_http_client_get_status_code(client),
-//             esp_http_client_get_content_length(client));
-
-    //response {"state":"COMPLETED","requestId":"52ec0b7b-0c2f-4417-b5c5-8dcf1fcaafe9",
-    // "statusCode":400,
-    // "message":"A device with clientId 'b4c46698-92cd-11ee-b9d1-70041dfbbcf6' has already requested access",
-    // "href":"/signalk/v1/requests/52ec0b7b-0c2f-4417-b5c5-8dcf1fcaafe9","ip":"::ffff:192.168.72.182"
-    // }
-
-    // {"state": "PENDING","href": "/signalk/v1/access/requests/358b5f32-76bf-4b33-8b23-10a330827185"}
-    ESP_LOGI(TAG_HTTPCLIENT, "response %s", httpClientData.buffer );
-    result = cJSON_Parse( httpClientData.buffer );
-    state = cJSON_GetStringValue( cJSON_GetObjectItem( result, "state" ));
-    statusCode = (int)cJSON_GetNumberValue( cJSON_GetObjectItem( result, "statusCode" ));
-    if ( strcmp( state, "PENDING" ) == 0 || ( strcmp( state, "COMPLETED" ) == 0 && statusCode ==  400 ) ) {
+    ESP_LOGI( TAG_HTTPCLIENT, R"(response %d '%s')", httpClientData.getStatusCode(), buffer );
+    result = cJSON_Parse( buffer );
+    state = cJSON_GetStringValue( cJSON_GetObjectItem( result, "state" ) );
+    if ( httpClientData.getStatusCode() == 404 || httpClientData.getStatusCode() == 500 ) {
+        // 500 Unable to check request: not found
+        ESP_LOGW( TAG_HTTPCLIENT, "access request not found, firing new one" );
+        clearRequestIdAndRequestNew();
+    } else if ( state == nullptr ) {
+        ESP_LOGW( TAG_HTTPCLIENT, "unable to parse response as JSON" );
+        prepareAccessRequest();
+        startPendingTokenTimer();
+    } else if ( strcmp( state, "PENDING" ) == 0 ) {
         if ( !pendingTokenState ) {
-            char *href = cJSON_GetStringValue( cJSON_GetObjectItem( result, "href" ));
-            if ( href == nullptr ) {
-                ESP_LOGW( TAG_HTTPCLIENT, "no href in response, can't wait on it" );
+            char *requestId = cJSON_GetStringValue( cJSON_GetObjectItem( result, "requestId" ));
+            if ( requestId == nullptr ) {
+                ESP_LOGW( TAG_HTTPCLIENT, "no requestId in response, can't wait on it" );
                 goto retry;
             }
-            prepareCheckAccessRequest( href );
+            saveSetting(NVS_KEY_REQUEST_ID, requestId );
+            prepareCheckAccessRequest( requestId );
             pendingTokenState = true;
         }
-        char *message = cJSON_GetStringValue( cJSON_GetObjectItem( result, "message" ));
-        if ( message != nullptr ) {
-            ESP_LOGW( TAG_HTTPCLIENT, "%s", message );
-        }
-        ESP_LOGI(TAG,"Start pendingTokenTimer");
-        xTimerStart( pendingTokenTimer, portMAX_DELAY );
+        startPendingTokenTimer();
     } else if ( strcmp( state, "COMPLETED" ) == 0 ) {
-        cJSON *accessRequestObject = cJSON_GetObjectItem( result, "accessRequest" );
-        char *permission = cJSON_GetStringValue( cJSON_GetObjectItem( accessRequestObject, "permission" ));
-        if ( strcmp( permission, "APPROVED" ) == 0 ) {
-            //  "accessRequest": {"permission": "APPROVED","token": "eyJhbGciOiJIUzI1NiIs...BAP8bt3tNBT1WiIttm3qM",...}
-            signalKServerToken = cJSON_GetStringValue( cJSON_GetObjectItem( accessRequestObject, "token" ));
-            ESP_LOGI( TAG_HTTPCLIENT, "got token %s", signalKServerToken.c_str());
-            saveSetting(NVS_KEY_TOKEN, signalKServerToken);
-            httpClientData.release();
-            triggerWsClientConnect();
+        statusCode = (int)cJSON_GetNumberValue( cJSON_GetObjectItem( result, "statusCode" ));
+        if ( statusCode ==  400 ) {
+            // response {
+            //   "state":"COMPLETED",
+            //   "requestId":"52ec0b7b-0c2f-4417-b5c5-8dcf1fcaafe9",
+            //   "statusCode":400,
+            //   "message":"A device with clientId 'b4c46698-92cd-11ee-b9d1-70041dfbbcf6' has already requested access",
+            //   "href":"/signalk/v1/requests/52ec0b7b-0c2f-4417-b5c5-8dcf1fcaafe9",
+            //   "ip":"::ffff:192.168.72.182"
+            // }
+
+            char *message = cJSON_GetStringValue( cJSON_GetObjectItem( result, "message" ));
+            if ( message != nullptr ) {
+                ESP_LOGW( TAG_HTTPCLIENT, "%s", message );
+            }
+            clearRequestIdAndRequestNew();
         } else {
-            // "accessRequest": {"permission": "DENIED"}
-            ESP_LOGW( TAG_HTTPCLIENT, "permission %s", permission );
-            // TODO really?
-            //goto retry;
+            cJSON *accessRequestObject = cJSON_GetObjectItem( result, "accessRequest" );
+            char *permission = cJSON_GetStringValue( cJSON_GetObjectItem( accessRequestObject, "permission" ));
+            if ( strcmp( permission, "APPROVED" ) == 0 ) {
+                //  "accessRequest": {"permission": "APPROVED","token": "eyJhbGciOiJIUzI1NiIs...BAP8bt3tNBT1WiIttm3qM",...}
+                signalKServerToken = cJSON_GetStringValue( cJSON_GetObjectItem( accessRequestObject, "token" ));
+                ESP_LOGI( TAG_HTTPCLIENT, "got token %s", signalKServerToken.c_str());
+                saveSetting(NVS_KEY_TOKEN, signalKServerToken);
+                httpClientData.release();
+                triggerWsClientConnect();
+            } else {
+                // "accessRequest": {"permission": "DENIED"}
+                ESP_LOGW( TAG_HTTPCLIENT, "permission %s", permission );
+                prepareAccessRequest();
+                startPendingTokenTimer();
+            }
         }
     } else {
-        ESP_LOGW( TAG_HTTPCLIENT, "received %s", httpClientData.buffer );
+        ESP_LOGW( TAG_HTTPCLIENT, "received %s", buffer );
     }
     cJSON_Delete( result );
     return;
 
  retry:
+    cJSON_Delete( result );
     httpClientData.release();
     pendingTokenState = false;
-     ESP_LOGI(TAG,"Start pendingTokenTimer");
-    xTimerStart( pendingTokenTimer, portMAX_DELAY );
+    startPendingTokenTimer();
 }
 
 void EspSigK::prepareAccessRequest() {
@@ -728,16 +763,23 @@ void EspSigK::prepareAccessRequest() {
     httpClientData.setPostRequest( url, post_data );
 }
 
-void EspSigK::prepareCheckAccessRequest( const char* href) {
-    char url[128];
-    snprintf( url, sizeof( url ), "http://%s:%d%s", signalKServerHost.c_str(), signalKServerPort, href );
+void EspSigK::prepareCheckAccessRequest( const char* requestId) {
+    char url[96];
+    snprintf( url, sizeof( url ), "http://%s:%d/signalk/v1/requests/%s", signalKServerHost.c_str(), signalKServerPort, requestId );
 
     pendingTokenState = false;
     httpClientData.setGetRequest( url );
 }
 
 void EspSigK::sendAccessRequest() {
-    prepareAccessRequest();
+    std::string requestId;
+    loadSetting( NVS_KEY_REQUEST_ID, requestId );
+    if ( requestId.empty() ) {
+        prepareAccessRequest();
+    } else {
+        ESP_LOGI(TAG_HTTPCLIENT, "Reusing stored requestId");
+        prepareCheckAccessRequest( requestId.c_str() );
+    }
     sendAndHandleAccessRequest();
 }
 
@@ -747,4 +789,21 @@ void EspSigK::onTokenTimer() {
     } else {
         sendAccessRequest();
     }
+}
+
+void EspSigK::startWsClientConnectTimer() {
+    ESP_LOGI( TAG, "Start wsClientConnectTimer" );
+    xTimerStart( wsClientConnectTimer, portMAX_DELAY );
+}
+
+void EspSigK::startPendingTokenTimer() const {
+    ESP_LOGI( TAG, "Start pendingTokenTimer" );
+    xTimerStart( pendingTokenTimer, portMAX_DELAY );
+}
+
+void EspSigK::clearRequestIdAndRequestNew() {
+    std::string dummy;
+    saveSetting( NVS_KEY_REQUEST_ID, dummy );
+    prepareAccessRequest();
+    startPendingTokenTimer();
 }

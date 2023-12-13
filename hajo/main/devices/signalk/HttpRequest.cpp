@@ -11,8 +11,13 @@ static esp_err_t http_event_handler( esp_http_client_event_t *evt ) {
 
 HttpRequest::HttpRequest() {
     buffer = nullptr;
-    length = bufferSize = 0;
+    bufferSize = 0;
     client = nullptr;
+    length = 0;
+    method = HTTP_METHOD_MAX;
+    postData = nullptr;
+    status_code = 0;
+    url = nullptr;
 }
 
 HttpRequest::~HttpRequest() {
@@ -74,7 +79,7 @@ esp_err_t HttpRequest::send() {
     }
     if ( postData != nullptr) {
         esp_http_client_set_header( client, "Content-Type", "application/json" );
-        esp_http_client_set_post_field( client, postData, strlen( postData ) );
+        esp_http_client_set_post_field( client, postData, (int)strlen( postData ) );
     }
     esp_err_t result = esp_http_client_perform( client );
     esp_http_client_cleanup( client );
@@ -84,11 +89,12 @@ esp_err_t HttpRequest::send() {
 esp_err_t HttpRequest::eventHandler( esp_http_client_event_t *evt ) {
     switch ( evt->event_id ) {
         case HTTP_EVENT_ON_DATA: {
+            status_code = esp_http_client_get_status_code( evt->client );
             bool chunked = esp_http_client_is_chunked_response( evt->client );
-            ESP_LOGI( TAG, "HTTP_EVENT_ON_DATA content_len=%lld data_len=%d chunked=%d",
-                      esp_http_client_get_content_length( evt->client ), evt->data_len, chunked );
+//            ESP_LOGI( TAG, "HTTP_EVENT_ON_DATA content_len=%lld data_len=%d chunked=%d",
+//                      esp_http_client_get_content_length( evt->client ), evt->data_len, chunked );
             if ( !chunked ) {
-                int content_length = esp_http_client_get_content_length( evt->client );
+                int content_length = (int) esp_http_client_get_content_length( evt->client );
                 receivedBytes( evt->data, evt->data_len, content_length );
             } else {
                 char *p = static_cast<char *>(malloc( evt->data_len + 1 ));
@@ -98,22 +104,22 @@ esp_err_t HttpRequest::eventHandler( esp_http_client_event_t *evt ) {
                 }
                 memcpy( p, evt->data, evt->data_len );
                 p[ evt->data_len ] = 0;
-                ESP_LOGI( TAG, "chunk %s", p );
+//                ESP_LOGI( TAG, "chunk %s", p );
                 free( p );
             }
             break;
         }
         case HTTP_EVENT_DISCONNECTED:
-            ESP_LOGI( TAG, "HTTP_EVENT_DISCONNECTED" );
+//            ESP_LOGI( TAG, "HTTP_EVENT_DISCONNECTED" );
             break;
         case HTTP_EVENT_ERROR:
             ESP_LOGI( TAG, "HTTP_EVENT_ERROR" );
             break;
         case HTTP_EVENT_ON_CONNECTED:
-            ESP_LOGI( TAG, "HTTP_EVENT_ON_CONNECTED" );
+//            ESP_LOGI( TAG, "HTTP_EVENT_ON_CONNECTED" );
             break;
         case HTTP_EVENT_ON_FINISH:
-            ESP_LOGI( TAG, "HTTP_EVENT_ON_FINISH" );
+//            ESP_LOGI( TAG, "HTTP_EVENT_ON_FINISH" );
             break;
         default:
             break;
