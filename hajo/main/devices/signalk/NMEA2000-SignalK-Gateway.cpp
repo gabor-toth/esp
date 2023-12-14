@@ -458,6 +458,7 @@ void HandleSeatalkAlarm( const tN2kMsg &N2kMsg ) {
 
 //*****************************************************************************
 void sendN2KMessageToSignalK( const tN2kMsg &N2kMsg ) {
+    // set CONFIG_NMEA2000_MSG_DEBUG=y in sdkconfig to see low level messages
     ESP_LOGD(TAG,"Sending PGN %05lx %06ld", N2kMsg.PGN, N2kMsg.PGN);
     switch ( N2kMsg.PGN ) {
         case 61184:

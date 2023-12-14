@@ -10,6 +10,9 @@
 #define RAD_TO_DEG                  57.27272727f /*!< Radians to degrees */
 
 static const char *TAG = "hajo_atti";
+#define LOG_LEVEL   ESP_LOG_DEBUG
+#define LOG(format, ... ) ESP_LOG_LEVEL_LOCAL(LOG_LEVEL, TAG, format, ##__VA_ARGS__)
+#define DO_LOG_READINGS   0
 
 static mpu6050_handle_t gyroscope;
 
@@ -54,16 +57,19 @@ static bool send_attitude( int index, tN2kMsg &msg ) {
     angle.roll = ( atan2( acce_value.acce_y, acce_value.acce_x ));
     angle.pitch = ( atan2( acce_value.acce_z, acce_value.acce_x ));
 
-//    ESP_LOGD( TAG, "angle roll=%lf pitch=%lf  acce x=%lf y=%lf z=%lf",
+#if DO_LOG_READINGS
+//    ESP_LOGI( TAG, "angle roll=%lf pitch=%lf  acce x=%lf y=%lf z=%lf",
 //              angle.roll* RAD_TO_DEG, angle.pitch * RAD_TO_DEG,
 //              acce_value.acce_x, acce_value.acce_y, acce_value.acce_z
 //              );
-//    ESP_LOGD( TAG, "angle roll=%lf pitch=%lf  gyro x=%lf y=%lf z=%lf   acce x=%lf y=%lf z=%lf",
-//              angle.roll, angle.pitch,
-//              gyro_value.gyro_x, gyro_value.gyro_y, gyro_value.gyro_z ,
-//              acce_value.acce_x, acce_value.acce_y, acce_value.acce_z
-//              );
+    ESP_LOGI( TAG, "angle roll=%lf pitch=%lf  gyro x=%lf y=%lf z=%lf   acce x=%lf y=%lf z=%lf",
+              angle.roll, angle.pitch,
+              gyro_value.gyro_x, gyro_value.gyro_y, gyro_value.gyro_z ,
+              acce_value.acce_x, acce_value.acce_y, acce_value.acce_z
+              );
+#endif
     // values are in rad, see https://signalk.org/specification/1.5.0/doc/vesselsBranch.html#vesselsregexpnavigationattitude
+    LOG("SetN2kAttitude");
     SetN2kAttitude( msg, index, 0.0, angle.pitch, angle.roll );
     return true;
 }
@@ -115,6 +121,8 @@ static bool n2k_send_attitude( int index, tN2kMsg &message ) {
 }
 
 void hajo_attitude_main( int iDev ) {
+    LOG("hajo_attitude_main");
+
     setup_gyroscope();
 
     setup_n2k_device( iDev );
