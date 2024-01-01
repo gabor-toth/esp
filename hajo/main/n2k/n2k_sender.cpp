@@ -9,7 +9,7 @@
 using namespace std;
 
 static const char *TAG = "n2k_sender";
-#define LOG_LEVEL   ESP_LOG_DEBUG
+#define LOG_LEVEL   ESP_LOG_INFO
 #define LOG(format, ... ) ESP_LOG_LEVEL_LOCAL(LOG_LEVEL, TAG, format, ##__VA_ARGS__)
 
 typedef struct loopback_callback_node_t {
