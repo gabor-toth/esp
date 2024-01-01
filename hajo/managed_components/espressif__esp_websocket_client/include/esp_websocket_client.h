@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2015-2021 Espressif Systems (Shanghai) CO LTD
+ * SPDX-FileCopyrightText: 2015-2023 Espressif Systems (Shanghai) CO LTD
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -158,12 +158,30 @@ esp_err_t esp_websocket_client_set_uri(esp_websocket_client_handle_t client, con
  * @brief      Set additional websocket headers for the client, when performing this behavior, the headers will replace the old ones
  * @pre        Must stop the WebSocket client before set headers if the client has been connected
  *
- * @param[in]  client  The client
- * @param headers  additional header strings each terminated with \r\n
+ *    - This API should be used after the WebSocket client connection has succeeded (i.e., once the transport layer is initialized).
+ *    - If you wish to set or append headers before the WebSocket client connection is established(before handshake), consider the following options:
+ *       1. Input headers directly into the config options, terminating each item with [CR][LF]. This approach will replace any previous headers.
+ *          Example: websocket_cfg.headers = "Sec-WebSocket-Key: my_key\r\nPassword: my_pass\r\n";
+ *       2. Use the `esp_websocket_client_append_header` API to append a single header to the current set.
+ *
+ * @param[in]  client  The WebSocket client handle
+ * @param[in]  headers Additional header strings each terminated with [CR][LF]
  *
  * @return     esp_err_t
  */
 esp_err_t esp_websocket_client_set_headers(esp_websocket_client_handle_t client, const char *headers);
+
+/**
+ * @brief      Appends a new key-value pair to the headers of a WebSocket client.
+ * @pre        Ensure that this function is called before starting the WebSocket client.
+ *
+ * @param[in]  client  The WebSocket client handle
+ * @param[in]  key     The header key to append
+ * @param[in]  value   The associated value for the given key
+ *
+ * @return     esp_err_t
+ */
+esp_err_t esp_websocket_client_append_header(esp_websocket_client_handle_t client, const char *key, const char *value);
 
 /**
  * @brief      Open the WebSocket connection
@@ -232,6 +250,24 @@ esp_err_t esp_websocket_client_destroy_on_exit(esp_websocket_client_handle_t cli
 int esp_websocket_client_send_bin(esp_websocket_client_handle_t client, const char *data, int len, TickType_t timeout);
 
 /**
+ * @brief      Write binary data to the WebSocket connection and sends it without setting the FIN flag(data send with WS OPCODE=02, i.e. binary)
+ *
+ *  Notes:
+ *   - To send continuation frame, you should use 'esp_websocket_client_send_cont_msg(...)' API.
+ *   - To mark the end of fragmented data, you should use the 'esp_websocket_client_send_fin(...)' API. This sends a FIN frame.
+ *
+ * @param[in]  client  The client
+ * @param[in]  data    The data
+ * @param[in]  len     The length
+ * @param[in]  timeout Write data timeout in RTOS ticks
+ *
+ * @return
+ *     - Number of data was sent
+ *     - (-1) if any errors
+ */
+int esp_websocket_client_send_bin_partial(esp_websocket_client_handle_t client, const char *data, int len, TickType_t timeout);
+
+/**
  * @brief      Write textual data to the WebSocket connection (data send with WS OPCODE=01, i.e. text)
  *
  * @param[in]  client  The client
@@ -246,6 +282,55 @@ int esp_websocket_client_send_bin(esp_websocket_client_handle_t client, const ch
 int esp_websocket_client_send_text(esp_websocket_client_handle_t client, const char *data, int len, TickType_t timeout);
 
 /**
+ * @brief      Write textual data to the WebSocket connection and sends it without setting the FIN flag(data send with WS OPCODE=01, i.e. text)
+ *
+ *  Notes:
+ *   - To send continuation frame, you should use 'esp_websocket_client_send_cont_mgs(...)' API.
+ *   - To mark the end of fragmented data, you should use the 'esp_websocket_client_send_fin(...)' API. This sends a FIN frame.
+ *
+ * @param[in]  client  The client
+ * @param[in]  data    The data
+ * @param[in]  len     The length
+ * @param[in]  timeout Write data timeout in RTOS ticks
+ *
+ * @return
+ *     - Number of data was sent
+ *     - (-1) if any errors
+ */
+int esp_websocket_client_send_text_partial(esp_websocket_client_handle_t client, const char *data, int len, TickType_t timeout);
+
+/**
+ * @brief      Write textual data to the WebSocket connection and sends it as continuation frame (OPCODE=0x0)
+ *
+ *  Notes:
+ *   - Continuation frames have an opcode of 0x0 and do not explicitly signify whether they are continuing a text or a binary message.
+ *   - You determine the type of message (text or binary) being continued by looking at the opcode of the initial frame in the sequence of fragmented frames.
+ *   - To mark the end of fragmented data, you should use the 'esp_websocket_client_send_fin(...)' API. This sends a FIN frame.
+ *
+ * @param[in]  client  The client
+ * @param[in]  data    The data
+ * @param[in]  len     The length
+ * @param[in]  timeout Write data timeout in RTOS ticks
+ *
+ * @return
+ *     - Number of data was sent
+ *     - (-1) if any errors
+ */
+int esp_websocket_client_send_cont_msg(esp_websocket_client_handle_t client, const char *data, int len, TickType_t timeout);
+
+/**
+ * @brief      Sends FIN frame
+ *
+ * @param[in]  client  The client
+ * @param[in]  timeout Write data timeout in RTOS ticks
+ *
+ * @return
+ *     - Number of data was sent
+ *     - (-1) if any errors
+ */
+int esp_websocket_client_send_fin(esp_websocket_client_handle_t client, TickType_t timeout);
+
+/**
  * @brief      Write opcode data to the WebSocket connection
  *
  * @param[in]  client  The client
@@ -256,6 +341,8 @@ int esp_websocket_client_send_text(esp_websocket_client_handle_t client, const c
  *
  *  Notes:
  *  - In order to send a zero payload, data and len should be set to NULL/0
+ *  - This API sets the FIN bit on the last fragment of message
+ *
  *
  * @return
  *     - Number of data was sent

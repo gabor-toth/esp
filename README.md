@@ -55,8 +55,9 @@ Upgrade esp-idf
 ```
 pushd ../../esp-idf
 git pull
+git checkout v5.1.2
 git submodule update --init --recursive
-rm -rf /home/tothg/.espressif/
+rm -rf $HOME/.espressif/
 ./install.sh esp32 esp32s2
 . ./export.sh
 cd tools
