@@ -5,6 +5,7 @@ idf_component_register(
         "../../common/gpio_task.c"
         "../../common/main_main.c"
         "../../common/nvs_main.c"
+        "../../common/timer.c"
         "../../common/wifi/connect.c"
         "../../common/wifi/wifi_connect.c"
         "sensor_main.cpp"
