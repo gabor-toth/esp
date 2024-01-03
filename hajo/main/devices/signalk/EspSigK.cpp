@@ -7,7 +7,7 @@
 #include "esp_log.h"
 #include "esp_mac.h"
 #include "esp_netif_ip_addr.h"
-#include "lib/nvs_main.h"
+#include "nvs_main.h"
 #include "mdns.h"
 #include "rest_server.h"
 #include "ssdp.h"

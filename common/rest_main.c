@@ -15,8 +15,8 @@
 #include "lwip/apps/mdns.h"
 #include "lwip/apps/netbiosns.h"
 #include "mdns.h"
-#include "lib/rest_main.h"
-#include "lib/rest_server.h"
+#include "rest_main.h"
+#include "rest_server.h"
 #include "wifi_connect.h"
 
 static const char *TAG = "rest-main";

@@ -12,7 +12,7 @@
 #elif DEVICE_TYPE == DEVICE_TYPE_LOGGER
 #include "devices/logger/hajo_logger.h"
 #endif
-#include "lib/nvs_main.h"
+#include "nvs_main.h"
 #include "n2k/n2k_receiver.h"
 #include "devices/attitude/hajo_attitude.h"
 #include "devices/signalk/hajo_signalk.h"

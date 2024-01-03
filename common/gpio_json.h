@@ -2,7 +2,7 @@
 #define ONTOZO_GPIO_JSON_H
 
 #include <stdbool.h>
-#include "lib/gpio_define.h"
+#include "gpio_define.h"
 
 #ifdef __cplusplus
 extern "C" {

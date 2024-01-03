@@ -1,6 +1,6 @@
 #include "cmath"
 #include "n2k/n2k_struct_parser.h"
-#include "lib/adc.h"
+#include "adc.h"
 #include "n2k/n2k_sender.h"
 #include "n2k/n2k_util.h"
 #include "hajo_battery.h"

@@ -9,10 +9,10 @@ set(DEVICE_TYPE ${DEVICE_TYPE_ALL})
 #set(DEVICE_TYPE ${DEVICE_TYPE_LOGGER})
 
 set(SOURCES
-        "lib/gpio_define.c"
-        "lib/gpio_task.c"
-        "lib/main_main.c"
-        "lib/nvs_main.c"
+        "../../common/gpio_define.c"
+        "../../common/gpio_task.c"
+        "../../common/main_main.c"
+        "../../common/nvs_main.c"
         "hajo_main.cpp"
         "n2k/n2k_struct_parser.cpp"
         "n2k/n2k_receiver.cpp"
@@ -30,17 +30,17 @@ if ((DEVICE_TYPE EQUAL DEVICE_TYPE_LOGGER) OR (DEVICE_TYPE EQUAL DEVICE_TYPE_ALL
             "devices/signalk/HttpRequest.cpp"
             "devices/signalk/hajo_signalk.cpp"
             "devices/signalk/NMEA2000-SignalK-Gateway.cpp"
-            "lib/gpio_json.c"
-            "lib/logger.c"
-            "lib/rest_main.c"
-            "lib/rest_server.c"
-            "lib/rest_util.c"
-            "lib/sntp_main.c"
-            "lib/system_info_rest.c"
-            "lib/wifi/connect.c"
-            "lib/wifi/wifi_connect.c"
-            "lib/ws_keep_alive.c"
-            "lib/ws_server.c"
+            "../../common/gpio_json.c"
+            "../../common/logger.c"
+            "../../common/rest_main.c"
+            "../../common/rest_server.c"
+            "../../common/rest_util.c"
+            "../../common/sntp_main.c"
+            "../../common/system_info_rest.c"
+            "../../common/wifi/connect.c"
+            "../../common/wifi/wifi_connect.c"
+            "../../common/ws_keep_alive.c"
+            "../../common/ws_server.c"
     )
 endif ()
 
@@ -55,14 +55,14 @@ if ((DEVICE_TYPE EQUAL DEVICE_TYPE_GAUGE_DISPLAY) OR (DEVICE_TYPE EQUAL DEVICE_T
             "devices/display/display_meter_tabbed.c"
             "devices/display/hajo_display.cpp"
             "devices/fluid/hajo_fluid.cpp"
-            "lib/adc.c"
+            "../../common/adc.c"
     )
 endif ()
 
 if ((DEVICE_TYPE EQUAL DEVICE_TYPE_BATTERY_MONITOR) OR (DEVICE_TYPE EQUAL DEVICE_TYPE_ALL))
     set(SOURCES ${SOURCES}
             "devices/battery/hajo_battery.cpp"
-            "lib/adc.c"
+            "../../common/adc.c"
     )
 endif ()
 
@@ -71,7 +71,7 @@ idf_component_register(
 
         INCLUDE_DIRS
         "."
-        "lib"
+        "../../common"
 
         # REQUIRES
         # "driver"

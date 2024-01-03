@@ -1,7 +1,7 @@
 #include "esp_event.h"
 #include "esp_log.h"
 #include "freertos/timers.h"
-#include "lib/nvs_main.h"
+#include "nvs_main.h"
 #include "n2k_receiver.h"
 #include "n2k_sender.h"
 

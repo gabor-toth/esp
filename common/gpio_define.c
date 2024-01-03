@@ -1,7 +1,7 @@
 #include <string.h>
 #include <esp_log.h>
-#include "lib/gpio_task.h"
-#include "lib/nvs_main.h"
+#include "gpio_task.h"
+#include "nvs_main.h"
 #include "gpio_define.h"
 #include "gpio_json.h"
 
