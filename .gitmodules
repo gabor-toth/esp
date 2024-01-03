@@ -17,3 +17,9 @@
 [submodule "hajo/components/SSDP_IDF"]
 	path = hajo/components/SSDP_IDF
 	url = https://github.com/luc-github/SSDP_IDF.git
+[submodule "sensor_temp/components/esp32-owb"]
+	path = sensor_temp/components/esp32-owb
+	url = https://github.com/DavidAntliff/esp32-owb.git
+[submodule "sensor_temp/components/esp32-ds18b20"]
+	path = sensor_temp/components/esp32-ds18b20
+	url = https://github.com/DavidAntliff/esp32-ds18b20.git
