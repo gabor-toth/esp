@@ -8,17 +8,11 @@
 
 static const char *TAG = "sensor_main";
 
-static void led_off() {
-    gpio_set_direction(GPIO_NUM_15, GPIO_MODE_OUTPUT );
-    gpio_set_level(GPIO_NUM_15, 0 );
-}
-
 void sensor_main() {
     nvs_init();
 
     ESP_ERROR_CHECK( esp_event_loop_create_default());
 
-    led_off();
     owb_gpio_driver_info driver_info;
     OneWireBus* bus = owb_gpio_initialize(&driver_info, GPIO_NUM_14 );
     DS18B20_Info* device = ds18b20_malloc();
