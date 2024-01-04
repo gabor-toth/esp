@@ -11,7 +11,6 @@
 */
 #include "esp_log.h"
 #include "esp_spiffs.h"
-#include "esp_wifi.h"
 #include "lwip/apps/mdns.h"
 #include "lwip/apps/netbiosns.h"
 #include "mdns.h"
@@ -90,13 +89,18 @@ esp_err_t init_fs( void ) {
     return ESP_OK;
 }
 
-err_enum_t on_wifi_connect( httpd_handle_t server ) {
+err_enum_t on_wifi_connect( httpd_handle_t server, const char *wifi_ssid ) {
+    (void) server;
+    (void) wifi_ssid;
+
     initialise_mdns();
 //    initialise_netbios();
     return ESP_OK;
 }
 
 void on_wifi_disconnect( httpd_handle_t server ) {
+    (void) server;
+
     mdns_free();
 //    netbiosns_stop();
 }

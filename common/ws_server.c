@@ -11,7 +11,6 @@
 #include <esp_log.h>
 #include <esp_system.h>
 #include <sys/param.h>
-#include "lwip/sockets.h"
 #include "rest_server.h"
 #include "ws_keep_alive.h"
 #include "ws_server.h"
@@ -185,7 +184,9 @@ static void stop_wss_echo_server( httpd_handle_t server ) {
     wss_keep_alive_stop( wss_keep_alive_get_keep_alive( server ));
 }
 
-esp_err_t wss_wifi_connect( httpd_handle_t hd ) {
+esp_err_t wss_wifi_connect( httpd_handle_t hd, const char *wifi_ssid ) {
+    (void) wifi_ssid;
+
     start_wss_echo_server( hd );
     return rest_register_uri_handler( hd, TAG, &ws );
 }

@@ -134,6 +134,8 @@ idf.py add-dependency espressif/esp_websocket_client
 idf.py build
 ```
 
+`build` is needed, it'll download the component.
+
 Git
 ===
 

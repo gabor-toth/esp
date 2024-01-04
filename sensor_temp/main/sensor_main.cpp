@@ -1,6 +1,5 @@
 #include "config.h"
 #include "ds18b20.h"
-#include "driver/gpio.h"
 #include "esp_event.h"
 #include "esp_log.h"
 #include "nvs_main.h"
