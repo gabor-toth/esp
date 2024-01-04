@@ -4,10 +4,13 @@ idf_component_register(
         "../../common/gpio_define.c"
         "../../common/gpio_task.c"
         "../../common/main_main.c"
+        "../../common/mdns_main.c"
         "../../common/nvs_main.c"
+        "../../common/rest_main.c"
         "../../common/timer.c"
         "../../common/wifi/connect.c"
         "../../common/wifi/wifi_connect.c"
+        "../../common/wifi/wifi_main.c"
         "sensor_main.cpp"
 
         INCLUDE_DIRS

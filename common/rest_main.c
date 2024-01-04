@@ -13,46 +13,10 @@
 #include "esp_spiffs.h"
 #include "lwip/apps/mdns.h"
 #include "lwip/apps/netbiosns.h"
-#include "mdns.h"
 #include "rest_main.h"
 #include "rest_server.h"
-#include "wifi_connect.h"
 
 static const char *TAG = "rest-main";
-
-static void initialise_mdns( void ) {
-    ESP_ERROR_CHECK( mdns_init());
-    esp_netif_t *netif = wifi_get_esp_netif();
-    if ( netif != NULL) {
-        const char *hostname;
-        ESP_ERROR_CHECK( esp_netif_get_hostname( netif, &hostname ));
-        ESP_ERROR_CHECK( mdns_hostname_set( hostname ));
-    } else {
-        ESP_ERROR_CHECK( mdns_hostname_set( CONFIG_EXAMPLE_MDNS_HOST_NAME ));
-    }
-    ESP_ERROR_CHECK( mdns_instance_name_set( CONFIG_MDNS_INSTANCE_NAME ));
-
-    mdns_txt_item_t serviceTxtData[] = {
-            { "board", "esp32s2" },
-            { "path",  "/" }
-    };
-
-    ESP_ERROR_CHECK( mdns_service_add(
-            CONFIG_MDNS_INSTANCE_NAME,
-            "_http",
-            "_tcp",
-            80,
-            serviceTxtData,
-            sizeof( serviceTxtData ) / sizeof( serviceTxtData[ 0 ] )));
-    /*
-    ESP_ERROR_CHECK( mdns_service_subtype_add_for_host(
-            CONFIG_MDNS_INSTANCE_NAME,
-            "_http",
-            "_tcp",
-            NULL,
-            "_server" ));
-    */
-}
 
 static void initialise_netbios( void ) {
     netbiosns_init();
@@ -89,19 +53,17 @@ esp_err_t init_fs( void ) {
     return ESP_OK;
 }
 
-err_enum_t on_wifi_connect( httpd_handle_t server, const char *wifi_ssid ) {
+static err_enum_t on_wifi_connect( httpd_handle_t server, const char *wifi_ssid ) {
     (void) server;
     (void) wifi_ssid;
 
-    initialise_mdns();
 //    initialise_netbios();
     return ESP_OK;
 }
 
-void on_wifi_disconnect( httpd_handle_t server ) {
+static void on_wifi_disconnect( httpd_handle_t server ) {
     (void) server;
 
-    mdns_free();
 //    netbiosns_stop();
 }
 
@@ -114,7 +76,7 @@ static const rest_callbacks_t callbacks = {
 };
 
 void discovery_register() {
-    rest_register_callbacks( &callbacks );
+    wifi_register_callbacks( &callbacks );
 }
 
 #endif

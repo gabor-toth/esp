@@ -19,6 +19,7 @@
 #include <cJSON.h>
 #include "rest_server.h"
 #include "rest_util.h"
+#include "wifi/wifi_main.h"
 
 static const char *TAG = "rest-server";
 static httpd_handle_t http_server = NULL;
@@ -29,8 +30,6 @@ typedef struct rest_callbacks_node_t {
 } rest_callbacks_node_t;
 
 static rest_callbacks_node_t *registered_callbacks = NULL;
-static rest_callbacks_node_t *registered_callbacks_tail = NULL;
-static char *wifi_ssid = NULL;
 
 #define FILE_PATH_MAX (ESP_VFS_PATH_MAX + 128)
 
@@ -219,26 +218,10 @@ static esp_err_t rest_server_start( const char *wifi_ssid ) {
         return result;
     }
 
-    ESP_LOGI( TAG, "[%s] Calling callbacks", currentTaskName());
-    for ( rest_callbacks_node_t *node = registered_callbacks; node != NULL; node = node->next ) {
-        if ( node->callbacks.wifi_connect_fn ) {
-            ESP_LOGI( TAG, "Callback for %s", node->callbacks.name );
-            node->callbacks.wifi_connect_fn( http_server, wifi_ssid );
-        } else {
-            ESP_LOGI( TAG, "No callback for %s", node->callbacks.name );
-        }
-    }
-    ESP_LOGI( TAG, "Done callbacks" );
-
     return result;
 }
 
 static esp_err_t rest_server_stop() {
-    for ( rest_callbacks_node_t *node = registered_callbacks; node != NULL; node = node->next ) {
-        if ( node->callbacks.wifi_disconnect_fn ) {
-            node->callbacks.wifi_disconnect_fn( http_server );
-        }
-    }
     return httpd_stop( http_server );
 }
 
@@ -246,16 +229,8 @@ static void handler_on_wifi_connect( void *dummy, esp_event_base_t event_base,
                                      int32_t event_id, void *event_data ) {
     if ( event_id == IP_EVENT_STA_GOT_IP ) {
         if ( http_server == NULL) {
-            ESP_ERROR_CHECK( rest_server_start( wifi_ssid ));
+            ESP_ERROR_CHECK( rest_server_start( wifi_get_ssid()));
         }
-    } else if ( event_id == WIFI_EVENT_STA_CONNECTED ) {
-        wifi_event_sta_connected_t *wifi_event = event_data;
-        if ( wifi_ssid != NULL) {
-            free( wifi_ssid );
-        }
-        wifi_ssid = malloc( wifi_event->ssid_len + 1 );
-        memcpy( wifi_ssid, wifi_event->ssid, wifi_event->ssid_len );
-        wifi_ssid[ wifi_event->ssid_len ] = 0;
     }
 }
 
@@ -270,22 +245,6 @@ static void handler_on_wifi_disconnect( void *dummy, esp_event_base_t event_base
     }
 }
 
-esp_err_t rest_register_callbacks( const rest_callbacks_t *callbacks ) {
-    rest_callbacks_node_t *node = malloc( sizeof( rest_callbacks_node_t ));
-    if ( node == NULL) {
-        return ESP_ERR_NO_MEM;
-    }
-    node->callbacks = *callbacks;
-    node->next = NULL;
-    if ( registered_callbacks_tail == NULL) {
-        registered_callbacks_tail = registered_callbacks = node;
-    } else {
-        registered_callbacks_tail->next = node;
-        registered_callbacks_tail = node;
-    }
-    return ESP_OK;
-}
-
 esp_err_t rest_register_uri_handler( httpd_handle_t handle,
                                      const char *log_tag,
                                      const httpd_uri_t *uri_handler ) {
@@ -294,12 +253,7 @@ esp_err_t rest_register_uri_handler( httpd_handle_t handle,
 }
 
 esp_err_t rest_server_main() {
-    ESP_ERROR_CHECK(
-            esp_event_handler_register( IP_EVENT, IP_EVENT_STA_GOT_IP, &handler_on_wifi_connect, NULL ));
-    ESP_ERROR_CHECK(
-            esp_event_handler_register( WIFI_EVENT, WIFI_EVENT_STA_CONNECTED, &handler_on_wifi_connect, NULL ));
-    ESP_ERROR_CHECK(
-            esp_event_handler_register( WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &handler_on_wifi_disconnect, NULL ));
+    wifi_register_callbacks(NULL);
 
     return ESP_OK;
 }

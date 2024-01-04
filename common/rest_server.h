@@ -2,8 +2,8 @@
 #define LIB_REST_SERVER_H
 
 #include <esp_err.h>
-#include <esp_vfs.h>
 #include <esp_http_server.h>
+#include <esp_vfs.h>
 #include <cJSON.h>
 
 #ifdef __cplusplus
@@ -21,20 +21,12 @@ typedef struct rest_server_context {
     char scratch[REST_SCRATCH_BUFSIZE];
 } rest_server_context_t;
 
-typedef esp_err_t (*rest_wifi_connect_func_t)( httpd_handle_t server, const char *wifi_ssid );
-
-typedef void (*rest_wifi_disconnect_func_t)( httpd_handle_t server );
-
-typedef struct {
+typedef struct rest_callbacks_t {
+    struct rest_callbacks_t *next;
     const char *name;
-    rest_wifi_connect_func_t wifi_connect_fn;
-    rest_wifi_disconnect_func_t wifi_disconnect_fn;
     httpd_open_func_t open_fn;
     httpd_close_func_t close_fn;
 } rest_callbacks_t;
-
-typedef esp_err_t (*rest_register_handlers_t)( httpd_handle_t server,
-                                               rest_server_context_t * );
 
 extern esp_err_t rest_register_callbacks( const rest_callbacks_t *callbacks );
 

@@ -12,6 +12,7 @@
 #include <esp_system.h>
 #include <sys/param.h>
 #include "rest_server.h"
+#include "wifi/wifi_main.h"
 #include "ws_keep_alive.h"
 #include "ws_server.h"
 #include "sdkconfig.h"
@@ -201,7 +202,7 @@ static const rest_callbacks_t callbacks = {
 
 void wss_register() {
     ESP_LOGI( TAG, "wss_register" );
-    rest_register_callbacks( &callbacks );
+    wifi_register_callbacks( &callbacks );
 }
 
 // Get all clients and send async message
