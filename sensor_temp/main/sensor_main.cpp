@@ -5,6 +5,7 @@
 #include "nvs_main.h"
 #include "owb_gpio.h"
 #include "timer.h"
+#include "wifi/wifi_main.h"
 
 static const char *TAG = "sensor_main";
 static owb_gpio_driver_info driver_info;
@@ -20,7 +21,9 @@ void tempsens_init() {
     ESP_LOGI(TAG, "tempsens_init finish");
 }
 
-void tempsens_measure(void* user_data) {
+void tempsens_measure( void* user_data) {
+    (void)user_data;
+
     if ( ds18b20_convert(device) ) {
         ds18b20_wait_for_conversion(device);
         float temp;
@@ -36,6 +39,7 @@ void sensor_main() {
 
     tempsens_init();
     timer_start("measure", tempsens_measure, 1000, nullptr, true );
+    ESP_ERROR_CHECK( wifi_connect());
 }
 
 extern "C" {

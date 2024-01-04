@@ -11,17 +11,14 @@
 */
 #include "esp_log.h"
 #include "esp_spiffs.h"
-#include "lwip/apps/mdns.h"
-#include "lwip/apps/netbiosns.h"
-#include "rest_main.h"
-#include "rest_server.h"
+//#include "lwip/apps/netbiosns.h"
 
 static const char *TAG = "rest-main";
 
-static void initialise_netbios( void ) {
-    netbiosns_init();
-    netbiosns_set_name( CONFIG_EXAMPLE_MDNS_HOST_NAME );
-}
+//static void initialise_netbios( void ) {
+//    netbiosns_init();
+//    netbiosns_set_name( CONFIG_EXAMPLE_MDNS_HOST_NAME );
+//}
 
 esp_err_t init_fs( void ) {
     esp_vfs_spiffs_conf_t conf = {
@@ -51,32 +48,6 @@ esp_err_t init_fs( void ) {
         ESP_LOGI( TAG, "Partition size: total: %d, used: %d", total, used );
     }
     return ESP_OK;
-}
-
-static err_enum_t on_wifi_connect( httpd_handle_t server, const char *wifi_ssid ) {
-    (void) server;
-    (void) wifi_ssid;
-
-//    initialise_netbios();
-    return ESP_OK;
-}
-
-static void on_wifi_disconnect( httpd_handle_t server ) {
-    (void) server;
-
-//    netbiosns_stop();
-}
-
-static const rest_callbacks_t callbacks = {
-        .name= "rest-main",
-        .wifi_connect_fn = on_wifi_connect,
-        .wifi_disconnect_fn= on_wifi_disconnect,
-        .open_fn=NULL,
-        .close_fn = NULL
-};
-
-void discovery_register() {
-    wifi_register_callbacks( &callbacks );
 }
 
 #endif

@@ -8,20 +8,17 @@ extern "C" {
 #include "esp_err.h"
 #include <esp_http_server.h>
 #include "esp_wifi.h"
+#include "lwip/err.h"
 
-typedef esp_err_t (*wifi_connect_func_t)( httpd_handle_t server, const char *wifi_ssid );
+typedef esp_err_t (*wifi_connect_func_t)(const char *wifi_ssid );
 
-typedef void (*wifi_disconnect_func_t)( httpd_handle_t server );
-
-//typedef esp_err_t (*register_handlers_t)( httpd_handle_t server, void *dummy );
+typedef void (*wifi_disconnect_func_t)();
 
 typedef struct wifi_callbacks_t {
     struct wifi_callbacks_t *next;
     const char *name;
     wifi_connect_func_t wifi_connect_fn;
     wifi_disconnect_func_t wifi_disconnect_fn;
-    httpd_open_func_t open_fn;
-    httpd_close_func_t close_fn;
 } wifi_callbacks_t;
 
 extern esp_err_t wifi_register_callbacks( const wifi_callbacks_t *callbacks );

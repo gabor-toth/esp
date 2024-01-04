@@ -1,14 +1,13 @@
 #include "hajo_signalk.h"
 #include "esp_log.h"
-#include "esp_wifi.h"
 #include "EspSigK.h"
-#include "rest_main.h"
-#include "rest_server.h"
-#include "wifi_connect.h"
-#include "ws_server.h"
+#include "mdns_main.h"
 #include "n2k/n2k_struct_parser.h"
 #include "n2k/n2k_sender.h"
 #include "n2k/n2k_util.h"
+#include "rest_server.h"
+#include "wifi/wifi_main.h"
+#include "ws_server.h"
 
 static const char* TAG = "hajo_signalk";
 
@@ -71,22 +70,30 @@ static esp_err_t signalk_start( httpd_handle_t server, const char* wifi_ssid ) {
     return ESP_OK;
 }
 
-static void signalk_stop( httpd_handle_t server ) {
+static void signalk_stop() {
     ESP_LOGI( TAG, "signalk_stop" );
     sigK.stop();
 }
 
-static const rest_callbacks_t callbacks = {
+static const wifi_callbacks_t wifi_callbacks = {
+        .next = nullptr,
         .name= TAG,
-        .wifi_connect_fn =signalk_start,
+        .wifi_connect_fn = nullptr,
         .wifi_disconnect_fn=signalk_stop,
-        .open_fn=nullptr,
-        .close_fn = nullptr
+};
+
+static const rest_callbacks_t rest_callbacks = {
+        .next = nullptr,
+        .name= TAG,
+        .start_fn=signalk_start,
+        .open_fn = nullptr,
+        .close_fn = nullptr,
 };
 
 static void signalk_register() {
     ESP_LOGI( TAG, "signalk_register" );
-    rest_register_callbacks( &callbacks );
+    wifi_register_callbacks( &wifi_callbacks );
+    rest_register_callbacks( &rest_callbacks );
 }
 
 static void process_incoming_pgn( const tN2kMsg &N2kMsg ) {
@@ -101,7 +108,7 @@ void hajo_signalk_main( int iDev ) {
     setup_n2k_device( iDev );
     n2k_sender_register_loopback( process_incoming_pgn );
 
-    discovery_register();
+    mdns_register();
     wss_register();
     signalk_register();
     rest_server_main();

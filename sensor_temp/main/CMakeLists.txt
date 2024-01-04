@@ -7,6 +7,7 @@ idf_component_register(
         "../../common/mdns_main.c"
         "../../common/nvs_main.c"
         "../../common/rest_main.c"
+        "../../common/rest_server.c"
         "../../common/timer.c"
         "../../common/wifi/connect.c"
         "../../common/wifi/wifi_connect.c"

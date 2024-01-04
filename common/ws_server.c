@@ -185,24 +185,30 @@ static void stop_wss_echo_server( httpd_handle_t server ) {
     wss_keep_alive_stop( wss_keep_alive_get_keep_alive( server ));
 }
 
-esp_err_t wss_wifi_connect( httpd_handle_t hd, const char *wifi_ssid ) {
+static esp_err_t wss_rest_started( httpd_handle_t hd, const char *wifi_ssid ) {
     (void) wifi_ssid;
 
     start_wss_echo_server( hd );
     return rest_register_uri_handler( hd, TAG, &ws );
 }
 
-static const rest_callbacks_t callbacks = {
+static const wifi_callbacks_t wifi_callbacks = {
         .name= "ws_server",
-        .wifi_connect_fn = wss_wifi_connect,
+        .wifi_connect_fn = NULL,
         .wifi_disconnect_fn= stop_wss_echo_server,
+};
+
+static const rest_callbacks_t rest_callbacks = {
+        //.name= "ws_server",
+        .start_fn = wss_rest_started,
         .open_fn=wss_open_fd,
         .close_fn = wss_close_fd
 };
 
 void wss_register() {
     ESP_LOGI( TAG, "wss_register" );
-    wifi_register_callbacks( &callbacks );
+    wifi_register_callbacks( &wifi_callbacks );
+    rest_register_callbacks( &rest_callbacks );
 }
 
 // Get all clients and send async message
@@ -214,7 +220,7 @@ void wss_server_send_message( httpd_handle_t server, const char *message ) {
         return;
     }
     for ( size_t i = 0; i < clients; ++i ) {
-        int sock = client_fds[ i ];
+        int sock = client_fds[i];
         if ( httpd_ws_get_fd_info( server, sock ) != HTTPD_WS_CLIENT_WEBSOCKET ) {
             continue;
         }

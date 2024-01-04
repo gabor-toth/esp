@@ -21,9 +21,12 @@ typedef struct rest_server_context {
     char scratch[REST_SCRATCH_BUFSIZE];
 } rest_server_context_t;
 
+typedef esp_err_t (*rest_start_callback_fn)( httpd_handle_t hd, const char *wifi_ssid );
+
 typedef struct rest_callbacks_t {
     struct rest_callbacks_t *next;
     const char *name;
+    rest_start_callback_fn start_fn;
     httpd_open_func_t open_fn;
     httpd_close_func_t close_fn;
 } rest_callbacks_t;

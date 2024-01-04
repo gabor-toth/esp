@@ -30,14 +30,11 @@ esp_err_t wifi_register_callbacks( const wifi_callbacks_t *callbacks ) {
 static void handler_on_wifi_connect( void *dummy, esp_event_base_t event_base,
                                      int32_t event_id, void *event_data ) {
     if ( event_id == IP_EVENT_STA_GOT_IP ) {
-//        if ( http_server == NULL) {
-//            ESP_ERROR_CHECK( rest_server_start( wifi_ssid ));
-//        }
         ESP_LOGI( TAG, "[%s] Calling callbacks", currentTaskName());
         for ( rest_callbacks_node_t *node = registered_callbacks; node != NULL; node = node->next ) {
             if ( node->callbacks.wifi_connect_fn ) {
                 ESP_LOGI( TAG, "Callback for %s", node->callbacks.name );
-                node->callbacks.wifi_connect_fn( http_server, wifi_ssid );
+                node->callbacks.wifi_connect_fn( /*http_server,*/ wifi_ssid );
             } else {
                 ESP_LOGI( TAG, "No callback for %s", node->callbacks.name );
             }
@@ -58,7 +55,7 @@ static void handler_on_wifi_disconnect( void *dummy, esp_event_base_t event_base
                                         int32_t event_id, void *event_data ) {
     for ( rest_callbacks_node_t *node = registered_callbacks; node != NULL; node = node->next ) {
         if ( node->callbacks.wifi_disconnect_fn ) {
-            node->callbacks.wifi_disconnect_fn( http_server );
+            node->callbacks.wifi_disconnect_fn( /*http_server */);
         }
     }
 }

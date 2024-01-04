@@ -11,7 +11,7 @@
 #include "mdns.h"
 #include "rest_server.h"
 #include "ssdp.h"
-#include "wifi_connect.h"
+#include "wifi/wifi_main.h"
 #include "ws_server.h"
 
 #define NVS_KEY_TOKEN "signalk.token"
@@ -595,7 +595,6 @@ void EspSigK::onClientTextReceived( const char *buf ) {
     if ( *buf == '{' ) {
         // cJSON_ParseWithLengthOpts(buf, 0, nullptr, false);
         cJSON *result = cJSON_Parse( buf );
-        cJSON *stateItem;
         if ( cJSON_GetObjectItem( result, "version" ) != nullptr ) {
             processFrameHello( result );
             processed = true;

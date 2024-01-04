@@ -38,8 +38,7 @@ static void initialise_mdns( void ) {
     */
 }
 
-static err_enum_t on_wifi_connect( httpd_handle_t server, const char *wifi_ssid ) {
-    (void) server;
+static err_enum_t on_wifi_connect(  const char *wifi_ssid ) {
     (void) wifi_ssid;
 
     initialise_mdns();
@@ -52,12 +51,10 @@ static void on_wifi_disconnect( httpd_handle_t server ) {
     mdns_free();
 }
 
-static const rest_callbacks_t callbacks = {
+static const wifi_callbacks_t callbacks = {
         .name= "rest-main",
         .wifi_connect_fn = on_wifi_connect,
         .wifi_disconnect_fn= on_wifi_disconnect,
-        .open_fn=NULL,
-        .close_fn = NULL
 };
 
 void mdns_register() {
