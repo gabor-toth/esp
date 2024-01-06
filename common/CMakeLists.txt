@@ -1,4 +1,4 @@
-idf_build_get_property(target IDF_TARGET)
+#idf_build_get_property(target IDF_TARGET)
 
 #if (${target} STREQUAL "linux")
 #    # Header only library for linux
@@ -44,7 +44,6 @@ idf_component_register(
         esp_netif
         esp_timer
         esp_wifi
-        espressif__mdns
         json
         nvs_flash
         spiffs
