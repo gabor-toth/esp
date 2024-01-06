@@ -455,6 +455,13 @@ CONFIG_EXAMPLE_CONNECT_IPV4=y
 # end of Example Connection Configuration
 
 #
+# Own common Configuration
+#
+CONFIG_OWN_CONFIG_HOST_NAME="tempsens"
+CONFIG_OWN_CONFIG_HOST_NAME_SUFFIX_WITH_CHIPID=y
+# end of Own common Configuration
+
+#
 # Compiler options
 #
 CONFIG_COMPILER_OPTIMIZATION_DEFAULT=y

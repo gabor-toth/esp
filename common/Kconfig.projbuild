@@ -1,0 +1,15 @@
+menu "Own common Configuration"
+
+    config OWN_CONFIG_HOST_NAME
+        string "Host name"
+        default "myhostname"
+        help
+            Host name advertised with mDNS.
+
+    config OWN_CONFIG_HOST_NAME_SUFFIX_WITH_CHIPID
+        bool "Append chip id to host name"
+        default n
+        help
+            Appends the chip id to the host name to distinguish between instances of the same device.
+
+endmenu
