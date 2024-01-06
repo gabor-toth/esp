@@ -7,6 +7,8 @@
 
 static const char *TAG = "n2k_recv";
 
+#define NVS_KEY_ADDRESS "n2k.address"
+
 #if 0
 #include "NMEA2000_esp32.h"
 #include <stdatomic.h>
@@ -83,7 +85,7 @@ _Noreturn static void task_main_poll( void *arg ) {
 
 uint8_t n2k_load_address() {
     uint32_t nvs_handle = nvs_open_storage();
-    char *s = nvs_read_string( nvs_handle, "address" );
+    char *s = nvs_read_string( nvs_handle, NVS_KEY_ADDRESS );
     uint address = 25;
     if ( s != nullptr ) {
         address = atoi( s );
@@ -101,7 +103,7 @@ void n2k_save_address( uint8_t address ) {
     uint32_t nvs_handle = nvs_open_storage();
     char s[8];
     itoa( address, s, 10 );
-    nvs_write_string( nvs_handle, "address", s );
+    nvs_write_string( nvs_handle, NVS_KEY_ADDRESS, s );
     nvs_close_storage( nvs_handle );
 }
 
