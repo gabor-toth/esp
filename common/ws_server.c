@@ -37,8 +37,8 @@ static esp_err_t ws_handler( httpd_req_t *req ) {
     }
     httpd_ws_frame_t ws_pkt;
     uint8_t *buf = NULL;
-    memset( &ws_pkt, 0, sizeof( httpd_ws_frame_t ));
-
+    memset( &ws_pkt, 0, sizeof( httpd_ws_frame_t ) );
+    
     // First receive the full ws message
     /* Set max_len = 0 to get the frame len */
     esp_err_t ret = httpd_ws_recv_frame( req, &ws_pkt, 0 );
@@ -50,7 +50,7 @@ static esp_err_t ws_handler( httpd_req_t *req ) {
     if ( ws_pkt.len ) {
         /* ws_pkt.len + 1 is for NULL termination as we are expecting a string */
         buf = calloc( 1, ws_pkt.len + 1 );
-        if ( buf == NULL) {
+        if ( buf == NULL ) {
             ESP_LOGE( TAG, "Failed to calloc memory for buf" );
             return ESP_ERR_NO_MEM;
         }
@@ -68,8 +68,8 @@ static esp_err_t ws_handler( httpd_req_t *req ) {
         ESP_LOGI( TAG, "Received PONG message" );
         free( buf );
         return wss_keep_alive_client_is_active( wss_keep_alive_get_keep_alive( req->handle ),
-                                                httpd_req_to_sockfd( req ));
-
+                                                httpd_req_to_sockfd( req ) );
+        
         // If it was a TEXT message, just echo it back
     } else if ( ws_pkt.type == HTTPD_WS_TYPE_TEXT || ws_pkt.type == HTTPD_WS_TYPE_PING ||
                 ws_pkt.type == HTTPD_WS_TYPE_CLOSE ) {
@@ -81,7 +81,7 @@ static esp_err_t ws_handler( httpd_req_t *req ) {
             ws_pkt.type = HTTPD_WS_TYPE_PONG;
         } else if ( ws_pkt.type == HTTPD_WS_TYPE_CLOSE ) {
             // Response CLOSE packet with no payload to peer
-            ESP_LOGI( TAG, "Closed connection %d", httpd_req_to_sockfd( req ));
+            ESP_LOGI( TAG, "Closed connection %d", httpd_req_to_sockfd( req ) );
             ws_pkt.len = 0;
             ws_pkt.payload = NULL;
         }
@@ -121,17 +121,16 @@ static const httpd_uri_t ws = {
         .handle_ws_control_frames = true,
 };
 
-
 static void send_hello( void *arg ) {
     struct async_resp_arg *resp_arg = arg;
     httpd_handle_t hd = resp_arg->hd;
     int fd = resp_arg->fd;
     httpd_ws_frame_t ws_pkt;
-    memset( &ws_pkt, 0, sizeof( httpd_ws_frame_t ));
+    memset( &ws_pkt, 0, sizeof( httpd_ws_frame_t ) );
     ws_pkt.payload = (uint8_t *) resp_arg->message;
     ws_pkt.len = strlen( resp_arg->message );
     ws_pkt.type = HTTPD_WS_TYPE_TEXT;
-
+    
     httpd_ws_send_frame_async( hd, fd, &ws_pkt );
     free( resp_arg->message );
     free( resp_arg );
@@ -142,11 +141,11 @@ static void send_ping( void *arg ) {
     httpd_handle_t hd = resp_arg->hd;
     int fd = resp_arg->fd;
     httpd_ws_frame_t ws_pkt;
-    memset( &ws_pkt, 0, sizeof( httpd_ws_frame_t ));
+    memset( &ws_pkt, 0, sizeof( httpd_ws_frame_t ) );
     ws_pkt.payload = NULL;
     ws_pkt.len = 0;
     ws_pkt.type = HTTPD_WS_TYPE_PING;
-
+    
     httpd_ws_send_frame_async( hd, fd, &ws_pkt );
     free( resp_arg );
 }
@@ -159,10 +158,10 @@ bool client_not_alive_cb( wss_keep_alive_t h, int fd ) {
 
 bool check_client_alive_cb( wss_keep_alive_t h, int fd ) {
     ESP_LOGD( TAG, "Checking if client (fd=%d) is alive", fd );
-    struct async_resp_arg *resp_arg = malloc( sizeof( struct async_resp_arg ));
+    struct async_resp_arg *resp_arg = malloc( sizeof( struct async_resp_arg ) );
     resp_arg->hd = wss_keep_alive_get_http_server( h );
     resp_arg->fd = fd;
-
+    
     if ( httpd_queue_work( resp_arg->hd, send_ping, resp_arg ) == ESP_OK ) {
         return true;
     }
@@ -182,12 +181,12 @@ static void start_wss_echo_server( httpd_handle_t hd ) {
 
 static void stop_wss_echo_server( httpd_handle_t server ) {
     // Stop keep alive thread
-    wss_keep_alive_stop( wss_keep_alive_get_keep_alive( server ));
+    wss_keep_alive_stop( wss_keep_alive_get_keep_alive( server ) );
 }
 
 static esp_err_t wss_rest_started( httpd_handle_t hd, const char *wifi_ssid ) {
     (void) wifi_ssid;
-
+    
     start_wss_echo_server( hd );
     return rest_register_uri_handler( hd, TAG, &ws );
 }
@@ -220,12 +219,12 @@ void wss_server_send_message( httpd_handle_t server, const char *message ) {
         return;
     }
     for ( size_t i = 0; i < clients; ++i ) {
-        int sock = client_fds[i];
+        int sock = client_fds[ i ];
         if ( httpd_ws_get_fd_info( server, sock ) != HTTPD_WS_CLIENT_WEBSOCKET ) {
             continue;
         }
         ESP_LOGI( TAG, "Active client (fd=%d) -> sending async message", sock );
-        struct async_resp_arg *resp_arg = malloc( sizeof( struct async_resp_arg ));
+        struct async_resp_arg *resp_arg = malloc( sizeof( struct async_resp_arg ) );
         resp_arg->hd = server;
         resp_arg->fd = sock;
         resp_arg->message = strdup( message );

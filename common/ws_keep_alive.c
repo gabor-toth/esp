@@ -56,7 +56,7 @@ static uint64_t get_max_delay( wss_keep_alive_t h ) {
     for ( int i = 0; i < h->max_clients; ++i ) {
         if ( h->clients[ i ].type == CLIENT_ACTIVE ) {
             uint64_t check_this_client_at = h->clients[ i ].last_seen + h->keep_alive_period_ms;
-            if ( check_this_client_at < check_after_ms + _tick_get_ms()) {
+            if ( check_this_client_at < check_after_ms + _tick_get_ms() ) {
                 check_after_ms = check_this_client_at - _tick_get_ms();
                 if ( check_after_ms < 0 ) {
                     check_after_ms = 1000; // min delay, some client(s) not responding already
@@ -66,7 +66,6 @@ static uint64_t get_max_delay( wss_keep_alive_t h ) {
     }
     return check_after_ms;
 }
-
 
 static bool update_client( wss_keep_alive_t h, int sockfd, uint64_t timestamp ) {
     for ( int i = 0; i < h->max_clients; ++i ) {
@@ -107,20 +106,20 @@ static void keep_alive_task( void *arg ) {
     client_fd_action_t client_action;
     while ( run_task ) {
         if ( xQueueReceive( keep_alive_storage->q, (void *) &client_action,
-                            get_max_delay( keep_alive_storage ) / portTICK_PERIOD_MS) == pdTRUE) {
+                            get_max_delay( keep_alive_storage ) / portTICK_PERIOD_MS ) == pdTRUE ) {
             switch ( client_action.type ) {
                 case CLIENT_FD_ADD:
-                    if ( !add_new_client( keep_alive_storage, client_action.fd )) {
+                    if ( !add_new_client( keep_alive_storage, client_action.fd ) ) {
                         ESP_LOGE( TAG, "Cannot add new client" );
                     }
                     break;
                 case CLIENT_FD_REMOVE:
-                    if ( !remove_client( keep_alive_storage, client_action.fd )) {
+                    if ( !remove_client( keep_alive_storage, client_action.fd ) ) {
                         ESP_LOGE( TAG, "Cannot remove client fd:%d", client_action.fd );
                     }
                     break;
                 case CLIENT_UPDATE:
-                    if ( !update_client( keep_alive_storage, client_action.fd, client_action.last_seen )) {
+                    if ( !update_client( keep_alive_storage, client_action.fd, client_action.last_seen ) ) {
                         ESP_LOGE( TAG, "Cannot find client fd:%d", client_action.fd );
                     }
                     break;
@@ -136,11 +135,11 @@ static void keep_alive_task( void *arg ) {
             for ( int i = 0; i < keep_alive_storage->max_clients; ++i ) {
                 if ( keep_alive_storage->clients[ i ].type == CLIENT_ACTIVE ) {
                     if ( keep_alive_storage->clients[ i ].last_seen + keep_alive_storage->keep_alive_period_ms <=
-                         _tick_get_ms()) {
+                         _tick_get_ms() ) {
                         ESP_LOGD( TAG, "Haven't seen the client (fd=%d) for a while",
                                   keep_alive_storage->clients[ i ].fd );
                         if ( keep_alive_storage->clients[ i ].last_seen + keep_alive_storage->not_alive_after_ms <=
-                             _tick_get_ms()) {
+                             _tick_get_ms() ) {
                             ESP_LOGI( TAG, "Client (fd=%d) not alive!", keep_alive_storage->clients[ i ].fd );
                             keep_alive_storage->client_not_alive_cb( keep_alive_storage,
                                                                      keep_alive_storage->clients[ i ].fd );
@@ -155,8 +154,8 @@ static void keep_alive_task( void *arg ) {
     }
     vQueueDelete( keep_alive_storage->q );
     free( keep_alive_storage );
-
-    vTaskDelete(NULL);
+    
+    vTaskDelete( NULL );
 }
 
 wss_keep_alive_t wss_keep_alive_start( wss_keep_alive_config_t *config, httpd_handle_t http_server ) {
@@ -164,8 +163,8 @@ wss_keep_alive_t wss_keep_alive_start( wss_keep_alive_config_t *config, httpd_ha
     size_t client_list_size = config->max_clients + queue_size;
     wss_keep_alive_t keep_alive_storage = calloc( 1,
                                                   sizeof( wss_keep_alive_storage_t ) +
-                                                  client_list_size * sizeof( client_fd_action_t ));
-    if ( keep_alive_storage == NULL) {
+                                                  client_list_size * sizeof( client_fd_action_t ) );
+    if ( keep_alive_storage == NULL ) {
         return false;
     }
     keep_alive_storage->check_client_alive_cb = config->check_client_alive_cb;
@@ -174,9 +173,9 @@ wss_keep_alive_t wss_keep_alive_start( wss_keep_alive_config_t *config, httpd_ha
     keep_alive_storage->not_alive_after_ms = config->not_alive_after_ms;
     keep_alive_storage->keep_alive_period_ms = config->keep_alive_period_ms;
     keep_alive_storage->http_server = http_server;
-    keep_alive_storage->q = xQueueCreate( queue_size, sizeof( client_fd_action_t ));
+    keep_alive_storage->q = xQueueCreate( queue_size, sizeof( client_fd_action_t ) );
     if ( xTaskCreate( keep_alive_task, "keep_alive_task", config->task_stack_size,
-                      keep_alive_storage, config->task_prio, NULL) != pdTRUE) {
+                      keep_alive_storage, config->task_prio, NULL ) != pdTRUE ) {
         wss_keep_alive_stop( keep_alive_storage );
         return false;
     }
@@ -193,7 +192,7 @@ void wss_keep_alive_stop( wss_keep_alive_t h ) {
 
 esp_err_t wss_keep_alive_add_client( wss_keep_alive_t h, int fd ) {
     client_fd_action_t client_fd_action = { .fd = fd, .type = CLIENT_FD_ADD };
-    if ( xQueueSendToBack( h->q, &client_fd_action, 0 ) == pdTRUE) {
+    if ( xQueueSendToBack( h->q, &client_fd_action, 0 ) == pdTRUE ) {
         return ESP_OK;
     }
     return ESP_FAIL;
@@ -201,7 +200,7 @@ esp_err_t wss_keep_alive_add_client( wss_keep_alive_t h, int fd ) {
 
 esp_err_t wss_keep_alive_remove_client( wss_keep_alive_t h, int fd ) {
     client_fd_action_t client_fd_action = { .fd = fd, .type = CLIENT_FD_REMOVE };
-    if ( xQueueSendToBack( h->q, &client_fd_action, 0 ) == pdTRUE) {
+    if ( xQueueSendToBack( h->q, &client_fd_action, 0 ) == pdTRUE ) {
         return ESP_OK;
     }
     return ESP_FAIL;
@@ -210,11 +209,10 @@ esp_err_t wss_keep_alive_remove_client( wss_keep_alive_t h, int fd ) {
 esp_err_t wss_keep_alive_client_is_active( wss_keep_alive_t h, int fd ) {
     client_fd_action_t client_fd_action = { .fd = fd, .type = CLIENT_UPDATE,
             .last_seen = _tick_get_ms() };
-    if ( xQueueSendToBack( h->q, &client_fd_action, 0 ) == pdTRUE) {
+    if ( xQueueSendToBack( h->q, &client_fd_action, 0 ) == pdTRUE ) {
         return ESP_OK;
     }
     return ESP_FAIL;
-
 }
 
 wss_keep_alive_t wss_keep_alive_get_keep_alive( httpd_handle_t server ) {

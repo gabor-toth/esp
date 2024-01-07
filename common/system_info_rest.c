@@ -14,12 +14,12 @@ static const char *TAG = "rest_sysinfo";
 static void add_task_list( cJSON *root ) {
     UBaseType_t numberOfTasks = uxTaskGetNumberOfTasks();
     unsigned long ulTotalRunTime, ulStatsAsPercentage;
-    TaskStatus_t *pxTaskStatusArray = malloc( numberOfTasks * sizeof( TaskStatus_t ));
-
+    TaskStatus_t *pxTaskStatusArray = malloc( numberOfTasks * sizeof( TaskStatus_t ) );
+    
     uxTaskGetSystemState( pxTaskStatusArray, numberOfTasks, &ulTotalRunTime );
     /* For percentage calculations. */
     ulTotalRunTime /= 100UL;
-
+    
     cJSON *jsonTasks = cJSON_AddObjectToObject( root, "tasks" );
     cJSON_AddNumberToObject( jsonTasks, "runtime", ulTotalRunTime );
     cJSON *jsonTaskList = cJSON_AddArrayToObject( jsonTasks, "taskList" );
@@ -39,7 +39,7 @@ static void add_task_list( cJSON *root ) {
             cJSON_AddNumberToObject( jsonTask, "percentage", ulStatsAsPercentage );
         }
     }
-
+    
     /* The array is no longer needed, free the memory it consumes. */
     free( pxTaskStatusArray );
 }
@@ -47,7 +47,7 @@ static void add_task_list( cJSON *root ) {
 static void add_heap_info( cJSON *root ) {
     cJSON *jsonHeap = cJSON_AddObjectToObject( root, "heap" );
     multi_heap_info_t heap_info;
-    heap_caps_get_info( &heap_info, MALLOC_CAP_8BIT);
+    heap_caps_get_info( &heap_info, MALLOC_CAP_8BIT );
     cJSON_AddNumberToObject( jsonHeap, "allocatedBytes", heap_info.total_allocated_bytes );
     cJSON_AddNumberToObject( jsonHeap, "freeBytes", heap_info.total_free_bytes );
 //    heap_caps_get_total_size
@@ -93,7 +93,7 @@ static esp_err_t system_info_get_handler( httpd_req_t *req ) {
 // TODO   add_task_list( root );
     const char *sys_info = cJSON_Print( root );
     httpd_resp_sendstr( req, sys_info );
-    free((void *) sys_info );
+    free( (void *) sys_info );
     cJSON_Delete( root );
     return ESP_OK;
 }

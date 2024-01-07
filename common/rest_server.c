@@ -21,7 +21,7 @@
 #include <string.h>
 #include "wifi/wifi_main.h"
 
-static const char *TAG = "rest-server";
+static const char *TAG = "rest_server";
 static httpd_handle_t http_server = NULL;
 
 typedef struct rest_callbacks_node_t {
@@ -56,7 +56,7 @@ esp_err_t set_content_type_from_file( httpd_req_t *req, const char *filepath ) {
 
 static bool has_2_dots_in_file_name( char *filepath ) {
     char *p;
-
+    
     return ((p = strchr( filepath, '.' )) != NULL) && strchr( p + 1, '.' ) != NULL;
 }
 
@@ -70,7 +70,7 @@ static void set_cache_forever( httpd_req_t *req, char *filepath ) {
      */
 //    static char last_modified_header_value[32];
 //    static char max_age_header_value[32];
-
+    
     httpd_resp_set_hdr( req, "Cache-Control", "max-age=31536000" ); // 1 year in seconds
 
 //    struct stat file_state;
@@ -85,10 +85,10 @@ static void set_cache_forever( httpd_req_t *req, char *filepath ) {
 static esp_err_t rest_file_get_handler( httpd_req_t *req ) {
     char filepath[FILE_PATH_MAX];
     char error_message[255];
-
+    
     rest_server_context_t *rest_context = (rest_server_context_t *) req->user_ctx;
     strlcpy( filepath, rest_context->base_path, sizeof(filepath) );
-    if ( req->uri[strlen( req->uri ) - 1] == '/' || !strchr( req->uri, '.' ) ) {
+    if ( req->uri[ strlen( req->uri ) - 1 ] == '/' || !strchr( req->uri, '.' ) ) {
         // serve index.html for Angular routes
         strlcat( filepath, "/index.html", sizeof(filepath) );
     } else {
@@ -101,13 +101,13 @@ static esp_err_t rest_file_get_handler( httpd_req_t *req ) {
         httpd_resp_send_err( req, HTTPD_404_NOT_FOUND, error_message );
         return ESP_FAIL;
     }
-
+    
     ESP_LOGI( TAG, "Sending file %s", filepath );
     if ( has_2_dots_in_file_name( filepath ) ) {
         set_cache_forever( req, filepath );
     }
     set_content_type_from_file( req, filepath );
-
+    
     char *chunk = rest_context->scratch;
     ssize_t read_bytes;
     do {
@@ -138,7 +138,7 @@ static esp_err_t rest_file_get_handler( httpd_req_t *req ) {
 
 esp_err_t rest_receive_json_body( httpd_req_t *req, rest_server_context_t *context, cJSON **root ) {
     *root = 0;
-
+    
     int total_len = (int) req->content_len;
     int cur_len = 0;
     char *buf = context->scratch;
@@ -154,8 +154,8 @@ esp_err_t rest_receive_json_body( httpd_req_t *req, rest_server_context_t *conte
         }
         cur_len += received;
     }
-    buf[total_len] = '\0';
-
+    buf[ total_len ] = '\0';
+    
     *root = cJSON_Parse( buf );
     return ESP_OK;
 }
@@ -202,14 +202,14 @@ static esp_err_t rest_server_start( const char *wifi_ssid ) {
 //        ESP_LOGE( TAG, "No memory for rest_context" );
 //        return ESP_ERR_NO_MEM;
 //    }
-
+    
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.uri_match_fn = httpd_uri_match_wildcard;
     config.max_uri_handlers = 16;
     config.global_user_ctx = calloc( GLOBAL_USER_CONTEXT_COUNT, sizeof( void * ) );
     config.open_fn = open_fn_callback;
     config.close_fn = close_fn_callback;
-
+    
     ESP_LOGI( TAG, "Starting HTTP Server" );
     esp_err_t result = httpd_start( &http_server, &config );
     if ( result != ESP_OK ) {
@@ -217,7 +217,7 @@ static esp_err_t rest_server_start( const char *wifi_ssid ) {
 //        free( rest_context );
         return result;
     }
-
+    
     ESP_LOGI( TAG, "[%s] Calling callbacks", currentTaskName() );
     for ( rest_callbacks_node_t *node = registered_callbacks; node != NULL; node = node->next ) {
         if ( node->callbacks.start_fn ) {
@@ -225,7 +225,7 @@ static esp_err_t rest_server_start( const char *wifi_ssid ) {
         }
     }
     ESP_LOGI( TAG, "Done callbacks" );
-
+    
     return result;
 }
 
@@ -242,7 +242,7 @@ esp_err_t rest_register_uri_handler( httpd_handle_t handle,
 
 static err_enum_t on_wifi_connect( const char *wifi_ssid ) {
     (void) wifi_ssid;
-
+    
     if ( http_server == NULL ) {
         ESP_ERROR_CHECK( rest_server_start( wifi_ssid ) );
     }
@@ -279,7 +279,7 @@ static const wifi_callbacks_t wifi_callbacks = {
 
 esp_err_t rest_server_main() {
     wifi_register_callbacks( &wifi_callbacks );
-
+    
     return ESP_OK;
 }
 
