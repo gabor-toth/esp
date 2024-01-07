@@ -455,11 +455,11 @@ CONFIG_EXAMPLE_CONNECT_IPV4=y
 # end of Example Connection Configuration
 
 #
-# Own common Configuration
+# Own common configuration
 #
 CONFIG_OWN_CONFIG_HOST_NAME="myhostname"
 # CONFIG_OWN_CONFIG_HOST_NAME_SUFFIX_WITH_CHIPID is not set
-# end of Own common Configuration
+# end of Own common configuration
 
 #
 # Compiler options

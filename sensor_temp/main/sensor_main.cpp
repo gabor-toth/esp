@@ -24,13 +24,14 @@ static DS18B20_Info *device;
 #error Unknown DS18B20_RESOLUTION_BITS value
 #endif
 
-void tempsens_init() {
+esp_err_t tempsens_init() {
     ESP_LOGI( TAG, "tempsens_init start" );
     bus = owb_gpio_initialize( &driver_info, CONFIG_DS18B20_GPIO_NUM );
     device = ds18b20_malloc();
     ds18b20_init_solo( device, bus );
     ds18b20_set_resolution( device, DS18B20_RESOLUTION_BITS );
     ESP_LOGI( TAG, "tempsens_init finish" );
+    return ESP_OK;
 }
 
 void tempsens_measure( void *user_data ) {
@@ -41,7 +42,7 @@ void tempsens_measure( void *user_data ) {
             ds18b20_wait_for_conversion( device );
             float temp;
             DS18B20_ERROR result = ds18b20_read_temp( device, &temp );
-            if () {
+            if ( DS18B20_OK != result ) {
                 ESP_LOGW( TAG, "bad result %d, repeating read", result );
                 continue;
             }
@@ -60,8 +61,8 @@ void sensor_main() {
     
     ESP_ERROR_CHECK( esp_event_loop_create_default() );
     
-    tempsens_init();
-    timer_start( "measure", tempsens_measure, 1000, nullptr, true );
+    ESP_ERROR_CHECK( tempsens_init() );
+    ESP_ERROR_CHECK( timer_start( "measure", tempsens_measure, 1000, nullptr, true ) );
     ESP_ERROR_CHECK( wifi_connect() );
 }
 

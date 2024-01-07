@@ -5,9 +5,10 @@
 extern "C" {
 #endif
 
-typedef void (*timer_callback_t)(void* user_data);
+typedef void (*timer_callback_t)( void *user_data );
 
-void timer_start( const char* name, timer_callback_t callback, int interval_ms, void* user_data, bool tickOnCreate );
+esp_err_t
+timer_start( const char *name, timer_callback_t callback, int interval_ms, void *user_data, bool tickOnCreate );
 
 #ifdef __cplusplus
 }
