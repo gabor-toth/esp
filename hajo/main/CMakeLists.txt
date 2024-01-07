@@ -9,10 +9,6 @@ set(DEVICE_TYPE ${DEVICE_TYPE_ALL})
 #set(DEVICE_TYPE ${DEVICE_TYPE_LOGGER})
 
 set(SOURCES
-        "../../common/gpio_define.c"
-        "../../common/gpio_task.c"
-        "../../common/main_main.c"
-        "../../common/nvs_main.c"
         "hajo_main.cpp"
         "n2k/n2k_struct_parser.cpp"
         "n2k/n2k_receiver.cpp"
@@ -30,20 +26,6 @@ if ((DEVICE_TYPE EQUAL DEVICE_TYPE_LOGGER) OR (DEVICE_TYPE EQUAL DEVICE_TYPE_ALL
             "devices/signalk/HttpRequest.cpp"
             "devices/signalk/hajo_signalk.cpp"
             "devices/signalk/NMEA2000-SignalK-Gateway.cpp"
-            "../../common/gpio_json.c"
-            "../../common/logger.c"
-            "../../common/mdns_main.c"
-            "../../common/rest_main.c"
-            "../../common/rest_server.c"
-            "../../common/rest_util.c"
-            "../../common/simple_list.c"
-            "../../common/sntp_main.c"
-            "../../common/system_info_rest.c"
-            "../../common/wifi/connect.c"
-            "../../common/wifi/wifi_connect.c"
-            "../../common/wifi/wifi_main.c"
-            "../../common/ws_keep_alive.c"
-            "../../common/ws_server.c"
     )
 endif ()
 
@@ -58,14 +40,12 @@ if ((DEVICE_TYPE EQUAL DEVICE_TYPE_GAUGE_DISPLAY) OR (DEVICE_TYPE EQUAL DEVICE_T
             "devices/display/display_meter_tabbed.c"
             "devices/display/hajo_display.cpp"
             "devices/fluid/hajo_fluid.cpp"
-            "../../common/adc.c"
     )
 endif ()
 
 if ((DEVICE_TYPE EQUAL DEVICE_TYPE_BATTERY_MONITOR) OR (DEVICE_TYPE EQUAL DEVICE_TYPE_ALL))
     set(SOURCES ${SOURCES}
             "devices/battery/hajo_battery.cpp"
-            "../../common/adc.c"
     )
 endif ()
 
@@ -75,15 +55,6 @@ idf_component_register(
         INCLUDE_DIRS
         "."
         "../../common"
-
-        # REQUIRES
-        # "driver"
-        # "esp_adc"
-        # "esp_event"
-        # "json"
-        # "lvgl"
-        # "NMEA2000"
-        # "nvs_flash"
 )
 
 if (CONFIG_EXAMPLE_WEB_DEPLOY_SF)
