@@ -50,6 +50,11 @@ void tempsens_measure( void *user_data ) {
                 ESP_LOGW( TAG, "bad temperature %f, repeating read", temp );
                 continue;
             }
+            /* TODO
+            I (81520) sensor_main: temperature 22.687500
+            I (82490) sensor_main: temperature 54.687500
+            I (83510) sensor_main: temperature 22.687500
+             */
             ESP_LOGI( TAG, "temperature %f", temp );
             break;
         }
