@@ -1,16 +1,33 @@
-#include "sdkconfig.h"
+//@formatter:off
 
+// see esp-idf/examples/common_components/protocol_examples_common/connect.c
+
+// OWN added
+#include "sdkconfig.h"
 #if defined(CONFIG_EXAMPLE_CONNECT_WIFI)
 
 #include <string.h>
+// OWN commented out
+/*
+#include "protocol_examples_common.h"
+#include "example_common_private.h"
+#include "sdkconfig.h"
+*/
 #include "esp_event.h"
 #include "esp_wifi.h"
 #include "esp_wifi_default.h"
 #include "esp_log.h"
-#include "wifi_main.h"
+// OWN commented out
+/*
+#include "esp_netif.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/event_groups.h"
+#include "lwip/err.h"
+#include "lwip/sys.h"
+*/
 
-// see esp-idf/examples/common_components/protocol_examples_common/connect.c
-
+// OWN changed
 static const char *TAG = "wifi";
 
 #if CONFIG_EXAMPLE_CONNECT_IPV6
@@ -30,17 +47,20 @@ const char *example_ipv6_addr_types_to_str[6] = {
  * All netifs created withing common connect component are prefixed with the module TAG,
  * so it returns true if the specified netif is owned by this module
  */
-bool example_is_our_netif( const char *prefix, esp_netif_t *netif ) {
-    return strncmp( prefix, esp_netif_get_desc( netif ), strlen( prefix ) - 1 ) == 0;
+bool example_is_our_netif(const char *prefix, esp_netif_t *netif)
+{
+    return strncmp(prefix, esp_netif_get_desc(netif), strlen(prefix) - 1) == 0;
 }
 
-esp_netif_t *get_example_netif_from_desc( const char *desc ) {
+esp_netif_t *get_example_netif_from_desc(const char *desc)
+{
     esp_netif_t *netif = NULL;
+    // OWN changed to check whole desc
     char *expected_desc;
     asprintf( &expected_desc, "%s: %s", TAG, desc );
-    while (( netif = esp_netif_next( netif )) != NULL) {
-        if ( strcmp( esp_netif_get_desc( netif ), expected_desc ) == 0 ) {
-            free( expected_desc );
+    while ((netif = esp_netif_next(netif)) != NULL) {
+        if (strcmp(esp_netif_get_desc(netif), expected_desc) == 0) {
+            free(expected_desc);
             return netif;
         }
     }
@@ -48,6 +68,7 @@ esp_netif_t *get_example_netif_from_desc( const char *desc ) {
     return netif;
 }
 
+// OWN commented out
 /*
 void example_print_all_netif_ips(const char *prefix)
 {

@@ -1,13 +1,9 @@
-//
-// Created by tothg on 2024.01.04..
-//
-
 #include "wifi_main.h"
 #include "esp_log.h"
 #include "logger.h"
 #include "simple_list.h"
 
-static const char *TAG = "wifi-main";
+static const char *TAG = "wifi_main";
 
 typedef struct rest_callbacks_node_t {
     struct rest_callbacks_node_t *next;
@@ -17,9 +13,12 @@ typedef struct rest_callbacks_node_t {
 static rest_callbacks_node_t *registered_callbacks = NULL;
 static char *wifi_ssid = NULL;
 
+// from wifi_connect.c
+extern void example_wifi_shutdown( void );
+
 esp_err_t wifi_register_callbacks( const wifi_callbacks_t *callbacks ) {
-    rest_callbacks_node_t *node = malloc( sizeof( rest_callbacks_node_t ));
-    if ( node == NULL) {
+    rest_callbacks_node_t *node = malloc( sizeof( rest_callbacks_node_t ) );
+    if ( node == NULL ) {
         return ESP_ERR_NO_MEM;
     }
     node->callbacks = *callbacks;
@@ -29,8 +28,11 @@ esp_err_t wifi_register_callbacks( const wifi_callbacks_t *callbacks ) {
 
 static void handler_on_wifi_connect( void *dummy, esp_event_base_t event_base,
                                      int32_t event_id, void *event_data ) {
+    (void) dummy;
+    (void) event_base;
+    
     if ( event_id == IP_EVENT_STA_GOT_IP ) {
-        ESP_LOGI( TAG, "[%s] Calling callbacks", currentTaskName());
+        ESP_LOGI( TAG, "[%s] Calling callbacks", currentTaskName() );
         for ( rest_callbacks_node_t *node = registered_callbacks; node != NULL; node = node->next ) {
             if ( node->callbacks.wifi_connect_fn ) {
                 ESP_LOGI( TAG, "Callback for %s", node->callbacks.name );
@@ -42,7 +44,7 @@ static void handler_on_wifi_connect( void *dummy, esp_event_base_t event_base,
         ESP_LOGI( TAG, "Done callbacks" );
     } else if ( event_id == WIFI_EVENT_STA_CONNECTED ) {
         wifi_event_sta_connected_t *wifi_event = event_data;
-        if ( wifi_ssid != NULL) {
+        if ( wifi_ssid != NULL ) {
             free( wifi_ssid );
         }
         wifi_ssid = malloc( wifi_event->ssid_len + 1 );
@@ -53,11 +55,20 @@ static void handler_on_wifi_connect( void *dummy, esp_event_base_t event_base,
 
 static void handler_on_wifi_disconnect( void *dummy, esp_event_base_t event_base,
                                         int32_t event_id, void *event_data ) {
+    (void) dummy;
+    (void) event_base;
+    (void) event_id;
+    (void) event_data;
+    
     for ( rest_callbacks_node_t *node = registered_callbacks; node != NULL; node = node->next ) {
         if ( node->callbacks.wifi_disconnect_fn ) {
             node->callbacks.wifi_disconnect_fn( /*http_server */);
         }
     }
+}
+
+void wifi_shutdown( void ) {
+    example_wifi_shutdown();
 }
 
 const char *wifi_get_ssid() {
@@ -66,11 +77,11 @@ const char *wifi_get_ssid() {
 
 esp_err_t wifi_main() {
     ESP_ERROR_CHECK(
-            esp_event_handler_register( IP_EVENT, IP_EVENT_STA_GOT_IP, &handler_on_wifi_connect, NULL ));
+            esp_event_handler_register( IP_EVENT, IP_EVENT_STA_GOT_IP, &handler_on_wifi_connect, NULL ) );
     ESP_ERROR_CHECK(
-            esp_event_handler_register( WIFI_EVENT, WIFI_EVENT_STA_CONNECTED, &handler_on_wifi_connect, NULL ));
+            esp_event_handler_register( WIFI_EVENT, WIFI_EVENT_STA_CONNECTED, &handler_on_wifi_connect, NULL ) );
     ESP_ERROR_CHECK(
-            esp_event_handler_register( WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &handler_on_wifi_disconnect, NULL ));
-
+            esp_event_handler_register( WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &handler_on_wifi_disconnect, NULL ) );
+    
     return ESP_OK;
 }

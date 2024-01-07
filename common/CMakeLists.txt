@@ -24,9 +24,11 @@ set(srcs
         "sntp_main.c"
         "system_info_rest.c"
         "timer.c"
-        "wifi/wifi_connect.c"
-        "wifi/connect.c"
+        "wifi/example_connect_override/connect.c"
+        "wifi/example_connect_override/wifi_connect.c"
+        "wifi/example_connect_override/wifi_scan.c"
         "wifi/wifi_main.c"
+        "wifi/wifi_scan.c"
         "ws_keep_alive.c"
         "ws_server.c"
 )
