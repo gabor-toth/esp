@@ -406,7 +406,17 @@ CONFIG_PARTITION_TABLE_MD5=y
 # end of Partition Table
 
 #
-# Example Configuration
+# Sensor configuration
+#
+CONFIG_DS18B20_GPIO_NUM=14
+# CONFIG_DS18B20_RESOLUTION_BITS_9 is not set
+# CONFIG_DS18B20_RESOLUTION_BITS_10 is not set
+# CONFIG_DS18B20_RESOLUTION_BITS_11 is not set
+CONFIG_DS18B20_RESOLUTION_BITS_12=y
+# end of Sensor configuration
+
+#
+# Rest server configuration
 #
 CONFIG_EXAMPLE_MDNS_HOST_NAME="n2k-gateway"
 CONFIG_MDNS_INSTANCE_NAME="N2K Gateway"
@@ -414,7 +424,7 @@ CONFIG_EXAMPLE_WEB_DEPLOY_SEMIHOST=y
 # CONFIG_EXAMPLE_WEB_DEPLOY_SF is not set
 CONFIG_EXAMPLE_HOST_PATH_TO_MOUNT="PATH-TO-WEB-DIST_DIR"
 CONFIG_EXAMPLE_WEB_MOUNT_POINT="/www"
-# end of Example Configuration
+# end of Rest server configuration
 
 #
 # Example Connection Configuration
@@ -455,11 +465,11 @@ CONFIG_EXAMPLE_CONNECT_IPV4=y
 # end of Example Connection Configuration
 
 #
-# Own common Configuration
+# Own common configuration
 #
 CONFIG_OWN_CONFIG_HOST_NAME="tempsens"
 CONFIG_OWN_CONFIG_HOST_NAME_SUFFIX_WITH_CHIPID=y
-# end of Own common Configuration
+# end of Own common configuration
 
 #
 # Compiler options

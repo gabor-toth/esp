@@ -1,4 +1,4 @@
-menu "Own common Configuration"
+menu "Own common configuration"
 
     config OWN_CONFIG_HOST_NAME
         string "Host name"

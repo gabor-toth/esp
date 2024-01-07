@@ -22,7 +22,9 @@ static const char *TAG = "rest_main";
 
 esp_err_t init_fs( void ) {
     esp_vfs_spiffs_conf_t conf = {
+#ifdef CONFIG_EXAMPLE_WEB_MOUNT_POINT
             .base_path = CONFIG_EXAMPLE_WEB_MOUNT_POINT,
+#endif
             .partition_label = NULL,
             .max_files = 5,
             .format_if_mount_failed = false
