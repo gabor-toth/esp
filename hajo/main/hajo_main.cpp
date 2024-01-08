@@ -101,7 +101,9 @@ static void clock_configure( int max_freq_mhz ) {
 
 void hajo_main() {
     nvs_init();
+#if !CONFIG_BARE_HARDWARE
     determine_device_type( DEVICE_TYPE );
+#endif
     initialize_twai_driver();
 
     ESP_ERROR_CHECK( esp_event_loop_create_default());

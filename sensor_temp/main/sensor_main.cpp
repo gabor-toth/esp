@@ -53,11 +53,6 @@ void tempsens_measure( void *user_data ) {
                 ESP_LOGW( TAG, "bad temperature %f, repeating read", temp );
                 continue;
             }
-            /* TODO
-            I (81520) sensor_main: temperature 22.687500
-            I (82490) sensor_main: temperature 54.687500
-            I (83510) sensor_main: temperature 22.687500
-             */
             ESP_LOGI( TAG, "temperature %f", temp );
             break;
         }
@@ -68,9 +63,11 @@ void sensor_main() {
     nvs_init();
     
     ESP_ERROR_CHECK( esp_event_loop_create_default() );
-    
+
+#if !CONFIG_BARE_HARDWARE
     ESP_ERROR_CHECK( tempsens_init() );
     ESP_ERROR_CHECK( timer_start( "measure", tempsens_measure, 1000, nullptr, true ) );
+#endif
 
     mdns_register();
     wss_register();
