@@ -36,7 +36,7 @@ static void handler_on_wifi_connect( void *dummy, esp_event_base_t event_base,
         for ( rest_callbacks_node_t *node = registered_callbacks; node != NULL; node = node->next ) {
             if ( node->callbacks.wifi_connect_fn ) {
                 ESP_LOGI( TAG, "Callback for %s", node->callbacks.name );
-                node->callbacks.wifi_connect_fn( /*http_server,*/ wifi_ssid );
+                node->callbacks.wifi_connect_fn( wifi_ssid );
             } else {
                 ESP_LOGI( TAG, "No callback for %s", node->callbacks.name );
             }
@@ -62,7 +62,7 @@ static void handler_on_wifi_disconnect( void *dummy, esp_event_base_t event_base
     
     for ( rest_callbacks_node_t *node = registered_callbacks; node != NULL; node = node->next ) {
         if ( node->callbacks.wifi_disconnect_fn ) {
-            node->callbacks.wifi_disconnect_fn( /*http_server */);
+            node->callbacks.wifi_disconnect_fn();
         }
     }
 }

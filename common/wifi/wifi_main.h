@@ -10,7 +10,7 @@ extern "C" {
 #include "esp_wifi.h"
 #include "lwip/err.h"
 
-typedef esp_err_t (*wifi_connect_func_t)(const char *wifi_ssid );
+typedef esp_err_t (*wifi_connect_func_t)( const char *wifi_ssid );
 
 typedef void (*wifi_disconnect_func_t)();
 
@@ -22,6 +22,8 @@ typedef struct wifi_callbacks_t {
 } wifi_callbacks_t;
 
 extern esp_err_t wifi_register_callbacks( const wifi_callbacks_t *callbacks );
+
+extern esp_err_t wifi_main();
 
 extern esp_err_t wifi_connect();
 

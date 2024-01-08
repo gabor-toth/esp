@@ -1,10 +1,14 @@
 #include "mdns_main.h"
+#include "esp_log.h"
 #include "lwip/err.h"
 #include "mdns.h"
 #include "rest_server.h"
 #include "wifi/wifi_main.h"
 
+static const char *TAG = "mdsn";
+
 static void initialise_mdns( void ) {
+    ESP_LOGI( TAG, "initialise" );
     ESP_ERROR_CHECK( mdns_init());
     esp_netif_t *netif = wifi_get_esp_netif();
     if ( netif != NULL) {
@@ -38,7 +42,7 @@ static void initialise_mdns( void ) {
     */
 }
 
-static err_enum_t on_wifi_connect(  const char *wifi_ssid ) {
+static err_enum_t on_wifi_connect( const char *wifi_ssid ) {
     (void) wifi_ssid;
 
     initialise_mdns();

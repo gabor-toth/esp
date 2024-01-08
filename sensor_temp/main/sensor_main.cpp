@@ -2,10 +2,13 @@
 #include "ds18b20.h"
 #include "esp_event.h"
 #include "esp_log.h"
+#include "mdns_main.h"
 #include "nvs_main.h"
 #include "owb_gpio.h"
+#include "rest_server.h"
 #include "timer.h"
 #include "wifi/wifi_main.h"
+#include "ws_server.h"
 
 static const char *TAG = "sensor_main";
 static owb_gpio_driver_info driver_info;
@@ -68,6 +71,12 @@ void sensor_main() {
     
     ESP_ERROR_CHECK( tempsens_init() );
     ESP_ERROR_CHECK( timer_start( "measure", tempsens_measure, 1000, nullptr, true ) );
+
+    mdns_register();
+    wss_register();
+    rest_server_main();
+    ESP_ERROR_CHECK(wifi_main() );
+
     ESP_ERROR_CHECK( wifi_connect() );
 }
 
