@@ -1,0 +1,7 @@
+*-backups/
+gerber/
+*.zip
+\#auto_saved_files\#
+_autosave-*.kicad_sch
+~*.lck
+fp-info-cache
