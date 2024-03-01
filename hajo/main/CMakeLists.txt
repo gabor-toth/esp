@@ -1,13 +1,5 @@
 #set(IDF_COMPONENT_MANAGER 0)
 
-set(DEVICE_TYPE_ALL 99)
-set(DEVICE_TYPE_LOGGER 1)
-set(DEVICE_TYPE_GAUGE_DISPLAY 5)
-set(DEVICE_TYPE_BATTERY_MONITOR 6)
-
-set(DEVICE_TYPE ${DEVICE_TYPE_ALL})
-#set(DEVICE_TYPE ${DEVICE_TYPE_LOGGER})
-
 set(SOURCES
         "../../common/gpio_define.c"
         "../../common/gpio_task.c"
@@ -91,3 +83,23 @@ if (CONFIG_EXAMPLE_WEB_DEPLOY_SF)
         message(FATAL_ERROR " ${WEB_SRC_DIR}/dist/frontend doesn't exit. Please run 'ng build' in ${WEB_SRC_DIR} ")
     endif ()
 endif ()
+
+if (CONFIG_DEVICE_TYPE)
+    string(COMPARE EQUAL ${CONFIG_DEVICE_TYPE} "BATTERY" is_device_type_battery_monitor)
+    string(COMPARE EQUAL ${CONFIG_DEVICE_TYPE} "LOGGER" is_device_type_logger)
+    string(COMPARE EQUAL ${CONFIG_DEVICE_TYPE} "FLUID" is_device_type_gauge_display)
+    if (is_device_type_logger)
+        add_compile_definitions(CONFIG_DEVICE_TYPE_LOGGER=1)
+    elseif (is_device_type_gauge_display)
+        add_compile_definitions(CONFIG_DEVICE_TYPE_GAUGE_DISPLAY=1)
+    elseif (is_device_type_battery_monitor)
+        add_compile_definitions(CONFIG_DEVICE_TYPE_BATTERY_MONITOR=1)
+    else ()
+        message(FATAL_ERROR "Unknown CONFIG_DEVICE_TYPE ${CONFIG_DEVICE_TYPE}, should be BATTERY/FLUID/LOGGER")
+    endif ()
+    #else ()
+    #message(FATAL_ERROR "Set CONFIG_DEVICE_TYPE like 'idf.py build -DCONFIG_DEVICE_TYPE=LOGGER'")
+endif ()
+UNSET(is_device_type_battery_monitor CACHE)
+UNSET(is_device_type_logger CACHE)
+UNSET(is_device_type_gauge_display CACHE)
