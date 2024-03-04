@@ -168,3 +168,13 @@ Display
   * https://electropeak.com/learn/interfacing-2-8-inch-tft-lcd-touch-screen-with-esp32/
   * http://www.lcdwiki.com/2.8inch_SPI_Module_ILI9341_SKU:MSP2807
 
+KiCad
+=====
+
+* search parts: https://componentsearchengine.com/
+* library loader: https://componentsearchengine.com/ga/libraryLoaderSetup.php?flow=ll
+
+links
+* https://ms.componentsearchengine.com/library/kicad
+
+
