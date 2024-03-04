@@ -405,7 +405,9 @@
   },
   "libraries": {
     "pinned_footprint_libs": [],
-    "pinned_symbol_libs": []
+    "pinned_symbol_libs": [
+      "own"
+    ]
   },
   "meta": {
     "filename": "hajo_akku.kicad_pro",
