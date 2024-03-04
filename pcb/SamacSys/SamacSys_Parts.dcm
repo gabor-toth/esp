@@ -1,0 +1,33 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP NE555DR
+D Single Precision Timer
+K
+F http://www.ti.com/lit/ds/symlink/ne555.pdf
+$ENDCMP
+#
+$CMP BD-03PMMP-LC7001
+D AMPHENOL LTW - BD-03PMMP-LC7001 - CIRCULAR CONNECTOR, PLUG, 3POS, PANEL
+K
+F http://www.amphenolltw.com/2012download/2D%20PDF/01_Circular%20Connectors/BD-03PMMP-LC7001.pdf
+$ENDCMP
+#
+$CMP 1821274
+D PCB header, nominal cross section: 0.5 mm?, color: black, nominal current: 6 A, rated voltage (III/2): 160 V, contact surface: Gold, type of contact: Male connector, Number of potentials: 5, Number of rows: 1, Number of positions per row: 5, number of connections: 5, product range: MC 0,5/..-G-THR, pitch: 2.54 mm, mounting: THR soldering, pin layout: Linear pinning, solder pin [P]: 2 mm, Stecksystem: MICRO COMBICON - FMC 0,5, Locking: without, type of packaging: 44 mm wide tape, Sample values available unde
+K
+F http://www.phoenixcontact.com/gb/produkte/1821274
+$ENDCMP
+#
+$CMP 1844772
+D Pluggable Terminal Blocks DMC 0,5/ 7-G1- 2,54 P20THR R44
+K
+F https://www.phoenixcontact.com/en-pc/products/printed-circuit-board-connector-dmc-05-7-g1-254-p20thr-r44-1844772
+$ENDCMP
+#
+$CMP 1821245
+D PCB header, nominal cross section: 0.5 mm?, color: black, nominal current: 6 A, rated voltage (III/2): 160 V, contact surface: Gold, type of contact: Male connector, Number of potentials: 2, Number of rows: 1, Number of positions per row: 2, number of connections: 2, product range: MC 0,5/..-G-THR, pitch: 2.54 mm, mounting: THR soldering, pin layout: Linear pinning, solder pin [P]: 2 mm, Stecksystem: MICRO COMBICON - FMC 0,5, Locking: without, type of packaging: 24 mm wide tape, Sample values available unde
+K
+F http://www.phoenixcontact.com/gb/produkte/1821245
+$ENDCMP
+#
+#End Doc Library
