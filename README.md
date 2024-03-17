@@ -177,4 +177,17 @@ KiCad
 links
 * https://ms.componentsearchengine.com/library/kicad
 
+TODO
+====
 
+fatal: remote error: upload-pack: not our ref 04b38e68fdf662cc866fca628e3e67a9714209d1
+fatal: remote error: upload-pack: not our ref e1ba2bd2f61cd81c16b31b09772967fbfd72edd2
+fatal: remote error: upload-pack: not our ref 11aa66e7f39c9402039882acb14a993e390f8893
+fatal: remote error: upload-pack: not our ref 848df55b08dcdad33c7dd9dbc25deacd2fc5e489
+fatal: remote error: upload-pack: not our ref 30e5c4f95bff1a17e06ce1042a165b0aa2bc4ca5
+Errors during submodule fetch:
+	components/lwip/lwip
+	components/esp_wifi/lib
+	components/bt/controller/lib_esp32h2/esp32h2-bt-lib
+	components/bt/controller/lib_esp32c6/esp32c6-bt-lib
+	components/bt/controller/lib_esp32c2/esp32c2-bt-lib
