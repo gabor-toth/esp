@@ -931,7 +931,7 @@
     (property "ki_keywords" "R res resistor")
     (path "/29f650f1-159f-4b55-a9cd-ca935562582a")
     (attr through_hole)
-    (fp_text reference "R1" (at -1.6764 0.4064 90) (layer "F.SilkS")
+    (fp_text reference "R1" (at -1.4732 -1.1176 90) (layer "F.SilkS")
         (effects (font (size 1 1) (thickness 0.15)))
       (tstamp 1ab8c93e-a226-4be1-ab93-021723c15ff8)
     )
