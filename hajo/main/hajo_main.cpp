@@ -17,6 +17,10 @@
 #include "devices/attitude/hajo_attitude.h"
 #include "devices/signalk/hajo_signalk.h"
 
+#define LED_TIME_ON 20
+#define LED_TIME_GAP 200
+#define LED_TIME_INTERVAL 3000
+
 #define ESP32_CAN_TX_PIN N2K_GPIO_NUM_TX
 #define ESP32_CAN_RX_PIN N2K_GPIO_NUM_RX
 #define ESP32_CAN_STANDBY_PIN N2K_GPIO_NUM_STANDBY
@@ -29,12 +33,12 @@ static int hardware_device_type = 0xff;
 
 static const char *device_type_names[] = {
         "unknown 0",
-        "logger",
+        "n2kgw & logger",
         "unknown 2",
         "unknown 3",
         "unknown 4",
-        "display",
-        "monitor",
+        "fluid & display",
+        "battery monitor",
         "unknown 7",
 };
 
@@ -70,7 +74,29 @@ static void determine_device_type( int firmware_device_type ) {
     gpio_config( &io_conf );
 }
 
+static void led_on() {
+    gpio_set_direction(GPIO_NUM_15, GPIO_MODE_OUTPUT );
+    gpio_set_level(GPIO_NUM_15, 1 );
+}
+
+_Noreturn static void task_led( void *arg ) {
+    (void) arg;
+    
+    TickType_t flashMarker = 0;
+    for ( ;; ) {
+        gpio_set_level(GPIO_NUM_15, 1 );
+        vTaskDelayUntil(&flashMarker, pdMS_TO_TICKS(LED_TIME_ON) );
+        gpio_set_level(GPIO_NUM_15, 0 );
+        vTaskDelayUntil(&flashMarker, pdMS_TO_TICKS(LED_TIME_GAP) );
+        gpio_set_level(GPIO_NUM_15, 1 );
+        vTaskDelayUntil(&flashMarker, pdMS_TO_TICKS(LED_TIME_ON) );
+        gpio_set_level(GPIO_NUM_15, 0 );
+        vTaskDelayUntil(&flashMarker, pdMS_TO_TICKS(LED_TIME_INTERVAL-2*LED_TIME_ON-LED_TIME_GAP) );
+    }
+}
+
 static void initialize_twai_driver() {
+#if N2K_GPIO_NUM_STANDBY != GPIO_NUM_NC
     gpio_config_t io_conf = {};
 
     io_conf.intr_type = GPIO_INTR_DISABLE;
@@ -80,6 +106,7 @@ static void initialize_twai_driver() {
     io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
     gpio_config( &io_conf );
     gpio_set_level( N2K_GPIO_NUM_STANDBY, 0 );
+#endif
 }
 
 esp_pm_lock_handle_t pm_lock_handle_display;
@@ -100,6 +127,9 @@ static void clock_configure( int max_freq_mhz ) {
 }
 
 void hajo_main() {
+    led_on();
+    xTaskCreate( task_led, "led", 1024, nullptr, 10, nullptr );
+
     nvs_init();
     determine_device_type( DEVICE_TYPE );
     initialize_twai_driver();
