@@ -6,6 +6,9 @@
 !/lvgl-ui/
 !/README.md
 !/pcb/
+**/kicad/**/_autosave-*
+**/kicad/**/.~lock.*
+**/kicad/**/~*.lck
 !/sensor_temp/
 
 build/
