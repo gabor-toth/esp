@@ -1,62 +1,46 @@
 #set(IDF_COMPONENT_MANAGER 0)
 
 set(SOURCES
+        "../../common/adc.c"
         "../../common/gpio_define.c"
+        "../../common/gpio_json.c"
         "../../common/gpio_task.c"
+        "../../common/logger.c"
         "../../common/main_main.c"
         "../../common/nvs_main.c"
-        "hajo_main.cpp"
-        "n2k/n2k_struct_parser.cpp"
+        "../../common/rest_main.c"
+        "../../common/rest_server.c"
+        "../../common/rest_util.c"
+        "../../common/sntp_main.c"
+        "../../common/system_info_rest.c"
+        "../../common/wifi/connect.c"
+        "../../common/wifi/wifi_connect.c"
+        "../../common/ws_keep_alive.c"
+        "../../common/ws_server.c"
+        "devices/attitude/hajo_attitude.cpp"
+        "devices/battery/hajo_battery.cpp"
+        "devices/display/display_main.c"
+        "devices/display/display_meter_single.c"
+        "devices/display/display_meter_tabbed.c"
+        "devices/display/hajo_display.cpp"
+        "devices/fluid/hajo_fluid.cpp"
+        "devices/logger/hajo_logger.cpp"
+        "devices/logger/sdcard.c"
+        "devices/signalk/EspSigK.cpp"
+        "devices/signalk/HttpRequest.cpp"
+        "devices/signalk/NMEA2000-SignalK-Gateway.cpp"
+        "devices/signalk/hajo_signalk.cpp"
+        "fonts/rubik_12.c"
+        "fonts/rubik_12_subpx.c"
+        "fonts/rubik_18.c"
+        "fonts/rubik_18_subpx.c"
+        "n2k/N2kRaymarine.cpp"
         "n2k/n2k_receiver.cpp"
         "n2k/n2k_sender.cpp"
+        "n2k/n2k_struct_parser.cpp"
         "n2k/n2k_util.cpp"
-        "n2k/N2kRaymarine.cpp"
+        "hajo_main.cpp"
 )
-
-if ((DEVICE_TYPE EQUAL DEVICE_TYPE_LOGGER) OR (DEVICE_TYPE EQUAL DEVICE_TYPE_ALL))
-    set(SOURCES ${SOURCES}
-            "devices/attitude/hajo_attitude.cpp"
-            "devices/logger/hajo_logger.cpp"
-            "devices/logger/sdcard.c"
-            "devices/signalk/EspSigK.cpp"
-            "devices/signalk/HttpRequest.cpp"
-            "devices/signalk/hajo_signalk.cpp"
-            "devices/signalk/NMEA2000-SignalK-Gateway.cpp"
-            "../../common/gpio_json.c"
-            "../../common/logger.c"
-            "../../common/rest_main.c"
-            "../../common/rest_server.c"
-            "../../common/rest_util.c"
-            "../../common/sntp_main.c"
-            "../../common/system_info_rest.c"
-            "../../common/wifi/connect.c"
-            "../../common/wifi/wifi_connect.c"
-            "../../common/ws_keep_alive.c"
-            "../../common/ws_server.c"
-    )
-endif ()
-
-if ((DEVICE_TYPE EQUAL DEVICE_TYPE_GAUGE_DISPLAY) OR (DEVICE_TYPE EQUAL DEVICE_TYPE_ALL))
-    set(SOURCES ${SOURCES}
-            "fonts/rubik_12.c"
-            "fonts/rubik_12_subpx.c"
-            "fonts/rubik_18.c"
-            "fonts/rubik_18_subpx.c"
-            "devices/display/display_main.c"
-            "devices/display/display_meter_single.c"
-            "devices/display/display_meter_tabbed.c"
-            "devices/display/hajo_display.cpp"
-            "devices/fluid/hajo_fluid.cpp"
-            "../../common/adc.c"
-    )
-endif ()
-
-if ((DEVICE_TYPE EQUAL DEVICE_TYPE_BATTERY_MONITOR) OR (DEVICE_TYPE EQUAL DEVICE_TYPE_ALL))
-    set(SOURCES ${SOURCES}
-            "devices/battery/hajo_battery.cpp"
-            "../../common/adc.c"
-    )
-endif ()
 
 idf_component_register(
         SRCS ${SOURCES}
