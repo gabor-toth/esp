@@ -2,6 +2,7 @@
 #include "freertos/queue.h"
 #include "freertos/task.h"
 #include "freertos/timers.h"
+#include "esp_log.h"
 #include "driver/gpio.h"
 
 #include "gpio_task.h"
@@ -20,8 +21,15 @@ static gpio_change_callback change_callback = NULL;
 
 static void IRAM_ATTR gpio_isr_handler( void *arg ) {
     GpioTimer *timer_data = (GpioTimer *) arg;
-    xTimerResetFromISR( timer_data->timer_going_high, NULL );
-    xTimerResetFromISR( timer_data->timer_going_low, NULL );
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    if ( xTimerStartFromISR( timer_data->timer_going_high, &xHigherPriorityTaskWoken ) != pdPASS ) {
+        ESP_DRAM_LOGE( "gpio_task", "gpio_isr_handler" );
+    }
+    if ( timer_data->timer_going_low != timer_data->timer_going_high ) {
+        if ( xTimerStartFromISR( timer_data->timer_going_low, &xHigherPriorityTaskWoken ) != pdPASS ) {
+            ESP_DRAM_LOGE( "gpio_task", "gpio_isr_handler" );
+        }
+    }
 }
 
 static void timer_gpio_callback( TimerHandle_t timer ) {
@@ -37,8 +45,8 @@ static void timer_gpio_callback( TimerHandle_t timer ) {
 _Noreturn static void task_gpio( void *arg ) {
     for ( ;; ) {
         uint32_t io_num;
-        if ( xQueueReceive( gpio_evt_queue, &io_num, portMAX_DELAY )) {
-            change_callback( io_num, gpio_get_level( io_num ));
+        if ( xQueueReceive( gpio_evt_queue, &io_num, portMAX_DELAY ) ) {
+            change_callback( io_num, gpio_get_level( io_num ) );
         }
     }
 }
@@ -46,15 +54,15 @@ _Noreturn static void task_gpio( void *arg ) {
 void gpio_task_init( gpio_change_callback _change_callback ) {
     change_callback = _change_callback;
     //create a queue to handle gpio event from isr
-    gpio_evt_queue = xQueueCreate( 10, sizeof( uint32_t ));
+    gpio_evt_queue = xQueueCreate( 10, sizeof( uint32_t ) );
     //start gpio task
-    xTaskCreate( task_gpio, "task_gpio", 2048, NULL, 10, NULL);
+    xTaskCreate( task_gpio, "task_gpio", 2048, NULL, 10, NULL );
 }
 
 static TimerHandle_t create_timer( const char *timer_name, const GpioTimer *timer_data, int delay_ms ) {
     return xTimerCreate(
             timer_name,
-            ( delay_ms != 0 ? delay_ms : DEFAULT_DELAY_MS ) / portTICK_PERIOD_MS,
+            pdMS_TO_TICKS( delay_ms != 0 ? delay_ms : DEFAULT_DELAY_MS ),
             0,
             (void *) timer_data,
             timer_gpio_callback );
@@ -62,9 +70,9 @@ static TimerHandle_t create_timer( const char *timer_name, const GpioTimer *time
 
 void gpio_task_add( int io_num, int delay_ms_on_going_low, int delay_ms_on_going_high ) {
     char timer_name[10];
-
+    
     sprintf( timer_name, "gpio%d", io_num );
-    GpioTimer *timer_data = malloc( sizeof( GpioTimer ));
+    GpioTimer *timer_data = malloc( sizeof( GpioTimer ) );
     timer_data->io_num = io_num;
     timer_data->last_reported_state = gpio_get_level( io_num );
     timer_data->timer_going_high = create_timer( timer_name, timer_data, delay_ms_on_going_high );

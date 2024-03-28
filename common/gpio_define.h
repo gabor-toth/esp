@@ -17,8 +17,8 @@ extern void gpio_init( void *user_context );
 
 // types
 
-#define INPUTS   1
-#define OUTPUTS  0
+#define INPUTS   true
+#define OUTPUTS  false
 
 typedef struct {
     char *name;
@@ -30,12 +30,12 @@ typedef enum {
     high_is_on, low_is_on, inherit = -1
 } PinLevelType;
 
-extern void gpio_add_class( bool is_input, char *name, int max_pin_count, PinLevelType level_type );
+extern void gpio_add_class( bool is_input, const char *name, int max_pin_count, PinLevelType level_type );
 
 extern int
-gpio_add_pin( bool is_input, int class, gpio_num_t gpio_pin, PinLevelType level_type, uint64_t *pin_bit_mask );
+gpio_add_pin( bool is_input, int class_id, gpio_num_t gpio_pin, PinLevelType level_type, uint64_t *pin_bit_mask );
 
-extern void gpio_set_delays( bool is_input, int class, int index, int delay_ms_going_low, int delay_ms_going_high );
+extern void gpio_set_delays( bool is_input, int class_id, int index, int delay_ms_going_low, int delay_ms_going_high );
 
 extern void gpio_define_output_pins_callback( gpio_config_t *io_conf, void *user_context );
 
@@ -45,21 +45,21 @@ extern void gpio_changed_callback( uint32_t io_num, int state );
 
 extern int gpio_get_number_of_classes( bool is_input );
 
-extern char *gpio_get_class_name( bool is_input, int class );
+extern const char *gpio_get_class_name( bool is_input, int class_id );
 
-extern int gpio_get_number_of_pins( bool is_input, int class );
+extern int gpio_get_number_of_pins( bool is_input, int class_id );
 
-extern bool gpio_is_valid_index( bool is_input, int class, int index );
+extern bool gpio_is_valid_index( bool is_input, int class_id, int index );
 
-extern bool gpio_get_pin_state( bool is_input, int class, int index );
+extern bool gpio_get_pin_state( bool is_input, int class_id, int index );
 
-extern bool gpio_get_pin_data( bool is_input, int class, int index, PinData *pin_data );
+extern bool gpio_get_pin_data( bool is_input, int class_id, int index, PinData *pin_data );
 
-extern void gpio_set_pin_state( bool is_input, int class, int index, bool state );
+extern void gpio_set_pin_state( bool is_input, int class_id, int index, bool state );
 
-extern void gpio_set_pin_state_forced( bool is_input, int class, int index, bool state );
+extern void gpio_set_pin_state_forced( bool is_input, int class_id, int index, bool state );
 
-extern bool gpio_set_pin_data( bool is_input, int class, int index, PinData *pin_data );
+extern bool gpio_set_pin_data( bool is_input, int class_id, int index, PinData *pin_data );
 
 #ifdef __cplusplus
 }
