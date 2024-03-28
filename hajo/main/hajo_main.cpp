@@ -1,15 +1,12 @@
 #include "config.h"
 #include "driver/gpio.h"
-#include "esp_private/esp_clk.h"
 #include "esp_event.h"
 #include "esp_log.h"
 #include "esp_pm.h"
-#include "devices/attitude/hajo_attitude.h"
 #include "devices/battery/hajo_battery.h"
 #include "devices/display/hajo_display.h"
 #include "devices/fluid/hajo_fluid.h"
 #include "devices/logger/hajo_logger.h"
-#include "devices/signalk/hajo_signalk.h"
 #include "nvs_main.h"
 #include "n2k/n2k_receiver.h"
 
@@ -71,22 +68,22 @@ static void determine_device_type( int firmware_device_type ) {
 }
 
 static void led_on() {
-    gpio_set_direction(GPIO_NUM_15, GPIO_MODE_OUTPUT );
-    gpio_set_level(GPIO_NUM_15, 1 );
+    gpio_set_direction(GPIO_NUM_LED_POWER, GPIO_MODE_OUTPUT );
+    gpio_set_level(GPIO_NUM_LED_POWER, 1 );
 }
 
-_Noreturn static void task_led( void *arg ) {
+_Noreturn static void task_power_led( void *arg ) {
     (void) arg;
     
     TickType_t flashMarker = 0;
     for ( ;; ) {
-        gpio_set_level(GPIO_NUM_15, 1 );
+        gpio_set_level(GPIO_NUM_LED_POWER, 1 );
         vTaskDelayUntil(&flashMarker, pdMS_TO_TICKS(LED_TIME_ON) );
-        gpio_set_level(GPIO_NUM_15, 0 );
+        gpio_set_level(GPIO_NUM_LED_POWER, 0 );
         vTaskDelayUntil(&flashMarker, pdMS_TO_TICKS(LED_TIME_GAP) );
-        gpio_set_level(GPIO_NUM_15, 1 );
+        gpio_set_level(GPIO_NUM_LED_POWER, 1 );
         vTaskDelayUntil(&flashMarker, pdMS_TO_TICKS(LED_TIME_ON) );
-        gpio_set_level(GPIO_NUM_15, 0 );
+        gpio_set_level(GPIO_NUM_LED_POWER, 0 );
         vTaskDelayUntil(&flashMarker, pdMS_TO_TICKS(LED_TIME_INTERVAL-2*LED_TIME_ON-LED_TIME_GAP) );
     }
 }
@@ -124,7 +121,7 @@ static void clock_configure( int max_freq_mhz ) {
 
 void hajo_main() {
     led_on();
-    xTaskCreate( task_led, "led", 1024, nullptr, 10, nullptr );
+    xTaskCreate( task_power_led, "power_led", 1024, nullptr, 10, nullptr );
 
     nvs_init();
     determine_device_type( DEVICE_TYPE );
@@ -147,8 +144,8 @@ void hajo_main() {
     clock_configure( 240 );
     NMEA2000.SetDeviceCount(3);
     hajo_logger_main( iDev++ );
-    hajo_attitude_main( iDev++ );
-    hajo_signalk_main( iDev++ );
+//    hajo_attitude_main( iDev++ );
+//    hajo_signalk_main( iDev++ );
 #endif
 
     n2k_init();
