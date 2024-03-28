@@ -1,7 +1,29 @@
+#include "freertos/FreeRTOS.h"
+#include <freertos/task.h>
+#include "driver/gpio.h"
+#include "config.h"
 #include "esp_log.h"
+#include "sdcard.h"
+#include "gpio_define.h"
 #include "n2k/n2k_struct_parser.h"
 #include "n2k/n2k_sender.h"
 #include "n2k/n2k_util.h"
+
+#define LED_TIME_ON 20
+#define LED_TIME_GAP 200
+#define LED_TIME_INTERVAL 1000
+
+#define BUTTONS_CLASS 0
+
+typedef enum {
+    led_mode_off,
+    led_mode_green,
+    led_mode_green_red,
+    led_mode_red,
+} led_mode_t;
+
+static volatile led_mode_t led_mode = led_mode_off;
+static volatile bool logging_on = false;
 
 static const char *LOG = "hajo_logger";
 
@@ -172,9 +194,100 @@ static void process_incoming_pgn( const tN2kMsg &message ) {
     incomingMessageHandler->HandleMsg( message );
 }
 
+_Noreturn static void task_main_test_sdcard( void *arg ) {
+    (void) arg;
+    
+    while (true) {
+        if ( logging_on ) {
+            if ( test_sdcard() ) {
+                led_mode = led_mode_green_red;
+            } else {
+                led_mode = led_mode_red;
+            }
+        } else {
+            led_mode = led_mode_green;
+        }
+        vTaskDelay(pdMS_TO_TICKS( 5000 ));
+    }
+}
+
+_Noreturn static void task_logger_led( void *arg ) {
+    (void) arg;
+    
+    TickType_t flashMarker = 0;
+    for ( ;; ) {
+        gpio_num_t led1 = GPIO_NUM_NC;
+        gpio_num_t led2 = GPIO_NUM_NC;
+        switch(led_mode) {
+            case led_mode_off:
+                vTaskDelayUntil(&flashMarker, pdMS_TO_TICKS(LED_TIME_INTERVAL) );
+                continue;
+            case led_mode_green:
+                led1 = led2 = GPIO_NUM_LOGGER_LED_GREEN;
+                break;
+            case led_mode_green_red:
+                led1 = GPIO_NUM_LOGGER_LED_GREEN;
+                led2 = GPIO_NUM_LOGGER_LED_RED;
+                break;
+            case led_mode_red:
+                led1 = led2 = GPIO_NUM_LOGGER_LED_RED;
+                break;
+        }
+        gpio_set_level(led1, 1 );
+        vTaskDelayUntil(&flashMarker, pdMS_TO_TICKS(LED_TIME_ON) );
+        gpio_set_level(led1, 0 );
+        vTaskDelayUntil(&flashMarker, pdMS_TO_TICKS(LED_TIME_GAP) );
+        gpio_set_level(led2, 1 );
+        vTaskDelayUntil(&flashMarker, pdMS_TO_TICKS(LED_TIME_ON) );
+        gpio_set_level(led2, 0 );
+        vTaskDelayUntil(&flashMarker, pdMS_TO_TICKS(LED_TIME_INTERVAL-2*LED_TIME_ON-LED_TIME_GAP) );
+    }
+}
+
+void gpio_define_output_pins_callback( gpio_config_t *io_conf, void *user_context ) {
+}
+
+void gpio_define_input_pins_callback( gpio_config_t *io_conf, void *user_context ) {
+    gpio_add_class( INPUTS, "buttons", 2, low_is_on );
+    
+    gpio_add_pin( INPUTS, BUTTONS_CLASS, GPIO_NUM_LOGGER_BUTTON_1,
+                  low_is_on, &io_conf->pin_bit_mask );
+    gpio_add_pin( INPUTS, BUTTONS_CLASS, GPIO_NUM_LOGGER_BUTTON_2,
+                  low_is_on, &io_conf->pin_bit_mask );
+}
+
+void gpio_changed_callback( gpio_num_t io_num, int state ) {
+    if ( io_num == GPIO_NUM_LOGGER_BUTTON_1 ) {
+        if ( state == 0 ) {
+            logging_on = !logging_on;
+            ESP_LOGI( LOG, "Logging turned %s", logging_on ? "on" : "off" );
+            led_mode = logging_on ? led_mode_green_red : led_mode_green;
+        }
+//    } else if ( io_num == GPIO_NUM_LOGGER_BUTTON_2 ) {
+//        if ( state == 0 ) {
+//        }
+    } else {
+        ESP_LOGW( LOG, "Unhandled gpio %d changed to %d", io_num, state );
+    }
+}
+
+static void init_leds_and_buttons() {
+    gpio_set_direction(GPIO_NUM_LOGGER_LED_GREEN, GPIO_MODE_OUTPUT );
+    gpio_set_direction(GPIO_NUM_LOGGER_LED_RED, GPIO_MODE_OUTPUT );
+    gpio_set_level(GPIO_NUM_LOGGER_LED_GREEN, 0 );
+    gpio_set_level(GPIO_NUM_LOGGER_LED_RED, 0 );
+    
+    gpio_init( nullptr );
+    xTaskCreate( task_logger_led, "logger_led", 1024, nullptr, 10, nullptr );
+}
+
 void hajo_logger_main( int iDev ) {
-    // test_sdcard();
+    logging_on = false;
+    init_leds_and_buttons();
+    
     setup_n2k_device( iDev );
 
     n2k_sender_register_loopback( process_incoming_pgn );
+    
+    xTaskCreate( task_main_test_sdcard, "test_sdcard", 4096, nullptr, 5, nullptr );
 }
