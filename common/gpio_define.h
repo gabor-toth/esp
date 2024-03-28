@@ -41,7 +41,7 @@ extern void gpio_define_output_pins_callback( gpio_config_t *io_conf, void *user
 
 extern void gpio_define_input_pins_callback( gpio_config_t *io_conf, void *user_context );
 
-extern void gpio_changed_callback( uint32_t io_num, int state );
+extern void gpio_changed_callback( gpio_num_t io_num, int state );
 
 extern int gpio_get_number_of_classes( bool is_input );
 

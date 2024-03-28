@@ -10,7 +10,7 @@
 #define DEFAULT_DELAY_MS 100
 
 typedef struct {
-    uint32_t io_num;
+    gpio_num_t io_num;
     TimerHandle_t timer_going_low;
     TimerHandle_t timer_going_high;
     int last_reported_state;
@@ -34,7 +34,7 @@ static void IRAM_ATTR gpio_isr_handler( void *arg ) {
 
 static void timer_gpio_callback( TimerHandle_t timer ) {
     GpioTimer *timer_data = (GpioTimer *) pvTimerGetTimerID( timer );
-    uint32_t io_num = timer_data->io_num;
+    gpio_num_t io_num = timer_data->io_num;
     int current_state = gpio_get_level( io_num );
     if ( current_state != timer_data->last_reported_state ) {
         timer_data->last_reported_state = current_state;
@@ -44,7 +44,7 @@ static void timer_gpio_callback( TimerHandle_t timer ) {
 
 _Noreturn static void task_gpio( void *arg ) {
     for ( ;; ) {
-        uint32_t io_num;
+        gpio_num_t io_num;
         if ( xQueueReceive( gpio_evt_queue, &io_num, portMAX_DELAY ) ) {
             change_callback( io_num, gpio_get_level( io_num ) );
         }
@@ -54,7 +54,7 @@ _Noreturn static void task_gpio( void *arg ) {
 void gpio_task_init( gpio_change_callback _change_callback ) {
     change_callback = _change_callback;
     //create a queue to handle gpio event from isr
-    gpio_evt_queue = xQueueCreate( 10, sizeof( uint32_t ) );
+    gpio_evt_queue = xQueueCreate( 10, sizeof( gpio_num_t ) );
     //start gpio task
     xTaskCreate( task_gpio, "task_gpio", 2048, NULL, 10, NULL );
 }
@@ -68,7 +68,7 @@ static TimerHandle_t create_timer( const char *timer_name, const GpioTimer *time
             timer_gpio_callback );
 }
 
-void gpio_task_add( int io_num, int delay_ms_on_going_low, int delay_ms_on_going_high ) {
+void gpio_task_add( gpio_num_t io_num, int delay_ms_on_going_low, int delay_ms_on_going_high ) {
     char timer_name[10];
     
     sprintf( timer_name, "gpio%d", io_num );
