@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2015-2023 Espressif Systems (Shanghai) CO LTD
+ * SPDX-FileCopyrightText: 2015-2024 Espressif Systems (Shanghai) CO LTD
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -550,8 +550,12 @@ static int esp_websocket_client_send_with_exact_opcode(esp_websocket_client_hand
     int ret = -1;
     int need_write = len;
     int wlen = 0, widx = 0;
-
     bool contained_fin = opcode & WS_TRANSPORT_OPCODES_FIN;
+
+    if (esp_websocket_new_buf(client, true) != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to setup tx buffer");
+        return -1;
+    }
 
     while (widx < len || opcode) {  // allow for sending "current_opcode" only message with len==0
         if (need_write > client->buffer_size) {
@@ -629,7 +633,7 @@ esp_websocket_client_handle_t esp_websocket_client_init(const esp_websocket_clie
         ESP_WS_CLIENT_MEM_CHECK(TAG, client->config->scheme, goto _websocket_init_fail);
     }
 
-    if (config->reconnect_timeout_ms <= 0) {
+    if (!config->disable_auto_reconnect && config->reconnect_timeout_ms <= 0) {
         client->wait_timeout_ms = WEBSOCKET_RECONNECT_TIMEOUT_MS;
         ESP_LOGW(TAG, "`reconnect_timeout_ms` is not set, or it is less than or equal to zero, using default time out %d (milliseconds)", WEBSOCKET_RECONNECT_TIMEOUT_MS);
     } else {
@@ -1039,10 +1043,9 @@ static void esp_websocket_client_task(void *pv)
             ESP_LOGD(TAG, " Waiting for TCP connection to be closed by the server");
             int ret = esp_transport_ws_poll_connection_closed(client->transport, 1000);
             if (ret == 0) {
-                // still waiting
-                break;
-            }
-            if (ret < 0) {
+                ESP_LOGW(TAG, "Did not get TCP close within expected delay");
+
+            } else if (ret < 0) {
                 ESP_LOGW(TAG, "Connection terminated while waiting for clean TCP close");
             }
             client->run = false;
@@ -1205,33 +1208,27 @@ int esp_websocket_client_send_fin(esp_websocket_client_handle_t client, TickType
 
 int esp_websocket_client_send_with_opcode(esp_websocket_client_handle_t client, ws_transport_opcodes_t opcode, const uint8_t *data, int len, TickType_t timeout)
 {
-    int ret = ESP_OK;
+    int ret = -1;
     if (client == NULL || len < 0 || (data == NULL && len > 0)) {
         ESP_LOGE(TAG, "Invalid arguments");
-        return ESP_FAIL;
+        return -1;
     }
 
     if (xSemaphoreTakeRecursive(client->lock, timeout) != pdPASS) {
         ESP_LOGE(TAG, "Could not lock ws-client within %" PRIu32 " timeout", timeout);
-        return ESP_FAIL;
+        return -1;
     }
 
     if (!esp_websocket_client_is_connected(client)) {
         ESP_LOGE(TAG, "Websocket client is not connected");
-        ret = ESP_FAIL;
         goto unlock_and_return;
     }
 
     if (client->transport == NULL) {
         ESP_LOGE(TAG, "Invalid transport");
-        ret = ESP_FAIL;
         goto unlock_and_return;
     }
-    if (esp_websocket_new_buf(client, true) != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to setup tx buffer");
-        ret = ESP_FAIL;
-        goto unlock_and_return;
-    }
+
     ret = esp_websocket_client_send_with_exact_opcode(client, opcode | WS_TRANSPORT_OPCODES_FIN, data, len, timeout);
     if (ret < 0) {
         ESP_LOGE(TAG, "Failed to send the buffer");
