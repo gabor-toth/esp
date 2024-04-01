@@ -11,7 +11,7 @@
 
 #define LED_TIME_ON 20
 #define LED_TIME_GAP 200
-#define LED_TIME_INTERVAL 1000
+#define LED_TIME_INTERVAL 2000
 
 #define BUTTONS_CLASS 0
 
