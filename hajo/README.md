@@ -1,20 +1,17 @@
-Signal K
-========
+# Signal K
 
 - https://signalk.org/installation.html
     - https://demo.signalk.org/@signalk/instrumentpanel/
 - https://github.com/SignalK/signalk-server#how-to-get-signal-k-server
 - https://github.com/SignalK/signalk-server/blob/master/docker/README.md#quickstart
 
-Docker
-------
+## In Docker
 
 ```
 docker run -d --init  --name signalk-server -p 3000:3000 -v $(pwd):/home/node/.signalk cr.signalk.io/signalk/signalk-server
 ```
 
-Local
------
+## Local
 
 ```
 sudo apt isntall libavahi-compat-libdnssd-dev
@@ -23,8 +20,7 @@ sudo npm install -g signalk-server
 
 ```
 
-Requests
----------
+## Requests
 
 ```
 curl -X GET http://10.128.65.180:3000/signalk
@@ -42,15 +38,13 @@ timestamp":"2023-11-22T12:43:36.969Z","
 values":[{"path":"","value":{"uuid":"urn:mrn:signalk:uuid:59e1f1c9-9e32-4340-a1d0-656512c48f0a"}}]}]}
 ```
 
-Other links
------------
+## Other links
 
 - [Discovery and Connection Establishment](https://signalk.org/specification/1.7.0/doc/connection.html)
 - [Streaming API](https://signalk.org/specification/1.7.0/doc/streaming_api.html)
 - [KIP](https://github.com/mxtommy/Kip)
 
-Service Sniffer
-===============
+# Service Sniffer
 
 ```
 sudo apt install gssdp-tools
@@ -66,16 +60,14 @@ gssdp-device-sniffer -i enp7s0
 gssdp-device-sniffer -i wlp0s20f3
 ```
 
-URLs
-====
+# URLs
 
 http://192.168.72.182/description.xml
 http://192.168.72.182/index.html
 http://192.168.72.182/signalk
 ws://182.72.168.192:81/
 
-MDNS
-====
+# MDNS
 
 ```
 + docker0 IPv4 6d65d96b9f13                                  _signalk-ws._tcp     local
@@ -86,30 +78,65 @@ MDNS
   txt = ["vuuid=urn:mrn:signalk:uuid:7f446102-b734-40b4-a384-0ed9ee12579c" "self=urn:mrn:signalk:uuid:7f446102-b734-40b4-a384-0ed9ee12579c" "roles=master, main" "swvers=2.4.1" "swname=signalk-server" "txtvers=1"]
 ```
 
-Raspberry PI
-============
+# Raspberry PI
 
-Install
--------
+## Install
 
-System
+### System
+
+Links
+
+- https://www.raspberrypi.com/software/, which will download the below image
+- https://www.raspberrypi.com/software/operating-systems/#raspberry-pi-os-64-bit
 
 ```
-sudo apt install ssh unattended-upgrades
+sudo apt install ssh
+#  unattended-upgrades
 sudo touch /boot/ssh
 reboot
+ssh ...
 sudo raspi-config
 sudo apt update
 sudo apt upgrade
 sudo vi /etc/hosts
   + 127.0.1.1       solpi
   - 127.0.1.1       raspberrypi
-vi /etc/inputrc
+sudo vi /etc/inputrc
   history-search-*
 sudo hostnamectl set-hostname solpi
 sudo dpkg-reconfigure tzdata
 sudo dpkg-reconfigure --priority=low unattended-upgrades
 
+mkdir -p .ssh
+chmod 700 .ssh/
+echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKcyI/bADRtxOoJ1hDOtbntHil+7zQbVbTIEuEyCPMNb gabor.toth@p92.hu' > .ssh/authorized_keys
+```
+
+### Connect to box
+
+```
+ssh signalk@192.168.72.189
+ssh signalk@192.168.72.191
+```
+
+### Wifi AP
+
+See
+
+- https://learn.sparkfun.com/tutorials/setting-up-a-raspberry-pi-3-as-an-access-point/all
+
+### Wifi station
+
+See
+
+- https://serverfault.com/questions/869857/systemd-how-to-selectively-disable-wpa-supplicant-for-a-specific-wlan-interface
+- https://forums.raspberrypi.com/viewtopic.php?t=211853
+- https://stackoverflow.com/questions/66514910/enable-predictable-network-interfaces-via-shell-on-raspberry-pi
+- https://forums.raspberrypi.com/viewtopic.php?t=198946
+
+#### Setup
+
+```
 sudo vi /etc/wpa_supplicant/wpa_supplicant.conf
   country=HU
   
@@ -117,14 +144,22 @@ sudo vi /etc/wpa_supplicant/wpa_supplicant.conf
       ssid="TothKiss"
       psk="ToThKiSs"
   }
-sudo killall -HUP wpa_supplicant 
-
-mkdir .ssh
-chmod 700 .ssh/
-echo '...' > .ssh/authorized_keys
+sudo killall -HUP wpa_supplicant
 ```
 
-Signalk
+#### Commands
+
+```
+sudo su
+ip link set dev wlan0 down
+ip link set dev wlan0 up
+iwlist wlan0 scan
+vi wpa_supplicant/wpa_supplicant.conf
+wpa_supplicant -B -c /etc/wpa_supplicant/wpa_supplicant.conf -i wlan0
+wpa_cli terminate -i wlan0
+```
+
+### Signalk
 
 ```
 curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
@@ -142,15 +177,15 @@ systemctl daemon-reload
 
 ```
 
-Wifi
-----
+## Wifi
 
+```
 sudo raspi-config
+```
 
+## Power
 
-Power
------
-
+- LED & HDMI: https://www.jeffgeerling.com/blogs/jeff-geerling/controlling-pwr-act-leds-raspberry-pi
 - https://linuxhint.com/tips-tricks-optimize-power-consumption-raspberry-pi/
 - https://raspberrypi.stackexchange.com/questions/114422/what-is-the-minimum-power-required-for-an-rpi-4-in-halt-or-shutdown/114423#114423
 
@@ -191,6 +226,12 @@ core_freq_min=100
 sdram_freq_min=50
 over_voltage_min=0
 
+#otg_mode=1
+```
+
+?
+
+```
 sudo vcgencmd display_power 0
 display_power=1 ???
 ```
