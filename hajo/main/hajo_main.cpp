@@ -148,8 +148,8 @@ void hajo_main() {
     NMEA2000.SetDeviceCount(3);
     hajo_logger_main( iDev++ );
     hajo_attitude_main( iDev++ );
-//    hajo_signalk_main( iDev++ );
-    wap_main();
+    hajo_signalk_main( iDev++ );
+//    wap_main();
 #endif
 
     n2k_init();

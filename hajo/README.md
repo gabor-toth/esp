@@ -44,7 +44,7 @@ values":[{"path":"","value":{"uuid":"urn:mrn:signalk:uuid:59e1f1c9-9e32-4340-a1d
 - [Streaming API](https://signalk.org/specification/1.7.0/doc/streaming_api.html)
 - [KIP](https://github.com/mxtommy/Kip)
 
-# Service Sniffer
+## Service Sniffer
 
 ```
 sudo apt install gssdp-tools
@@ -60,14 +60,14 @@ gssdp-device-sniffer -i enp7s0
 gssdp-device-sniffer -i wlp0s20f3
 ```
 
-# URLs
+## URLs
 
 http://192.168.72.182/description.xml
 http://192.168.72.182/index.html
 http://192.168.72.182/signalk
 ws://182.72.168.192:81/
 
-# MDNS
+#x MDNS
 
 ```
 + docker0 IPv4 6d65d96b9f13                                  _signalk-ws._tcp     local
@@ -84,40 +84,121 @@ ws://182.72.168.192:81/
 
 ### System
 
-Links
-
-- https://www.raspberrypi.com/software/, which will download the below image
-- https://www.raspberrypi.com/software/operating-systems/#raspberry-pi-os-64-bit
+- download Raspberry PI Imager from here: https://www.raspberrypi.com/software/
+- choose 'Raspberry PI OS (other)', then choose 'OS Lite (64 bit)'
+- (which will download an image from
+  here https://www.raspberrypi.com/software/operating-systems/#raspberry-pi-os-64-bit)
+- select target SD card and write
+- put SD card into PI, boot with HDMI and keyboard connected
+- select Hungarian layout and normal keyboard
+- set hostname to 'signalk'
+- create user 'signalk' with password 'signalk'
+- login with that credentials
+- set up ssh server
 
 ```
-sudo apt install ssh
-#  unattended-upgrades
-sudo touch /boot/ssh
-reboot
-ssh ...
 sudo raspi-config
-sudo apt update
-sudo apt upgrade
-sudo vi /etc/hosts
-  + 127.0.1.1       solpi
-  - 127.0.1.1       raspberrypi
-sudo vi /etc/inputrc
-  history-search-*
-sudo hostnamectl set-hostname solpi
-sudo dpkg-reconfigure tzdata
-sudo dpkg-reconfigure --priority=low unattended-upgrades
+```
 
+- then go to menu 3 'Interfaces' and I1 'SSH'
+- and enable it
+- connect from your pc
+
+```
+ssh signalk@192.168.72.191
+```
+
+- and continue in ssh
+
+```
 mkdir -p .ssh
 chmod 700 .ssh/
 echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKcyI/bADRtxOoJ1hDOtbntHil+7zQbVbTIEuEyCPMNb gabor.toth@p92.hu' > .ssh/authorized_keys
+
+sudo su
+apt -y update
+apt -y upgrade
+apt -y install vim
+sed -i 's/raspberrypi/solpi/' /etc/hosts
+hostnamectl set-hostname solpi
+sed -i '/history-search/ s/# //' /etc/inputrc
+dpkg-reconfigure tzdata
+# unattended-upgrades
+# dpkg-reconfigure --priority=low unattended-upgrades
+# raspi-config
+ # ?
+exit
+exit
 ```
 
-### Connect to box
+### Power
+
+- LED & HDMI: https://www.jeffgeerling.com/blogs/jeff-geerling/controlling-pwr-act-leds-raspberry-pi
+- https://linuxhint.com/tips-tricks-optimize-power-consumption-raspberry-pi/
+- https://raspberrypi.stackexchange.com/questions/114422/what-is-the-minimum-power-required-for-an-rpi-4-in-halt-or-shutdown/114423#114423
+
+TODO: add commands
+
+#### Tweak hardware settings
+
+- https://linuxhint.com/tips-tricks-optimize-power-consumption-raspberry-pi/
 
 ```
-ssh signalk@192.168.72.189
-ssh signalk@192.168.72.191
+sudo su
+vi /boot/firmware/config.txt
+
+# power save stuff
+arm_boost=0
+#dtoverlay=pi3-disable-bt
+dtparam=act_led_trigger=none
+dtparam=act_led_activelow=off
+dtparam=pwr_led_trigger=none
+dtparam=pwr_led_activelow=off
+
+arm_freq_min=200
+core_freq_min=100
+sdram_freq_min=50
+over_voltage_min=0
 ```
+
+?
+
+```
+sudo vcgencmd display_power 0
+display_power=1 ???
+```
+
+### SignalK
+
+Source link?
+
+```
+sudo su
+curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
+apt -y install nodejs libnss-mdns avahi-utils libavahi-compat-libdnssd-dev
+apt-mark auto libnss-mdns
+npm install -g npm@latest
+npm install -g --unsafe-perm signalk-server -y # will take a while
+signalk-server-setup
+# Enter the location to store server configuration: /home/signalk/.signalk
+# Enter your vessel name: sol
+# Enter your mmsi if you have one: 
+# The Signal K default port is 3000
+# Port 80 does not require ":3000" in the browser and app interfaces
+# Do you want to use port 80? Yes
+# Do you want to enable SSL? No
+
+vi /etc/systemd/system/signalk.service
+  # add at the end
+  [Unit]
+  Wants=network.target
+systemctl daemon-reload
+```
+
+- go to http://192.168.72.191/
+- create an admin account admin/signalk
+- login
+- TBC
 
 ### Wifi AP
 
@@ -147,7 +228,16 @@ sudo vi /etc/wpa_supplicant/wpa_supplicant.conf
 sudo killall -HUP wpa_supplicant
 ```
 
-#### Commands
+### Others
+
+#### Connect to box
+
+```
+ssh signalk@192.168.72.189
+ssh signalk@192.168.72.191
+```
+
+#### Wifi Commands
 
 ```
 sudo su
@@ -159,79 +249,3 @@ wpa_supplicant -B -c /etc/wpa_supplicant/wpa_supplicant.conf -i wlan0
 wpa_cli terminate -i wlan0
 ```
 
-### Signalk
-
-```
-curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
-sudo apt install nodejs npm -y
-sudo npm install -g npm@latest
-sudo apt install libnss-mdns avahi-utils libavahi-compat-libdnssd-dev -y
-sudo apt-mark auto libnss-mdns
-sudo npm install -g --unsafe-perm signalk-server -y
-sudo signalk-server-setup
-
-vi /etc/systemd/system/signalk.service
-  [Unit]
-  Wants=network.target
-systemctl daemon-reload
-
-```
-
-## Wifi
-
-```
-sudo raspi-config
-```
-
-## Power
-
-- LED & HDMI: https://www.jeffgeerling.com/blogs/jeff-geerling/controlling-pwr-act-leds-raspberry-pi
-- https://linuxhint.com/tips-tricks-optimize-power-consumption-raspberry-pi/
-- https://raspberrypi.stackexchange.com/questions/114422/what-is-the-minimum-power-required-for-an-rpi-4-in-halt-or-shutdown/114423#114423
-
-Turn off bus power for USB and Ethernet
----------------------------------------
-
-- https://forums.raspberrypi.com/viewtopic.php?t=138888
-
-sudo nano /etc/rc.local
-
-```
-sleep 10
-echo '1-1' | sudo tee /sys/bus/usb/drivers/usb/unbind
-```
-
-or
-
-```
-echo -n 0x0 | sudo tee /sys/devices/platform/soc/3f980000.usb/buspower
-```
-
-Tweak hardware settings
------------------------
-
-- https://linuxhint.com/tips-tricks-optimize-power-consumption-raspberry-pi/
-
-vi /boot/config.txt
-
-```
-dtoverlay=pi3-disable-bt
-dtparam=act_led_trigger=none
-dtparam=act_led_activelow=off
-dtparam=pwr_led_trigger=none
-dtparam=pwr_led_activelow=off
-
-arm_freq_min=200
-core_freq_min=100
-sdram_freq_min=50
-over_voltage_min=0
-
-#otg_mode=1
-```
-
-?
-
-```
-sudo vcgencmd display_power 0
-display_power=1 ???
-```

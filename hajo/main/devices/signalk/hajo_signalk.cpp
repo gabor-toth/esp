@@ -106,6 +106,6 @@ void hajo_signalk_main( int iDev ) {
     signalk_register();
     rest_server_main();
 
-    ESP_ERROR_CHECK( wifi_connect());
+//    ESP_ERROR_CHECK( wifi_connect());
 //    ESP_LOGI( TAG, "init finished" );
 }

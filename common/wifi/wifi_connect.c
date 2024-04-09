@@ -111,7 +111,7 @@ static void example_handler_on_wifi_disconnect( void *dummy, esp_event_base_t ev
     }
     ESP_LOGI( TAG, "Wifi disconnected, trying to reconnect..." );
     esp_err_t err = esp_wifi_connect();
-    if ( err == ESP_ERR_WIFI_NOT_STARTED) {
+    if ( err == ESP_ERR_WIFI_NOT_STARTED ) {
         return;
     }
     ESP_ERROR_CHECK( err );
@@ -130,18 +130,18 @@ static void example_handler_on_sta_got_ip( void *dummy, esp_event_base_t event_b
                                            int32_t event_id, void *event_data ) {
     s_retry_num = 0;
     ip_event_got_ip_t *event = (ip_event_got_ip_t *) event_data;
-    if ( !example_is_our_netif( EXAMPLE_NETIF_DESC_STA, event->esp_netif )) {
+    if ( !example_is_our_netif( EXAMPLE_NETIF_DESC_STA, event->esp_netif ) ) {
         ESP_LOGI( TAG, "Got IPv4 event: wrong interface \"%s\" (%s) address: " IPSTR,
                   esp_netif_get_desc( event->esp_netif ),
-                  EXAMPLE_NETIF_DESC_STA, IP2STR( &event->ip_info.ip ));
+                  EXAMPLE_NETIF_DESC_STA, IP2STR( &event->ip_info.ip ) );
         return;
     }
     ESP_LOGI( TAG, "Got IPv4 event: Interface \"%s\" address: " IPSTR, esp_netif_get_desc( event->esp_netif ),
-              IP2STR( &event->ip_info.ip ));
+              IP2STR( &event->ip_info.ip ) );
     if ( s_semph_get_ip_addrs ) {
         xSemaphoreGive( s_semph_get_ip_addrs );
     } else {
-        ESP_LOGI( TAG, "- IPv4 address: " IPSTR ",", IP2STR( &event->ip_info.ip ));
+        ESP_LOGI( TAG, "- IPv4 address: " IPSTR ",", IP2STR( &event->ip_info.ip ) );
     }
 }
 
@@ -167,11 +167,10 @@ static void example_handler_on_sta_got_ipv6(void *arg, esp_event_base_t event_ba
 }
 #endif // CONFIG_EXAMPLE_CONNECT_IPV6
 
-
 void example_wifi_start( void ) {
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-    ESP_ERROR_CHECK( esp_wifi_init( &cfg ));
-
+    ESP_ERROR_CHECK( esp_wifi_init( &cfg ) );
+    
     esp_netif_inherent_config_t esp_netif_config = ESP_NETIF_INHERENT_DEFAULT_WIFI_STA();
     // Warning: the interface desc is used in tests to capture actual connection details (IP, gw, mask)
     esp_netif_config.if_desc = EXAMPLE_NETIF_DESC_STA;
@@ -180,30 +179,28 @@ void example_wifi_start( void ) {
     // OWN added
     set_hostname();
     esp_wifi_set_default_wifi_sta_handlers();
-
-    ESP_ERROR_CHECK( esp_wifi_set_storage( WIFI_STORAGE_RAM ));
-    ESP_ERROR_CHECK( esp_wifi_set_mode( WIFI_MODE_STA ));
-    ESP_ERROR_CHECK( esp_wifi_start());
+    
+    ESP_ERROR_CHECK( esp_wifi_set_storage( WIFI_STORAGE_RAM ) );
+    ESP_ERROR_CHECK( esp_wifi_set_mode( WIFI_MODE_STA ) );
+    ESP_ERROR_CHECK( esp_wifi_start() );
 }
-
 
 void example_wifi_stop( void ) {
     esp_err_t err = esp_wifi_stop();
-    if ( err == ESP_ERR_WIFI_NOT_INIT) {
+    if ( err == ESP_ERR_WIFI_NOT_INIT ) {
         return;
     }
     ESP_ERROR_CHECK( err );
-    ESP_ERROR_CHECK( esp_wifi_deinit());
-    ESP_ERROR_CHECK( esp_wifi_clear_default_wifi_driver_and_handlers( s_example_sta_netif ));
+    ESP_ERROR_CHECK( esp_wifi_deinit() );
+    ESP_ERROR_CHECK( esp_wifi_clear_default_wifi_driver_and_handlers( s_example_sta_netif ) );
     esp_netif_destroy( s_example_sta_netif );
     s_example_sta_netif = NULL;
 }
 
-
 esp_err_t example_wifi_sta_do_connect( wifi_config_t wifi_config, bool wait ) {
     if ( wait ) {
         s_semph_get_ip_addrs = xSemaphoreCreateBinary();
-        if ( s_semph_get_ip_addrs == NULL) {
+        if ( s_semph_get_ip_addrs == NULL ) {
             return ESP_ERR_NO_MEM;
         }
 #if CONFIG_EXAMPLE_CONNECT_IPV6
@@ -217,17 +214,18 @@ esp_err_t example_wifi_sta_do_connect( wifi_config_t wifi_config, bool wait ) {
     s_retry_num = 0;
     ESP_ERROR_CHECK(
             esp_event_handler_register( WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &example_handler_on_wifi_disconnect,
-                                        NULL ));
-    ESP_ERROR_CHECK( esp_event_handler_register( IP_EVENT, IP_EVENT_STA_GOT_IP, &example_handler_on_sta_got_ip, NULL ));
+                                        NULL ) );
+    ESP_ERROR_CHECK(
+            esp_event_handler_register( IP_EVENT, IP_EVENT_STA_GOT_IP, &example_handler_on_sta_got_ip, NULL ) );
     ESP_ERROR_CHECK( esp_event_handler_register( WIFI_EVENT, WIFI_EVENT_STA_CONNECTED, &example_handler_on_wifi_connect,
-                                                 s_example_sta_netif ));
+                                                 s_example_sta_netif ) );
 #if CONFIG_EXAMPLE_CONNECT_IPV6
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_GOT_IP6, &example_handler_on_sta_got_ipv6, NULL));
 #endif
-
+    
     // OWN
     ESP_LOGI( TAG, "Connecting to %s on channel %d...", wifi_config.sta.ssid, wifi_config.sta.channel );
-    ESP_ERROR_CHECK( esp_wifi_set_config( WIFI_IF_STA, &wifi_config ));
+    ESP_ERROR_CHECK( esp_wifi_set_config( WIFI_IF_STA, &wifi_config ) );
     esp_err_t ret = esp_wifi_connect();
     if ( ret != ESP_OK ) {
         ESP_LOGE( TAG, "WiFi connect failed! ret:%x", ret );
@@ -250,10 +248,10 @@ esp_err_t example_wifi_sta_do_connect( wifi_config_t wifi_config, bool wait ) {
 
 esp_err_t example_wifi_sta_do_disconnect( void ) {
     ESP_ERROR_CHECK( esp_event_handler_unregister( WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED,
-                                                   &example_handler_on_wifi_disconnect ));
-    ESP_ERROR_CHECK( esp_event_handler_unregister( IP_EVENT, IP_EVENT_STA_GOT_IP, &example_handler_on_sta_got_ip ));
+                                                   &example_handler_on_wifi_disconnect ) );
+    ESP_ERROR_CHECK( esp_event_handler_unregister( IP_EVENT, IP_EVENT_STA_GOT_IP, &example_handler_on_sta_got_ip ) );
     ESP_ERROR_CHECK(
-            esp_event_handler_unregister( WIFI_EVENT, WIFI_EVENT_STA_CONNECTED, &example_handler_on_wifi_connect ));
+            esp_event_handler_unregister( WIFI_EVENT, WIFI_EVENT_STA_CONNECTED, &example_handler_on_wifi_connect ) );
 #if CONFIG_EXAMPLE_CONNECT_IPV6
     ESP_ERROR_CHECK(esp_event_handler_unregister(IP_EVENT, IP_EVENT_GOT_IP6, &example_handler_on_sta_got_ipv6));
 #endif
@@ -289,10 +287,10 @@ esp_err_t example_wifi_connect( void ) {
             },
     };
     // OWN start
-    strncpy((char *) wifi_config.sta.ssid, known_wifi_networks[ selected_network_index ].ssid,
-            sizeof( wifi_config.sta.ssid ));
-    strncpy((char *) wifi_config.sta.password, known_wifi_networks[ selected_network_index ].password,
-            sizeof( wifi_config.sta.password ));
+    strncpy( (char *) wifi_config.sta.ssid, known_wifi_networks[ selected_network_index ].ssid,
+             sizeof(wifi_config.sta.ssid) );
+    strncpy( (char *) wifi_config.sta.password, known_wifi_networks[ selected_network_index ].password,
+             sizeof(wifi_config.sta.password) );
 //    wifi_config.sta.channel = selected_channel;
     // OWN end
 #if CONFIG_EXAMPLE_WIFI_SSID_PWD_FROM_STDIN
@@ -322,23 +320,23 @@ esp_err_t example_wifi_connect( void ) {
 // see esp-idf/examples/wifi/scan/main/scan.c
 
 static void wifi_scan( void ) {
-    ESP_ERROR_CHECK( esp_netif_init());
+    ESP_ERROR_CHECK( esp_netif_init() );
 //    esp_netif_t *netif = esp_netif_get_default_netif();
     // OWN commented out
     // ESP_ERROR_CHECK(esp_event_loop_create_default());
     esp_netif_t *sta_netif = esp_netif_create_default_wifi_sta();
     assert( sta_netif );
-
+    
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-    ESP_ERROR_CHECK( esp_wifi_init( &cfg ));
-
-    ESP_ERROR_CHECK( esp_wifi_set_mode( WIFI_MODE_STA ));
-    ESP_ERROR_CHECK( esp_wifi_start());
+    ESP_ERROR_CHECK( esp_wifi_init( &cfg ) );
+    
+    ESP_ERROR_CHECK( esp_wifi_set_mode( WIFI_MODE_STA ) );
+    ESP_ERROR_CHECK( esp_wifi_start() );
 
 #if ASYNC_WIFI_INIT
     ESP_ERROR_CHECK( esp_event_handler_register( WIFI_EVENT, WIFI_EVENT_SCAN_DONE, &handler_on_wifi_scan_done,
-                                                 sta_netif ));
-    esp_wifi_scan_start(NULL, false );
+                                                 sta_netif ) );
+    esp_wifi_scan_start( NULL, false );
 #else
     uint16_t number = DEFAULT_SCAN_LIST_SIZE;
     uint16_t mem_size = DEFAULT_SCAN_LIST_SIZE * sizeof( wifi_ap_record_t );
@@ -377,7 +375,7 @@ static void wifi_scan( void ) {
 static void find_known_wifi( wifi_ap_record_t *ap_info, uint16_t ap_count ) {
     int8_t best_rssi = INT8_MIN;
     selected_network_index = -1;
-
+    
     for ( int ap = 0; ap < ap_count; ap++ ) {
         ESP_LOGI( TAG, "SSID %-16s channel %2d signal %3ddB", ap_info[ ap ].ssid, ap_info[ ap ].primary,
                   ap_info[ ap ].rssi );
@@ -401,20 +399,20 @@ static void handler_on_wifi_scan_done( void *sta_netif, esp_event_base_t event_b
     wifi_event_sta_scan_done_t *scan_done_data = (wifi_event_sta_scan_done_t *) event_data;
     ESP_LOGI( TAG, "Scan finished with status %ld, number of results %d", scan_done_data->status,
               scan_done_data->number );
-
+    
     uint16_t ap_count = 0;
-    ESP_ERROR_CHECK( esp_wifi_scan_get_ap_num( &ap_count ));
-    wifi_ap_record_t *ap_info = calloc( ap_count, sizeof( wifi_ap_record_t ));
-    ESP_ERROR_CHECK( esp_wifi_scan_get_ap_records( &ap_count, ap_info ));
+    ESP_ERROR_CHECK( esp_wifi_scan_get_ap_num( &ap_count ) );
+    wifi_ap_record_t *ap_info = calloc( ap_count, sizeof( wifi_ap_record_t ) );
+    ESP_ERROR_CHECK( esp_wifi_scan_get_ap_records( &ap_count, ap_info ) );
     find_known_wifi( ap_info, ap_count );
     free( ap_info );
-
+    
     ESP_ERROR_CHECK(
-            esp_event_handler_unregister( WIFI_EVENT, WIFI_EVENT_SCAN_DONE, &handler_on_wifi_scan_done ));
-
+            esp_event_handler_unregister( WIFI_EVENT, WIFI_EVENT_SCAN_DONE, &handler_on_wifi_scan_done ) );
+    
     esp_wifi_stop();
-    esp_netif_destroy_default_wifi((esp_netif_t *) sta_netif );
-
+    esp_netif_destroy_default_wifi( (esp_netif_t *) sta_netif );
+    
     if ( selected_network_index == -1 ) {
         ESP_LOGW( TAG, "No known wifi network found" );
         return;
@@ -438,7 +436,7 @@ esp_netif_t *wifi_get_esp_netif() {
 
 static void set_hostname() {
     // TODO hostname should be read from flash
-    ESP_ERROR_CHECK( esp_netif_set_hostname( s_example_sta_netif, "n2k-gw-sol" ));
+    ESP_ERROR_CHECK( esp_netif_set_hostname( s_example_sta_netif, "sol-n2kgw" ) );
 }
 // OWN end
 
