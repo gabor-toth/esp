@@ -67,7 +67,7 @@ http://192.168.72.182/index.html
 http://192.168.72.182/signalk
 ws://182.72.168.192:81/
 
-#x MDNS
+## MDNS
 
 ```
 + docker0 IPv4 6d65d96b9f13                                  _signalk-ws._tcp     local
@@ -118,7 +118,7 @@ echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKcyI/bADRtxOoJ1hDOtbntHil+7zQbVbTIEuE
 sudo su
 apt -y update
 apt -y upgrade
-apt -y install vim
+apt -y install traceroute vim
 sed -i 's/raspberrypi/solpi/' /etc/hosts
 hostnamectl set-hostname solpi
 sed -i '/history-search/ s/# //' /etc/inputrc
@@ -149,23 +149,34 @@ vi /boot/firmware/config.txt
 
 # power save stuff
 arm_boost=0
-#dtoverlay=pi3-disable-bt
+dtoverlay=disable-bt
+# Turn off Power LED
+dtparam=pwr_led_trigger=default-on
+dtparam=pwr_led_activelow=off
+# Turn off Activity LED
 dtparam=act_led_trigger=none
 dtparam=act_led_activelow=off
-dtparam=pwr_led_trigger=none
-dtparam=pwr_led_activelow=off
+# Turn off Ethernet ACT LED
+dtparam=eth_led0=4
+# Turn off Ethernet LNK LED
+dtparam=eth_led1=4
 
 arm_freq_min=200
 core_freq_min=100
 sdram_freq_min=50
 over_voltage_min=0
-```
-
-?
 
 ```
-sudo vcgencmd display_power 0
-display_power=1 ???
+
+Bluetooth
+```
+systemctl stop bluetooth
+systemctl disable bluetooth
+```
+
+Startup speed
+```
+systemd-analyze blame
 ```
 
 ### SignalK
@@ -202,11 +213,47 @@ systemctl daemon-reload
 
 ### Wifi AP
 
-See
+On Debian 12 (Bookworm), see
+- https://raspberrytips.com/access-point-setup-raspberry-pi/
 
-- https://learn.sparkfun.com/tutorials/setting-up-a-raspberry-pi-3-as-an-access-point/all
+```
+rasp-config
+  Localization, Wifi coubtra, HU, Finish
+nmcli con add con-name hotspot ifname wlan0 type wifi ssid "sol-wifi"
+nmcli con modify hotspot ipv4.method shared ipv4.address 192.168.77.1/24
+nmcli con modify hotspot wifi-sec.key-mgmt wpa-psk
+nmcli con modify hotspot wifi-sec.psk "passwifi"
+nmcli con modify hotspot 802-11-wireless.mode ap 802-11-wireless.band bg ipv4.method shared
+
+nmcli connection down hotspot
+nmcli connection up hotspot
+
+nmtui
+```
 
 ### Wifi station
+
+On Debian 12 (Bookworm):
+```
+nmcli dev show wlan1
+nmcli dev wifi list
+nmcli connection show
+
+#nmcli dev set wlan1 autoconnect yes
+nmcli dev wifi connect TothKiss password ******** ifname wlan1
+nmcli dev wifi connect TGA password ******** ifname wlan1
+#nmcli connection modify TothKiss connection.autoconnect yes
+
+systemctl restart NetworkManager
+
+```
+
+Turn off Wifi dongle's LED:
+- https://github.com/lwfinger/rtl8188eu/issues/82
+```
+echo 0 > /sys/class/leds/rtl8xxxu-usb1-1.4/brightness
+```
+
 
 See
 
