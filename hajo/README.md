@@ -161,7 +161,8 @@ dtparam=eth_led0=4
 # Turn off Ethernet LNK LED
 dtparam=eth_led1=4
 
-arm_freq_min=200
+# clock is not stable below 600
+arm_freq_min=600
 core_freq_min=100
 sdram_freq_min=50
 over_voltage_min=0
@@ -169,12 +170,14 @@ over_voltage_min=0
 ```
 
 Bluetooth
+
 ```
 systemctl stop bluetooth
 systemctl disable bluetooth
 ```
 
 Startup speed
+
 ```
 systemd-analyze blame
 ```
@@ -214,16 +217,18 @@ systemctl daemon-reload
 ### Wifi AP
 
 On Debian 12 (Bookworm), see
+
 - https://raspberrytips.com/access-point-setup-raspberry-pi/
 
 ```
 rasp-config
   Localization, Wifi coubtra, HU, Finish
-nmcli con add con-name hotspot ifname wlan0 type wifi ssid "sol-wifi"
+nmcli con add con-name hotspot ifname wlan0 type wifi ssid "sol"
 nmcli con modify hotspot ipv4.method shared ipv4.address 192.168.77.1/24
 nmcli con modify hotspot wifi-sec.key-mgmt wpa-psk
-nmcli con modify hotspot wifi-sec.psk "passwifi"
-nmcli con modify hotspot 802-11-wireless.mode ap 802-11-wireless.band bg ipv4.method shared
+nmcli con modify hotspot wifi-sec.psk "SoL37695"
+nmcli con modify hotspot 802-11-wireless.mode ap 802-11-wireless.band bg 802-11-wireless.channel 2 ipv4.method shared
+nmcli con modify hotspot 802-11-wireless-security.proto rsn
 
 nmcli connection down hotspot
 nmcli connection up hotspot
@@ -234,6 +239,7 @@ nmtui
 ### Wifi station
 
 On Debian 12 (Bookworm):
+
 ```
 nmcli dev show wlan1
 nmcli dev wifi list
@@ -249,11 +255,12 @@ systemctl restart NetworkManager
 ```
 
 Turn off Wifi dongle's LED:
+
 - https://github.com/lwfinger/rtl8188eu/issues/82
+
 ```
 echo 0 > /sys/class/leds/rtl8xxxu-usb1-1.4/brightness
 ```
-
 
 See
 
