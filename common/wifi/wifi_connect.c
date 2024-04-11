@@ -69,6 +69,7 @@ typedef struct {
 } known_wifi_network_t;
 
 static known_wifi_network_t known_wifi_networks[] = {
+        { .ssid = "sol", .password = "SoL37695" },
         { .ssid = "TothKiss", .password = "ToThKiSs" },
         { .ssid ="P92WG_E", .password ="22Dailymuffintime77" },
         { .ssid ="TGA", .password ="ToThKiSs01" },
@@ -96,7 +97,7 @@ extern bool example_is_our_netif( const char *prefix, esp_netif_t *netif );
 static void example_handler_on_wifi_disconnect( void *dummy, esp_event_base_t event_base,
                                                 int32_t event_id, void *event_data ) {
     s_retry_num++;
-    if ( s_retry_num > CONFIG_EXAMPLE_WIFI_CONN_MAX_RETRY ) {
+    if ( CONFIG_EXAMPLE_WIFI_CONN_MAX_RETRY > 0 && s_retry_num > CONFIG_EXAMPLE_WIFI_CONN_MAX_RETRY ) {
         ESP_LOGI( TAG, "Wifi Connect failed %d times, stop reconnect.", s_retry_num );
         /* let example_wifi_sta_do_connect() return */
         if ( s_semph_get_ip_addrs ) {

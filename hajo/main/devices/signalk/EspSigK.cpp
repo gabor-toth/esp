@@ -101,7 +101,7 @@ QueueHandle_t EspSigK::event_queue = nullptr;
 EspSigK::EspSigK() {
     printDeltaSerial = false;
     printDebugSerial = false;
-    signalKServerPort = 3000;
+    signalKServerPort = 80;
     wsClientReconnectInterval = 12000;
 }
 
@@ -158,7 +158,7 @@ void EspSigK::start( const char *deviceName, const char *hostname, httpd_handle_
     this->deviceName = deviceName;
 
     if ( strcmp( wifi_ssid, "TothKiss") == 0 ) {
-        signalKServerHost = "192.168.72.189";
+        signalKServerHost = "192.168.72.180";
     } else if ( strcmp( wifi_ssid, "P92WG_E") == 0 || strcmp( wifi_ssid, "TGA") == 0 ) {
         // signalKServerHost = "10.128.65.20";
         signalKServerHost = "79.122.115.7";
