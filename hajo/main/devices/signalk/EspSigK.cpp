@@ -172,14 +172,25 @@ void EspSigK::start( const char *deviceName, const char *hostname, httpd_handle_
 void EspSigK::stop() {
     ssdp_stop();
     stopWsClient();
-    // TODO guard this
+    xTimerStop( wsClientConnectTimer, portMAX_DELAY );
+    xTimerStop( pendingTokenTimer, portMAX_DELAY );
+    /*
+    // TODO guard these
     if ( wsClientConnectTimer ) {
         xTimerStop( wsClientConnectTimer, portMAX_DELAY );
         xTimerDelete( wsClientConnectTimer, portMAX_DELAY );
-        xTimerStop( pendingTokenTimer, portMAX_DELAY );
-        xTimerDelete( pendingTokenTimer, portMAX_DELAY );
         wsClientConnectTimer = nullptr;
     }
+    if ( pendingTokenTimer ) {
+        xTimerStop( pendingTokenTimer, portMAX_DELAY );
+        xTimerDelete( pendingTokenTimer, portMAX_DELAY );
+        pendingTokenTimer = nullptr;
+    }
+    if ( wsTask ) {
+        vTaskDelete(wsTask);
+        wsTask = nullptr;
+    }
+     */
 }
 
 /* ******************************************************************** */
@@ -297,7 +308,7 @@ void EspSigK::taskWsClientConnect( void *arg ) {
 void EspSigK::setupWebSocket() {
     if ( !event_queue ) {
         event_queue = xQueueCreate( 10, sizeof( int ));
-        if ( xTaskCreate( taskWsClientConnect, TAG_WSCLIENT, 3072, this, tskIDLE_PRIORITY, nullptr ) != pdTRUE) {
+        if ( xTaskCreate( taskWsClientConnect, TAG_WSCLIENT, 3072, this, tskIDLE_PRIORITY, &wsTask ) != pdTRUE) {
             ESP_LOGE( TAG_WSCLIENT, "Error create websocket task" );
         }
         wsClientConnectTimer = xTimerCreate(

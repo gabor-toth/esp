@@ -70,10 +70,10 @@ typedef struct {
 
 static known_wifi_network_t known_wifi_networks[] = {
         { .ssid = "sol", .password = "SoL37695" },
-        { .ssid = "TothKiss", .password = "ToThKiSs" },
-        { .ssid ="P92WG_E", .password ="22Dailymuffintime77" },
+//        { .ssid = "TothKiss", .password = "ToThKiSs" },
+//        { .ssid ="P92WG_E", .password ="22Dailymuffintime77" },
         { .ssid ="TGA", .password ="ToThKiSs01" },
-        { .ssid ="DIGI-02300875", .password ="qnZFucU6" },
+//        { .ssid ="DIGI-02300875", .password ="qnZFucU6" },
 };
 
 static int selected_network_index;
@@ -96,8 +96,10 @@ extern bool example_is_our_netif( const char *prefix, esp_netif_t *netif );
 
 static void example_handler_on_wifi_disconnect( void *dummy, esp_event_base_t event_base,
                                                 int32_t event_id, void *event_data ) {
+    // OWN changed
+#if CONFIG_EXAMPLE_WIFI_CONN_MAX_RETRY > 0
     s_retry_num++;
-    if ( CONFIG_EXAMPLE_WIFI_CONN_MAX_RETRY > 0 && s_retry_num > CONFIG_EXAMPLE_WIFI_CONN_MAX_RETRY ) {
+    if ( s_retry_num > CONFIG_EXAMPLE_WIFI_CONN_MAX_RETRY ) {
         ESP_LOGI( TAG, "Wifi Connect failed %d times, stop reconnect.", s_retry_num );
         /* let example_wifi_sta_do_connect() return */
         if ( s_semph_get_ip_addrs ) {
@@ -107,9 +109,11 @@ static void example_handler_on_wifi_disconnect( void *dummy, esp_event_base_t ev
         if (s_semph_get_ip6_addrs) {
             xSemaphoreGive(s_semph_get_ip6_addrs);
         }
+    // OWN changed
 #endif
         return;
     }
+#endif
     ESP_LOGI( TAG, "Wifi disconnected, trying to reconnect..." );
     esp_err_t err = esp_wifi_connect();
     if ( err == ESP_ERR_WIFI_NOT_STARTED ) {
@@ -320,6 +324,12 @@ esp_err_t example_wifi_connect( void ) {
 
 // see esp-idf/examples/wifi/scan/main/scan.c
 
+// OWN added
+static void wifi_scan_start() {
+    selected_network_index = -1;
+    esp_wifi_scan_start( NULL, false );
+}
+
 static void wifi_scan( void ) {
     ESP_ERROR_CHECK( esp_netif_init() );
 //    esp_netif_t *netif = esp_netif_get_default_netif();
@@ -337,7 +347,7 @@ static void wifi_scan( void ) {
 #if ASYNC_WIFI_INIT
     ESP_ERROR_CHECK( esp_event_handler_register( WIFI_EVENT, WIFI_EVENT_SCAN_DONE, &handler_on_wifi_scan_done,
                                                  sta_netif ) );
-    esp_wifi_scan_start( NULL, false );
+    wifi_scan_start();
 #else
     uint16_t number = DEFAULT_SCAN_LIST_SIZE;
     uint16_t mem_size = DEFAULT_SCAN_LIST_SIZE * sizeof( wifi_ap_record_t );
@@ -416,13 +426,13 @@ static void handler_on_wifi_scan_done( void *sta_netif, esp_event_base_t event_b
     
     if ( selected_network_index == -1 ) {
         ESP_LOGW( TAG, "No known wifi network found" );
+//        timer;
         return;
     }
     example_wifi_connect();
 }
 
 esp_err_t wifi_connect( void ) {
-    selected_network_index = -1;
     wifi_scan();
 #if ASYNC_WIFI_INIT
     return ESP_OK;
