@@ -2,17 +2,20 @@ Short term
 ==========
 
 - víz
-  - ellenállás üzemanyaghoz
-  - átkötés vízhez
-  - csatlakozó-aljzat vízhez 
-- kijelző 
-  - kábelezésremm
-  - új kinézet
-  - 
+    - ellenállás víz visszajövőhöz?
+- kijelző
+    - kábelezés
+    - új kinézet
+    - https://www.youtube.com/watch?v=6uKf5Bj0xcc&ab_channel=SquareLine
 - logger
-  - meglévő hardveren
-  - SD kártya
-  - gyroscope (MPU6050)
+- battery
+    - nyákon bevágás a csavar helyén
+
+- hűtő
+    - ASR-03DA, ASR-02DD Szilárdtest relé https://www.hestore.hu/prod_10035237.html
+    - relé 3v SMT https://www.hestore.hu/prod_10039590.html
+    - SSR DIP8-ban https://www.hestore.hu/prod_10028866.html
+    - IR530n https://electronics.stackexchange.com/questions/393066/how-to-control-12v-from-5v-using-transistor
 
 Before go live
 ==============
@@ -35,14 +38,8 @@ Before go live
 Long term plans
 ===============
 
-- reduce consumption
-  ```
-  setCpuFrequencyMhz(160);
-  adc_power_off();
-  ```
 - data logger to SD card
 - configuration via ISO-11783 commands
-- measure declination
 - configuration on display
     - dimmer
     - off timer
