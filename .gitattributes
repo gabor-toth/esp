@@ -1,0 +1,5 @@
+# run "git add --renormalize ." after changing
+
+# Declare files that will always have LF line endings on checkout.
+*.bat text eol=crlf
+*.sh text eol=lf

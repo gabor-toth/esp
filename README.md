@@ -152,6 +152,13 @@ CMake environment (Settings / Build, Execution, Deployment / CMake / Environment
 IDF_PATH=/home/tothg/own/projects/esp-idf;PATH=/home/tothg/own/projects/esp-idf/components/esptool_py/esptool:/home/tothg/own/projects/esp-idf/components/espcoredump:/home/tothg/own/projects/esp-idf/components/partition_table:/home/tothg/own/projects/esp-idf/components/app_update:/home/tothg/.espressif/tools/xtensa-esp-elf-gdb/12.1_20221002/xtensa-esp-elf-gdb/bin:/home/tothg/.espressif/tools/xtensa-esp32-elf/esp-2022r1-11.2.0/xtensa-esp32-elf/bin:/home/tothg/.espressif/tools/xtensa-esp32s2-elf/esp-2022r1-11.2.0/xtensa-esp32s2-elf/bin:/home/tothg/.espressif/tools/riscv32-esp-elf/esp-2022r1-11.2.0/riscv32-esp-elf/bin:/home/tothg/.espressif/tools/esp32ulp-elf/2.35_20220830/esp32ulp-elf/bin:/home/tothg/.espressif/tools/cmake/3.24.0/bin:/home/tothg/.espressif/tools/openocd-esp32/v0.11.0-esp32-20221026/openocd-esp32/bin:/home/tothg/.espressif/tools/xtensa-esp-elf-gdb/12.1_20221002/xtensa-esp-elf-gdb/bin:/home/tothg/.espressif/tools/xtensa-esp32-elf/esp-2022r1-11.2.0/xtensa-esp32-elf/bin:/home/tothg/.espressif/tools/xtensa-esp32s2-elf/esp-2022r1-11.2.0/xtensa-esp32s2-elf/bin:/home/tothg/.espressif/tools/riscv32-esp-elf/esp-2022r1-11.2.0/riscv32-esp-elf/bin:/home/tothg/.espressif/tools/esp32ulp-elf/2.35_20220830/esp32ulp-elf/bin:/home/tothg/.espressif/tools/cmake/3.24.0/bin:/home/tothg/.espressif/tools/openocd-esp32/v0.11.0-esp32-20221026/openocd-esp32/bin:/home/tothg/.espressif/python_env/idf5.1_py3.10_env/bin:/home/tothg/own/projects/esp-idf/tools:/home/tothg/.local/bin:/home/tothg/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin:/home/tothg/jpm/bin:/opt/mssql-tools/bin
 ```
 
+Windows
+```
+[Environment]::GetEnvironmentVariable("IDF_PATH")
+$Env:Path
+python C:\Espressif\frameworks\esp-idf-v5.2.1-2\tools\idf_tools.py install-python-env
+```
+
 Something else
 
 ```
