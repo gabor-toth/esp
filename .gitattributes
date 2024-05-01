@@ -3,3 +3,4 @@
 # Declare files that will always have LF line endings on checkout.
 *.bat text eol=crlf
 *.sh text eol=lf
+*/managed_components/**/* text eol=lf
