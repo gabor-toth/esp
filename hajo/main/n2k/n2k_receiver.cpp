@@ -84,7 +84,7 @@ _Noreturn static void task_main_poll( void *arg ) {
 uint8_t n2k_load_address() {
     uint32_t nvs_handle = nvs_open_storage();
     char *s = nvs_read_string( nvs_handle, "address" );
-    uint address = 25;
+    uint8_t address = 25;
     if ( s != nullptr ) {
         address = atoi( s );
         ESP_LOGI( TAG, "Loaded address %02x", address );
