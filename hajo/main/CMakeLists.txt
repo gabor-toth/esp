@@ -10,6 +10,7 @@ set(SOURCES
         "../../common/nvs_main.c"
         "../../common/http/http_main.c"
         "../../common/http/http_server.c"
+        "../../common/http/http_static_file.c"
         "../../common/rest_util.c"
         "../../common/sntp_main.c"
         "../../common/system_info_rest.c"
