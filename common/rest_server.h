@@ -48,14 +48,6 @@ extern esp_err_t rest_register_uri_handler( httpd_handle_t handle,
                                             const char *log_tag,
                                             const httpd_uri_t *uri_handler );
 
-/**
- * Receive JSON body.
- * Caller is responsible to call cJSON_Delete(root) and httpd_resp_sendstr()
- */
-extern esp_err_t rest_receive_json_body( httpd_req_t *req,
-                                         rest_server_context_t *context,
-                                         cJSON **root );
-
 #ifdef __cplusplus
 }
 #endif

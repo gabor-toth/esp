@@ -137,30 +137,6 @@ static esp_err_t rest_file_get_handler( httpd_req_t *req ) {
     return ESP_OK;
 }
 
-esp_err_t rest_receive_json_body( httpd_req_t *req, rest_server_context_t *context, cJSON **root ) {
-    *root = 0;
-
-    int total_len = req->content_len;
-    int cur_len = 0;
-    char *buf = context->scratch;
-    if ( total_len >= REST_SCRATCH_BUFSIZE) {
-        httpd_resp_send_err( req, HTTPD_400_BAD_REQUEST, "content too long" );
-        return ESP_FAIL;
-    }
-    while ( cur_len < total_len ) {
-        int received = httpd_req_recv( req, buf + cur_len, total_len );
-        if ( received <= 0 ) {
-            httpd_resp_send_err( req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to post control value" );
-            return ESP_FAIL;
-        }
-        cur_len += received;
-    }
-    buf[ total_len ] = '\0';
-
-    *root = cJSON_Parse( buf );
-    return ESP_OK;
-}
-
 esp_err_t rest_register_static_files_handler( httpd_handle_t server, rest_server_context_t *rest_context,
                                               const char *static_files_base_path ) {
     if ( static_files_base_path == NULL) {
