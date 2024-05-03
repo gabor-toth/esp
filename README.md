@@ -153,6 +153,8 @@ IDF_PATH=/home/tothg/own/projects/esp-idf;PATH=/home/tothg/own/projects/esp-idf/
 ```
 
 Windows
+-------
+
 ```
 [Environment]::GetEnvironmentVariable("IDF_PATH")
 $Env:Path
@@ -165,6 +167,17 @@ Something else
 PATH += /home/tothg/.espressif/tools/xtensa-esp32-elf/esp-2021r2-patch3-8.4.0/xtensa-esp32-elf/bin:/home/tothg/.espressif/tools/xtensa-clang/12.0.1-d9341b81fc/xtensa-esp32-elf-clang/bin:/home/tothg/.espressif/tools/esp32ulp-elf/2.28.51-esp-20191205/esp32ulp-elf-binutils/bin:/home/tothg/.espressif/tools/cmake/3.20.3/bin:/home/tothg/.espressif/tools/openocd-esp32/v0.11.0-esp32-20211220/openocd-esp32/bin:/home/tothg/.espressif/tools/ninja/1.10.2/:/home/tothg/.espressif/python_env/idf5.0_py3.8_env/bin:/home/tothg/own/projects/esp-idf/tools:
 IDF_PATH = /home/tothg/own/projects/esp-idf
 ```
+
+USB on Windows
+--------------
+
+- https://blog.manzelseet.com/fixing-cp2102-with-custom-vidpid.html
+- https://community.silabs.com/s/article/downloading-cp210x-drivers-from-windows-update?language=en_US
+  The PIDs that must be programmed to the CP210x device are listed below: 0x10C4 0xEA63
+- https://github.com/DiUS/cp210x-cfg/blob/master/README.md
+- https://blog.manzelseet.com/fixing-cp2102-with-custom-vidpid.html
+- https://community.silabs.com/s/question/0D51M00007xeNnTSAU/an721-cp21xxcustomizationutilityexe-not-found?language=en_US
+
 
 Hardware
 ========
@@ -183,6 +196,7 @@ KiCad
 
 links
 * https://ms.componentsearchengine.com/library/kicad
+
 
 TODO
 ====
