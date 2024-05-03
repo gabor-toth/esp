@@ -2,7 +2,7 @@
 
 #if defined(CONFIG_EXAMPLE_CONNECT_WIFI)
 
-#include "rest_server.h"
+#include "http/http_server.h"
 #include "rest_util.h"
 #include "freertos/portmacro.h"
 #include "freertos/task.h"
@@ -98,7 +98,7 @@ static esp_err_t system_info_get_handler( httpd_req_t *req ) {
     return ESP_OK;
 }
 
-void rest_register_system_info_handler( httpd_handle_t server, rest_server_context_t *rest_context ) {
+void rest_register_system_info_handler(httpd_handle_t server, http_server_context_t *rest_context ) {
     /* URI handler for fetching system info */
     httpd_uri_t system_info_get_uri = {
             .uri = "/system/info",
@@ -106,7 +106,7 @@ void rest_register_system_info_handler( httpd_handle_t server, rest_server_conte
             .handler = system_info_get_handler,
             .user_ctx = rest_context
     };
-    rest_register_uri_handler( server, TAG, &system_info_get_uri );
+    http_register_uri_handler(server, TAG, &system_info_get_uri);
 }
 
 #endif

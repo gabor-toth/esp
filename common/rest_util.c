@@ -70,13 +70,13 @@ void rest_allow_cors( httpd_req_t *req ) {
     httpd_resp_set_hdr( req, "Access-Control-Allow-Origin", "*" );
 }
 
-esp_err_t rest_receive_json_body( httpd_req_t *req, rest_server_context_t *context, cJSON **root ) {
+esp_err_t rest_receive_json_body(httpd_req_t *req, http_server_context_t *context, cJSON **root ) {
     *root = 0;
 
     size_t total_len = req->content_len;
     int cur_len = 0;
     char *buf = context->scratch;
-    if ( total_len >= REST_SCRATCH_BUFSIZE) {
+    if (total_len >= HTTP_SCRATCH_BUFFER_SIZE) {
         httpd_resp_send_err( req, HTTPD_400_BAD_REQUEST, "content too long" );
         return ESP_FAIL;
     }

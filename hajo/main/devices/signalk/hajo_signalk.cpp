@@ -2,8 +2,8 @@
 #include "esp_log.h"
 #include "esp_wifi.h"
 #include "EspSigK.h"
-#include "rest_main.h"
-#include "rest_server.h"
+#include "http/http_main.h"
+#include "http/http_server.h"
 #include "wifi_connect.h"
 #include "ws_server.h"
 #include "n2k/n2k_struct_parser.h"
@@ -76,7 +76,7 @@ static void signalk_stop( httpd_handle_t server ) {
     sigK.stop();
 }
 
-static const rest_callbacks_t callbacks = {
+static const http_callbacks_t callbacks = {
         .name= TAG,
         .wifi_connect_fn =signalk_start,
         .wifi_disconnect_fn=signalk_stop,
@@ -86,7 +86,7 @@ static const rest_callbacks_t callbacks = {
 
 static void signalk_register() {
     ESP_LOGI( TAG, "signalk_register" );
-    rest_register_callbacks( &callbacks );
+    http_register_callbacks(&callbacks);
 }
 
 static void process_incoming_pgn( const tN2kMsg &N2kMsg ) {
@@ -104,7 +104,7 @@ void hajo_signalk_main( int iDev ) {
     discovery_register();
     wss_register();
     signalk_register();
-    rest_server_main();
+    http_server_main();
 
     ESP_ERROR_CHECK( wifi_connect());
 //    ESP_LOGI( TAG, "init finished" );

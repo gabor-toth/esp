@@ -15,8 +15,8 @@
 #include "lwip/apps/mdns.h"
 #include "lwip/apps/netbiosns.h"
 #include "mdns.h"
-#include "rest_main.h"
-#include "rest_server.h"
+#include "http_main.h"
+#include "http_server.h"
 #include "wifi_connect.h"
 
 static const char *TAG = "rest-main";
@@ -101,7 +101,7 @@ static void on_wifi_disconnect( httpd_handle_t server ) {
 //    netbiosns_stop();
 }
 
-static const rest_callbacks_t callbacks = {
+static const http_callbacks_t callbacks = {
         .name= "rest-main",
         .wifi_connect_fn = on_wifi_connect,
         .wifi_disconnect_fn= on_wifi_disconnect,
@@ -110,7 +110,7 @@ static const rest_callbacks_t callbacks = {
 };
 
 void discovery_register() {
-    rest_register_callbacks( &callbacks );
+    http_register_callbacks(&callbacks);
 }
 
 #endif

@@ -17,19 +17,19 @@
 #include <esp_vfs.h>
 #include "esp_wifi.h"
 #include <cJSON.h>
-#include "rest_server.h"
+#include "http_server.h"
 #include "rest_util.h"
 
 static const char *TAG = "rest-server";
 static httpd_handle_t http_server = NULL;
 
-typedef struct rest_callbacks_node_t {
-    struct rest_callbacks_node_t *next;
-    rest_callbacks_t callbacks;
-} rest_callbacks_node_t;
+typedef struct http_callbacks_node_t {
+    struct http_callbacks_node_t *next;
+    http_callbacks_t callbacks;
+} http_callbacks_node_t;
 
-static rest_callbacks_node_t *registered_callbacks = NULL;
-static rest_callbacks_node_t *registered_callbacks_tail = NULL;
+static http_callbacks_node_t *registered_callbacks = NULL;
+static http_callbacks_node_t *registered_callbacks_tail = NULL;
 static char *wifi_ssid = NULL;
 
 #define FILE_PATH_MAX (ESP_VFS_PATH_MAX + 128)
@@ -83,12 +83,12 @@ static void set_cache_forever( httpd_req_t *req, char *filepath ) {
 }
 
 /* Send HTTP response with the contents of the requested file */
-static esp_err_t rest_file_get_handler( httpd_req_t *req ) {
+static esp_err_t http_file_get_handler(httpd_req_t *req ) {
     char filepath[FILE_PATH_MAX];
     char error_message[255];
 
-    rest_server_context_t *rest_context = (rest_server_context_t *) req->user_ctx;
-    strlcpy( filepath, rest_context->base_path, sizeof( filepath ));
+    http_server_context_t *http_context = (http_server_context_t *) req->user_ctx;
+    strlcpy(filepath, http_context->fs_base_path, sizeof( filepath ));
     if ( req->uri[ strlen( req->uri ) - 1 ] == '/' || !strchr( req->uri, '.' )) {
         // serve index.html for Angular routes
         strlcat( filepath, "/index.html", sizeof( filepath ));
@@ -109,11 +109,11 @@ static esp_err_t rest_file_get_handler( httpd_req_t *req ) {
     }
     set_content_type_from_file( req, filepath );
 
-    char *chunk = rest_context->scratch;
+    char *chunk = http_context->scratch;
     ssize_t read_bytes;
     do {
         /* Read file in chunks into the scratch buffer */
-        read_bytes = read( fd, chunk, REST_SCRATCH_BUFSIZE);
+        read_bytes = read(fd, chunk, HTTP_SCRATCH_BUFFER_SIZE);
         if ( read_bytes == -1 ) {
             ESP_LOGE( TAG, "Failed to read file : %s", filepath );
         } else if ( read_bytes > 0 ) {
@@ -137,24 +137,24 @@ static esp_err_t rest_file_get_handler( httpd_req_t *req ) {
     return ESP_OK;
 }
 
-esp_err_t rest_register_static_files_handler( httpd_handle_t server, rest_server_context_t *rest_context,
-                                              const char *static_files_base_path ) {
+esp_err_t http_register_static_files_handler(httpd_handle_t server, http_server_context_t *http_context,
+                                             const char *static_files_base_path ) {
     if ( static_files_base_path == NULL) {
         return ESP_ERR_INVALID_ARG;
     }
-    strlcpy( rest_context->base_path, static_files_base_path, sizeof( rest_context->base_path ));
+    strlcpy(http_context->fs_base_path, static_files_base_path, sizeof( http_context->fs_base_path ));
     /* URI handler for getting web server files */
     httpd_uri_t common_get_uri = {
             .uri = "/*",
             .method = HTTP_GET,
-            .handler = rest_file_get_handler,
-            .user_ctx = rest_context
+            .handler = http_file_get_handler,
+            .user_ctx = http_context
     };
-    return rest_register_uri_handler( server, TAG, &common_get_uri );
+    return http_register_uri_handler(server, TAG, &common_get_uri);
 }
 
 static esp_err_t open_fn_callback( httpd_handle_t hd, int sockfd ) {
-    for ( rest_callbacks_node_t *node = registered_callbacks; node != NULL; node = node->next ) {
+    for (http_callbacks_node_t *node = registered_callbacks; node != NULL; node = node->next ) {
         if ( node->callbacks.open_fn ) {
             esp_err_t result = node->callbacks.open_fn( hd, sockfd );
             if ( result != ESP_OK ) {
@@ -166,17 +166,17 @@ static esp_err_t open_fn_callback( httpd_handle_t hd, int sockfd ) {
 }
 
 static void close_fn_callback( httpd_handle_t hd, int sockfd ) {
-    for ( rest_callbacks_node_t *node = registered_callbacks; node != NULL; node = node->next ) {
+    for (http_callbacks_node_t *node = registered_callbacks; node != NULL; node = node->next ) {
         if ( node->callbacks.close_fn ) {
             node->callbacks.close_fn( hd, sockfd );
         }
     }
 }
 
-static esp_err_t rest_server_start( const char *wifi_ssid ) {
-//    rest_server_context_t *rest_context = calloc( 1, sizeof( rest_server_context_t ));
-//    if ( rest_context == NULL) {
-//        ESP_LOGE( TAG, "No memory for rest_context" );
+static esp_err_t http_server_start(const char *wifi_ssid ) {
+//    http_server_context_t *http_context = calloc( 1, sizeof( http_server_context_t ));
+//    if ( http_context == NULL) {
+//        ESP_LOGE( TAG, "No memory for http_context" );
 //        return ESP_ERR_NO_MEM;
 //    }
 
@@ -191,12 +191,12 @@ static esp_err_t rest_server_start( const char *wifi_ssid ) {
     esp_err_t result = httpd_start( &http_server, &config );
     if ( result != ESP_OK ) {
         ESP_LOGE( TAG, "Error %d starting HTTP Server", result );
-//        free( rest_context );
+//        free( http_context );
         return result;
     }
 
     ESP_LOGI( TAG, "[%s] Calling callbacks", currentTaskName());
-    for ( rest_callbacks_node_t *node = registered_callbacks; node != NULL; node = node->next ) {
+    for (http_callbacks_node_t *node = registered_callbacks; node != NULL; node = node->next ) {
         if ( node->callbacks.wifi_connect_fn ) {
             ESP_LOGI( TAG, "Callback for %s", node->callbacks.name );
             node->callbacks.wifi_connect_fn( http_server, wifi_ssid );
@@ -209,8 +209,8 @@ static esp_err_t rest_server_start( const char *wifi_ssid ) {
     return result;
 }
 
-static esp_err_t rest_server_stop() {
-    for ( rest_callbacks_node_t *node = registered_callbacks; node != NULL; node = node->next ) {
+static esp_err_t http_server_stop() {
+    for (http_callbacks_node_t *node = registered_callbacks; node != NULL; node = node->next ) {
         if ( node->callbacks.wifi_disconnect_fn ) {
             node->callbacks.wifi_disconnect_fn( http_server );
         }
@@ -222,7 +222,7 @@ static void handler_on_wifi_connect( void *dummy, esp_event_base_t event_base,
                                      int32_t event_id, void *event_data ) {
     if ( event_id == IP_EVENT_STA_GOT_IP ) {
         if ( http_server == NULL) {
-            ESP_ERROR_CHECK( rest_server_start( wifi_ssid ));
+            ESP_ERROR_CHECK(http_server_start(wifi_ssid));
         }
     } else if ( event_id == WIFI_EVENT_STA_CONNECTED ) {
         wifi_event_sta_connected_t *wifi_event = event_data;
@@ -238,7 +238,7 @@ static void handler_on_wifi_connect( void *dummy, esp_event_base_t event_base,
 static void handler_on_wifi_disconnect( void *dummy, esp_event_base_t event_base,
                                         int32_t event_id, void *event_data ) {
     if ( http_server ) {
-        if ( rest_server_stop() == ESP_OK ) {
+        if (http_server_stop() == ESP_OK ) {
             http_server = NULL;
         } else {
             ESP_LOGE( TAG, "Failed to stop HTTP server" );
@@ -246,8 +246,8 @@ static void handler_on_wifi_disconnect( void *dummy, esp_event_base_t event_base
     }
 }
 
-esp_err_t rest_register_callbacks( const rest_callbacks_t *callbacks ) {
-    rest_callbacks_node_t *node = malloc( sizeof( rest_callbacks_node_t ));
+esp_err_t http_register_callbacks(const http_callbacks_t *callbacks ) {
+    http_callbacks_node_t *node = malloc(sizeof( http_callbacks_node_t ));
     if ( node == NULL) {
         return ESP_ERR_NO_MEM;
     }
@@ -262,14 +262,14 @@ esp_err_t rest_register_callbacks( const rest_callbacks_t *callbacks ) {
     return ESP_OK;
 }
 
-esp_err_t rest_register_uri_handler( httpd_handle_t handle,
-                                     const char *log_tag,
-                                     const httpd_uri_t *uri_handler ) {
+esp_err_t http_register_uri_handler(httpd_handle_t handle,
+                                    const char *log_tag,
+                                    const httpd_uri_t *uri_handler ) {
     ESP_LOGI( log_tag, "Register URL %s", uri_handler->uri );
     return httpd_register_uri_handler( handle, uri_handler );
 }
 
-esp_err_t rest_server_main() {
+esp_err_t http_server_main() {
     ESP_ERROR_CHECK(
             esp_event_handler_register( IP_EVENT, IP_EVENT_STA_GOT_IP, &handler_on_wifi_connect, NULL ));
     ESP_ERROR_CHECK(

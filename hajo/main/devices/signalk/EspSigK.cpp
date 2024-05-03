@@ -9,7 +9,7 @@
 #include "esp_netif_ip_addr.h"
 #include "nvs_main.h"
 #include "mdns.h"
-#include "rest_server.h"
+#include "http/http_server.h"
 #include "ssdp.h"
 #include "wifi_connect.h"
 #include "ws_server.h"
@@ -206,23 +206,23 @@ void EspSigK::setupHTTP() {
             .handler = htmlDescriptionXml,
             .user_ctx = nullptr
     };
-    rest_register_uri_handler( http_server, TAG, &uri );
+    http_register_uri_handler(http_server, TAG, &uri);
 
     uri.handler = htmlSignalKEndpoints;
     uri.uri = "/signalk";
-    rest_register_uri_handler( http_server, TAG, &uri );
+    http_register_uri_handler(http_server, TAG, &uri);
     uri.uri = "/signalk/";
-    rest_register_uri_handler( http_server, TAG, &uri );
+    http_register_uri_handler(http_server, TAG, &uri);
 
     uri.handler = htmlIndexContents;
     uri.uri = "/";
-    rest_register_uri_handler( http_server, TAG, &uri );
+    http_register_uri_handler(http_server, TAG, &uri);
     uri.uri = "/index.html";
-    rest_register_uri_handler( http_server, TAG, &uri );
+    http_register_uri_handler(http_server, TAG, &uri);
 
     uri.handler = htmlHandleNotFound;
     uri.uri = "/*";
-    rest_register_uri_handler( http_server, TAG, &uri );
+    http_register_uri_handler(http_server, TAG, &uri);
 }
 
 esp_err_t EspSigK::htmlHandleNotFound( httpd_req_t *r ) {

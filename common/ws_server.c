@@ -12,7 +12,7 @@
 #include <esp_system.h>
 #include <sys/param.h>
 #include "lwip/sockets.h"
-#include "rest_server.h"
+#include "http/http_server.h"
 #include "ws_keep_alive.h"
 #include "ws_server.h"
 #include "sdkconfig.h"
@@ -187,10 +187,10 @@ static void stop_wss_echo_server( httpd_handle_t server ) {
 
 static esp_err_t wss_wifi_connect( httpd_handle_t hd, const char* wifi_ssid ) {
     start_wss_echo_server( hd );
-    return rest_register_uri_handler( hd, TAG, &ws );
+    return http_register_uri_handler(hd, TAG, &ws);
 }
 
-static const rest_callbacks_t callbacks = {
+static const http_callbacks_t callbacks = {
         .name= "ws_server",
         .wifi_connect_fn = wss_wifi_connect,
         .wifi_disconnect_fn= stop_wss_echo_server,
@@ -200,7 +200,7 @@ static const rest_callbacks_t callbacks = {
 
 void wss_register() {
     ESP_LOGI( TAG, "wss_register" );
-    rest_register_callbacks( &callbacks );
+    http_register_callbacks(&callbacks);
 }
 
 // Get all clients and send async message

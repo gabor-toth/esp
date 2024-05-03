@@ -14,7 +14,7 @@
 #include "freertos/task.h"
 #include "ws_keep_alive.h"
 #include "esp_timer.h"
-#include "rest_server.h"
+#include "http/http_server.h"
 
 typedef enum {
     NO_CLIENT = 0,

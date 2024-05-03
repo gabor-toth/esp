@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-extern void rest_register_system_info_handler( httpd_handle_t server, rest_server_context_t *rest_context );
+extern void rest_register_system_info_handler(httpd_handle_t server, http_server_context_t *rest_context );
 
 #ifdef __cplusplus
 }
