@@ -5,7 +5,6 @@
 #include <time.h>
 #include <stdbool.h>
 #include "esp_log.h"
-#include "esp_attr.h"
 #include "esp_sntp.h"
 #include "sntp_main.h"
 
@@ -37,6 +36,8 @@ static void print_local_time() {
 }
 
 void time_sync_notification_cb( struct timeval *tv ) {
+    (void) tv;
+
     is_time_set = true;
     print_local_time();
 }
@@ -58,13 +59,13 @@ static void check_if_time_is_set( void ) {
 
 void sntp_init_before_wifi() {
 #ifdef LWIP_DHCP_GET_NTP_SRV
-    sntp_servermode_dhcp( 1 );      // accept NTP offers from DHCP server, if any
+    esp_sntp_servermode_dhcp( true );      // accept NTP offers from DHCP server, if any
 #endif
 }
 
 void sntp_init_after_wifi() {
     ESP_LOGI( LOG_TAG, "Initializing SNTP" );
-    sntp_setoperatingmode( SNTP_OPMODE_POLL );
+    esp_sntp_setoperatingmode( SNTP_OPMODE_POLL );
 
     setenv( "TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1 ); // Italy rule
     tzset();
@@ -75,7 +76,7 @@ void sntp_init_after_wifi() {
  * provided via NTP over DHCP is not accessible
  */
 #if LWIP_DHCP_GET_NTP_SRV && SNTP_MAX_SERVERS > 1
-    sntp_setservername( 1, "pool.ntp.org" );
+    esp_sntp_setservername( 1, "pool.ntp.org" );
 #else   /* LWIP_DHCP_GET_NTP_SRV && (SNTP_MAX_SERVERS > 1) */
     // otherwise, use DNS address from a pool
     sntp_setservername( 0, CONFIG_SNTP_TIME_SERVER );
@@ -87,17 +88,17 @@ void sntp_init_after_wifi() {
 #ifdef CONFIG_SNTP_TIME_SYNC_METHOD_SMOOTH
     sntp_set_sync_mode(SNTP_SYNC_MODE_SMOOTH);
 #endif
-    sntp_init();
+    esp_sntp_init();
 
     ESP_LOGI( LOG_TAG, "List of configured NTP servers:" );
 
     for ( uint8_t i = 0; i < SNTP_MAX_SERVERS; ++i ) {
-        if ( sntp_getservername( i )) {
-            ESP_LOGI( LOG_TAG, "server %d: %s", i, sntp_getservername( i ));
+        if ( esp_sntp_getservername( i )) {
+            ESP_LOGI( LOG_TAG, "server %d: %s", i, esp_sntp_getservername( i ));
         } else {
             // we have either IPv4 or IPv6 address, let's print it
             char buff[INET6_ADDRSTRLEN];
-            ip_addr_t const *ip = sntp_getserver( i );
+            ip_addr_t const *ip = esp_sntp_getserver( i );
             if ( ipaddr_ntoa_r( ip, buff, INET6_ADDRSTRLEN ) != NULL)
                 ESP_LOGI( LOG_TAG, "server %d: %s", i, buff );
         }
