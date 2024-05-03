@@ -450,10 +450,16 @@ bool EspSigK::connectWsClient() {
     authHeader = "Authorization: Bearer "+ signalKServerToken + "\r\n";
 
     const esp_websocket_client_config_t ws_cfg = {
+            .uri = nullptr,
             .host = signalKServerHost.c_str(),
             .port = signalKServerPort,
+            .username = nullptr,
+            .password = nullptr,
             .path = "/signalk/v1/stream?subscribe=none",
             .disable_auto_reconnect = true,
+            .user_context = nullptr,
+            //.task_prio = nullptr,
+            .task_name = nullptr,
             .transport = WEBSOCKET_TRANSPORT_OVER_TCP,
             .headers = authHeader.empty() ? nullptr : authHeader.c_str(),
             .keep_alive_enable = true,

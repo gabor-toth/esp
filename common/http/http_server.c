@@ -14,38 +14,30 @@
 #include <esp_log.h>
 #include "esp_wifi.h"
 #include <cJSON.h>
+#include "http_events.h"
 #include "http_server.h"
 
 static const char *TAG = "http-server";
 static httpd_handle_t http_server = NULL;
 
-typedef struct http_callbacks_node_t {
-    struct http_callbacks_node_t *next;
-    http_callbacks_t callbacks;
-} http_callbacks_node_t;
+ESP_EVENT_DEFINE_BASE(HTTP_SERVER_EVENT);
 
-static http_callbacks_node_t *registered_callbacks = NULL;
-static http_callbacks_node_t *registered_callbacks_tail = NULL;
 static char *wifi_ssid = NULL;
 
 static esp_err_t open_fn_callback( httpd_handle_t hd, int sockfd ) {
-    for (http_callbacks_node_t *node = registered_callbacks; node != NULL; node = node->next ) {
-        if ( node->callbacks.open_fn ) {
-            esp_err_t result = node->callbacks.open_fn( hd, sockfd );
-            if ( result != ESP_OK ) {
-                return result;
-            }
-        }
-    }
-    return ESP_OK;
+    http_server_file_descriptor_event_data data = {
+            .hd = hd,
+            .sockfd = sockfd
+    };
+    return esp_event_post(HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_FILE_DESCRIPTOR_OPEN, &data, sizeof(data), portMAX_DELAY);
 }
 
 static void close_fn_callback( httpd_handle_t hd, int sockfd ) {
-    for (http_callbacks_node_t *node = registered_callbacks; node != NULL; node = node->next ) {
-        if ( node->callbacks.close_fn ) {
-            node->callbacks.close_fn( hd, sockfd );
-        }
-    }
+    http_server_file_descriptor_event_data data = {
+            .hd = hd,
+            .sockfd = sockfd
+    };
+    esp_event_post(HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_FILE_DESCRIPTOR_CLOSE, &data, sizeof(data), portMAX_DELAY);
 }
 
 static esp_err_t http_server_start(const char *wifi_ssid ) {
@@ -71,25 +63,22 @@ static esp_err_t http_server_start(const char *wifi_ssid ) {
     }
 
     ESP_LOGI( TAG, "[%s] Calling callbacks", currentTaskName());
-    for (http_callbacks_node_t *node = registered_callbacks; node != NULL; node = node->next ) {
-        if ( node->callbacks.wifi_connect_fn ) {
-            ESP_LOGI( TAG, "Callback for %s", node->callbacks.name );
-            node->callbacks.wifi_connect_fn( http_server, wifi_ssid );
-        } else {
-            ESP_LOGI( TAG, "No callback for %s", node->callbacks.name );
-        }
-    }
+    http_server_server_event_data data = {
+            .hd = &http_server,
+            .ssid = wifi_ssid,
+    };
+    esp_event_post(HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_SERVER_START, &data, sizeof(data), portMAX_DELAY);
     ESP_LOGI( TAG, "Done callbacks" );
 
     return result;
 }
 
 static esp_err_t http_server_stop() {
-    for (http_callbacks_node_t *node = registered_callbacks; node != NULL; node = node->next ) {
-        if ( node->callbacks.wifi_disconnect_fn ) {
-            node->callbacks.wifi_disconnect_fn( http_server );
-        }
-    }
+    http_server_server_event_data data = {
+            .hd = &http_server,
+            .ssid = wifi_ssid,
+    };
+    esp_event_post(HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_SERVER_STOP, &data, sizeof(data), portMAX_DELAY);
     return httpd_stop( http_server );
 }
 
@@ -121,22 +110,6 @@ static void handler_on_wifi_disconnect( void *dummy, esp_event_base_t event_base
     }
 }
 
-esp_err_t http_register_callbacks(const http_callbacks_t *callbacks ) {
-    http_callbacks_node_t *node = malloc(sizeof( http_callbacks_node_t ));
-    if ( node == NULL) {
-        return ESP_ERR_NO_MEM;
-    }
-    node->callbacks = *callbacks;
-    node->next = NULL;
-    if ( registered_callbacks_tail == NULL) {
-        registered_callbacks_tail = registered_callbacks = node;
-    } else {
-        registered_callbacks_tail->next = node;
-        registered_callbacks_tail = node;
-    }
-    return ESP_OK;
-}
-
 esp_err_t http_register_uri_handler(httpd_handle_t handle,
                                     const char *log_tag,
                                     const httpd_uri_t *uri_handler ) {
@@ -154,6 +127,5 @@ esp_err_t http_server_main() {
 
     return ESP_OK;
 }
-
 
 #endif

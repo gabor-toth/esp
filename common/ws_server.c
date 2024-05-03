@@ -11,8 +11,8 @@
 #include <esp_log.h>
 #include <esp_system.h>
 #include <sys/param.h>
-#include "lwip/sockets.h"
 #include "http/http_server.h"
+#include "http/http_events.h"
 #include "ws_keep_alive.h"
 #include "ws_server.h"
 #include "sdkconfig.h"
@@ -98,18 +98,20 @@ static esp_err_t ws_handler( httpd_req_t *req ) {
     return ESP_OK;
 }
 
-esp_err_t wss_open_fd( httpd_handle_t hd, int sockfd ) {
-    ESP_LOGI( TAG, "New client connected %d", sockfd );
-    wss_keep_alive_t h = wss_keep_alive_get_keep_alive( hd );
-    return wss_keep_alive_add_client( h, sockfd );
+void handler_on_open_fd(void *dummy, esp_event_base_t event_base, int32_t event_id, void *event_data ) {
+    http_server_file_descriptor_event_data * data = event_data;
+    ESP_LOGI( TAG, "New client connected %d",data->sockfd );
+    wss_keep_alive_t h = wss_keep_alive_get_keep_alive( data->hd );
+    wss_keep_alive_add_client( h, data->sockfd );
 }
 
-void wss_close_fd( httpd_handle_t hd, int sockfd ) {
-    httpd_ws_client_info_t info = httpd_ws_get_fd_info( hd, sockfd );
-    ESP_LOGI( TAG, "Client disconnected %d type %d", sockfd, info );
-    wss_keep_alive_t h = wss_keep_alive_get_keep_alive( hd );
-    wss_keep_alive_remove_client( h, sockfd );
-    close( sockfd );
+void handler_on_close_fd(void *dummy, esp_event_base_t event_base, int32_t event_id, void *event_data ) {
+    http_server_file_descriptor_event_data * data = event_data;
+    httpd_ws_client_info_t info = httpd_ws_get_fd_info( data->hd, data->sockfd );
+    ESP_LOGI( TAG, "Client disconnected %d type %d", data->sockfd, info );
+    wss_keep_alive_t h = wss_keep_alive_get_keep_alive( data->hd );
+    wss_keep_alive_remove_client( h, data->sockfd );
+    close( data->sockfd );
 }
 
 static const httpd_uri_t ws = {
@@ -176,31 +178,32 @@ static void start_wss_echo_server( httpd_handle_t hd ) {
     keep_alive_config.client_not_alive_cb = client_not_alive_cb;
     keep_alive_config.check_client_alive_cb = check_client_alive_cb;
     wss_keep_alive_start( &keep_alive_config, hd );
-//    conf.open_fn = wss_open_fd;
-//    conf.close_fn = wss_close_fd;
 }
 
-static void stop_wss_echo_server( httpd_handle_t server ) {
+static void handler_on_http_server_stop(void *dummy, esp_event_base_t event_base, int32_t event_id, void *event_data ) {
+    http_server_server_event_data * data = event_data;
     // Stop keep alive thread
-    wss_keep_alive_stop( wss_keep_alive_get_keep_alive( server ));
+    wss_keep_alive_stop( wss_keep_alive_get_keep_alive( data->hd ));
 }
 
-static esp_err_t wss_wifi_connect( httpd_handle_t hd, const char* wifi_ssid ) {
-    start_wss_echo_server( hd );
-    return http_register_uri_handler(hd, TAG, &ws);
+static void handler_on_http_server_start(void *dummy, esp_event_base_t event_base, int32_t event_id, void *event_data ) {
+    http_server_server_event_data * data = event_data;
+    start_wss_echo_server( data->hd );
+    http_register_uri_handler(data->hd, TAG, &ws);
 }
-
-static const http_callbacks_t callbacks = {
-        .name= "ws_server",
-        .wifi_connect_fn = wss_wifi_connect,
-        .wifi_disconnect_fn= stop_wss_echo_server,
-        .open_fn=wss_open_fd,
-        .close_fn = wss_close_fd
-};
 
 void wss_register() {
     ESP_LOGI( TAG, "wss_register" );
-    http_register_callbacks(&callbacks);
+    ESP_ERROR_CHECK(
+            esp_event_handler_register(HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_SERVER_START,
+                                       &handler_on_http_server_start, NULL ));
+    ESP_ERROR_CHECK(
+            esp_event_handler_register(HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_SERVER_STOP, &handler_on_http_server_stop, NULL ));
+    ESP_ERROR_CHECK(
+            esp_event_handler_register(HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_FILE_DESCRIPTOR_OPEN, &handler_on_open_fd, NULL ));
+    ESP_ERROR_CHECK(
+            esp_event_handler_register(HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_FILE_DESCRIPTOR_CLOSE, &handler_on_close_fd, NULL ));
+
 }
 
 // Get all clients and send async message

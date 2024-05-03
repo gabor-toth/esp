@@ -15,6 +15,7 @@
 #include "lwip/apps/mdns.h"
 #include "lwip/apps/netbiosns.h"
 #include "mdns.h"
+#include "http_events.h"
 #include "http_main.h"
 #include "http_server.h"
 #include "wifi_connect.h"
@@ -60,27 +61,22 @@ static void initialise_netbios( void ) {
     netbiosns_set_name( CONFIG_EXAMPLE_MDNS_HOST_NAME );
 }
 
-static esp_err_t on_wifi_connect( httpd_handle_t server, const char * wifi_ssid ) {
+static void on_wifi_connect(  void *dummy, esp_event_base_t event_base, int32_t event_id, void *event_data ) {
+//    http_server_server_event_data * data = event_data;
     initialise_mdns();
 //    initialise_netbios();
-    return ESP_OK;
 }
 
-static void on_wifi_disconnect( httpd_handle_t server ) {
+static void on_wifi_disconnect(  void *dummy, esp_event_base_t event_base, int32_t event_id, void *event_data ) {
     mdns_free();
 //    netbiosns_stop();
 }
 
-static const http_callbacks_t callbacks = {
-        .name= "rest-main",
-        .wifi_connect_fn = on_wifi_connect,
-        .wifi_disconnect_fn= on_wifi_disconnect,
-        .open_fn=NULL,
-        .close_fn = NULL
-};
-
 void discovery_register() {
-    http_register_callbacks(&callbacks);
+    ESP_ERROR_CHECK(
+            esp_event_handler_register(HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_SERVER_START, &on_wifi_connect, NULL ));
+    ESP_ERROR_CHECK(
+            esp_event_handler_register(HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_SERVER_STOP, &on_wifi_disconnect, NULL ));
 }
 
 #endif

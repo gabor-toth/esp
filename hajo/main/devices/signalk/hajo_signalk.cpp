@@ -2,6 +2,7 @@
 #include "esp_log.h"
 #include "esp_wifi.h"
 #include "EspSigK.h"
+#include "http/http_events.h"
 #include "http/http_main.h"
 #include "http/http_server.h"
 #include "wifi_connect.h"
@@ -64,29 +65,23 @@ static void setup_n2k_device( int iDev ) {
     NMEA2000.AttachMsgHandler( incomingMessageHandler );
 }
 
-static esp_err_t signalk_start( httpd_handle_t server, const char* wifi_ssid ) {
+static void signalk_start(  void *dummy, esp_event_base_t event_base, int32_t event_id, void *event_data ) {
+    http_server_server_event_data * data = static_cast<http_server_server_event_data *>(event_data);
     ESP_LOGI( TAG, "signalk_start" );
-    sigK.start( DEVICE_NAME, "n2k-gw", server, wifi_ssid );
-
-    return ESP_OK;
+    sigK.start( DEVICE_NAME, "n2k-gw", data->hd, data->ssid );
 }
 
-static void signalk_stop( httpd_handle_t server ) {
+static void signalk_stop(  void *dummy, esp_event_base_t event_base, int32_t event_id, void *event_data ) {
     ESP_LOGI( TAG, "signalk_stop" );
     sigK.stop();
 }
 
-static const http_callbacks_t callbacks = {
-        .name= TAG,
-        .wifi_connect_fn =signalk_start,
-        .wifi_disconnect_fn=signalk_stop,
-        .open_fn=nullptr,
-        .close_fn = nullptr
-};
-
 static void signalk_register() {
     ESP_LOGI( TAG, "signalk_register" );
-    http_register_callbacks(&callbacks);
+    ESP_ERROR_CHECK(
+            esp_event_handler_register(HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_SERVER_START, &signalk_start, nullptr ));
+    ESP_ERROR_CHECK(
+            esp_event_handler_register(HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_SERVER_STOP, &signalk_stop, nullptr ));
 }
 
 static void process_incoming_pgn( const tN2kMsg &N2kMsg ) {
