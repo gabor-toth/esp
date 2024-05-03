@@ -288,7 +288,7 @@ esp_err_t example_wifi_connect( void ) {
                     .scan_method = WIFI_ALL_CHANNEL_SCAN,
                     .sort_method = WIFI_CONNECT_AP_BY_SIGNAL,
                     .threshold.rssi = CONFIG_EXAMPLE_WIFI_SCAN_RSSI_THRESHOLD,
-                    .threshold.authmode = WIFI_AUTH_WPA2_PSK,
+                    .threshold.authmode = WIFI_AUTH_WPA2_WPA3_PSK,
             },
     };
     // OWN start

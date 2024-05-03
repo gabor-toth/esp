@@ -90,13 +90,13 @@ esp_err_t init_fs( void ) {
     return ESP_OK;
 }
 
-err_enum_t on_wifi_connect( httpd_handle_t server ) {
+static esp_err_t on_wifi_connect( httpd_handle_t server, const char * wifi_ssid ) {
     initialise_mdns();
 //    initialise_netbios();
     return ESP_OK;
 }
 
-void on_wifi_disconnect( httpd_handle_t server ) {
+static void on_wifi_disconnect( httpd_handle_t server ) {
     mdns_free();
 //    netbiosns_stop();
 }
