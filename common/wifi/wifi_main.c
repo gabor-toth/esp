@@ -79,17 +79,26 @@ static void find_known_wifi( wifi_ap_record_t* ap_info, uint16_t ap_count ) {
     }
 }
 
+static void log_free_memory( const char* event ) {
+    multi_heap_info_t heap_info;
+    heap_caps_get_info( &heap_info, MALLOC_CAP_8BIT);
+    ESP_LOGI( TAG, "Memory on %s: allocated %d, free %d", event, heap_info.total_allocated_bytes,
+              heap_info.total_free_bytes );
+}
+
 static void on_reconnect_timer( TimerHandle_t timer ) {
     ESP_ERROR_CHECK( esp_event_post( WIFI_OWN_EVENT, WIFI_OWN_EVENT_RECONNECT_TIMER, NULL, 0, portMAX_DELAY ));
 }
 
 static void handler_on_reconnect_timer( void* sta_netif, esp_event_base_t event_base,
                                         int32_t event_id, void* event_data ) {
+    log_free_memory( "reconnect_timer" );
     wifi_scan();
 }
 
 static void start_reconnect_timer() {
     wifi_shutdown();
+    log_free_memory( "shutdown" );
     xTimerStart( reconnect_timer, portMAX_DELAY );
 }
 
@@ -139,11 +148,12 @@ esp_err_t wifi_main( void ) {
             NULL,
             on_reconnect_timer );
     ESP_ERROR_CHECK(
-            esp_event_handler_unregister( WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED,
-                                          &handler_on_sta_disconnect ));
+            esp_event_handler_register( WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED,
+                                        &handler_on_sta_disconnect, NULL ));
     ESP_ERROR_CHECK(
-            esp_event_handler_unregister( WIFI_OWN_EVENT, WIFI_OWN_EVENT_RECONNECT_TIMER,
-                                          &handler_on_reconnect_timer ));
+            esp_event_handler_register( WIFI_OWN_EVENT, WIFI_OWN_EVENT_RECONNECT_TIMER,
+                                        &handler_on_reconnect_timer, NULL ));
+    log_free_memory( "init" );
     wifi_scan();
 
 #if ASYNC_WIFI_INIT
