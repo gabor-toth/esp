@@ -166,6 +166,7 @@ void wifi_scan(void) {
     ESP_ERROR_CHECK( esp_wifi_set_mode( WIFI_MODE_STA ));
     ESP_ERROR_CHECK( esp_wifi_start());
 
+    // will be deregistered in wifi_handler_on_scan_done
     ESP_ERROR_CHECK( esp_event_handler_register( WIFI_EVENT, WIFI_EVENT_SCAN_DONE, &wifi_handler_on_scan_done,
                                                  sta_netif ));
     wifi_scan_start();

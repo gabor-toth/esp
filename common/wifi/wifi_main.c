@@ -17,6 +17,12 @@ extern esp_err_t example_wifi_connect( void );
 // own
 
 #define DEFAULT_SCAN_LIST_SIZE 16
+#define RECONNECT_TIMEOUT_SECS 30
+
+ESP_EVENT_DEFINE_BASE( WIFI_OWN_EVENT );
+typedef enum {
+    WIFI_OWN_EVENT_RECONNECT_TIMER
+} wifi_own_event_t;
 
 static const char* TAG = "wifi_own";
 
@@ -35,13 +41,14 @@ static known_wifi_network_t known_wifi_networks[] = {
 
 static int selected_network_index;
 static int selected_channel;
+static TimerHandle_t reconnect_timer;
 
 void wifi_scan_get_ssid_and_password( wifi_sta_config_t* wifi_config_sta ) {
     strncpy((char*) wifi_config_sta->ssid, known_wifi_networks[ selected_network_index ].ssid,
             sizeof(wifi_config_sta->ssid));
     strncpy((char*) wifi_config_sta->password, known_wifi_networks[ selected_network_index ].password,
             sizeof(wifi_config_sta->password));
-//    wifi_config_sta->channel = selected_channel;
+    wifi_config_sta->channel = selected_channel;
 }
 
 void wifi_set_hostname( esp_netif_t* netif ) {
@@ -51,7 +58,7 @@ void wifi_set_hostname( esp_netif_t* netif ) {
 
 void wifi_scan_start() {
     selected_network_index = -1;
-    esp_wifi_scan_start(NULL, false );
+    ESP_ERROR_CHECK( esp_wifi_scan_start( NULL, false ));
 }
 
 static void find_known_wifi( wifi_ap_record_t* ap_info, uint16_t ap_count ) {
@@ -70,6 +77,25 @@ static void find_known_wifi( wifi_ap_record_t* ap_info, uint16_t ap_count ) {
             }
         }
     }
+}
+
+static void on_reconnect_timer( TimerHandle_t timer ) {
+    ESP_ERROR_CHECK( esp_event_post( WIFI_OWN_EVENT, WIFI_OWN_EVENT_RECONNECT_TIMER, NULL, 0, portMAX_DELAY ));
+}
+
+static void handler_on_reconnect_timer( void* sta_netif, esp_event_base_t event_base,
+                                        int32_t event_id, void* event_data ) {
+    wifi_scan();
+}
+
+static void start_reconnect_timer() {
+    wifi_shutdown();
+    xTimerStart( reconnect_timer, portMAX_DELAY );
+}
+
+static void handler_on_sta_disconnect( void* sta_netif, esp_event_base_t event_base,
+                                       int32_t event_id, void* event_data ) {
+    start_reconnect_timer();
 }
 
 void wifi_handler_on_scan_done( void* sta_netif, esp_event_base_t event_base,
@@ -93,10 +119,12 @@ void wifi_handler_on_scan_done( void* sta_netif, esp_event_base_t event_base,
 
     if ( selected_network_index == -1 ) {
         ESP_LOGW( TAG, "No known Wifi network found" );
-//      TODO  timer
+        start_reconnect_timer();
         return;
     }
-    example_wifi_connect();
+    if ( !example_wifi_connect()) {
+        start_reconnect_timer();
+    }
 }
 
 void wifi_shutdown( void ) {
@@ -104,7 +132,20 @@ void wifi_shutdown( void ) {
 }
 
 esp_err_t wifi_main( void ) {
+    reconnect_timer = xTimerCreate(
+            "wifiReconnect",
+            pdMS_TO_TICKS( RECONNECT_TIMEOUT_SECS * 1000 ),
+            0,
+            NULL,
+            on_reconnect_timer );
+    ESP_ERROR_CHECK(
+            esp_event_handler_unregister( WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED,
+                                          &handler_on_sta_disconnect ));
+    ESP_ERROR_CHECK(
+            esp_event_handler_unregister( WIFI_OWN_EVENT, WIFI_OWN_EVENT_RECONNECT_TIMER,
+                                          &handler_on_reconnect_timer ));
     wifi_scan();
+
 #if ASYNC_WIFI_INIT
     return ESP_OK;
 #else
