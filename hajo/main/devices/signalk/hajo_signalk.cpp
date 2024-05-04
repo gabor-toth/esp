@@ -5,7 +5,7 @@
 #include "http/http_events.h"
 #include "http/http_main.h"
 #include "http/http_server.h"
-#include "wifi_connect.h"
+#include "wifi/wifi_main.h"
 #include "ws_server.h"
 #include "n2k/n2k_struct_parser.h"
 #include "n2k/n2k_sender.h"

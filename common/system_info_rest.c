@@ -11,6 +11,7 @@
 
 static const char *TAG = "rest_sysinfo";
 
+__attribute__((unused))
 static void add_task_list( cJSON *root ) {
     UBaseType_t numberOfTasks = uxTaskGetNumberOfTasks();
     unsigned long ulTotalRunTime, ulStatsAsPercentage;

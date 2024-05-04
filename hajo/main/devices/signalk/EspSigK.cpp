@@ -11,7 +11,7 @@
 #include "mdns.h"
 #include "http/http_server.h"
 #include "ssdp.h"
-#include "wifi_connect.h"
+#include "wifi/wifi_main.h"
 #include "ws_server.h"
 
 #define NVS_KEY_TOKEN "signalk.token"
@@ -204,7 +204,10 @@ void EspSigK::setupHTTP() {
             .uri = "/description.xml",
             .method = HTTP_GET,
             .handler = htmlDescriptionXml,
-            .user_ctx = nullptr
+            .user_ctx = nullptr,
+            .is_websocket = false,
+            .handle_ws_control_frames = false,
+            .supported_subprotocol = nullptr,
     };
     http_register_uri_handler(http_server, TAG, &uri);
 
@@ -458,14 +461,33 @@ bool EspSigK::connectWsClient() {
             .path = "/signalk/v1/stream?subscribe=none",
             .disable_auto_reconnect = true,
             .user_context = nullptr,
-            //.task_prio = nullptr,
+            .task_prio = 0,
             .task_name = nullptr,
+            .task_stack = 0,
+            .buffer_size = 0,
+            .cert_pem = nullptr,
+            .cert_len = 0,
+            .client_cert = nullptr,
+            .client_cert_len = 0,
+            .client_key  = nullptr,
+            .client_key_len = 0,
             .transport = WEBSOCKET_TRANSPORT_OVER_TCP,
+            .subprotocol = nullptr,
+            .user_agent = nullptr,
             .headers = authHeader.empty() ? nullptr : authHeader.c_str(),
+            .pingpong_timeout_sec = 0,
+            .disable_pingpong_discon = false,
+            .use_global_ca_store = false,
+            .crt_bundle_attach = nullptr,
+            .skip_cert_common_name_check = false,
             .keep_alive_enable = true,
+            .keep_alive_idle = 0,
+            .keep_alive_interval = 0,
+            .keep_alive_count = 0,
             .reconnect_timeout_ms = 10000,
             .network_timeout_ms = 10000,
-            // .task_stack =  ,
+            .ping_interval_sec = 0,
+            .if_name = nullptr,
     };
 
     // https://docs.espressif.com/projects/esp-idf/en/v4.1/api-reference/protocols/esp_websocket_client.html
@@ -612,7 +634,6 @@ void EspSigK::onClientTextReceived( const char *buf ) {
     if ( *buf == '{' ) {
         // cJSON_ParseWithLengthOpts(buf, 0, nullptr, false);
         cJSON *result = cJSON_Parse( buf );
-        cJSON *stateItem;
         if ( cJSON_GetObjectItem( result, "version" ) != nullptr ) {
             processFrameHello( result );
             processed = true;

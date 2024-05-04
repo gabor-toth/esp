@@ -6,8 +6,8 @@
 #include "n2k/n2k_sender.h"
 #include "n2k/n2k_util.h"
 
-static double fluid_u = 3.20;
-static double fluid_rtop = 806;
+//static double fluid_u = 3.20;
+//static double fluid_rtop = 806;
 static double fluid_rbottom = 51.1;
 static double fluid_rmes_min = 2;
 static double fluid_rmes_max = 180;
