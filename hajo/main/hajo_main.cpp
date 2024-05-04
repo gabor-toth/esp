@@ -9,7 +9,6 @@
 #include "devices/fluid/hajo_fluid.h"
 #include "devices/logger/hajo_logger.h"
 #include "devices/signalk/hajo_signalk.h"
-#include "devices/wap/wap_main.h"
 #include "nvs_main.h"
 #include "n2k/n2k_receiver.h"
 
@@ -149,7 +148,6 @@ void hajo_main() {
     hajo_logger_main( iDev++ );
     hajo_attitude_main( iDev++ );
     hajo_signalk_main( iDev++ );
-//    wap_main();
 #endif
 
     n2k_init();

@@ -15,7 +15,7 @@
 #include "lwip/apps/netbiosns.h"
 #include "mdns.h"
 #include "http_events.h"
-#include "http_main.h"
+#include "http_discovery.h"
 #include "http_server.h"
 #include "wifi/wifi_main.h"
 

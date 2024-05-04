@@ -3,7 +3,7 @@
 #include "esp_wifi.h"
 #include "EspSigK.h"
 #include "http/http_events.h"
-#include "http/http_main.h"
+#include "http/http_discovery.h"
 #include "http/http_server.h"
 #include "wifi/wifi_main.h"
 #include "ws_server.h"
@@ -101,6 +101,6 @@ void hajo_signalk_main( int iDev ) {
     signalk_register();
     http_server_main();
 
-    ESP_ERROR_CHECK( wifi_connect());
+    ESP_ERROR_CHECK( wifi_main());
 //    ESP_LOGI( TAG, "init finished" );
 }

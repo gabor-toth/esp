@@ -8,7 +8,7 @@ set(SOURCES
         "../../common/logger.c"
         "../../common/main_main.c"
         "../../common/nvs_main.c"
-        "../../common/http/http_main.c"
+        "../../common/http/http_discovery.c"
         "../../common/http/http_server.c"
         "../../common/http/http_static_file.c"
         "../../common/rest_util.c"

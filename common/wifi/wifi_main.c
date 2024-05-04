@@ -9,7 +9,7 @@
 // in scan.c
 extern void wifi_scan( void );
 
-// in wifi_connect.c
+// in wifi_main.c
 extern void example_wifi_shutdown( void );
 
 extern esp_err_t example_wifi_connect( void );
@@ -103,7 +103,7 @@ void wifi_shutdown( void ) {
     example_wifi_shutdown();
 }
 
-esp_err_t wifi_connect( void ) {
+esp_err_t wifi_main( void ) {
     wifi_scan();
 #if ASYNC_WIFI_INIT
     return ESP_OK;
