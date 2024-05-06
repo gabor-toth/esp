@@ -71,7 +71,7 @@ esp_netif_t *get_example_netif_from_desc(const char *desc)
 	// OWN start
     char *expected_desc;
     asprintf( &expected_desc, "%s: %s", TAG, desc );
-	// OWN orifinal was
+	// OWN original was
 	// return esp_netif_find_if(netif_desc_matches_with, (void*)desc);
     esp_netif_t *netif = esp_netif_find_if(netif_desc_matches_with, (void*)desc);
     free( expected_desc );

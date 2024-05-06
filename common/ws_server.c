@@ -37,7 +37,7 @@ static esp_err_t ws_handler( httpd_req_t *req ) {
     }
     httpd_ws_frame_t ws_pkt;
     uint8_t *buf = NULL;
-    memset( &ws_pkt, 0, sizeof( httpd_ws_frame_t ));
+    memset( &ws_pkt, 0, sizeof( httpd_ws_frame_t ) );
 
     // First receive the full ws message
     /* Set max_len = 0 to get the frame len */
@@ -50,7 +50,7 @@ static esp_err_t ws_handler( httpd_req_t *req ) {
     if ( ws_pkt.len ) {
         /* ws_pkt.len + 1 is for NULL termination as we are expecting a string */
         buf = calloc( 1, ws_pkt.len + 1 );
-        if ( buf == NULL) {
+        if ( buf == NULL ) {
             ESP_LOGE( TAG, "Failed to calloc memory for buf" );
             return ESP_ERR_NO_MEM;
         }
@@ -68,7 +68,7 @@ static esp_err_t ws_handler( httpd_req_t *req ) {
         ESP_LOGI( TAG, "Received PONG message" );
         free( buf );
         return wss_keep_alive_client_is_active( wss_keep_alive_get_keep_alive( req->handle ),
-                                                httpd_req_to_sockfd( req ));
+                                                httpd_req_to_sockfd( req ) );
 
         // If it was a TEXT message, just echo it back
     } else if ( ws_pkt.type == HTTPD_WS_TYPE_TEXT || ws_pkt.type == HTTPD_WS_TYPE_PING ||
@@ -81,7 +81,7 @@ static esp_err_t ws_handler( httpd_req_t *req ) {
             ws_pkt.type = HTTPD_WS_TYPE_PONG;
         } else if ( ws_pkt.type == HTTPD_WS_TYPE_CLOSE ) {
             // Response CLOSE packet with no payload to peer
-            ESP_LOGI( TAG, "Closed connection %d", httpd_req_to_sockfd( req ));
+            ESP_LOGI( TAG, "Closed connection %d", httpd_req_to_sockfd( req ) );
             ws_pkt.len = 0;
             ws_pkt.payload = NULL;
         }
@@ -98,15 +98,15 @@ static esp_err_t ws_handler( httpd_req_t *req ) {
     return ESP_OK;
 }
 
-void handler_on_open_fd(void *dummy, esp_event_base_t event_base, int32_t event_id, void *event_data ) {
-    http_server_file_descriptor_event_data * data = event_data;
-    ESP_LOGI( TAG, "New client connected %d",data->sockfd );
+void handler_on_open_fd( void *dummy, esp_event_base_t event_base, int32_t event_id, void *event_data ) {
+    http_server_file_descriptor_event_data *data = event_data;
+    ESP_LOGI( TAG, "New client connected %d", data->sockfd );
     wss_keep_alive_t h = wss_keep_alive_get_keep_alive( data->hd );
     wss_keep_alive_add_client( h, data->sockfd );
 }
 
-void handler_on_close_fd(void *dummy, esp_event_base_t event_base, int32_t event_id, void *event_data ) {
-    http_server_file_descriptor_event_data * data = event_data;
+void handler_on_close_fd( void *dummy, esp_event_base_t event_base, int32_t event_id, void *event_data ) {
+    http_server_file_descriptor_event_data *data = event_data;
     httpd_ws_client_info_t info = httpd_ws_get_fd_info( data->hd, data->sockfd );
     ESP_LOGI( TAG, "Client disconnected %d type %d", data->sockfd, info );
     wss_keep_alive_t h = wss_keep_alive_get_keep_alive( data->hd );
@@ -123,13 +123,12 @@ static const httpd_uri_t ws = {
         .handle_ws_control_frames = true,
 };
 
-
 static void send_hello( void *arg ) {
     struct async_resp_arg *resp_arg = arg;
     httpd_handle_t hd = resp_arg->hd;
     int fd = resp_arg->fd;
     httpd_ws_frame_t ws_pkt;
-    memset( &ws_pkt, 0, sizeof( httpd_ws_frame_t ));
+    memset( &ws_pkt, 0, sizeof( httpd_ws_frame_t ) );
     ws_pkt.payload = (uint8_t *) resp_arg->message;
     ws_pkt.len = strlen( resp_arg->message );
     ws_pkt.type = HTTPD_WS_TYPE_TEXT;
@@ -144,7 +143,7 @@ static void send_ping( void *arg ) {
     httpd_handle_t hd = resp_arg->hd;
     int fd = resp_arg->fd;
     httpd_ws_frame_t ws_pkt;
-    memset( &ws_pkt, 0, sizeof( httpd_ws_frame_t ));
+    memset( &ws_pkt, 0, sizeof( httpd_ws_frame_t ) );
     ws_pkt.payload = NULL;
     ws_pkt.len = 0;
     ws_pkt.type = HTTPD_WS_TYPE_PING;
@@ -161,7 +160,7 @@ bool client_not_alive_cb( wss_keep_alive_t h, int fd ) {
 
 bool check_client_alive_cb( wss_keep_alive_t h, int fd ) {
     ESP_LOGD( TAG, "Checking if client (fd=%d) is alive", fd );
-    struct async_resp_arg *resp_arg = malloc( sizeof( struct async_resp_arg ));
+    struct async_resp_arg *resp_arg = malloc( sizeof( struct async_resp_arg ) );
     resp_arg->hd = wss_keep_alive_get_http_server( h );
     resp_arg->fd = fd;
 
@@ -180,30 +179,35 @@ static void start_wss_echo_server( httpd_handle_t hd ) {
     wss_keep_alive_start( &keep_alive_config, hd );
 }
 
-static void handler_on_http_server_stop(void *dummy, esp_event_base_t event_base, int32_t event_id, void *event_data ) {
-    http_server_server_event_data * data = event_data;
+static void
+handler_on_http_server_stop( void *dummy, esp_event_base_t event_base, int32_t event_id, void *event_data ) {
+    http_server_server_event_data *data = event_data;
     // Stop keep alive thread
-    wss_keep_alive_stop( wss_keep_alive_get_keep_alive( data->hd ));
+    wss_keep_alive_stop( wss_keep_alive_get_keep_alive( data->hd ) );
+    httpd_unregister_uri_handler( data->hd, ws.uri, ws.method );
 }
 
-static void handler_on_http_server_start(void *dummy, esp_event_base_t event_base, int32_t event_id, void *event_data ) {
-    http_server_server_event_data * data = event_data;
+static void
+handler_on_http_server_start( void *dummy, esp_event_base_t event_base, int32_t event_id, void *event_data ) {
+    http_server_server_event_data *data = event_data;
     start_wss_echo_server( data->hd );
-    http_register_uri_handler(data->hd, TAG, &ws);
+    http_register_uri_handler( data->hd, TAG, &ws );
 }
 
 void wss_register() {
     ESP_LOGI( TAG, "wss_register" );
     ESP_ERROR_CHECK(
-            esp_event_handler_register(HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_SERVER_START,
-                                       &handler_on_http_server_start, NULL ));
+            esp_event_handler_register( HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_SERVER_START,
+                                        &handler_on_http_server_start, NULL ) );
     ESP_ERROR_CHECK(
-            esp_event_handler_register(HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_SERVER_STOP, &handler_on_http_server_stop, NULL ));
+            esp_event_handler_register( HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_SERVER_STOP, &handler_on_http_server_stop,
+                                        NULL ) );
     ESP_ERROR_CHECK(
-            esp_event_handler_register(HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_FILE_DESCRIPTOR_OPEN, &handler_on_open_fd, NULL ));
+            esp_event_handler_register( HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_FILE_DESCRIPTOR_OPEN, &handler_on_open_fd,
+                                        NULL ) );
     ESP_ERROR_CHECK(
-            esp_event_handler_register(HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_FILE_DESCRIPTOR_CLOSE, &handler_on_close_fd, NULL ));
-
+            esp_event_handler_register( HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_FILE_DESCRIPTOR_CLOSE,
+                                        &handler_on_close_fd, NULL ) );
 }
 
 // Get all clients and send async message
@@ -220,7 +224,7 @@ void wss_server_send_message( httpd_handle_t server, const char *message ) {
             continue;
         }
         ESP_LOGI( TAG, "Active client (fd=%d) -> sending async message", sock );
-        struct async_resp_arg *resp_arg = malloc( sizeof( struct async_resp_arg ));
+        struct async_resp_arg *resp_arg = malloc( sizeof( struct async_resp_arg ) );
         resp_arg->hd = server;
         resp_arg->fd = sock;
         resp_arg->message = strdup( message );

@@ -105,10 +105,12 @@ static void example_handler_on_wifi_disconnect(void *arg, esp_event_base_t event
         if (s_semph_get_ip6_addrs) {
             xSemaphoreGive(s_semph_get_ip6_addrs);
         }
-    // OWN added
 #endif
+        // OWN added
+        ESP_ERROR_CHECK( esp_event_post( WIFI_OWN_EVENT, WIFI_OWN_EVENT_CONNECTION_MAX_RETRY, NULL, 0, portMAX_DELAY ) );
         return;
     }
+    // OWN added
 #endif
     ESP_LOGI(TAG, "Wifi disconnected, trying to reconnect...");
     esp_err_t err = esp_wifi_connect();
@@ -198,9 +200,13 @@ void example_wifi_stop(void)
     }
     ESP_ERROR_CHECK(err);
     ESP_ERROR_CHECK(esp_wifi_deinit());
-    ESP_ERROR_CHECK(esp_wifi_clear_default_wifi_driver_and_handlers(s_example_sta_netif));
-    esp_netif_destroy(s_example_sta_netif);
-    s_example_sta_netif = NULL;
+    // OWN added
+    if ( s_example_sta_netif ) {
+        ESP_ERROR_CHECK(esp_wifi_clear_default_wifi_driver_and_handlers(s_example_sta_netif));
+        esp_netif_destroy(s_example_sta_netif);
+        s_example_sta_netif = NULL;
+    // OWN added
+    }
 }
 
 
@@ -260,6 +266,8 @@ esp_err_t example_wifi_sta_do_disconnect(void)
 #endif
     if (s_semph_get_ip_addrs) {
         vSemaphoreDelete(s_semph_get_ip_addrs);
+        // OWN added
+        s_semph_get_ip_addrs = NULL;
     }
 #if CONFIG_EXAMPLE_CONNECT_IPV6
     if (s_semph_get_ip6_addrs) {
@@ -291,7 +299,7 @@ esp_err_t example_wifi_connect(void)
             .sort_method = WIFI_CONNECT_AP_BY_SIGNAL,
             .threshold.rssi = CONFIG_EXAMPLE_WIFI_SCAN_RSSI_THRESHOLD,
             // OWN modified
-            .threshold.authmode = WIFI_AUTH_WPA2_WPA3_PSK,
+            .threshold.authmode = WIFI_AUTH_WPA2_PSK,
         },
     };
     // OWN added
