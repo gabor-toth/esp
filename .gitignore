@@ -5,3 +5,23 @@ cmake-build-debug*/
 **/kicad/**/.~lock.*
 **/kicad/**/~*.lck
 sdkconfig.old
+.metadata
+
+# local projects
+
+/canboat/
+/lv_port_esp32/
+/lvgl/
+/hello_world/
+/i2c_simple/
+/i2c_tools/
+/generic_gpio/
+/main/
+/power_test/
+/restful_server/
+/spi-lcd/
+/twai_network/
+/ws_echo_server/
+/x/
+
+
