@@ -121,7 +121,17 @@ static void clock_configure( int max_freq_mhz ) {
     ESP_ERROR_CHECK( esp_pm_lock_acquire( pm_lock_handle_listen ));
 }
 
+static int own_log_vprintf(const char *format, va_list args) {
+    TaskHandle_t task = xTaskGetCurrentTaskHandle();
+    TaskStatus_t taskStatus;
+    vTaskGetInfo( task, &taskStatus, pdFALSE, eRunning );
+    printf( LOG_COLOR_I "%s ", taskStatus.pcTaskName);
+    return vprintf(format,args);
+}
+
 void hajo_main() {
+    esp_log_set_vprintf(own_log_vprintf);
+    
     led_on();
     xTaskCreate( task_power_led, "power_led", 1024, nullptr, 10, nullptr );
 

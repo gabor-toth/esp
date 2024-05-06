@@ -181,10 +181,14 @@ static void start_wss_echo_server( httpd_handle_t hd ) {
 
 static void
 handler_on_http_server_stop( void *dummy, esp_event_base_t event_base, int32_t event_id, void *event_data ) {
+    ESP_LOGI( TAG, "on_http_server_stop start" );
+
     http_server_server_event_data *data = event_data;
     // Stop keep alive thread
     wss_keep_alive_stop( wss_keep_alive_get_keep_alive( data->hd ) );
     httpd_unregister_uri_handler( data->hd, ws.uri, ws.method );
+
+    ESP_LOGI( TAG, "on_http_server_stop end" );
 }
 
 static void
@@ -200,11 +204,11 @@ void wss_register() {
             esp_event_handler_register( HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_SERVER_START,
                                         &handler_on_http_server_start, NULL ) );
     ESP_ERROR_CHECK(
-            esp_event_handler_register( HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_SERVER_STOP, &handler_on_http_server_stop,
-                                        NULL ) );
+            esp_event_handler_register( HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_SERVER_STOPPING,
+                                        &handler_on_http_server_stop, NULL ) );
     ESP_ERROR_CHECK(
-            esp_event_handler_register( HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_FILE_DESCRIPTOR_OPEN, &handler_on_open_fd,
-                                        NULL ) );
+            esp_event_handler_register( HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_FILE_DESCRIPTOR_OPEN,
+                                        &handler_on_open_fd, NULL ) );
     ESP_ERROR_CHECK(
             esp_event_handler_register( HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_FILE_DESCRIPTOR_CLOSE,
                                         &handler_on_close_fd, NULL ) );

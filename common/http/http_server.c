@@ -17,8 +17,9 @@
 #include "http_events.h"
 #include "http_server.h"
 
-static const char *TAG = "http-server";
+static const char *TAG = "http_server";
 static httpd_handle_t http_server = NULL;
+static bool stopping = false;
 
 ESP_EVENT_DEFINE_BASE( HTTP_SERVER_EVENT );
 
@@ -38,8 +39,8 @@ static void close_fn_callback( httpd_handle_t hd, int sockfd ) {
             .hd = hd,
             .sockfd = sockfd
     };
-    ESP_ERROR_CHECK( esp_event_post( HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_FILE_DESCRIPTOR_CLOSE, &data, sizeof(data),
-                                     portMAX_DELAY ) );
+    ESP_ERROR_CHECK( esp_event_post( HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_FILE_DESCRIPTOR_CLOSE,
+                                     &data, sizeof(data), portMAX_DELAY ) );
 }
 
 static esp_err_t http_server_start( const char *wifi_ssid ) {
@@ -57,6 +58,7 @@ static esp_err_t http_server_start( const char *wifi_ssid ) {
     config.close_fn = close_fn_callback;
 
     ESP_LOGI( TAG, "Starting HTTP Server" );
+    stopping = false;
     esp_err_t result = httpd_start( &http_server, &config );
     if ( result != ESP_OK ) {
         ESP_LOGE( TAG, "Error %d starting HTTP Server", result );
@@ -65,23 +67,14 @@ static esp_err_t http_server_start( const char *wifi_ssid ) {
     }
 
     http_server_server_event_data data = {
-            .hd = &http_server,
+            .hd = http_server,
             .ssid = wifi_ssid,
     };
     ESP_ERROR_CHECK(
-            esp_event_post( HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_SERVER_START, &data, sizeof(data), portMAX_DELAY ) );
+            esp_event_post( HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_SERVER_START,
+                            &data, sizeof(data), portMAX_DELAY ) );
 
     return result;
-}
-
-static esp_err_t http_server_stop() {
-    http_server_server_event_data data = {
-            .hd = &http_server,
-            .ssid = wifi_ssid,
-    };
-    ESP_ERROR_CHECK(
-            esp_event_post( HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_SERVER_STOP, &data, sizeof(data), portMAX_DELAY ) );
-    return httpd_stop( http_server );
 }
 
 static void handler_on_wifi_connect( void *dummy, esp_event_base_t event_base,
@@ -104,12 +97,38 @@ static void handler_on_wifi_connect( void *dummy, esp_event_base_t event_base,
 static void handler_on_wifi_disconnect( void *dummy, esp_event_base_t event_base,
                                         int32_t event_id, void *event_data ) {
     if ( http_server ) {
-        if ( http_server_stop() == ESP_OK ) {
-            http_server = NULL;
-        } else {
-            ESP_LOGE( TAG, "Failed to stop HTTP server" );
+        if ( stopping ) {
+            ESP_LOGW( TAG, "Wifi disconnected, already stopping" );
+            return;
         }
+        stopping = true;
+        http_server_server_event_data data = {
+                .hd = http_server,
+                .ssid = wifi_ssid,
+        };
+        ESP_LOGI( TAG, "Wifi disconnected, sending STOPPING event" );
+        ESP_ERROR_CHECK(
+                esp_event_post( HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_SERVER_STOPPING,
+                                &data, sizeof(data), portMAX_DELAY ) );
     }
+}
+
+static void handler_on_http_server_stopping( void *dummy, esp_event_base_t event_base,
+                                             int32_t event_id, void *event_data ) {
+    ESP_LOGI( TAG, "Sending STOPPED event" );
+    ESP_ERROR_CHECK(
+            esp_event_post( HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_SERVER_STOPPED,
+                            NULL, 0, portMAX_DELAY ) );
+}
+
+static void handler_on_http_server_stopped( void *dummy, esp_event_base_t event_base,
+                                            int32_t event_id, void *event_data ) {
+    ESP_LOGI( TAG, "Stopping HTTP server" );
+    if ( httpd_stop( http_server ) != ESP_OK ) {
+        ESP_LOGE( TAG, "Failed to stop HTTP server" );
+    }
+    http_server = NULL;
+    ESP_LOGI( TAG, "Stopped HTTP server" );
 }
 
 esp_err_t http_register_uri_handler( httpd_handle_t handle,
@@ -121,11 +140,20 @@ esp_err_t http_register_uri_handler( httpd_handle_t handle,
 
 esp_err_t http_server_main() {
     ESP_ERROR_CHECK(
-            esp_event_handler_register( IP_EVENT, IP_EVENT_STA_GOT_IP, &handler_on_wifi_connect, NULL ) );
+            esp_event_handler_register( IP_EVENT, IP_EVENT_STA_GOT_IP,
+                                        &handler_on_wifi_connect, NULL ) );
     ESP_ERROR_CHECK(
-            esp_event_handler_register( WIFI_EVENT, WIFI_EVENT_STA_CONNECTED, &handler_on_wifi_connect, NULL ) );
+            esp_event_handler_register( WIFI_EVENT, WIFI_EVENT_STA_CONNECTED,
+                                        &handler_on_wifi_connect, NULL ) );
     ESP_ERROR_CHECK(
-            esp_event_handler_register( WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &handler_on_wifi_disconnect, NULL ) );
+            esp_event_handler_register( WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED,
+                                        &handler_on_wifi_disconnect, NULL ) );
+    ESP_ERROR_CHECK(
+            esp_event_handler_register( HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_SERVER_STOPPING,
+                                        &handler_on_http_server_stopping, NULL ) );
+    ESP_ERROR_CHECK(
+            esp_event_handler_register( HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_SERVER_STOPPED,
+                                        &handler_on_http_server_stopped, NULL ) );
 
     return ESP_OK;
 }

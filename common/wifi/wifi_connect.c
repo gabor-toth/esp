@@ -114,6 +114,7 @@ static void example_handler_on_wifi_disconnect(void *arg, esp_event_base_t event
 #endif
     ESP_LOGI(TAG, "Wifi disconnected, trying to reconnect...");
     esp_err_t err = esp_wifi_connect();
+    ESP_LOGI(TAG, "after trying to reconnect %d", err);
     if (err == ESP_ERR_WIFI_NOT_STARTED) {
         return;
     }

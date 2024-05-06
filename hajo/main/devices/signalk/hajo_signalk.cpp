@@ -72,16 +72,19 @@ static void signalk_start(  void *dummy, esp_event_base_t event_base, int32_t ev
 }
 
 static void signalk_stop(  void *dummy, esp_event_base_t event_base, int32_t event_id, void *event_data ) {
-    ESP_LOGI( TAG, "signalk_stop" );
+    ESP_LOGI( TAG, "signalk_stop start" );
     sigK.stop();
+    ESP_LOGI( TAG, "signalk_stop end" );
 }
 
 static void signalk_register() {
     ESP_LOGI( TAG, "signalk_register" );
     ESP_ERROR_CHECK(
-            esp_event_handler_register(HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_SERVER_START, &signalk_start, nullptr ));
+            esp_event_handler_register(HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_SERVER_START,
+                                       &signalk_start, nullptr ));
     ESP_ERROR_CHECK(
-            esp_event_handler_register(HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_SERVER_STOP, &signalk_stop, nullptr ));
+            esp_event_handler_register( HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_SERVER_STOPPING,
+                                        &signalk_stop, nullptr ));
 }
 
 static void process_incoming_pgn( const tN2kMsg &N2kMsg ) {

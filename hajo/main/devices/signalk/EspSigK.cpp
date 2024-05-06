@@ -170,19 +170,16 @@ void EspSigK::start( const char *deviceName, const char *hostname, httpd_handle_
 }
 
 void EspSigK::stop() {
-    ssdp_stop();
+    http_server = nullptr;
+//    ssdp_stop();
     stopWsClient();
-    xTimerStop( wsClientConnectTimer, portMAX_DELAY );
-    xTimerStop( pendingTokenTimer, portMAX_DELAY );
-    /*
-    // TODO guard these
     if ( wsClientConnectTimer ) {
-        xTimerStop( wsClientConnectTimer, portMAX_DELAY );
+//        xTimerStop( wsClientConnectTimer, portMAX_DELAY );
         xTimerDelete( wsClientConnectTimer, portMAX_DELAY );
         wsClientConnectTimer = nullptr;
     }
     if ( pendingTokenTimer ) {
-        xTimerStop( pendingTokenTimer, portMAX_DELAY );
+//        xTimerStop( pendingTokenTimer, portMAX_DELAY );
         xTimerDelete( pendingTokenTimer, portMAX_DELAY );
         pendingTokenTimer = nullptr;
     }
@@ -190,7 +187,6 @@ void EspSigK::stop() {
         vTaskDelete(wsTask);
         wsTask = nullptr;
     }
-     */
 }
 
 /* ******************************************************************** */
