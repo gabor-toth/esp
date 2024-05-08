@@ -2,13 +2,15 @@
 #include "esp_log.h"
 #include "lvgl/lvgl.h"
 
+#define USE_ANIMATION   0
+
 typedef struct {
     int index;
     lv_style_t *current_style;
 } user_data_t;
 
 static lv_style_t style_bar_background;
-static lv_style_t style_label;
+static lv_style_t style_image;
 static lv_style_t style_indic_battery;
 static lv_style_t style_indic_battery_charge;
 static lv_style_t style_indic_battery_deplete;
@@ -18,7 +20,10 @@ static lv_style_t style_indic_water_deplete;
 static lv_style_t style_indic_water_empty;
 static lv_style_t style_indic_fuel;
 static lv_style_t style_indic_fuel_empty;
+static lv_style_t style_label;
+
 static lv_color_t color_indic_empty = LV_COLOR_MAKE( 0xF4, 0x43, 0x36 );
+static lv_color_t color_label = LV_COLOR_MAKE( 255, 255, 255 );
 
 static lv_obj_t *bar_water;
 static lv_obj_t *bar_fuel;
@@ -49,7 +54,7 @@ LV_FONT_DECLARE( lv_font_montserrat_12 )
 void setup_screen() {
     static lv_style_t style_screen;
     lv_obj_t *screen = lv_scr_act();
-    
+
     lv_style_init( &style_screen );
     lv_color_t color_bg_top = LV_COLOR_MAKE( 70, 75, 85 );
     lv_color_t color_bg_bottom = LV_COLOR_MAKE( 45, 50, 60 );
@@ -72,7 +77,7 @@ static void setup_bar_background_style() {
     lv_color_t color_bg = LV_COLOR_MAKE( 15, 18, 21 );
     lv_color_t color_outline = LV_COLOR_MAKE( 30, 36, 45 );
     lv_color_t color_shadow = LV_COLOR_MAKE( 5, 10, 15 );
-    
+
     lv_style_init( &style_bar_background );
     lv_style_set_bg_color( &style_bar_background, color_bg );
     lv_style_set_bg_opa( &style_bar_background, LV_OPA_COVER );
@@ -89,10 +94,10 @@ void setup_bar_common( int index, lv_obj_t *bar, lv_style_t *style_indic, int y0
     user_data_t *user_data = calloc( 1, sizeof( user_data_t ) );
     user_data->index = index;
     lv_obj_set_user_data( bar, user_data );
-    
+
     set_style( bar, style_indic );
     lv_obj_add_style( bar, &style_bar_background, LV_PART_MAIN );
-    
+
     lv_obj_set_size( bar, STYLE_BAR_WIDTH - 2 * STYLE_BAR_OUTLINE,
                      STYLE_BAR_HEIGHT + 2 * STYLE_BAR_PADDING - 2 * STYLE_BAR_OUTLINE );
     lv_obj_set_pos( bar, STYLE_BAR_X + STYLE_BAR_OUTLINE, y0 );
@@ -100,11 +105,11 @@ void setup_bar_common( int index, lv_obj_t *bar, lv_style_t *style_indic, int y0
 
 lv_obj_t *setup_water_bar( lv_obj_t *parent, int y0 ) {
     lv_color_t color_indic_water = LV_COLOR_MAKE( 54, 185, 246 );
-    
+
     lv_style_init( &style_indic_water );
     lv_style_set_bg_opa( &style_indic_water, LV_OPA_COVER );
     lv_style_set_bg_color( &style_indic_water, color_indic_water );
-    
+
     lv_style_init( &style_indic_water_deplete );
     lv_style_set_bg_opa( &style_indic_water_deplete, LV_OPA_COVER );
     lv_style_set_bg_color( &style_indic_water_deplete, color_indic_empty );
@@ -112,31 +117,32 @@ lv_obj_t *setup_water_bar( lv_obj_t *parent, int y0 ) {
     lv_style_set_bg_grad_dir( &style_indic_water_deplete, LV_GRAD_DIR_HOR );
 //    lv_style_set_bg_main_stop(&style_indic_water_25, 0);
     lv_style_set_bg_grad_stop( &style_indic_water_deplete, 20 );
-    
+
     lv_style_init( &style_indic_water_empty );
     lv_style_set_bg_opa( &style_indic_water_empty, LV_OPA_COVER );
     lv_style_set_bg_color( &style_indic_water_empty, color_indic_empty );
-    
+
     lv_obj_t *bar = lv_bar_create( parent );
     setup_bar_common( 0, bar, &style_indic_water, y0 );
-    
+
     lv_bar_set_range( bar, 0, 100 + STYLE_BAR_EMPTY_STATE );
     lv_bar_set_value( bar, 0, LV_ANIM_OFF );
-    
+
     lv_obj_t *icon = lv_img_create( parent );
     lv_img_set_src( icon, &img_water );
+    lv_obj_add_style( icon, &style_image, LV_PART_MAIN );
     lv_obj_set_pos( icon, STYLE_IMAGE_X, y0 + STYLE_BAR_PADDING );
-    
+
     return bar;
 }
 
 lv_obj_t *setup_fuel_bar( lv_obj_t *parent, int y0 ) {
     lv_color_t color_indic_fuel = LV_COLOR_MAKE( 152, 152, 21 );
-    
+
     lv_style_init( &style_indic_fuel );
     lv_style_set_bg_opa( &style_indic_fuel, LV_OPA_COVER );
     lv_style_set_bg_color( &style_indic_fuel, color_indic_fuel );
-    
+
     lv_style_init( &style_indic_fuel_empty );
     lv_style_set_bg_opa( &style_indic_fuel_empty, LV_OPA_COVER );
     lv_style_set_bg_color( &style_indic_fuel_empty, color_indic_empty );
@@ -144,32 +150,33 @@ lv_obj_t *setup_fuel_bar( lv_obj_t *parent, int y0 ) {
     lv_style_set_bg_grad_dir( &style_indic_fuel_empty, LV_GRAD_DIR_HOR );
 //    lv_style_set_bg_main_stop(&style_indic_fuel_empty, 0);
     lv_style_set_bg_grad_stop( &style_indic_fuel_empty, 20 );
-    
+
     lv_obj_t *bar = lv_bar_create( parent );
     setup_bar_common( 1, bar, &style_indic_fuel, y0 );
-    
+
     lv_bar_set_range( bar, 0, 100 + STYLE_BAR_EMPTY_STATE );
     lv_bar_set_value( bar, 0, LV_ANIM_OFF );
-    
+
     lv_obj_t *icon = lv_img_create( parent );
     lv_img_set_src( icon, &img_fuel );
+    lv_obj_add_style( icon, &style_image, LV_PART_MAIN );
     lv_obj_set_pos( icon, STYLE_IMAGE_X, y0 + STYLE_BAR_PADDING );
-    
+
     return bar;
 }
 
 void setup_battery_style() {
     lv_color_t color_indic_battery = LV_COLOR_MAKE( 85, 170, 0 );
     lv_color_t color_indic_battery_warn = LV_COLOR_MAKE( 255, 170, 0 );
-    
+
     lv_style_init( &style_indic_battery );
     lv_style_set_bg_opa( &style_indic_battery, LV_OPA_COVER );
     lv_style_set_bg_color( &style_indic_battery, color_indic_battery );
-    
+
     lv_style_init( &style_indic_battery_empty );
     lv_style_set_bg_opa( &style_indic_battery_empty, LV_OPA_COVER );
     lv_style_set_bg_color( &style_indic_battery_empty, color_indic_battery );
-    
+
     int position;
     lv_style_init( &style_indic_battery_deplete );
     lv_style_set_bg_opa( &style_indic_battery_deplete, LV_OPA_COVER );
@@ -179,7 +186,7 @@ void setup_battery_style() {
     position = 255 * (BATTERY_VOLTAGE_DEPLETE - BATTERY_VOLTAGE_START) / (BATTERY_VOLTAGE_END - BATTERY_VOLTAGE_START);
     lv_style_set_bg_main_stop( &style_indic_battery_deplete, position - 10 );
     lv_style_set_bg_grad_stop( &style_indic_battery_deplete, position + 10 );
-    
+
     lv_style_init( &style_indic_battery_charge );
     lv_style_set_bg_opa( &style_indic_battery_charge, LV_OPA_COVER );
     lv_style_set_bg_color( &style_indic_battery_charge, color_indic_battery );
@@ -193,20 +200,25 @@ void setup_battery_style() {
 lv_obj_t *setup_battery_bar( lv_obj_t *parent, int y0, int index ) {
     lv_obj_t *bar = lv_bar_create( parent );
     setup_bar_common( index + 2, bar, &style_indic_battery_charge, y0 );
-    
+
     lv_bar_set_range( bar, BATTERY_VOLTAGE_START, BATTERY_VOLTAGE_END );
     lv_bar_set_value( bar, BATTERY_VOLTAGE_END, LV_ANIM_OFF );
-    
+
     lv_obj_t *icon = lv_img_create( parent );
     lv_img_set_src( icon, index == 0 ? &img_battery_engine : &img_battery );
+    lv_obj_add_style( icon, &style_image, LV_PART_MAIN );
     lv_obj_set_pos( icon, STYLE_IMAGE_X, y0 );
-    
+
     return bar;
 }
 
+void setup_image_style() {
+    lv_style_init( &style_image );
+    lv_style_set_img_recolor_opa( &style_image, LV_OPA_MAX );
+    lv_style_set_img_recolor( &style_image, color_label );
+}
+
 void setup_label_style() {
-    lv_color_t color_label = LV_COLOR_MAKE( 255, 255, 255 );
-    
     lv_style_init( &style_label );
     lv_style_set_text_color( &style_label, color_label );
 //    lv_style_set_text_font(&style_label, &rubik_12);
@@ -233,13 +245,13 @@ lv_obj_t *setup_battery_label( lv_obj_t *parent, int y0 ) {
     int start = BATTERY_VOLTAGE_START / 10;
     int end = BATTERY_VOLTAGE_END / 10;
     char label_text[4];
-//    int x0 = STYLE_BAR_X + STYLE_BAR_PADDING;
+    int x0 = STYLE_BAR_X + STYLE_BAR_PADDING;
     double multiplier = (STYLE_BAR_WIDTH - STYLE_BAR_PADDING * 4.0) / (end - start);
     for ( int i = 0; i < end - start + 1; i++ ) {
         label = lv_label_create( parent );
         lv_snprintf( label_text, sizeof(label_text), "%d", start + i );
         lv_label_set_text( label, label_text );
-        lv_obj_set_pos( label, (int) (y0 + i * multiplier), y0 );
+        lv_obj_set_pos( label, (int) (x0 + i * multiplier), y0 );
         lv_obj_add_style( label, &style_label, LV_PART_MAIN );
     }
     // TODO add line for halves
@@ -316,40 +328,40 @@ static void set_battery_value( void *bar, int32_t value ) {
 }
 
 void setup_animation_step( lv_obj_t *bar, lv_anim_exec_xcb_t setter ) {
-    
+
     lv_anim_t anim;
     lv_anim_init( &anim );
     lv_anim_set_exec_cb( &anim, setter );
-    lv_anim_set_time( &anim, 5000 );
-    lv_anim_set_playback_time( &anim, 5000 );
+    lv_anim_set_time( &anim, 60000 );
+    lv_anim_set_playback_time( &anim, 60000 );
     lv_anim_set_var( &anim, bar );
     lv_anim_set_values( &anim, 0, 5 );
-//    lv_anim_set_repeat_count(&anim, LV_ANIM_REPEAT_INFINITE);
-    lv_anim_set_repeat_count( &anim, 1 );
+    lv_anim_set_repeat_count( &anim, LV_ANIM_REPEAT_INFINITE );
+//    lv_anim_set_repeat_count( &anim, 1 );
     lv_anim_start( &anim );
 }
 
 void setup_animation_fuel( lv_obj_t *bar, lv_anim_exec_xcb_t setter ) {
-    
+
     lv_anim_t anim;
     lv_anim_init( &anim );
     lv_anim_set_exec_cb( &anim, setter );
-    lv_anim_set_time( &anim, 5000 );
-    lv_anim_set_playback_time( &anim, 5000 );
+    lv_anim_set_time( &anim, 60000 );
+    lv_anim_set_playback_time( &anim, 60000 );
     lv_anim_set_var( &anim, bar );
     lv_anim_set_values( &anim, 0, 100 + STYLE_BAR_EMPTY_STATE );
-//    lv_anim_set_repeat_count(&anim, LV_ANIM_REPEAT_INFINITE);
-    lv_anim_set_repeat_count( &anim, 1 );
+    lv_anim_set_repeat_count( &anim, LV_ANIM_REPEAT_INFINITE );
+//    lv_anim_set_repeat_count( &anim, 1 );
     lv_anim_start( &anim );
 }
 
 void setup_animation_battery( lv_obj_t *bar, lv_anim_exec_xcb_t setter ) {
-    
+
     lv_anim_t anim;
     lv_anim_init( &anim );
     lv_anim_set_exec_cb( &anim, setter );
-    lv_anim_set_time( &anim, 3000 );
-    lv_anim_set_playback_time( &anim, 3000 );
+    lv_anim_set_time( &anim, 60000 );
+    lv_anim_set_playback_time( &anim, 60000 );
     lv_anim_set_var( &anim, bar );
     lv_anim_set_values( &anim, BATTERY_VOLTAGE_START, BATTERY_VOLTAGE_END );
     lv_anim_set_repeat_count( &anim, LV_ANIM_REPEAT_INFINITE );
@@ -359,10 +371,12 @@ void setup_animation_battery( lv_obj_t *bar, lv_anim_exec_xcb_t setter ) {
 
 void display_meter_main() {
     setup_screen();
-    setup_bar_background_style();
-    setup_label_style();
-    setup_battery_style();
     
+    setup_bar_background_style();
+    setup_battery_style();
+    setup_image_style();
+    setup_label_style();
+
     lv_obj_t *screen = lv_scr_act();
     lv_obj_t *prev;
     prev = bar_water = setup_water_bar( screen, STYLE_BAR_HEIGHT * 3 / 2 );
@@ -375,12 +389,20 @@ void display_meter_main() {
                                                  1 );
     setup_battery_label( screen, obj_get_bottom( prev ) + STYLE_BAR_OUTLINE );
     bar_battery[ 2 ] = setup_battery_bar( screen, obj_get_bottom( prev ) + STYLE_BAR_HEIGHT, 2 );
-    
+
+#if USE_ANIMATION
     setup_animation_step( bar_water, set_water_value );
     setup_animation_fuel( bar_fuel, set_fuel_value );
     for ( int i = 0; i < 3; i++ ) {
         setup_animation_battery( bar_battery[ i ], set_battery_value );
     }
+#else
+    set_water_value( bar_water, 3 );
+    set_fuel_value( bar_fuel, 45 );
+    set_battery_value( bar_battery[ 0 ], 105 );
+    set_battery_value( bar_battery[ 1 ], 125 );
+    set_battery_value( bar_battery[ 2 ], 137 );
+#endif
 }
 
 void display_meter_set_value( display_type_t type, int instance, int value ) {

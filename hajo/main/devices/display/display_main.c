@@ -24,7 +24,9 @@ static void guiTask( void *pvParameter );
 
 static void lv_tick_task( void *arg );
 
-static void backlight_callback( TimerHandle_t timer );
+static void timer_callback_backlight( TimerHandle_t timer );
+
+static void log_free_memory();
 
 /**********************
  *  STATIC VARIABLES
@@ -34,9 +36,10 @@ static const char *LOG = "display";
 
 static SemaphoreHandle_t xGuiSemaphore;
 static disp_backlight_config_t *backlight_handler;
-static int backlight_off_interval = 5;
+static int backlight_off_interval = 30;
 static TimerHandle_t backlight_timer;
 static bool is_display_on;
+static volatile bool turn_off_display;
 static lv_indev_t *indev;
 static lv_indev_state_t indev_previous_state;
 
@@ -55,7 +58,7 @@ void display_main() {
             pdMS_TO_TICKS( backlight_off_interval * 1000 ),
             0,
             NULL,
-            backlight_callback );
+            timer_callback_backlight );
 }
 
 bool display_start_task() {
@@ -112,9 +115,10 @@ static void guiTask( void *pvParameter ) {
 
     uint32_t size_in_px = DISP_BUF_SIZE;
 
-    lv_color_t * buf1 = heap_caps_malloc( size_in_px * sizeof( lv_color_t ), MALLOC_CAP_DMA );
+    lv_color_t *buf1 = heap_caps_malloc( size_in_px * sizeof( lv_color_t ), MALLOC_CAP_DMA );
     assert( buf1 != NULL );
-    lv_color_t * buf2 = heap_caps_malloc( size_in_px * sizeof( lv_color_t ), MALLOC_CAP_DMA );
+//    lv_color_t *buf2 = NULL;
+    lv_color_t *buf2 = heap_caps_malloc( size_in_px * sizeof( lv_color_t ), MALLOC_CAP_DMA );
     assert( buf2 != NULL );
 
     static lv_disp_draw_buf_t disp_buf;
@@ -122,9 +126,28 @@ static void guiTask( void *pvParameter ) {
 
     lv_disp_drv_t disp_drv;
     lv_disp_drv_init( &disp_drv );
+    disp_drv.hor_res = 320;
+    disp_drv.ver_res = 240;
+#if CONFIG_LV_DISPLAY_ORIENTATION_PORTRAIT
+    disp_drv.rotated = 1;
+#elif CONFIG_LV_DISPLAY_ORIENTATION_PORTRAIT_INVERTED
+    disp_drv.rotated = 3;
+#elif CONFIG_LV_DISPLAY_ORIENTATION_LANDSCAPE
+    disp_drv.rotated = 0;
+#elif CONFIG_LV_DISPLAY_ORIENTATION_LANDSCAPE_INVERTED
+    disp_drv.rotated = 2;
+#else
+#   error Unknown screen orientation
+#endif
     disp_drv.flush_cb = disp_driver_flush;
     disp_drv.draw_buf = &disp_buf;
-    lv_disp_drv_register( &disp_drv );
+    ESP_LOGI( LOG, "drv horiz %d vert %d", disp_drv.hor_res, disp_drv.ver_res );
+    lv_disp_t *disp = lv_disp_drv_register( &disp_drv );
+
+    lv_disp_t *disp_def = lv_disp_get_default();
+    ESP_LOGI( LOG, "own %p def %p", disp, disp_def );
+    ESP_LOGI( LOG, "own horiz %d vert %d", lv_disp_get_hor_res( disp ), lv_disp_get_ver_res( disp ) );
+    ESP_LOGI( LOG, "def horiz %d vert %d", lv_disp_get_hor_res( disp_def ), lv_disp_get_ver_res( disp_def ) );
 
     /* Create and start a periodic timer interrupt to call lv_tick_inc */
     const esp_timer_create_args_t periodic_timer_args = {
@@ -141,16 +164,31 @@ static void guiTask( void *pvParameter ) {
     indev_drv.type = LV_INDEV_TYPE_POINTER;
     indev = lv_indev_drv_register( &indev_drv );
 
+    ESP_LOGI( LOG, "before display_meter_main" );
     display_meter_main();
+    ESP_LOGI( LOG, "after display_meter_main" );
 
+    uint32_t next_log_time = 0;
+    log_free_memory();
     while ( 1 ) {
         /* Delay 1 tick (assumes FreeRTOS tick is 10ms */
         vTaskDelay( pdMS_TO_TICKS( 10 ) );
+
+        if ( turn_off_display ) {
+            turn_off_display = false;
+            backlight_off();
+        }
 
         /* Try to take the semaphore, call lvgl related function on success */
         if ( display_start_task() ) {
             lv_task_handler();
             display_end_task();
+        }
+
+        uint32_t current_time = lv_tick_get();
+        if ( current_time > next_log_time ) {
+            log_free_memory();
+            next_log_time = current_time + 1000;
         }
     }
 }
@@ -165,8 +203,15 @@ static void lv_tick_task( void *arg ) {
     lv_tick_inc( LV_TICK_PERIOD_MS );
 }
 
-static void backlight_callback( TimerHandle_t timer ) {
+static void timer_callback_backlight( TimerHandle_t timer ) {
     (void) timer;
 
-    backlight_off();
+    turn_off_display = true;
+}
+
+static void log_free_memory() {
+    multi_heap_info_t heap_info;
+    heap_caps_get_info( &heap_info, MALLOC_CAP_8BIT );
+    ESP_LOGI( LOG, "Memory allocated %d, free %d",
+              heap_info.total_allocated_bytes, heap_info.total_free_bytes );
 }
