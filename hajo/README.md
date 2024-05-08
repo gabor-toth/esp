@@ -42,7 +42,6 @@ values":[{"path":"","value":{"uuid":"urn:mrn:signalk:uuid:59e1f1c9-9e32-4340-a1d
 
 - [Discovery and Connection Establishment](https://signalk.org/specification/1.7.0/doc/connection.html)
 - [Streaming API](https://signalk.org/specification/1.7.0/doc/streaming_api.html)
-- [KIP](https://github.com/mxtommy/Kip)
 
 ## Service Sniffer
 
@@ -213,6 +212,22 @@ systemctl daemon-reload
 - create an admin account admin/signalk
 - login
 - TBC
+
+#### Dashboard
+
+- Install
+    - [KIP](https://github.com/mxtommy/Kip)
+    - @signalk/signalk-autopilot
+    - signalk-alarm-silencer
+- Create user kip, set pwd dCMhD4mjTYBeZ8gQ, admin or at least r/w
+- Link: http://192.168.72.180/@mxtommy/kip
+    - load demo
+    - connect to local, don't login, request token, approve in SignalK
+    - save layout to global/default
+    - log in
+    - copy global/default to user/default
+- todo
+    - self.electrical.batteries.1.voltage
 
 ### Wifi AP
 
