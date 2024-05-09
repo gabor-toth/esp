@@ -183,6 +183,10 @@ void EspSigK::stop() {
         xTimerDelete( pendingTokenTimer, portMAX_DELAY );
         pendingTokenTimer = nullptr;
     }
+    if ( event_queue ) {
+        vQueueDelete( event_queue);
+        event_queue = nullptr;
+    }
     if ( wsTask ) {
         vTaskDelete(wsTask);
         wsTask = nullptr;
@@ -389,6 +393,7 @@ void EspSigK::onWebSocketClientEvent( esp_event_base_t event_base, int32_t event
                 ESP_LOGW(TAG_WSCLIENT,"Token invalid, requesting new one");
                 signalKServerToken.clear();
                 saveSetting(NVS_KEY_TOKEN, signalKServerToken);
+                clearRequestId();
                 triggerWsClientConnect();
             } else {
                 startWsClientConnectTimer();
@@ -405,13 +410,14 @@ void EspSigK::onWebSocketClientEvent( esp_event_base_t event_base, int32_t event
                 buf[ data->data_len ] = 0;
                 onClientTextReceived( buf );
                 free( buf );
-            } else if ( data->op_code == 1 ) {
+            } else if ( data->op_code == 2 ) {
                 ESP_LOGI( TAG_WSCLIENT, "received binary len %d", data->data_len );
             }
             break;
         }
         case WEBSOCKET_EVENT_CLOSED:
-            //ESP_LOGI( TAG_WSCLIENT, "event closed" );
+            ESP_LOGW( TAG_WSCLIENT, "event closed" );
+            onClientDisconnected();
             break;
         case WEBSOCKET_EVENT_BEFORE_CONNECT:
             //ESP_LOGI( TAG_WSCLIENT, "event before_connect" );
@@ -518,6 +524,7 @@ void EspSigK::stopWsClient() {
         esp_websocket_client_destroy( wsClientHandle );
         wsClientHandle = nullptr;
     }
+    wsClientConnected = false;
 }
 
 /* ******************************************************************** */
@@ -601,6 +608,7 @@ void EspSigK::sendDeltaSet( DeltaSet &deltaSet ) {
     if ( wsClientConnected ) {
         if ( esp_websocket_client_send_text( wsClientHandle, deltaText, strlen( deltaText ), 10 ) == ESP_FAIL ) {
             ESP_LOGE( TAG_WSCLIENT, "error sending delta" );
+            onClientDisconnected();
         }
     }
     free( deltaText );
@@ -620,7 +628,6 @@ void EspSigK::onClientConnected() {
 
 void EspSigK::onClientDisconnected() {
     wsClientConnected = false;
-    signalKServerToken.clear();
     startWsClientConnectTimer();
 }
 
@@ -630,8 +637,12 @@ void EspSigK::onClientTextReceived( const char *buf ) {
     if ( *buf == '{' ) {
         // cJSON_ParseWithLengthOpts(buf, 0, nullptr, false);
         cJSON *result = cJSON_Parse( buf );
+        cJSON *item;
         if ( cJSON_GetObjectItem( result, "version" ) != nullptr ) {
             processFrameHello( result );
+            processed = true;
+        } else if ( ( item = cJSON_GetObjectItem( result, "message" ) ) != nullptr ) {
+            ESP_LOGW( TAG_WSCLIENT, "message: %s", cJSON_GetStringValue(item) );
             processed = true;
         }
         cJSON_Delete( result );
@@ -836,8 +847,12 @@ void EspSigK::startPendingTokenTimer() const {
 }
 
 void EspSigK::clearRequestIdAndRequestNew() {
-    std::string dummy;
-    saveSetting( NVS_KEY_REQUEST_ID, dummy );
+    clearRequestId();
     prepareAccessRequest();
     startPendingTokenTimer();
+}
+
+void EspSigK::clearRequestId() {
+    std::string dummy;
+    saveSetting( NVS_KEY_REQUEST_ID, dummy );
 }

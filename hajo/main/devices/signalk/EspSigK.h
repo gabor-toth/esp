@@ -19,7 +19,7 @@ class EspSigK;
 class DeltaValue {
 public:
     DeltaValue( const char *path, const char *value );
-    
+
     std::string path;
     std::string value;
 };
@@ -27,27 +27,27 @@ public:
 class DeltaSet {
 public:
     DeltaSet( unsigned char source, unsigned long pgn );
-    
+
     void addValue( const char *path, const char *value );
-    
+
     void addValue( const char *path, int value );
-    
+
     void addValue( const char *path, double value );
-    
+
     void addValue( const char *path, bool value );
-    
+
     [[nodiscard]] const std::list<DeltaValue> &getDeltas() const {
         return deltas;
     };
-    
+
     [[nodiscard]] unsigned char getSource() const {
         return source;
     }
-    
+
     [[nodiscard]] unsigned long getPgn() const {
         return pgn;
     }
-    
+
     void send( EspSigK &espSigk );
 
 private:
@@ -61,80 +61,80 @@ private:
 
 public:
     EspSigK();
-    
+
     ~EspSigK();
-    
+
     void start( const char *deviceName, const char *hostname, httpd_handle_t server, const char *wifi_ssid );
-    
+
     void stop();
-    
+
     void setPrintDeltaSerial( bool v );
-    
+
     void setPrintDebugSerial( bool v );
-    
+
     void sendDeltaSet( DeltaSet &deltaSet );
 
 private:
     void setupDiscovery();
-    
+
     void setupHTTP();
-    
+
     void setupWebSocket();
-    
+
     bool connectWsClient();
-    
+
     void stopWsClient();
-    
+
     void onClientConnected();
-    
+
     void onClientDisconnected();
-    
+
     void onClientTextReceived( const char *buf );
-    
+
     void processFrameHello( cJSON *o );
-    
+
     bool findMDNSService();
-    
+
     static esp_err_t htmlSignalKEndpoints( httpd_req_t *r );
-    
+
     static esp_err_t htmlHandleNotFound( httpd_req_t *r );
-    
+
     static esp_err_t htmlIndexContents( httpd_req_t *r );
-    
+
     static esp_err_t htmlDescriptionXml( httpd_req_t *r );
-    
+
     void onWebSocketClientEvent( esp_event_base_t event_base, int32_t event_id, void *event_data );
-    
+
     static void webSocketClientEventHandler( void *event_handler_arg, esp_event_base_t event_base, int32_t event_id,
                                              void *event_data );
-    
+
     _Noreturn static void taskWsClientConnect( void *arg );
-    
+
     void triggerWsClientConnect();
-    
+
     static void timerCallback( TimerHandle_t timer );
-    
+
     bool loadSetting( const char *name, std::string &value );
-    
+
     void setUuid();
-    
+
     void sendAccessRequest();
-    
+
     void prepareAccessRequest();
-    
+
     void prepareCheckAccessRequest( const char *href );
-    
+
     void onTokenTimer();
-    
+
     void sendAndHandleAccessRequest();
-    
+
     void saveSetting( const char *name, const std::string &value );
-    
+
     httpd_handle_t http_server;
     std::string hostname;
     bool printDeltaSerial;
     bool printDebugSerial;
-    
+
     std::string deviceName;
     std::string signalKServerHost;
     uint16_t signalKServerPort;
@@ -149,14 +149,16 @@ private:
     TaskHandle_t wsTask;
     bool pendingTokenState;
     TimerHandle_t pendingTokenTimer;
-    
+
     HttpRequest httpClientData;
-    
+
     void startPendingTokenTimer() const;
-    
+
     void startWsClientConnectTimer();
-    
+
     void clearRequestIdAndRequestNew();
+
+    void clearRequestId();
 };
 
 extern EspSigK sigK;
