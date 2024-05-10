@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
+//@formatter:off
 #include <stdio.h>
 
 #include "esp_websocket_client.h"
@@ -430,7 +430,9 @@ static void destroy_and_free_resources(esp_websocket_client_handle_t client)
     if (client->transport_list) {
         esp_transport_list_destroy(client->transport_list);
     }
-    vQueueDelete(client->lock);
+    if ( client->lock ) {
+        vQueueDelete( client->lock );
+    }
     free(client->tx_buffer);
     free(client->rx_buffer);
     free(client->errormsg_buffer);
@@ -1056,11 +1058,11 @@ static void esp_websocket_client_task(void *pv)
     }
 
     esp_transport_close(client->transport);
-    xEventGroupSetBits(client->status_bits, STOPPED_BIT);
     client->state = WEBSOCKET_STATE_UNKNOW;
     if (client->selected_for_destroying == true) {
         destroy_and_free_resources(client);
     }
+    xEventGroupSetBits(client->status_bits, STOPPED_BIT);
     vTaskDelete(NULL);
 }
 

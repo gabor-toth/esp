@@ -461,7 +461,7 @@ bool EspSigK::connectWsClient() {
             .username = nullptr,
             .password = nullptr,
             .path = "/signalk/v1/stream?subscribe=none",
-            .disable_auto_reconnect = true,
+            .disable_auto_reconnect = false, // 'true' causes a race condition in esp_websocket_client_task()
             .user_context = nullptr,
             .task_prio = 0,
             .task_name = nullptr,
@@ -496,6 +496,7 @@ bool EspSigK::connectWsClient() {
 
     esp_err_t err;
     wsClientHandle = esp_websocket_client_init( &ws_cfg );
+    ESP_LOGI( TAG_WSCLIENT, "starting %p", wsClientHandle );
     if ( wsClientHandle == nullptr ) {
         ESP_LOGE( TAG_WSCLIENT, "esp_websocket_client_init failed" );
         return false;
@@ -514,17 +515,18 @@ bool EspSigK::connectWsClient() {
         return false;
     }
 
-    ESP_LOGI( TAG_WSCLIENT, "started" );
+    ESP_LOGI( TAG_WSCLIENT, "started %p", wsClientHandle );
     return true;
 }
 
 void EspSigK::stopWsClient() {
+    ESP_LOGI( TAG_WSCLIENT, "stopping %p", wsClientHandle );
     if ( wsClientHandle != nullptr ) {
-        esp_websocket_client_stop( wsClientHandle );
-        esp_websocket_client_destroy( wsClientHandle );
+        ESP_ERROR_CHECK(esp_websocket_client_destroy( wsClientHandle ) );
         wsClientHandle = nullptr;
     }
     wsClientConnected = false;
+    ESP_LOGI( TAG_WSCLIENT, "stopped" );
 }
 
 /* ******************************************************************** */

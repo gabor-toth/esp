@@ -113,7 +113,7 @@ void nk2_register_sender( tN2kSendFunction sendFunction,
 
     if ( timer_event_queue == nullptr ) {
         timer_event_queue = xQueueCreate( 10, sizeof( void * ));
-        xTaskCreate( task_main, TAG, 3072, nullptr, 10, nullptr );
+        xTaskCreate( task_main, TAG, 4096, nullptr, 10, nullptr );
 
         int interval_ms = 10; // >= 10ms
         TimerHandle_t timer = xTimerCreate(
