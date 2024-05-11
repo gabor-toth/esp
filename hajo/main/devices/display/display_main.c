@@ -26,8 +26,6 @@ static void lv_tick_task( void *arg );
 
 static void timer_callback_backlight( TimerHandle_t timer );
 
-static void log_free_memory();
-
 /**********************
  *  STATIC VARIABLES
  **********************/
@@ -169,7 +167,6 @@ static void guiTask( void *pvParameter ) {
     ESP_LOGI( LOG, "after display_meter_main" );
 
     uint32_t next_log_time = 0;
-    log_free_memory();
     while ( 1 ) {
         /* Delay 1 tick (assumes FreeRTOS tick is 10ms */
         vTaskDelay( pdMS_TO_TICKS( 10 ) );
@@ -187,7 +184,6 @@ static void guiTask( void *pvParameter ) {
 
         uint32_t current_time = lv_tick_get();
         if ( current_time > next_log_time ) {
-            log_free_memory();
             next_log_time = current_time + 1000;
         }
     }
@@ -207,11 +203,4 @@ static void timer_callback_backlight( TimerHandle_t timer ) {
     (void) timer;
 
     turn_off_display = true;
-}
-
-static void log_free_memory() {
-    multi_heap_info_t heap_info;
-    heap_caps_get_info( &heap_info, MALLOC_CAP_8BIT );
-    ESP_LOGI( LOG, "Memory allocated %d, free %d",
-              heap_info.total_allocated_bytes, heap_info.total_free_bytes );
 }
