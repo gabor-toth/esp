@@ -34,7 +34,7 @@ static const char *LOG = "display";
 
 static SemaphoreHandle_t xGuiSemaphore;
 static disp_backlight_config_t *backlight_handler;
-static int backlight_off_interval = 30;
+static int backlight_off_interval = 300;
 static TimerHandle_t backlight_timer;
 static bool is_display_on;
 static volatile bool turn_off_display;
@@ -49,7 +49,7 @@ void display_main() {
     /* If you want to use a task to create the graphic, you NEED to create a Pinned task
      * Otherwise there can be problem such as memory corruption and so on.
      * NOTE: When not using Wi-Fi nor Bluetooth you can pin the guiTask to core 0 */
-    xTaskCreatePinnedToCore( guiTask, "gui", 4096 * 2, NULL, 0, NULL, 0 );
+    xTaskCreatePinnedToCore( guiTask, "gui", 4096 * 2, NULL, configMAX_PRIORITIES - 1, NULL, 0 );
 
     backlight_timer = xTimerCreate(
             "backlight",
@@ -111,13 +111,23 @@ static void guiTask( void *pvParameter ) {
     backlight_handler = lvgl_driver_init();
     backlight_on();
 
-    uint32_t size_in_px = DISP_BUF_SIZE;
+    // 25600 = 320 x (240/3)
+    // 19200 = 320 x (240/4)
+//    uint32_t size_in_px = DISP_BUF_SIZE;
+    uint32_t size_in_px = 320 * (240 / 4);
 
-    lv_color_t *buf1 = heap_caps_malloc( size_in_px * sizeof( lv_color_t ), MALLOC_CAP_DMA );
+    uint32_t buffer_size = size_in_px * sizeof( lv_color_t );
+    lv_color_t *buf1 = heap_caps_malloc( buffer_size, MALLOC_CAP_DMA );
     assert( buf1 != NULL );
 //    lv_color_t *buf2 = NULL;
-    lv_color_t *buf2 = heap_caps_malloc( size_in_px * sizeof( lv_color_t ), MALLOC_CAP_DMA );
-    assert( buf2 != NULL );
+    lv_color_t *buf2 = heap_caps_malloc( buffer_size, MALLOC_CAP_DMA );
+    if ( buf2 == NULL ) {
+        ESP_LOGE( LOG, "free mem %d, largest %d, needed %ld",
+                  heap_caps_get_free_size( MALLOC_CAP_DMA ),
+                  heap_caps_get_largest_free_block( MALLOC_CAP_DMA ),
+                  buffer_size );
+        assert( buf2 != NULL );
+    }
 
     static lv_disp_draw_buf_t disp_buf;
     lv_disp_draw_buf_init( &disp_buf, buf1, buf2, size_in_px );
@@ -166,6 +176,7 @@ static void guiTask( void *pvParameter ) {
     display_meter_main();
     ESP_LOGI( LOG, "after display_meter_main" );
 
+    vTaskPrioritySet( NULL, tskIDLE_PRIORITY + 5 );
     uint32_t next_log_time = 0;
     while ( 1 ) {
         /* Delay 1 tick (assumes FreeRTOS tick is 10ms */

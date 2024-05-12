@@ -4,11 +4,14 @@
 
 #define USE_ANIMATION   0
 
+static const char *LOG = "displ_meter";
+
 typedef struct {
     int index;
     lv_style_t *current_style;
 } user_data_t;
 
+static bool initialized = false;
 static lv_style_t style_bar_background;
 static lv_style_t style_image;
 static lv_style_t style_indic_battery;
@@ -265,12 +268,13 @@ int obj_get_bottom( lv_obj_t *obj ) {
     return lv_obj_get_style_y( obj, LV_PART_MAIN ) + lv_obj_get_style_height( obj, LV_PART_MAIN );
 }
 
-static void set_water_value( void *bar, int32_t step ) {
-    if ( step < 0 ) {
-        step = 0;
-    } else if ( step > 4 ) {
-        step = 4;
+static void set_water_value( void *bar, int32_t percent ) {
+    if ( percent < 0 ) {
+        percent = 0;
+    } else if ( percent > 100 ) {
+        percent = 100;
     }
+    int step = percent / 25;
     int value;
     lv_style_t *style;
     if ( step == 0 ) {
@@ -288,21 +292,21 @@ static void set_water_value( void *bar, int32_t step ) {
     lv_bar_set_value( bar, value, LV_ANIM_ON );
 }
 
-static void set_fuel_value( void *bar, int32_t value ) {
-    if ( value < 0 ) {
-        value = 0;
-    } else if ( value > 100 ) {
-        value = 100;
+static void set_fuel_value( void *bar, int32_t percent ) {
+    if ( percent < 0 ) {
+        percent = 0;
+    } else if ( percent > 100 ) {
+        percent = 100;
     }
     lv_style_t *style;
-    if ( value == 0 ) {
+    if ( percent == 0 ) {
         style = &style_indic_water_empty;
-    } else if ( value < 25 ) {
+    } else if ( percent < 25 ) {
         style = &style_indic_fuel_empty;
     } else {
         style = &style_indic_fuel;
     }
-    value += STYLE_BAR_EMPTY_STATE;
+    int value = percent + STYLE_BAR_EMPTY_STATE;
     set_style( bar, style );
     lv_bar_set_value( bar, value, LV_ANIM_ON );
 }
@@ -371,7 +375,7 @@ void setup_animation_battery( lv_obj_t *bar, lv_anim_exec_xcb_t setter ) {
 
 void display_meter_main() {
     setup_screen();
-    
+
     setup_bar_background_style();
     setup_battery_style();
     setup_image_style();
@@ -397,13 +401,45 @@ void display_meter_main() {
         setup_animation_battery( bar_battery[ i ], set_battery_value );
     }
 #else
-    set_water_value( bar_water, 3 );
-    set_fuel_value( bar_fuel, 45 );
-    set_battery_value( bar_battery[ 0 ], 105 );
-    set_battery_value( bar_battery[ 1 ], 125 );
-    set_battery_value( bar_battery[ 2 ], 137 );
+    set_water_value( bar_water, 0 );
+    set_fuel_value( bar_fuel, 0 );
+    for ( int i = 0; i < sizeof(bar_battery) / sizeof(bar_battery[ 0 ]); ++i ) {
+        set_battery_value( bar_battery[ i ], 0 );
+    }
 #endif
+    initialized = true;
 }
 
 void display_meter_set_value( display_type_t type, int instance, int value ) {
+//    ESP_LOGI( LOG, "type %d/%s inst %d value %d", type, display_type_names[ type ], instance, value );
+    if ( !initialized ) {
+        return;
+    }
+    switch ( type ) {
+        case FUEL:
+            set_fuel_value( bar_fuel, value );
+            break;
+        case VOLTAGE:
+            if ( instance >= 0 && instance < sizeof(bar_battery) / sizeof(bar_battery[ 0 ]) ) {
+                set_battery_value( bar_battery[ instance ], value );
+            } else {
+                ESP_LOGW( LOG, "Unhandled battery instance %d", instance );
+            }
+            break;
+        case WATER:
+            set_water_value( bar_water, value );
+            break;
+        case TEMP:
+            break;
+        default:
+            ESP_LOGW( LOG, "Unhandled display type %d", type );
+            break;
+    }
 }
+
+const char *display_type_names[] = {
+        "FUEL",
+        "VOLTAGE",
+        "WATER",
+        "TEMP"
+};

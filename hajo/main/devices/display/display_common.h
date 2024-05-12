@@ -8,8 +8,11 @@ extern "C" {
 typedef enum {
     FUEL,
     VOLTAGE,
-    WATER
+    WATER,
+    TEMP
 } display_type_t;
+
+extern const char *display_type_names[];
 
 #ifdef __cplusplus
 }
