@@ -2,6 +2,7 @@
 
 set(SOURCES
         "../../common/adc.c"
+        "../../common/debug_helper.c"
         "../../common/gpio_define.c"
         "../../common/gpio_json.c"
         "../../common/gpio_task.c"

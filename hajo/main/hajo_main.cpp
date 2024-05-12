@@ -1,4 +1,5 @@
 #include "config.h"
+#include "debug_helper.h"
 #include "driver/gpio.h"
 #include "esp_event.h"
 #include "esp_log.h"
@@ -130,6 +131,8 @@ static int own_log_vprintf(const char *format, va_list args) {
 }
 
 void hajo_main() {
+    //debug_start_task_dump();
+
     esp_log_set_vprintf(own_log_vprintf);
     
     led_on();
