@@ -478,12 +478,12 @@ void HandleSeatalkPilotHeading( const tN2kMsg &N2kMsg ) {
         ESP_LOGD(TAG,"SeaTalk PilotHeading sid %d headTrue %d headMagnetic %d",
                  sid, headingTrue, headingMagnetic );
         DeltaSet deltaSet(N2kMsg.Source, N2kMsg.PGN);
-        if ( headingTrue != 65535 ) {
-            deltaSet.addValue( "steering.autopilot.target.headingTrue", headingTrue / 1000.0 );
+        if ( headingTrue == 65535 ) {
+            deltaSet.addValue( "steering.autopilot.target.headingTrue", "invalid");
         } else {
-            deltaSet.addValue( "steering.autopilot.target.headingTrue", "" );
+            deltaSet.addValue( "steering.autopilot.target.headingTrue", headingTrue / 10000.0 );
         }
-        deltaSet.addValue( "steering.autopilot.target.headingMagnetic", headingMagnetic / 1000.0 );
+        deltaSet.addValue( "steering.autopilot.target.headingMagnetic", headingMagnetic / 10000.0 );
         deltaSet.send( sigK );
     }
 }
