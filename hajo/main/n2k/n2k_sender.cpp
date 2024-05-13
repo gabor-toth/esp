@@ -69,7 +69,7 @@ _Noreturn static void task_main( void *arg ) {
             }
             iterator->Scheduler.UpdateNextTime();
 
-            LOG( "sending for %s", iterator->Description );
+            //LOG( "sending for %s", iterator->Description );
             int index;
             tN2kMsg N2kMsg;
             for ( index = 0; iterator->SendFunction( index, N2kMsg ); index++ ) {
@@ -81,7 +81,7 @@ _Noreturn static void task_main( void *arg ) {
                 }
             }
             if ( index == 0 ) {
-                LOG( "nothing to send for %s", iterator->Description );
+                //LOG( "nothing to send for %s", iterator->Description );
             }
         }
     }

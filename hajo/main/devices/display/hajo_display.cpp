@@ -10,7 +10,7 @@ static const char *LOG = "display";
 static void process_incoming_pgn_battery_status( const tN2kMsg &N2kMsg ) {
     N2kDCBatStatusData data;
     if ( ParseN2kDCBatStatus( N2kMsg, data )) {
-        ESP_LOGI( LOG, "packet battery status %d: voltage %lf", data.instance, data.voltage );
+//        ESP_LOGI( LOG, "packet battery status %d: voltage %lf", data.instance, data.voltage );
         int voltageDisplayValue = (int) ( data.voltage * 10 );
         display_set_value( VOLTAGE, data.instance, voltageDisplayValue );
     }
@@ -56,7 +56,6 @@ void DisplayIncomingMessageHandler::HandleMsg( const tN2kMsg &N2kMsg ) {
 //    if ( device_type != DEVICE_TYPE_GAUGE_DISPLAY ) {
 //        return;
 //    }
-    ESP_LOGI( LOG, "packet pgn %5lx", N2kMsg.PGN );
     switch ( N2kMsg.PGN ) {
         case N2K_PGN_FLUID_LEVEL:
             process_incoming_pgn_fluid_level( N2kMsg );
@@ -69,6 +68,14 @@ void DisplayIncomingMessageHandler::HandleMsg( const tN2kMsg &N2kMsg ) {
             break;
         case N2K_PGN_BATTERY_CONFIGURATION:
             process_incoming_pgn_battery_configuration( N2kMsg );
+            break;
+        case 0x1ef00: // proprietary fast packet
+        case 0x1f112: // PGN 127250 - Vessel Heading
+        case 0x1f10d: // PGN 127245 - Rudder
+        case 0x0ff4f: // ?
+            break;
+        default:
+            ESP_LOGI( LOG, "new packet pgn %5lx", N2kMsg.PGN );
             break;
     }
 }
