@@ -1,6 +1,43 @@
 #ifndef HAJO_N2KRAYMARINE_H
 #define HAJO_N2KRAYMARINE_H
 
+#include "N2kTypes.h"
+#include "N2kMsg.h"
+
+typedef struct {
+    uint16_t value;
+    const char *name;
+} LookupEntry;
+
+extern const char *SeaTalkAlarmGroup[5];
+extern const char *SeaTalkAlarmId[106];
+extern const char *SeaTalkAlarmStatus[3];
+extern const char *SeaTalkDeviceId[6];
+extern const char *SeaTalkDisplayColor[4];
+extern const char *SeaTalkKeystroke[10];
+extern const char *SeaTalkNetworkGroup[11];
+extern const LookupEntry SeaTalkPilotMode16[6];
+
+extern bool ParseN2kPGN61184(const tN2kMsg &N2kMsg, uint8_t &proprietaryID, uint8_t &variant, uint8_t &wirelessSetting,
+                             uint8_t &wiredSetting, uint8_t &beepControl);
+
+extern bool ParseN2kPGN65288(const tN2kMsg &N2kMsg, uint16_t &company, uint8_t &sid, uint8_t &alarmStatus,
+                             uint8_t &alarmId, uint8_t &alarmGroup, uint8_t &alarmPriority);
+
+extern bool ParseN2kPGN65359(const tN2kMsg &N2kMsg, uint16_t &company, uint8_t &sid, uint16_t &headingTrue,
+                             uint16_t &headingMagnetic);
+
+extern bool ParseN2kPGN65360(const tN2kMsg &N2kMsg, uint16_t &company, uint8_t &sid, uint16_t &targetHeadingTrue,
+                             uint16_t &targetHeadingMagnetic);
+
+extern bool ParseN2kPGN65361(const tN2kMsg &N2kMsg, uint8_t &alarmId, uint8_t &alarmGroup);
+
+extern bool ParseN2kPGN65379(const tN2kMsg &N2kMsg, uint16_t &company, uint16_t &pilotMode, uint8_t &subMode,
+                             uint8_t &pilotModeData);
+
+extern bool ParseN2kPGN126720(const tN2kMsg &N2kMsg, int &Index, uint16_t &ManufacturerCode, uint8_t &Reserved,
+                              uint8_t &IndustryCode, uint16_t &ProprietaryID);
+
 /*
 1	Manufacturer Code	1851: Raymarine	0 .. 2045, 11 bits lookup MANUFACTURER_CODE
 2	Reserved			2 bits RESERVED

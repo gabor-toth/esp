@@ -16,9 +16,11 @@
 // Version 0.1, 06.02.2021, AK-Homberger
 
 #include "esp_log.h"
+#include "NMEA2000.h"
 #include "N2kMessages.h"
 #include "N2kMsg.h"
 #include "N2kTypes.h"
+#include "n2k/N2kRaymarine.h"
 
 #include "devices/signalk/EspSigK.h"        // For SignalK handling
 
@@ -39,7 +41,21 @@ static const char* TAG = "n2k-gw";
 //      0
 //    };
 
+const char* lookupName( const char *names[], size_t sizeInBytes, uint8_t value ) {
+    if ( value >= sizeInBytes / sizeof(const char*) || names[value] == nullptr) {
+        return "bad_index";
+    }
+    return names[value];
+}
 
+const char* lookupName( const LookupEntry names[], size_t sizeInBytes, uint8_t value ) {
+    for ( uint i = 0; i < sizeInBytes / sizeof(LookupEntry); i++) {
+        if ( names[i].value == value) {
+            return names[i].name;
+        }
+    }
+    return "bad_index";
+}
 
 //*****************************************************************************
 void HandleHeading( const tN2kMsg &N2kMsg ) {
@@ -193,6 +209,83 @@ void HandleWaterTemp( const tN2kMsg &N2kMsg ) {
     }
 }
 
+void HandleBatteryDetailedStatus( const tN2kMsg &N2kMsg ) {
+    unsigned char SID;
+    unsigned char DCInstance;
+    tN2kDCType DCType;
+    uint8_t StateOfCharge;
+    uint8_t StateOfHealth;
+    double TimeRemaining;
+    double RippleVoltage;
+    double Capacity;
+
+    if ( ParseN2kPGN127506( N2kMsg, SID, DCInstance,DCType,StateOfCharge,StateOfHealth,TimeRemaining,RippleVoltage,Capacity)) {
+        DeltaSet deltaSet(N2kMsg.Source, N2kMsg.PGN);
+        char path[64];
+        snprintf( path, sizeof(path), "electrical.batteries.%d.rippleVoltage",DCInstance+1);
+        deltaSet.addValue( path, RippleVoltage);
+        deltaSet.send( sigK );
+    }
+}
+
+void HandleBatteryStatus( const tN2kMsg &N2kMsg ) {
+    unsigned char BatteryInstance;
+    double BatteryVoltage;
+    double BatteryCurrent;
+    double BatteryTemperature;
+    unsigned char SID;
+
+    if ( ParseN2kPGN127508( N2kMsg, BatteryInstance,BatteryVoltage,BatteryCurrent,BatteryTemperature,SID)) {
+        DeltaSet deltaSet(N2kMsg.Source, N2kMsg.PGN);
+        char path[64];
+        snprintf( path, sizeof(path), "electrical.batteries.%d.voltage", BatteryInstance+1);
+        deltaSet.addValue( path, BatteryVoltage);
+        deltaSet.send( sigK );
+    }
+}
+
+void HandleFluidLevel( const tN2kMsg &N2kMsg ) {
+    unsigned char Instance;
+    tN2kFluidType FluidType;
+    double Level;
+    double Capacity;
+
+    if ( ParseN2kPGN127505( N2kMsg, Instance,FluidType,Level,Capacity)) {
+        DeltaSet deltaSet(N2kMsg.Source, N2kMsg.PGN);
+        char path[64];
+        const char* typeName;
+        switch ( FluidType ) {
+            case N2kft_Fuel:
+                typeName ="fuel";
+                break;
+            case N2kft_Water:
+                typeName ="freshWater";
+                break;
+            case N2kft_GrayWater:
+                typeName ="wasteWater";
+                break;
+            case N2kft_LiveWell:
+                typeName ="liveWell";
+                break;
+            case N2kft_Oil:
+                typeName ="lubrication";
+                break;
+            case N2kft_BlackWater:
+                typeName ="blackWater";
+                break;
+            case N2kft_FuelGasoline:
+                typeName ="fuel";
+                break;
+            default:
+                typeName ="other";
+                break;
+        }
+        snprintf( path, sizeof(path), "tanks.%s.%d.currentLevel", typeName,Instance+1);
+        // capacity, currentVolume
+        deltaSet.addValue( path,Level);
+        deltaSet.send( sigK );
+    }
+}
 
 //*****************************************************************************
 void HandleRudder( const tN2kMsg &N2kMsg ) {
@@ -274,45 +367,104 @@ void HandleAttitude( const tN2kMsg &N2kMsg ) {
     }
 }
 
-bool ParseN2kPGN126720(const tN2kMsg &N2kMsg, uint16_t& ManufacturerCode, uint8_t& Reserved, uint8_t&  IndustryCode, uint16_t& ProprietaryID, uint8_t& Command) {
-    if (N2kMsg.PGN!=126720L) return false;
-
-    int Index=0;
-    uint16_t v = N2kMsg.Get2ByteUInt(Index);
-    ManufacturerCode = v & ((1<<11)-1);
-    Reserved = (v>>11) & 0x03;
-    IndustryCode = (v>>13) & 0x07;
-    ProprietaryID =  N2kMsg.Get2ByteUInt(Index);
-    Command =  N2kMsg.GetByte(Index);
-
+bool HandleSeaTalkFastPacket33264(const tN2kMsg &N2kMsg, int &Index) {
+    uint8_t command = N2kMsg.GetByte(Index);
+    switch (command) {
+        case 134: {
+            uint8_t device = N2kMsg.GetByte(Index);
+            uint8_t key = N2kMsg.GetByte(Index);
+            uint8_t keyInverted = N2kMsg.GetByte(Index);
+            // -1: 80, +1: 81, -10: 82, +10: 83, released: 84
+            ESP_LOGI( TAG, R"(SeaTalk keystroke device %d key %02x keyInverted %02x)",
+                      device, key, keyInverted );
+            break;
+        }
+        case 144: {
+            N2kMsg.GetByte(Index);
+            uint8_t device = N2kMsg.GetByte(Index);
+            ESP_LOGI( TAG, R"(SeaTalk device identification device %d "%s" dataLen %d)",
+                      device,
+                      lookupName(SeaTalkDeviceId,sizeof (SeaTalkDeviceId), device),
+                      N2kMsg.DataLen-Index );
+            break;
+        }
+        case 131:
+        case 132:
+        case 150:
+        case 154:
+        case 156:
+        case 174:
+            // These come from autopilot very quickly
+            break;
+        default:
+            ESP_LOGI(TAG, R"(SeaTalk propId %d command %d dataLen %d)",
+                     33264, command, N2kMsg.DataLen-Index);
+            break;
+    }
     return true;
 }
 
-void HandleProprietaryFastPacket( const tN2kMsg &N2kMsg ) {
+bool HandleSeaTalkFastPacket3212(const tN2kMsg &N2kMsg, int Index) {
+    uint8_t group = N2kMsg.GetByte(Index);
+    if ( group == 255) {
+        // 255 is probably "not yet configured", use "none" instead
+        group = 0;
+    }
+    //uint8_t unknown1 =
+    N2kMsg.GetByte(Index);
+    uint8_t command = N2kMsg.GetByte(Index);
+    uint8_t value = N2kMsg.GetByte(Index);
+    //uint8_t unknown2 =
+    N2kMsg.GetByte(Index);
+    switch ( command) {
+        case 0:
+            ESP_LOGI(TAG, R"(SeaTalk display brightness group %d "%s" brightness %d%%)",
+                     group,
+                     lookupName(SeaTalkNetworkGroup, sizeof(SeaTalkNetworkGroup), group),
+                     value);
+            break;
+        case 1:
+            ESP_LOGI(TAG, R"(SeaTalk display color group %d "%s" color %s)",
+                     group,
+                     lookupName(SeaTalkNetworkGroup, sizeof(SeaTalkNetworkGroup), group),
+                     lookupName(SeaTalkDisplayColor, sizeof(SeaTalkDisplayColor), group));
+            break;
+        default:
+            ESP_LOGI(TAG, "SeaTalk propId %d command %d value %d dataLen %d",
+                     3212, command, value, N2kMsg.DataLen-Index);
+            break;
+    }
+    return true;
+}
+
+void HandleProprietaryFastPacket(const tN2kMsg &N2kMsg ) {
     uint16_t ManufacturerCode;
     uint8_t Reserved;
     uint8_t  IndustryCode;
     uint16_t ProprietaryID;
-    uint8_t Command;
+    int Index = 0;
 
-    if ( ParseN2kPGN126720( N2kMsg, ManufacturerCode, Reserved, IndustryCode, ProprietaryID, Command)) {
-        ESP_LOGD(TAG,"ProprietaryFastPacket manu %d res %d indus %d propId %d cmd %d",
-                 ManufacturerCode, Reserved, IndustryCode, ProprietaryID, Command );
+    if ( ParseN2kPGN126720( N2kMsg, Index, ManufacturerCode, Reserved, IndustryCode, ProprietaryID)) {
+        /*
+         * manu 1851 res 3 indus 4 propId 33264 cmd 131/132/154/150/174/156/144
+         */
+        if ( ManufacturerCode == 1851 ) {
+            // SeaTalk
+            bool processed = false;
+            if ( ProprietaryID == 33264 ) {
+                processed = HandleSeaTalkFastPacket33264(N2kMsg, Index);
+            } if ( ProprietaryID == 3212 ) {
+                processed = HandleSeaTalkFastPacket3212(N2kMsg, Index);
+            }
+            if ( !processed) {
+                ESP_LOGI(TAG, "ProprietaryFastPacket RayMarine propId %d dataLen %d",
+                         ProprietaryID, N2kMsg.DataLen);
+            }
+        } else {
+            ESP_LOGI( TAG, "ProprietaryFastPacket manu %d res %d indus %d propId %d dataLen %d",
+                      ManufacturerCode, Reserved, IndustryCode, ProprietaryID, N2kMsg.DataLen );
+        }
     }
-}
-
-bool ParseN2kPGN65359(const tN2kMsg &N2kMsg, uint16_t& company, uint8_t& sid, uint16_t& headingTrue, uint16_t& headingMagnetic) {
-    if (N2kMsg.PGN!=65359L) return false;
-
-    /* see https://github.com/canboat/canboat/blob/master/analyzer/pgn.h */
-    int Index=0;
-    // company = ManufacturerCode(11) .. Reserved(2) .. IndustryCode(3)
-    company = N2kMsg.Get2ByteUInt(Index);
-    sid  =  N2kMsg.GetByte(Index);
-    headingTrue = N2kMsg.Get2ByteUInt(Index);
-    headingMagnetic = N2kMsg.Get2ByteUInt(Index);
-
-    return true;
 }
 
 void HandleSeatalkPilotHeading( const tN2kMsg &N2kMsg ) {
@@ -322,23 +474,18 @@ void HandleSeatalkPilotHeading( const tN2kMsg &N2kMsg ) {
     uint16_t headingMagnetic;
 
     if ( ParseN2kPGN65359( N2kMsg, company, sid, headingTrue, headingMagnetic)) {
-        ESP_LOGD(TAG,"SeatalkPilotHeading company %d sid %d headTrue %d headMagnetic %d",
-                 company, sid, headingTrue, headingMagnetic );
+        // company 40763 sid 255 headTrue 65535 headMagnetic 13884
+        ESP_LOGD(TAG,"SeaTalk PilotHeading sid %d headTrue %d headMagnetic %d",
+                 sid, headingTrue, headingMagnetic );
+        DeltaSet deltaSet(N2kMsg.Source, N2kMsg.PGN);
+        if ( headingTrue != 65535 ) {
+            deltaSet.addValue( "steering.autopilot.target.headingTrue", headingTrue / 1000.0 );
+        } else {
+            deltaSet.addValue( "steering.autopilot.target.headingTrue", "" );
+        }
+        deltaSet.addValue( "steering.autopilot.target.headingMagnetic", headingMagnetic / 1000.0 );
+        deltaSet.send( sigK );
     }
-}
-
-bool ParseN2kPGN65360(const tN2kMsg &N2kMsg, uint16_t& company, uint8_t& sid, uint16_t& targetHeadingTrue, uint16_t& targetHeadingMagnetic) {
-    if (N2kMsg.PGN!=65360L) return false;
-
-    /* see https://github.com/canboat/canboat/blob/master/analyzer/pgn.h */
-    int Index=0;
-    // company = ManufacturerCode(11) .. Reserved(2) .. IndustryCode(3)
-    company = N2kMsg.Get2ByteUInt(Index);
-    sid  =  N2kMsg.GetByte(Index);
-    targetHeadingTrue = N2kMsg.Get2ByteUInt(Index);
-    targetHeadingMagnetic = N2kMsg.Get2ByteUInt(Index);
-
-    return true;
 }
 
 void HandleSeatalkPilotLockedHeading( const tN2kMsg &N2kMsg ) {
@@ -348,63 +495,31 @@ void HandleSeatalkPilotLockedHeading( const tN2kMsg &N2kMsg ) {
     uint16_t headingMagnetic;
 
     if ( ParseN2kPGN65360( N2kMsg, company, sid, headingTrue, headingMagnetic)) {
-        ESP_LOGD(TAG,"SeatalkPilotHeading company %d sid %d headTrue %d headMagnetic %d",
-                 company, sid, headingTrue, headingMagnetic );
+        ESP_LOGI(TAG,"SeaTalk PilotLockedHeading sid %d headTrue %d headMagnetic %d",
+                 sid, headingTrue, headingMagnetic );
     }
-}
-
-bool ParseN2kPGN65379(const tN2kMsg &N2kMsg, uint16_t& company, uint8_t& pilotMode, uint8_t& subMode, uint8_t& pilotModeData) {
-    if (N2kMsg.PGN!=65379L) return false;
-
-    /* see https://github.com/canboat/canboat/blob/master/analyzer/pgn.h */
-    int Index=0;
-    // company = ManufacturerCode(11) .. Reserved(2) .. IndustryCode(3)
-    company = N2kMsg.Get2ByteUInt(Index);
-    // 0: standby, 64: auto
-    pilotMode  =  N2kMsg.GetByte(Index);
-    subMode  =  N2kMsg.GetByte(Index);
-    pilotModeData  =  N2kMsg.GetByte(Index);
-    // reserved
-
-    return true;
 }
 
 void HandleSeatalkPilotMode( const tN2kMsg &N2kMsg ) {
     uint16_t company;
-    uint8_t pilotMode;
+    uint16_t pilotMode;
     uint8_t subMode;
     uint8_t pilotModeData;
 
     if ( ParseN2kPGN65379( N2kMsg, company, pilotMode, subMode, pilotModeData)) {
-        ESP_LOGD(TAG,"SeatalkPilotMode company %d mode %d sub %d data %d",
-                 company, pilotMode, subMode, pilotModeData );
+        ESP_LOGI(TAG, R"(SeaTalk PilotMode mode %d "%s" subMode %d data %d)",
+                 pilotMode,
+                 lookupName(SeaTalkPilotMode16, sizeof(SeaTalkPilotMode16), pilotMode),
+                 subMode,
+                 pilotModeData );
+        DeltaSet deltaSet(N2kMsg.Source, N2kMsg.PGN);
+        const char *modeValue = pilotMode == 64 ? "auto" : pilotMode == 256 ? "wind": pilotMode == 384 ? "route" : "standby";
+        deltaSet.addValue( "steering.autopilot.mode", modeValue );
+        deltaSet.send( sigK );
     }
 }
 
-bool ParseN2kPGN65288(const tN2kMsg &N2kMsg, uint16_t& company, uint8_t& sid, uint8_t& alarmStatus, uint8_t& alarmId, uint8_t& alarmGroup, uint8_t& alarmPriority) {
-    if (N2kMsg.PGN!=65288L) return false;
-
-    /* see https://github.com/canboat/canboat/blob/master/analyzer/pgn.h */
-    int Index=0;
-    // company = ManufacturerCode(11) .. Reserved(2) .. IndustryCode(3)
-    company = N2kMsg.Get2ByteUInt(Index);
-    sid  =  N2kMsg.GetByte(Index);
-    // 0=Alarm condition not met
-    // 1=Alarm condition met and not silenced
-    // 2=Alarm condition met and silenced
-    alarmStatus  =  N2kMsg.GetByte(Index);
-    // 30=Pilot Drive Stopped
-    // 32=Pilot Calibration Required
-    // 51=Pilot No Wind Data
-    // 80=Pilot Invalid Command
-    alarmId  =  N2kMsg.GetByte(Index);
-    alarmGroup  =  N2kMsg.GetByte(Index);
-    alarmPriority  =  N2kMsg.GetByte(Index);
-
-    return true;
-}
-
-void HandleSeatalkAlarm( const tN2kMsg &N2kMsg ) {
+void HandleSeaTalkAlarm(const tN2kMsg &N2kMsg ) {
     uint16_t company;
     uint8_t sid;
     uint8_t alarmStatus;
@@ -413,68 +528,89 @@ void HandleSeatalkAlarm( const tN2kMsg &N2kMsg ) {
     uint8_t alarmPriority;
 
     if ( ParseN2kPGN65288( N2kMsg, company, sid, alarmStatus, alarmId,alarmGroup,alarmPriority)) {
-        ESP_LOGD(TAG,"SeatalkAlarm company %d sid %d status %d id %d group %d prio %d",
-                 company, sid, alarmStatus, alarmId ,alarmGroup,alarmPriority);
+        ESP_LOGI( TAG, R"(SeaTalk alarm sid %d status %d "%s" id %d "%s" group %d "%s" priority %d)",
+                  sid,
+                  alarmStatus, lookupName( SeaTalkAlarmStatus, sizeof(SeaTalkAlarmStatus), alarmStatus ),
+                  alarmId , lookupName( SeaTalkAlarmId, sizeof(SeaTalkAlarmId), alarmId ),
+                  alarmGroup, lookupName( SeaTalkAlarmGroup, sizeof(SeaTalkAlarmGroup), alarmGroup ),
+                  alarmPriority);
     }
 }
 
-/*
- {"Seatalk: Silence Alarm",
-     65361,
-     PACKET_COMPLETE,
-     PACKET_SINGLE,
-     {COMPANY(1851),
-      LOOKUP_FIELD("Alarm ID", BYTES(1), SEATALK_ALARM_ID),
-      LOOKUP_FIELD("Alarm Group", BYTES(1), SEATALK_ALARM_GROUP),
-      RESERVED_FIELD(32),
-      END_OF_FIELDS}}
+void HandleTimeAndDate( const tN2kMsg &N2kMsg ) {
+    uint16_t DaysSince1970;
+    double SecondsSinceMidnight;
+    int16_t LocalOffset;
 
-    61184:  Manufacturer Proprietary single-frame addressed
+    if (ParseN2kPGN129033( N2kMsg,DaysSince1970, SecondsSinceMidnight,LocalOffset) ) {
 
-   {"Seatalk: Wireless Keypad Light Control",
-     61184,
-     PACKET_INCOMPLETE,
-     PACKET_SINGLE,
-     {COMPANY(1851),
-      MATCH_FIELD("Proprietary ID", BYTES(1), 1, "Wireless Keypad Light Control"),
-      UINT8_FIELD("Variant"),
-      UINT8_FIELD("Wireless Setting"),
-      UINT8_FIELD("Wired Setting"),
-      RESERVED_FIELD(BYTES(2)),
-      END_OF_FIELDS}}
+    }
+}
 
-    {"Seatalk: Wireless Keypad Control",
-     61184,
-     PACKET_INCOMPLETE,
-     PACKET_SINGLE,
-     {COMPANY(1851),
-      UINT8_FIELD("PID"),
-      UINT8_FIELD("Variant"),
-      UINT8_FIELD("Beep Control"),
-      RESERVED_FIELD(BYTES(3)),
-      END_OF_FIELDS}}
-*/
+void HandleSeatalkSilenceAlarm(const tN2kMsg &N2kMsg) {
+    uint8_t alarmId;
+    uint8_t alarmGroup;
 
+    if ( ParseN2kPGN65361( N2kMsg, alarmId,alarmGroup)) {
+        ESP_LOGI( TAG, R"(SeaTalk silence alarm id %d "%s" group %d "%s")",
+                  alarmId , lookupName( SeaTalkAlarmId, sizeof(SeaTalkAlarmId), alarmId ),
+                  alarmGroup, lookupName( SeaTalkAlarmGroup, sizeof(SeaTalkAlarmGroup), alarmGroup ));
+    }
+}
+
+void HandleSeatalkKeypadControl(const tN2kMsg &N2kMsg) {
+    uint8_t proprietaryID;
+    uint8_t variant;
+     uint8_t wirelessSetting;
+            uint8_t wiredSetting;
+            uint8_t beepControl;
+
+    if ( ParseN2kPGN61184( N2kMsg, proprietaryID, variant,wirelessSetting,wiredSetting,beepControl)) {
+        ESP_LOGI( TAG, R"(SeaTalk keypad control proprietaryID %d variant %d wirelessSetting %d wiredSetting %d beepControl %d)",
+                  proprietaryID,variant,wirelessSetting,wiredSetting,beepControl);
+    }
+}
+
+void HandleProductInformation( const tN2kMsg &N2kMsg ) {
+    tNMEA2000::tProductInformation productInfo = {};
+
+    if (        ParseN2kPGN126996(N2kMsg,productInfo.N2kVersion,productInfo.ProductCode,
+                                  sizeof(productInfo.N2kModelID),productInfo.N2kModelID,
+                                  sizeof(productInfo.N2kSwCode),productInfo.N2kSwCode,
+                                  sizeof(productInfo.N2kModelVersion),productInfo.N2kModelVersion,
+                                  sizeof(productInfo.N2kModelSerialCode),productInfo.N2kModelSerialCode,
+                                  productInfo.CertificationLevel,productInfo.LoadEquivalency) ) {
+        ESP_LOGI(TAG,"product info modelId %s version %s serial %s",
+                 productInfo.N2kModelID,
+                 productInfo.N2kModelVersion,
+                 productInfo.N2kModelSerialCode );
+    }
+}
 
 //*****************************************************************************
-void sendN2KMessageToSignalK( const tN2kMsg &N2kMsg ) {
+
+// see https://signalk.org/specification/1.5.0/doc/vesselsBranch.html
+
+void sendN2KMessageToSignalK(const tN2kMsg &N2kMsg ) {
     // set CONFIG_NMEA2000_MSG_DEBUG=y in sdkconfig to see low level messages
     ESP_LOGD(TAG,"Sending PGN %05lx %06ld", N2kMsg.PGN, N2kMsg.PGN);
     switch ( N2kMsg.PGN ) {
-        case 61184:
-//            HandleSeatalkKeypadControl(N2kMsg);
+        case 61184L:
+            HandleSeatalkKeypadControl(N2kMsg);
             break;
         case 65288L:
-            HandleSeatalkAlarm(N2kMsg);
+            // TODO send to SignalK
+            HandleSeaTalkAlarm(N2kMsg);
             break;
         case 65359L:
             HandleSeatalkPilotHeading( N2kMsg );
             break;
         case 65360L:
+            // TODO send to SignalK
             HandleSeatalkPilotLockedHeading( N2kMsg );
             break;
         case 65361L:
-//            HandleSeatalkSilenceAlarm( N2kMsg );
+            HandleSeatalkSilenceAlarm( N2kMsg );
             break;
         case 65379L:
             HandleSeatalkPilotMode( N2kMsg );
@@ -483,7 +619,25 @@ void sendN2KMessageToSignalK( const tN2kMsg &N2kMsg ) {
             // NMEA - Request group function: The receiver shall respond by sending the requested PGN, at the desired transmission interval.
             break;
         case 126720L:
+            // TODO send to SignalK
             HandleProprietaryFastPacket( N2kMsg );
+            break;
+        case 126996L:
+            HandleProductInformation( N2kMsg );
+            break;
+        case 127505L:
+            HandleFluidLevel(N2kMsg);
+            break;
+        case 127506L:
+            // not interested in this one
+            //HandleBatteryDetailedStatus( N2kMsg );
+            break;
+        case 127508L:
+            HandleBatteryStatus( N2kMsg );
+            break;
+        case 127513L:
+            // not interested in this one
+            //HandleBatteryConfiguration( N2kMsg );
             break;
         case 127245L:
             HandleRudder( N2kMsg );
@@ -512,6 +666,9 @@ void sendN2KMessageToSignalK( const tN2kMsg &N2kMsg ) {
         case 129029L:
             HandleGNSS( N2kMsg );
             break;
+        case 129033L:
+            HandleTimeAndDate( N2kMsg );
+            break;
         case 130306L:
             HandleWind( N2kMsg );
             break;
@@ -521,10 +678,23 @@ void sendN2KMessageToSignalK( const tN2kMsg &N2kMsg ) {
         case 59904L: // ISO request
         case 60928L: // Address claim
         case 65384L: // unknown and dropped
+        case 126993L: // HeartBeat
+            // not interested in there
+            break;
+        case 65362L:
+        case 65370L:
+        case 65381L:
+            // not able to find these
             break;
         default:
-            ESP_LOGW(TAG,"Dropped PGN %05lx %06ld", N2kMsg.PGN, N2kMsg.PGN);
+            ESP_LOGW(TAG,"Unhandled PGN %05lx %06ld", N2kMsg.PGN, N2kMsg.PGN);
             break;
     }
     ESP_LOGD(TAG,"Sent");
 }
+
+/*
+ * Seatalk PilotMode mode 64 "bad_index" sub 0 data 2
+ * Seatalk PilotHeading sid 255 headTrue 65535 headMagnetic 15937
+ * SeaTalk silence alarm id 59 "Pilot Lost Waypoint Data" group 159 "bad_index"
+ */

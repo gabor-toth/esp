@@ -597,7 +597,11 @@ void EspSigK::sendDeltaSet( DeltaSet &deltaSet ) {
         cJSON *thisValue = cJSON_CreateObject();
         cJSON_AddItemToArray( values, thisValue );
         cJSON_AddStringToObject( thisValue, "path", delta.path.c_str());
-        cJSON_AddStringToObject( thisValue, "value", delta.value.c_str());
+        if (delta.value.length() != 0 ) {
+            cJSON_AddStringToObject( thisValue, "value", delta.value.c_str() );
+        } else {
+            cJSON_AddItemReferenceToObject( thisValue, "value", nullptr );
+        }
     }
 
     char *deltaText = cJSON_PrintUnformatted( result );
