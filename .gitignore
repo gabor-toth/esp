@@ -17,9 +17,12 @@ sdkconfig.old
 /i2c_tools/
 /generic_gpio/
 /main/
+/NMEA2000-SignalK-Gateway-main*
 /power_test/
 /restful_server/
+/sdspi/
 /spi-lcd/
+/tusb_console/
 /twai_network/
 /ws_echo_server/
 /x/
