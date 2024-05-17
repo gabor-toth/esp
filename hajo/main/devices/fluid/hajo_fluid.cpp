@@ -14,12 +14,6 @@ static double fluid_rmes_max = 180;
 
 static const char* TAG = "hajo_fluid";
 
-// new PCB design
-//#define WATER_PIN_0 GPIO_NUM_4
-//#define WATER_PIN_1 GPIO_NUM_5
-//#define WATER_PIN_2 GPIO_NUM_7
-//#define WATER_PIN_3 GPIO_NUM_8
-// old PCB design
 #define PIN_WATER_0 GPIO_NUM_12
 #define PIN_WATER_1 GPIO_NUM_11
 #define PIN_WATER_2 GPIO_NUM_8

@@ -13,21 +13,35 @@
 static const char *TAG = "hajo_atti";
 #define LOG_LEVEL   ESP_LOG_DEBUG
 #define LOG(format, ... ) ESP_LOG_LEVEL_LOCAL(LOG_LEVEL, TAG, format, ##__VA_ARGS__)
-#define DO_LOG_READINGS   0
+#define DO_LOG_READINGS   1
+#define CONFIG_RETRIES  5
 
 static mpu6050_handle_t gyroscope;
 
 void setup_gyroscope() {
     i2c_port_t i2c_master_port = I2C_NUM_0;
 
+    gpio_config_t io_conf = {};
+    io_conf.pin_bit_mask = BIT(GPIO_ATTITUDE_GND) | BIT(GPIO_ATTITUDE_3V3);
+    io_conf.intr_type = GPIO_INTR_DISABLE;
+    io_conf.mode = GPIO_MODE_OUTPUT;
+    io_conf.pull_down_en =GPIO_PULLDOWN_DISABLE;
+    io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
+    gpio_config( &io_conf );
+
+    gpio_set_level(GPIO_ATTITUDE_GND, 0);
+    gpio_set_level(GPIO_ATTITUDE_3V3, 1);
+
+    vTaskDelay(pdMS_TO_TICKS(100));
+
     i2c_config_t conf = {
             .mode = I2C_MODE_MASTER,
-            .sda_io_num = GPIO_I2C_SDA_ATTITUDE,
-            .scl_io_num = GPIO_I2C_SDC_ATTITUDE,
-            .sda_pullup_en = GPIO_PULLUP_ENABLE,
-            .scl_pullup_en = GPIO_PULLUP_ENABLE,
+            .sda_io_num = GPIO_ATTITUDE_I2C_SDA,
+            .scl_io_num = GPIO_ATTITUDE_I2C_SDC,
+            .sda_pullup_en = true,
+            .scl_pullup_en = true,
             .master {
-                .clk_speed = 100000, //-> either all initializer clauses should be designated or none of them should be
+                    .clk_speed = 100000, //-> either all initializer clauses should be designated or none of them should be
             },
             .clk_flags = 0,
     };
@@ -37,15 +51,24 @@ void setup_gyroscope() {
     ESP_ERROR_CHECK( i2c_driver_install( i2c_master_port, conf.mode, 0, 0, 0 ));
 
     gyroscope = mpu6050_create( i2c_master_port, 0b1101000 );
-    mpu6050_config( gyroscope, ACCE_FS_2G, GYRO_FS_250DPS );
-    mpu6050_wake_up( gyroscope );
+    for( int retry = 1; retry<= CONFIG_RETRIES; retry++) {
+        esp_err_t  result = mpu6050_config( gyroscope, ACCE_FS_2G, GYRO_FS_250DPS );
+        if ( result == ESP_OK ) {
+            break;
+        }
+        if ( retry == CONFIG_RETRIES) {
+            ESP_ERROR_CHECK( result );
+        }
+        vTaskDelay(pdMS_TO_TICKS(10));
+    }
+    ESP_ERROR_CHECK(mpu6050_wake_up( gyroscope ) );
 }
 
 static bool send_attitude( int index, tN2kMsg &msg ) {
 //    mpu6050_gyro_value_t gyro_value;
 //    mpu6050_get_gyro( gyroscope, &gyro_value );
     mpu6050_acce_value_t acce_value;
-    mpu6050_get_acce( gyroscope, &acce_value );
+    ESP_ERROR_CHECK(mpu6050_get_acce( gyroscope, &acce_value ));
     complimentary_angle_t angle;
 //    mpu6050_complimentory_filter( gyroscope, &acce_value, &gyro_value, &angle );
     // see https://howthingsfly.si.edu/flight-dynamics/roll-pitch-and-yaw
@@ -54,10 +77,10 @@ static bool send_attitude( int index, tN2kMsg &msg ) {
     // yaw = turning  (around z axis)
 
     // board mounted horizontally
-    // angle.roll = (atan2(acce_value.acce_y, acce_value.acce_z) * RAD_TO_DEG);
-    // angle.pitch = (atan2(acce_value.acce_x, acce_value.acce_z) * RAD_TO_DEG);
-    // board mounted vertically
-    angle.roll = atan2( acce_value.acce_y, acce_value.acce_x );
+    // angle.roll = atan2(acce_value.acce_y, acce_value.acce_z);
+    // angle.pitch = atan2(acce_value.acce_x, acce_value.acce_z) ;
+    // board mounted vertically, facing forward
+    angle.roll = -atan2( acce_value.acce_y, acce_value.acce_x );
     angle.pitch = atan2( acce_value.acce_z, acce_value.acce_x );
 
 #if DO_LOG_READINGS

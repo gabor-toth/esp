@@ -28,14 +28,14 @@ static const char *LOG = "hajo_main";
 static int hardware_device_type = 0xff;
 
 static const char *device_type_names[] = {
-        "unknown 0",
-        "n2kgw & logger",
-        "unknown 2",
-        "unknown 3",
-        "unknown 4",
-        "fluid & display",
-        "battery monitor",
-        "unknown 7",
+        "unknown 0",        // 000
+        "n2kgw & logger",   // 001
+        "unknown 2",        // 010
+        "unknown 3",        // 011
+        "unknown 4",        // 100
+        "fluid & display",  // 101
+        "battery monitor",  // 110
+        "unknown 7",        // 111
 };
 
 static void determine_device_type( int firmware_device_type ) {
