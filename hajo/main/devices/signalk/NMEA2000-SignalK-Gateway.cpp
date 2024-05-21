@@ -94,10 +94,13 @@ void HandleBoatSpeed( const tN2kMsg &N2kMsg ) {
     tN2kSpeedWaterReferenceType SWRT;
 
     if ( ParseN2kBoatSpeed( N2kMsg, SID, WaterReferenced, GroundReferenced, SWRT )) {
+        /*
         DeltaSet deltaSet(N2kMsg.Source, N2kMsg.PGN);
+         -1000000000.000000
         deltaSet.addValue( "navigation.speedThroughWater", WaterReferenced );
         deltaSet.addValue( "navigation.speedOverGround", GroundReferenced );
         deltaSet.send( sigK );
+         */
     }
 }
 
@@ -113,8 +116,11 @@ void HandleDepth( const tN2kMsg &N2kMsg ) {
     if ( ParseN2kWaterDepth( N2kMsg, SID, DepthBelowTransducer, Offset, Range )) {
         WaterDepth = DepthBelowTransducer + Offset;
         DeltaSet deltaSet(N2kMsg.Source, N2kMsg.PGN);
-        deltaSet.addValue( "environment.depth.belowTransducer", DepthBelowTransducer );
-        deltaSet.addValue( "environment.depth.belowSurface", WaterDepth );
+        deltaSet.addValue( "environment.depth.belowKeel", WaterDepth );
+        deltaSet.addValue( "environment.depth.belowTransducer", WaterDepth );
+        deltaSet.addValue( "environment.depth.belowSurface", WaterDepth);
+        // TODO depth/transducerToKeel
+        // TODO depth/surfaceToTransducer
         deltaSet.send( sigK );
     }
 }
@@ -675,6 +681,10 @@ void sendN2KMessageToSignalK(const tN2kMsg &N2kMsg ) {
         case 130310L:
             HandleWaterTemp( N2kMsg );
             break;
+        case 129540L: // ISO request
+        case 130312L:
+            // TODO implement these
+            break;
         case 59904L: // ISO request
         case 60928L: // Address claim
         case 65384L: // unknown and dropped
@@ -697,4 +707,28 @@ void sendN2KMessageToSignalK(const tN2kMsg &N2kMsg ) {
  * Seatalk PilotMode mode 64 "bad_index" sub 0 data 2
  * Seatalk PilotHeading sid 255 headTrue 65535 headMagnetic 15937
  * SeaTalk silence alarm id 59 "Pilot Lost Waypoint Data" group 159 "bad_index"
+ */
+
+/*
+
+environment/wind/speedTrue
+environment/wind/speedOverGround
+environment/wind/speedApparent
+environment/wind/angleApparent
+environment/wind/angleTrueGround
+environment/wind/angleTrueWater
+navigation/speedOverGround
+navigation/speedThroughWater
+navigation/courseOverGroundMagnetic
+
+129540L: GNSS Sats in View, pri=6, period=1000
+130312L: Temperature, pri=5, period=2000
+
+129029:
+navigation.gnss.differentialAge -1000000000.000000"
+navigation.gnss.geoidalSeparation -1000000000.000000"
+navigation.gnss.positionDilution -1000000000.000000"
+
+128259:
+navigation.speedOverGround -1000000000.000000"
  */

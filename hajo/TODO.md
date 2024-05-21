@@ -18,20 +18,11 @@ Nyák
     - BC557 helyett MOSFET, hogy ne legyen feszültségesés?
 - battery
     - nyákon bevágás a csavar helyén
+- logger
+    - debugger csatlakozó
 
 Before go live
 ==============
-
-+ calculate displayed values from raw adc
-+ change values displayed
-+ fluid level hardware
-+ fluid level measurement
-+ own 3.3V regulator
-+ shared SPI bus on display
-+ turn display off (timer/touch) / on (touch irq)
-+ schematics
-+ can transceiver standby?
-+ 160MHz for drawing display
 
 - fluid level power source
 - adc read on timer only
