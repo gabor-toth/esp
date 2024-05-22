@@ -1,10 +1,8 @@
 Short term
 ==========
 
-- víz
-    - ellenállás víz visszajövőhöz?
-- kijelző
-    - https://www.youtube.com/watch?v=6uKf5Bj0xcc&ab_channel=SquareLine
+- logger
+    - correction
 - hűtő
     - ASR-03DA, ASR-02DD Szilárdtest relé https://www.hestore.hu/prod_10035237.html
     - relé 3v SMT https://www.hestore.hu/prod_10039590.html
@@ -24,7 +22,6 @@ Nyák
 Before go live
 ==============
 
-- fluid level power source
 - adc read on timer only
 - round up/down when displaying data
 
@@ -36,6 +33,5 @@ Long term plans
 - configuration on display
     - dimmer
     - off timer
-
-Hardware
-========
+- configuration on logger
+    - correction for pitch/

@@ -11,12 +11,18 @@
 #define RAD_TO_DEG                  57.27272727f /*!< Radians to degrees */
 
 static const char *TAG = "hajo_atti";
+
 #define LOG_LEVEL   ESP_LOG_DEBUG
 #define LOG(format, ... ) ESP_LOG_LEVEL_LOCAL(LOG_LEVEL, TAG, format, ##__VA_ARGS__)
 #define DO_LOG_READINGS   1
 #define CONFIG_RETRIES  5
 
 static mpu6050_handle_t gyroscope;
+
+static complimentary_angle_t correction = {
+        .roll = 0.0,
+        .pitch = 0.0
+};
 
 void setup_gyroscope() {
     i2c_port_t i2c_master_port = I2C_NUM_0;
@@ -80,8 +86,8 @@ static bool send_attitude( int index, tN2kMsg &msg ) {
     // angle.roll = atan2(acce_value.acce_y, acce_value.acce_z);
     // angle.pitch = atan2(acce_value.acce_x, acce_value.acce_z) ;
     // board mounted vertically, facing forward
-    angle.roll = -atan2( acce_value.acce_y, acce_value.acce_x );
-    angle.pitch = atan2( acce_value.acce_z, acce_value.acce_x );
+    angle.roll = -atan2( acce_value.acce_y, acce_value.acce_x ) + correction.roll;
+    angle.pitch = atan2( acce_value.acce_z, acce_value.acce_x ) + correction.pitch;
 
 #if DO_LOG_READINGS
     ESP_LOGI( TAG, "angle roll=%lf pitch=%lf  acce x=%lf y=%lf z=%lf",
@@ -148,6 +154,8 @@ static bool n2k_send_attitude( int index, tN2kMsg &message ) {
 
 void hajo_attitude_main( int iDev ) {
     LOG("hajo_attitude_main");
+
+    // TODO read correction from nvs
 
     setup_gyroscope();
 
