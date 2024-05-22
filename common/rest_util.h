@@ -18,7 +18,7 @@ extern esp_err_t rest_parse_index( const char *uri, int *index, bool needed );
 extern void rest_send_message_back( httpd_req_t *req, const char *format, ... );
 
 /* Will free root */
-extern void rest_send_json_back( httpd_req_t *req, cJSON *root );
+extern void rest_send_json_back_and_delete( httpd_req_t *req, cJSON *root );
 
 extern void rest_add_time_json( cJSON *root );
 
@@ -28,9 +28,9 @@ extern void rest_allow_cors( httpd_req_t *req );
  * Receive JSON body.
  * Caller is responsible to call cJSON_Delete(root) and httpd_resp_sendstr()
  */
-extern esp_err_t rest_receive_json_body(httpd_req_t *req,
-                                        http_server_context_t* context,
-                                        cJSON **root );
+extern esp_err_t rest_receive_json_body( httpd_req_t *req,
+                                         http_server_context_t *context,
+                                         cJSON **root );
 
 #ifdef __cplusplus
 }

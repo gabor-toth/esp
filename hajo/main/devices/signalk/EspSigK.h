@@ -97,8 +97,6 @@ private:
 
     static esp_err_t htmlSignalKEndpoints( httpd_req_t *r );
 
-    static esp_err_t htmlHandleNotFound( httpd_req_t *r );
-
     static esp_err_t htmlIndexContents( httpd_req_t *r );
 
     static esp_err_t htmlDescriptionXml( httpd_req_t *r );

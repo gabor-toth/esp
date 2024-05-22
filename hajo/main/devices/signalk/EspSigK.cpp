@@ -222,16 +222,6 @@ void EspSigK::setupHTTP() {
     http_register_uri_handler(http_server, TAG, &uri);
     uri.uri = "/index.html";
     http_register_uri_handler(http_server, TAG, &uri);
-
-    uri.handler = htmlHandleNotFound;
-    uri.uri = "/*";
-    http_register_uri_handler(http_server, TAG, &uri);
-}
-
-esp_err_t EspSigK::htmlHandleNotFound( httpd_req_t *r ) {
-    ESP_LOGW( TAG, "Not found '%s'", r->uri );
-    httpd_resp_send_err( r, HTTPD_404_NOT_FOUND, "Not found" );
-    return ESP_OK;
 }
 
 esp_err_t EspSigK::htmlDescriptionXml( httpd_req_t *r ) {

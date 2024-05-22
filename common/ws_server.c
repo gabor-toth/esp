@@ -114,15 +114,6 @@ void handler_on_close_fd( void *dummy, esp_event_base_t event_base, int32_t even
     close( data->sockfd );
 }
 
-static const httpd_uri_t ws = {
-        .uri        = "/ws",
-        .method     = HTTP_GET,
-        .handler    = ws_handler,
-        .user_ctx   = NULL,
-        .is_websocket = true,
-        .handle_ws_control_frames = true,
-};
-
 static void send_hello( void *arg ) {
     struct async_resp_arg *resp_arg = arg;
     httpd_handle_t hd = resp_arg->hd;
@@ -186,7 +177,6 @@ handler_on_http_server_stop( void *dummy, esp_event_base_t event_base, int32_t e
     http_server_server_event_data *data = event_data;
     // Stop keep alive thread
     wss_keep_alive_stop( wss_keep_alive_get_keep_alive( data->hd ) );
-    httpd_unregister_uri_handler( data->hd, ws.uri, ws.method );
 
     ESP_LOGI( TAG, "on_http_server_stop end" );
 }
@@ -194,7 +184,16 @@ handler_on_http_server_stop( void *dummy, esp_event_base_t event_base, int32_t e
 static void
 handler_on_http_server_start( void *dummy, esp_event_base_t event_base, int32_t event_id, void *event_data ) {
     http_server_server_event_data *data = event_data;
+
     start_wss_echo_server( data->hd );
+    httpd_uri_t ws = {
+            .uri        = "/ws",
+            .method     = HTTP_GET,
+            .handler    = ws_handler,
+            .user_ctx   = NULL,
+            .is_websocket = true,
+            .handle_ws_control_frames = true,
+    };
     http_register_uri_handler( data->hd, TAG, &ws );
 }
 
