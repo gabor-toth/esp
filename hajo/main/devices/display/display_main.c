@@ -34,7 +34,7 @@ static const char *LOG = "display";
 
 static SemaphoreHandle_t xGuiSemaphore;
 static disp_backlight_config_t *backlight_handler;
-static int backlight_off_interval = 300;
+static int backlight_off_interval = 60;
 static TimerHandle_t backlight_timer;
 static bool is_display_on;
 static volatile bool turn_off_display;
@@ -114,7 +114,7 @@ static void guiTask( void *pvParameter ) {
     // 25600 = 320 x (240/3)
     // 19200 = 320 x (240/4)
 //    uint32_t size_in_px = DISP_BUF_SIZE;
-    uint32_t size_in_px = 320 * (240 / 4);
+    uint32_t size_in_px = 320 * ( 240 / 4 );
 
     uint32_t buffer_size = size_in_px * sizeof( lv_color_t );
     lv_color_t *buf1 = heap_caps_malloc( buffer_size, MALLOC_CAP_DMA );

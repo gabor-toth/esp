@@ -142,7 +142,6 @@ static void setup_n2k_device( int iDev ) {
     NMEA2000.ExtendReceiveMessages( ReceiveMessages, iDev );
 }
 
-
 static bool n2k_send_attitude( int index, tN2kMsg &message ) {
     switch ( index ) {
         case 0:
