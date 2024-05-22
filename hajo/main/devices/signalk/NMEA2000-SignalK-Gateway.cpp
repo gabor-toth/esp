@@ -21,6 +21,7 @@
 #include "N2kMsg.h"
 #include "N2kTypes.h"
 #include "n2k/N2kRaymarine.h"
+#include "signalk_rest.h"
 
 #include "devices/signalk/EspSigK.h"        // For SignalK handling
 
@@ -698,6 +699,7 @@ void sendN2KMessageToSignalK(const tN2kMsg &N2kMsg ) {
             break;
         default:
             ESP_LOGW(TAG,"Unhandled PGN %05lx %06ld", N2kMsg.PGN, N2kMsg.PGN);
+            signalk_rest_unhandled_pgn(N2kMsg.PGN);
             break;
     }
     ESP_LOGD(TAG,"Sent");

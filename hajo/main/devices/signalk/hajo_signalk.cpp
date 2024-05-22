@@ -5,6 +5,7 @@
 #include "http/http_events.h"
 #include "http/http_discovery.h"
 #include "http/http_server.h"
+#include "signalk_rest.h"
 #include "wifi/wifi_main.h"
 #include "ws_server.h"
 #include "n2k/n2k_struct_parser.h"
@@ -102,8 +103,8 @@ void hajo_signalk_main( int iDev ) {
     discovery_register();
     wss_register();
     signalk_register();
+    signalk_rest_register();
     http_server_main();
 
     ESP_ERROR_CHECK( wifi_main());
-//    ESP_LOGI( TAG, "init finished" );
 }

@@ -37,6 +37,7 @@ set(SOURCES
         "devices/signalk/HttpRequest.cpp"
         "devices/signalk/NMEA2000-SignalK-Gateway.cpp"
         "devices/signalk/hajo_signalk.cpp"
+        "devices/signalk/signalk_rest.c"
         "devices/wap/wap_main.c"
         "fonts/rubik_12.c"
         "fonts/rubik_12_subpx.c"
