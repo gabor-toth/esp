@@ -31,6 +31,8 @@ set(SOURCES
         "devices/display/display_meter.c"
         "devices/display/hajo_display.cpp"
         "devices/fridge/fridge.cpp"
+        "devices/fridge/fridge_fan.cpp"
+        "devices/fridge/fridge_temp.cpp"
         "devices/fluid/hajo_fluid.cpp"
         "devices/logger/hajo_logger.cpp"
         "devices/logger/sdcard.c"

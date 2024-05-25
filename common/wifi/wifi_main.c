@@ -31,7 +31,7 @@ typedef struct {
 
 static known_wifi_network_t known_wifi_networks[] = {
         { .ssid = "sol", .password = "SoL37695" },
-//        { .ssid = "TothKiss", .password = "ToThKiSs" },
+        { .ssid = "TothKiss", .password = "ToThKiSs" },
 //        { .ssid ="P92WG_E", .password ="22Dailymuffintime77" },
         { .ssid ="TGA", .password ="ToThKiSs01" },
 //        { .ssid ="DIGI-02300875", .password ="qnZFucU6" },
@@ -43,9 +43,9 @@ static TimerHandle_t reconnect_timer;
 
 void wifi_scan_get_ssid_and_password( wifi_sta_config_t *wifi_config_sta ) {
     strncpy( (char *) wifi_config_sta->ssid, known_wifi_networks[ selected_network_index ].ssid,
-             sizeof(wifi_config_sta->ssid) );
+             sizeof( wifi_config_sta->ssid ) );
     strncpy( (char *) wifi_config_sta->password, known_wifi_networks[ selected_network_index ].password,
-             sizeof(wifi_config_sta->password) );
+             sizeof( wifi_config_sta->password ) );
     wifi_config_sta->channel = selected_channel;
 }
 
