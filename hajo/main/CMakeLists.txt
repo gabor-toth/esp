@@ -30,6 +30,7 @@ set(SOURCES
         "devices/display/display_main.c"
         "devices/display/display_meter.c"
         "devices/display/hajo_display.cpp"
+        "devices/fridge/fridge.cpp"
         "devices/fluid/hajo_fluid.cpp"
         "devices/logger/hajo_logger.cpp"
         "devices/logger/sdcard.c"
@@ -78,21 +79,25 @@ if (CONFIG_EXAMPLE_WEB_DEPLOY_SF)
 endif ()
 
 if (CONFIG_DEVICE_TYPE)
-    string(COMPARE EQUAL ${CONFIG_DEVICE_TYPE} "BATTERY" is_device_type_battery_monitor)
-    string(COMPARE EQUAL ${CONFIG_DEVICE_TYPE} "LOGGER" is_device_type_logger)
-    string(COMPARE EQUAL ${CONFIG_DEVICE_TYPE} "FLUID" is_device_type_gauge_display)
-    if (is_device_type_logger)
-        add_compile_definitions(CONFIG_DEVICE_TYPE_LOGGER=1)
-    elseif (is_device_type_gauge_display)
-        add_compile_definitions(CONFIG_DEVICE_TYPE_GAUGE_DISPLAY=1)
-    elseif (is_device_type_battery_monitor)
-        add_compile_definitions(CONFIG_DEVICE_TYPE_BATTERY_MONITOR=1)
+    string(COMPARE EQUAL ${CONFIG_DEVICE_TYPE} "BATTERY" is_device_type_battery)
+    string(COMPARE EQUAL ${CONFIG_DEVICE_TYPE} "DISPLAY" is_device_type_display)
+    string(COMPARE EQUAL ${CONFIG_DEVICE_TYPE} "FRIDGE" is_device_type_fridge)
+    string(COMPARE EQUAL ${CONFIG_DEVICE_TYPE} "GATEWAY" is_device_type_gateway)
+    if (is_device_type_battery)
+        add_compile_definitions(CONFIG_DEVICE_TYPE_BATTERY=1)
+    elseif (is_device_type_fridge)
+        add_compile_definitions(CONFIG_DEVICE_TYPE_FRIDGE=1)
+    elseif (is_device_type_display)
+        add_compile_definitions(CONFIG_DEVICE_TYPE_DISPLAY=1)
+    elseif (is_device_type_gateway)
+        add_compile_definitions(CONFIG_DEVICE_TYPE_GATEWAY=1)
     else ()
-        message(FATAL_ERROR "Unknown CONFIG_DEVICE_TYPE ${CONFIG_DEVICE_TYPE}, should be BATTERY/FLUID/LOGGER")
+        message(FATAL_ERROR "Unknown CONFIG_DEVICE_TYPE ${CONFIG_DEVICE_TYPE}, should be BATTERY/DISPLAY/FRIDGE/GATEWAY")
     endif ()
     #else ()
-    #message(FATAL_ERROR "Set CONFIG_DEVICE_TYPE like 'idf.py build -DCONFIG_DEVICE_TYPE=LOGGER'")
+    #message(FATAL_ERROR "Set CONFIG_DEVICE_TYPE like 'idf.py build -DCONFIG_DEVICE_TYPE=GATEWAY'")
 endif ()
-UNSET(is_device_type_battery_monitor CACHE)
-UNSET(is_device_type_logger CACHE)
-UNSET(is_device_type_gauge_display CACHE)
+UNSET(is_device_type_battery CACHE)
+UNSET(is_device_type_display CACHE)
+UNSET(is_device_type_fridge CACHE)
+UNSET(is_device_type_gateway CACHE)

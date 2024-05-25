@@ -53,7 +53,7 @@ public:
 };
 
 void DisplayIncomingMessageHandler::HandleMsg( const tN2kMsg &N2kMsg ) {
-//    if ( device_type != DEVICE_TYPE_GAUGE_DISPLAY ) {
+//    if ( device_type != DEVICE_TYPE_DISPLAY ) {
 //        return;
 //    }
     switch ( N2kMsg.PGN ) {

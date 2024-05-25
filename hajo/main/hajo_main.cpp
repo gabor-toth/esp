@@ -7,6 +7,7 @@
 #include "devices/attitude/hajo_attitude.h"
 #include "devices/battery/hajo_battery.h"
 #include "devices/display/hajo_display.h"
+#include "devices/fridge/fridge.h"
 #include "devices/fluid/hajo_fluid.h"
 #include "devices/logger/hajo_logger.h"
 #include "devices/signalk/hajo_signalk.h"
@@ -138,20 +139,20 @@ void hajo_main() {
     led_on();
     xTaskCreate( task_power_led, "power_led", 1024, nullptr, 10, nullptr );
 
-    nvs_init();
-    determine_device_type( DEVICE_TYPE );
-    initialize_twai_driver();
+//    nvs_init();
+//    determine_device_type( DEVICE_TYPE );
+//    initialize_twai_driver();
 
     ESP_ERROR_CHECK( esp_event_loop_create_default());
 
     int iDev = 0;
-#if DEVICE_TYPE == DEVICE_TYPE_GAUGE_DISPLAY || DEVICE_TYPE == DEVICE_TYPE_ALL
+#if DEVICE_TYPE == DEVICE_TYPE_DISPLAY || DEVICE_TYPE == DEVICE_TYPE_ALL
     NMEA2000.SetDeviceCount(2);
     hajo_fluid_main( iDev++ );
     hajo_display_main( iDev++ );
     clock_configure( 240 );
 #endif
-#if DEVICE_TYPE == DEVICE_TYPE_BATTERY_MONITOR || DEVICE_TYPE == DEVICE_TYPE_ALL
+#if DEVICE_TYPE == DEVICE_TYPE_MONITOR || DEVICE_TYPE == DEVICE_TYPE_ALL
     hajo_battery_main( iDev++ );
     clock_configure( 80 );
 #endif
@@ -162,8 +163,14 @@ void hajo_main() {
     hajo_attitude_main( iDev++ );
     hajo_signalk_main( iDev++ );
 #endif
+#if DEVICE_TYPE == DEVICE_TYPE_FRIDGE || DEVICE_TYPE == DEVICE_TYPE_ALL
+    fridge_main();
+#endif
 
-    n2k_init();
+//    n2k_init();
+}
+
+void n2k_save_address( uint8_t address ) {
 }
 
 extern "C" {

@@ -225,14 +225,14 @@ _Noreturn static void task_logger_led( void *arg ) {
                 vTaskDelayUntil(&flashMarker, pdMS_TO_TICKS(LED_TIME_INTERVAL) );
                 continue;
             case led_mode_green:
-                led1 = led2 = GPIO_NUM_LOGGER_LED_GREEN;
+                led1 = led2 = GPIO_NUM_GATEWAY_LED_GREEN;
                 break;
             case led_mode_green_red:
-                led1 = GPIO_NUM_LOGGER_LED_GREEN;
-                led2 = GPIO_NUM_LOGGER_LED_RED;
+                led1 = GPIO_NUM_GATEWAY_LED_GREEN;
+                led2 = GPIO_NUM_GATEWAY_LED_RED;
                 break;
             case led_mode_red:
-                led1 = led2 = GPIO_NUM_LOGGER_LED_RED;
+                led1 = led2 = GPIO_NUM_GATEWAY_LED_RED;
                 break;
         }
         gpio_set_level(led1, 1 );
@@ -252,20 +252,20 @@ void gpio_define_output_pins_callback( gpio_config_t *io_conf, void *user_contex
 void gpio_define_input_pins_callback( gpio_config_t *io_conf, void *user_context ) {
     gpio_add_class( INPUTS, "buttons", 2, low_is_on );
     
-    gpio_add_pin( INPUTS, BUTTONS_CLASS, GPIO_NUM_LOGGER_BUTTON_1,
+    gpio_add_pin( INPUTS, BUTTONS_CLASS, GPIO_NUM_GATEWAY_BUTTON_1,
                   low_is_on, &io_conf->pin_bit_mask );
-    gpio_add_pin( INPUTS, BUTTONS_CLASS, GPIO_NUM_LOGGER_BUTTON_2,
+    gpio_add_pin( INPUTS, BUTTONS_CLASS, GPIO_NUM_GATEWAY_BUTTON_2,
                   low_is_on, &io_conf->pin_bit_mask );
 }
 
 void gpio_changed_callback( gpio_num_t io_num, int state ) {
-    if ( io_num == GPIO_NUM_LOGGER_BUTTON_1 ) {
+    if ( io_num == GPIO_NUM_GATEWAY_BUTTON_1 ) {
         if ( state == 0 ) {
             logging_on = !logging_on;
             ESP_LOGI( LOG, "Logging turned %s", logging_on ? "on" : "off" );
             led_mode = logging_on ? led_mode_green_red : led_mode_green;
         }
-//    } else if ( io_num == GPIO_NUM_LOGGER_BUTTON_2 ) {
+//    } else if ( io_num == GPIO_NUM_GATEWAY_BUTTON_2 ) {
 //        if ( state == 0 ) {
 //        }
     } else {
@@ -274,10 +274,10 @@ void gpio_changed_callback( gpio_num_t io_num, int state ) {
 }
 
 static void init_leds_and_buttons() {
-    gpio_set_direction(GPIO_NUM_LOGGER_LED_GREEN, GPIO_MODE_OUTPUT );
-    gpio_set_direction(GPIO_NUM_LOGGER_LED_RED, GPIO_MODE_OUTPUT );
-    gpio_set_level(GPIO_NUM_LOGGER_LED_GREEN, 0 );
-    gpio_set_level(GPIO_NUM_LOGGER_LED_RED, 0 );
+    gpio_set_direction(GPIO_NUM_GATEWAY_LED_GREEN, GPIO_MODE_OUTPUT );
+    gpio_set_direction(GPIO_NUM_GATEWAY_LED_RED, GPIO_MODE_OUTPUT );
+    gpio_set_level(GPIO_NUM_GATEWAY_LED_GREEN, 0 );
+    gpio_set_level(GPIO_NUM_GATEWAY_LED_RED, 0 );
     
     gpio_init( nullptr );
     xTaskCreate( task_logger_led, "logger_led", 1024, nullptr, 10, nullptr );
