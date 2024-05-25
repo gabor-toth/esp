@@ -6,7 +6,7 @@
 #include "esp_timer.h"
 #include "fridge.h"
 
-#define DO_ANIMATION 1
+#define DO_ANIMATION 0
 
 static const char *TAG = "fridge";
 
@@ -21,6 +21,7 @@ static int animation_counter;
 
 static void timer_callback( void *arg ) {
     fridge_fan_timer_handler();
+    fridge_temp_timer_handler();
 
 #if DO_ANIMATION
     if ( --animation_counter == 0 ) {

@@ -18,14 +18,16 @@ static const char *TAG = "fridge";
 #define FAN_3_OUT_PWM   GPIO_NUM_8
 #define FAN_3_IN_SENSE  GPIO_NUM_9
 
+#define NUMBER_OF_DEVICES   3
+
 #define PCNT_HIGH_LIMIT    (30000)
 
-static const gpio_num_t gpios_power[3]= { FAN_1_OUT_POWER, FAN_2_OUT_POWER, FAN_3_OUT_POWER};
-static const gpio_num_t gpios_pwm[3]= { FAN_1_OUT_PWM, FAN_2_OUT_PWM, FAN_3_OUT_PWM};
-static const gpio_num_t gpios_sense[3]= { FAN_1_IN_SENSE, FAN_2_IN_SENSE, FAN_3_IN_SENSE};
+static const gpio_num_t gpios_power[NUMBER_OF_DEVICES]= { FAN_1_OUT_POWER, FAN_2_OUT_POWER, FAN_3_OUT_POWER};
+static const gpio_num_t gpios_pwm[NUMBER_OF_DEVICES]= { FAN_1_OUT_PWM, FAN_2_OUT_PWM, FAN_3_OUT_PWM};
+static const gpio_num_t gpios_sense[NUMBER_OF_DEVICES]= { FAN_1_IN_SENSE, FAN_2_IN_SENSE, FAN_3_IN_SENSE};
 
-static pcnt_unit_handle_t unit_handles[3] = { nullptr, nullptr, nullptr };
-static int previous_counter[3] = { 0, 0, 0 };
+static pcnt_unit_handle_t unit_handles[NUMBER_OF_DEVICES] = { nullptr, nullptr, nullptr };
+static int previous_counter[NUMBER_OF_DEVICES] = { 0, 0, 0 };
 
 void fridge_fan_set_duty_cycle( int index, double _duty_cycle ) {
     auto channel = (ledc_channel_t) index;
@@ -36,7 +38,7 @@ void fridge_fan_set_duty_cycle( int index, double _duty_cycle ) {
 }
 
 void fridge_fan_timer_handler() {
-    for ( int i = 0; i < 3; i++ ) {
+    for ( int i = 0; i < NUMBER_OF_DEVICES; i++ ) {
         int current_counter = 0;
         pcnt_unit_get_count( unit_handles[ i ], &current_counter );
         int count;
@@ -90,7 +92,7 @@ static void setup_fridge_pcnt() {
             }
     };
 
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < NUMBER_OF_DEVICES; i++) {
         pcnt_unit_handle_t unit_handle = nullptr;
         ESP_ERROR_CHECK( pcnt_new_unit( &unit_config, &unit_handle ) );
         unit_handles[i] = unit_handle;
@@ -143,7 +145,7 @@ static void setup_fridge_pwm() {
             }
     };
 
-    for( int i = 0; i < 3; i++ ) {
+    for( int i = 0; i < NUMBER_OF_DEVICES; i++ ) {
         // Prepare and then apply the LEDC PWM channel configuration
         ledc_channel.gpio_num       = gpios_pwm[i];
         ledc_channel.channel = static_cast<ledc_channel_t>(LEDC_CHANNEL_0 + i);

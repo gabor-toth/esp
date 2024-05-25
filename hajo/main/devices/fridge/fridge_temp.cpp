@@ -1,13 +1,14 @@
 #include "driver/gpio.h"
 #include "driver/ledc.h"
 #include "driver/pulse_cnt.h"
+#include "ds18b20.h"
 #include "esp_attr.h"
 #include "esp_log.h"
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #include "fridge.h"
-#include <stdatomic.h>
+#include "owb_gpio.h"
 
 #define TEMP_1_IN  GPIO_NUM_10
 #define TEMP_2_IN  GPIO_NUM_11
@@ -16,17 +17,51 @@
 
 static const char *TAG = "fridge";
 
-static const gpio_num_t gpios_data[4] = { TEMP_1_IN, TEMP_2_IN, TEMP_3_IN, TEMP_4_IN };
+#define NUMBER_OF_DEVICES   2
+
+static const gpio_num_t gpios_data[NUMBER_OF_DEVICES] = { TEMP_1_IN, TEMP_2_IN/*, TEMP_3_IN, TEMP_4_IN */};
+static float corrections[NUMBER_OF_DEVICES] = { 0.44, -0.44 };
+static owb_gpio_driver_info driver_info[NUMBER_OF_DEVICES];
+static OneWireBus *buses[NUMBER_OF_DEVICES];
+static DS18B20_Info *devices[NUMBER_OF_DEVICES];
 
 void fridge_temp_timer_handler() {
-    for ( int i = 0; i < 4; i++ ) {
-//        ESP_LOGI(TAG, "Count %d, RPM %d, duty %0.2lf", count, count*60/2, duty_cycle);
+    for ( int i = 0; i < NUMBER_OF_DEVICES; i++ ) {
+        DS18B20_Info *device = devices[ i ];
+        ds18b20_wait_for_conversion( device );
+        float temp;
+        DS18B20_ERROR result = ds18b20_read_temp( device, &temp );
+        temp += corrections[ i ];
+        ESP_LOGI( TAG, "result %d = %d %f", i, result, temp );
+        ds18b20_convert( device );
     }
 }
 
-static void setup_pcnt() {
+static void write_correction_to_device( int i, const DS18B20_Info *device ) {
+    uint8_t trigger_high = 0;
+    uint8_t trigger_low = 0;
+    trigger_high = (int)( corrections[i] * 100);
+    ds18b20_write_trigger(device,trigger_high, trigger_low );
+}
+
+static void setup_devices() {
+    for ( int i = 0; i < NUMBER_OF_DEVICES; i++ ) {
+        OneWireBus *bus = buses[ i ] = owb_gpio_initialize( driver_info + i, gpios_data[ i ] );
+        DS18B20_Info *device = devices[ i ] = ds18b20_malloc();
+        ds18b20_init_solo( device, bus );
+        ds18b20_set_resolution( device, DS18B20_RESOLUTION_12_BIT );
+
+        //write_correction_to_device( i, device );
+        uint8_t trigger_high = 0;
+        uint8_t trigger_low = 0;
+        ds18b20_read_trigger(device, &trigger_high, &trigger_low );
+        corrections[i] = (float) ((*(int8_t*)&trigger_high)/100.0);
+        ESP_LOGI(TAG,"index %d high %02x low %02x corr %.2f", i, trigger_high, trigger_low,  corrections[i]);
+
+        ds18b20_convert( device );
+    }
 }
 
 void fridge_temp_setup() {
-    setup_pcnt();
+    setup_devices();
 }

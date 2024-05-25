@@ -11,4 +11,6 @@ extern void fridge_fan_set_duty_cycle( int index, double duty_cycle );
 
 extern void fridge_temp_setup();
 
+extern void fridge_temp_timer_handler();
+
 #endif //HAJO_FRIDGE_H
