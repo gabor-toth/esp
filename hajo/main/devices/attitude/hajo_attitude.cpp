@@ -14,7 +14,7 @@ static const char *TAG = "hajo_atti";
 
 #define LOG_LEVEL   ESP_LOG_DEBUG
 #define LOG(format, ... ) ESP_LOG_LEVEL_LOCAL(LOG_LEVEL, TAG, format, ##__VA_ARGS__)
-#define DO_LOG_READINGS   1
+#define DO_LOG_READINGS   0
 #define CONFIG_RETRIES  5
 
 static mpu6050_handle_t gyroscope;

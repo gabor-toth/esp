@@ -146,7 +146,10 @@ private:
     TimerHandle_t wsClientConnectTimer;
     TaskHandle_t wsTask;
     bool pendingTokenState;
+    bool logged_no_http_server;
+    bool logged_no_ws_connection;
     TimerHandle_t pendingTokenTimer;
+    SemaphoreHandle_t semaphore;
 
     HttpRequest httpClientData;
 

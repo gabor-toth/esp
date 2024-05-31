@@ -120,7 +120,7 @@ void n2k_init() {
             timer_callback );
     ESP_LOGI(TAG,"Timer %p created", timer);
     */
-    xTaskCreate( task_main_poll, TAG, 3072, nullptr, tskIDLE_PRIORITY, nullptr );
+    xTaskCreate( task_main_poll, TAG, 4096, nullptr, tskIDLE_PRIORITY, nullptr );
     //n2k_wake_receiver();
 
     uint8_t sourceAddress = n2k_load_address();

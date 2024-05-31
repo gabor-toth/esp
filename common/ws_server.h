@@ -9,7 +9,7 @@ extern "C" {
 
 extern void wss_register();
 
-extern void wss_server_send_message( httpd_handle_t hd, const char *message );
+extern bool wss_server_send_message( httpd_handle_t hd, const char *message );
 
 #ifdef __cplusplus
 }

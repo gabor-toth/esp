@@ -219,13 +219,19 @@ systemctl daemon-reload
     - [KIP](https://github.com/mxtommy/Kip)
     - @signalk/signalk-autopilot
     - signalk-alarm-silencer
-- Create user kip, set pwd dCMhD4mjTYBeZ8gQ, admin or at least r/w
+- Setup
+    - Server,Settings, Options, mdns enable
+    - Save, restart
+- Create user kip, set pwd kip, admin or at least r/w
 - Link: http://192.168.72.180/@mxtommy/kip
+- Copy demo page to local user
     - load demo
-    - connect to local, don't login, request token, approve in SignalK
-    - save layout to global/default
-    - log in
-    - copy global/default to user/default
+    - menu Configuration, Settings,
+    - connect to local, don't login,
+    - request token, approve in SignalK (timeout = NEVER)
+    - go to Storage tab, save layout to global/default
+    - log in with kip/kip
+    - go to Storage tab, copy global/default to user/default
 - todo
     - self.electrical.batteries.1.voltage
 

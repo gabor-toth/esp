@@ -48,7 +48,7 @@ static LoggerIncomingMessageHandler *incomingMessageHandler;
 static void process_incoming_pgn_gnss_position_data( const tN2kMsg &msg ) {
     N2kGNSSData data;
     if ( ParseN2kGNSS( msg, data )) {
-        ESP_LOGI( LOG, "PGN position data latitude %lf longitude %lf sats %d type %d method %d",
+        ESP_LOGD( LOG, "PGN position data latitude %lf longitude %lf sats %d type %d method %d",
                   data.latitude, data.longitude, data.satellites, data.gnssType, data.gnssMethod );
     }
 }
@@ -56,7 +56,7 @@ static void process_incoming_pgn_gnss_position_data( const tN2kMsg &msg ) {
 static void process_incoming_pgn_local_offset( const tN2kMsg &msg ) {
     N2kLocalOffsetData data;
     if ( ParseN2kLocalOffset( msg, data )) {
-        ESP_LOGI( LOG, "PGN local offset days %d seconds %lf offset %d",
+        ESP_LOGD( LOG, "PGN local offset days %d seconds %lf offset %d",
                   data.daysSince1970, data.secondsSinceMidnight, data.localOffset );
     }
 }
@@ -80,7 +80,7 @@ static void process_incoming_pgn_proprietary_fast_packet( const tN2kMsg &msg ) {
     int industryCode = vb >> 12;
     int proprietaryId = msg.Get2ByteUInt( index );
     int command = msg.GetByte( index );
-    ESP_LOGI( LOG, "PGN proprietary manu %04x industry %d proprietaryId %04x/%d command %02d/%d",
+    ESP_LOGD( LOG, "PGN proprietary manu %04x industry %d proprietaryId %04x/%d command %02d/%d",
               manufacturerCode, industryCode,
               proprietaryId, proprietaryId,
               command, command );
@@ -108,7 +108,7 @@ static void process_incoming_pgn_dump( const tN2kMsg &msg ) {
     for ( int i = 0; i < msg.DataLen; i++, p += 3 ) {
         sprintf( p, "%02x ", msg.Data[ i ] );
     }
-    ESP_LOGI( LOG, "PGN %5lx len %2d data %s", msg.PGN, msg.DataLen, buf );
+    ESP_LOGD( LOG, "PGN %5lx len %2d data %s", msg.PGN, msg.DataLen, buf );
 }
 
 void LoggerIncomingMessageHandler::HandleMsg( const tN2kMsg &N2kMsg ) {

@@ -389,7 +389,7 @@ bool HandleSeaTalkFastPacket33264(const tN2kMsg &N2kMsg, int &Index) {
         case 144: {
             N2kMsg.GetByte(Index);
             uint8_t device = N2kMsg.GetByte(Index);
-            ESP_LOGI( TAG, R"(SeaTalk device identification device %d "%s" dataLen %d)",
+            ESP_LOGD( TAG, R"(SeaTalk device identification device %d "%s" dataLen %d)",
                       device,
                       lookupName(SeaTalkDeviceId,sizeof (SeaTalkDeviceId), device),
                       N2kMsg.DataLen-Index );
@@ -402,6 +402,9 @@ bool HandleSeaTalkFastPacket33264(const tN2kMsg &N2kMsg, int &Index) {
         case 156:
         case 174:
             // These come from autopilot very quickly
+            break;
+        case 164:
+            // comers every 30 secs, 8 bytes
             break;
         default:
             ESP_LOGI(TAG, R"(SeaTalk propId %d command %d dataLen %d)",
@@ -502,7 +505,7 @@ void HandleSeatalkPilotLockedHeading( const tN2kMsg &N2kMsg ) {
     uint16_t headingMagnetic;
 
     if ( ParseN2kPGN65360( N2kMsg, company, sid, headingTrue, headingMagnetic)) {
-        ESP_LOGI(TAG,"SeaTalk PilotLockedHeading sid %d headTrue %d headMagnetic %d",
+        ESP_LOGD(TAG,"SeaTalk PilotLockedHeading sid %d headTrue %d headMagnetic %d",
                  sid, headingTrue, headingMagnetic );
     }
 }
@@ -514,7 +517,7 @@ void HandleSeatalkPilotMode( const tN2kMsg &N2kMsg ) {
     uint8_t pilotModeData;
 
     if ( ParseN2kPGN65379( N2kMsg, company, pilotMode, subMode, pilotModeData)) {
-        ESP_LOGI(TAG, R"(SeaTalk PilotMode mode %d "%s" subMode %d data %d)",
+        ESP_LOGD(TAG, R"(SeaTalk PilotMode mode %d "%s" subMode %d data %d)",
                  pilotMode,
                  lookupName(SeaTalkPilotMode16, sizeof(SeaTalkPilotMode16), pilotMode),
                  subMode,

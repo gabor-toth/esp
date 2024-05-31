@@ -139,9 +139,9 @@ void hajo_main() {
     led_on();
     xTaskCreate( task_power_led, "power_led", 1024, nullptr, 10, nullptr );
 
-//    nvs_init();
-//    determine_device_type( DEVICE_TYPE );
-//    initialize_twai_driver();
+    nvs_init();
+    determine_device_type( DEVICE_TYPE );
+    initialize_twai_driver();
 
     ESP_ERROR_CHECK( esp_event_loop_create_default());
 
@@ -156,7 +156,7 @@ void hajo_main() {
     hajo_battery_main( iDev++ );
     clock_configure( 80 );
 #endif
-#if DEVICE_TYPE == DEVICE_TYPE_LOGGER || DEVICE_TYPE == DEVICE_TYPE_ALL
+#if DEVICE_TYPE == CONFIG_DEVICE_TYPE_GATEWAY || DEVICE_TYPE == DEVICE_TYPE_ALL
     clock_configure( 240 );
     NMEA2000.SetDeviceCount(3);
     hajo_logger_main( iDev++ );
@@ -167,10 +167,7 @@ void hajo_main() {
     fridge_main();
 #endif
 
-//    n2k_init();
-}
-
-void n2k_save_address( uint8_t address ) {
+    n2k_init();
 }
 
 extern "C" {
