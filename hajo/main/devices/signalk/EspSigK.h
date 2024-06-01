@@ -64,6 +64,8 @@ public:
 
     ~EspSigK();
 
+    void init();
+
     void start( const char *deviceName, const char *hostname, httpd_handle_t server, const char *wifi_ssid );
 
     void stop();
@@ -130,6 +132,7 @@ private:
 
     httpd_handle_t http_server;
     std::string hostname;
+    std::string ip_address;
     bool printDeltaSerial;
     bool printDebugSerial;
 
@@ -160,6 +163,12 @@ private:
     void clearRequestIdAndRequestNew();
 
     void clearRequestId();
+
+    static void debug_timer_cb( void *arg );
+
+    static void start_free_mem_timer();
+
+    void getIpAddress();
 };
 
 extern EspSigK sigK;

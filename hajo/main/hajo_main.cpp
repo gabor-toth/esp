@@ -1,5 +1,4 @@
 #include "config.h"
-#include "debug_helper.h"
 #include "driver/gpio.h"
 #include "esp_event.h"
 #include "esp_log.h"
@@ -132,27 +131,6 @@ static int own_log_vprintf(const char *format, va_list args) {
     return vprintf(format,args);
 }
 
-void debug_timer_cb(void* arg) {
-    debug_print_free_mem( nullptr);
-
-    DeltaSet deltaSet(100,127245);
-    deltaSet.addValue( "steering.rudderAngle", 0.1 );
-    deltaSet.send( sigK );
-}
-
-void start_free_mem_timer() {
-    esp_timer_create_args_t timer_args = {
-            .callback = debug_timer_cb,
-            .arg = nullptr,
-            .dispatch_method= ESP_TIMER_TASK,
-            .name = nullptr,
-            .skip_unhandled_events= true,
-    };
-    esp_timer_handle_t timer_handle = nullptr;
-    ESP_ERROR_CHECK(esp_timer_create( &timer_args, &timer_handle) );
-    ESP_ERROR_CHECK( esp_timer_start_periodic( timer_handle,  1000000L ) );
-}
-
 void hajo_main() {
     //debug_start_task_dump();
 
@@ -190,7 +168,6 @@ void hajo_main() {
 #endif
 
     n2k_init();
-    start_free_mem_timer();
 }
 
 extern "C" {

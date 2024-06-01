@@ -86,6 +86,7 @@ static void signalk_register() {
     ESP_ERROR_CHECK(
             esp_event_handler_register( HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_SERVER_STOPPING,
                                         &signalk_stop, nullptr ));
+    sigK.init();
 }
 
 static void process_incoming_pgn( const tN2kMsg &N2kMsg ) {

@@ -38,7 +38,9 @@ void debug_start_task_dump() {
     esp_timer_start_periodic( timer, 1000000 );
 }
 
-void debug_print_free_mem( const char *log ) {
+size_t debug_print_free_mem( const char *log ) {
+    size_t free_size = heap_caps_get_free_size(MALLOC_CAP_8BIT);
     ESP_LOGW( log != NULL ? log : LOG, "free mem %d",
-              heap_caps_get_free_size( MALLOC_CAP_8BIT ));
+              free_size );
+    return free_size;
 }

@@ -14,7 +14,7 @@ dependencies:
   espressif__esp_websocket_client:
     component_hash: null
     source:
-      path: /home/apa/projects/esp/hajo/components/espressif__esp_websocket_client
+      path: /home/tothg/own/projects/esp/hajo/components/espressif__esp_websocket_client
       type: local
     version: 1.2.3
   idf:

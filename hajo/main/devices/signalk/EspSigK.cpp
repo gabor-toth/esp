@@ -4,7 +4,6 @@
 #include "NMEA2000_esp32_stream.h"
 #include "adc.h"
 #include "debug_helper.h"
-#include "esp_http_client.h"
 #include "esp_log.h"
 #include "esp_mac.h"
 #include "esp_netif_ip_addr.h"
@@ -150,6 +149,10 @@ void EspSigK::setupDiscovery() {
     ESP_ERROR_CHECK( ssdp_start( &config ));
 }
 
+void EspSigK::init() {
+    start_free_mem_timer();
+}
+
 void EspSigK::start( const char *deviceName, const char *hostname, httpd_handle_t server, const char *wifi_ssid ) {
 //    signalKServerToken.clear();
 //    saveSetting(NVS_KEY_TOKEN, signalKServerToken);
@@ -159,6 +162,8 @@ void EspSigK::start( const char *deviceName, const char *hostname, httpd_handle_
     this->hostname = hostname;
     this->http_server = server;
     this->deviceName = deviceName;
+
+    getIpAddress();
 
     if ( strcmp( wifi_ssid, "TothKiss" ) == 0 ) {
         signalKServerHost = "192.168.72.180";
@@ -171,6 +176,16 @@ void EspSigK::start( const char *deviceName, const char *hostname, httpd_handle_
 //    setupDiscovery();
     setupHTTP();
     setupWebSocket();
+}
+
+void EspSigK::getIpAddress() {
+    esp_netif_t *netif = wifi_get_esp_netif();
+    esp_netif_ip_info_t ip_info;
+    esp_netif_get_ip_info( netif, &ip_info );
+
+    char ipAddress[32];
+    snprintf( ipAddress, sizeof( ipAddress ), IPSTR, IP2STR( &ip_info.ip ));
+    ip_address = ipAddress;
 }
 
 void EspSigK::stop() {
@@ -247,12 +262,8 @@ esp_err_t EspSigK::htmlIndexContents( httpd_req_t *r ) {
 esp_err_t EspSigK::htmlSignalKEndpoints( httpd_req_t *r ) {
     ESP_LOGI( TAG, "Serving htmlSignalKEndpoints" );
 
-    esp_netif_t *netif = wifi_get_esp_netif();
-    esp_netif_ip_info_t ip_info;
-    esp_netif_get_ip_info( netif, &ip_info );
-
     char wsUrl[64];
-    snprintf( wsUrl, sizeof( wsUrl ), "ws://" IPSTR ":81/", IP2STR( &ip_info.ip ));
+    snprintf( wsUrl, sizeof( wsUrl ), "ws://%s:81/", sigK.ip_address.c_str());
 
     cJSON *result = cJSON_CreateObject();
 
@@ -326,7 +337,7 @@ void EspSigK::setupWebSocket() {
 }
 
 bool EspSigK::findMDNSService() {
-    debug_print_free_mem(TAG);
+    debug_print_free_mem( TAG );
     if ( signalKServerHost.empty()) {
         ESP_LOGI( TAG_WSCLIENT, "mDNS start lookup" );
 
@@ -363,7 +374,7 @@ bool EspSigK::findMDNSService() {
     }
 
     ESP_LOGI( TAG_WSCLIENT, "Found SignalK server %s:%d via mDNS", signalKServerHost.c_str(), signalKServerPort );
-    debug_print_free_mem(TAG);
+    debug_print_free_mem( TAG );
     return true;
 }
 
@@ -415,11 +426,11 @@ void EspSigK::onWebSocketClientEvent( esp_event_base_t event_base, int32_t event
         case WEBSOCKET_EVENT_CLOSED:
             ESP_LOGW( TAG_WSCLIENT, "event closed" );
             wsClientConnected = false;
-            debug_print_free_mem(TAG);
+            debug_print_free_mem( TAG );
             break;
         case WEBSOCKET_EVENT_BEFORE_CONNECT:
             ESP_LOGW( TAG_WSCLIENT, "event before connect" );
-            debug_print_free_mem(TAG);
+            debug_print_free_mem( TAG );
             break;
         default:
             ESP_LOGW( TAG_WSCLIENT, "ignored event %ld", event_id );
@@ -435,7 +446,7 @@ void EspSigK::webSocketClientEventHandler( void *event_handler_arg, esp_event_ba
 bool EspSigK::connectWsClient() {
     stopWsClient();
 
-    debug_print_free_mem(TAG_WSCLIENT);
+    debug_print_free_mem( TAG_WSCLIENT );
     ESP_LOGI( TAG_WSCLIENT, "starting" );
 
     if ( !signalKServerHost.empty()) {
@@ -454,7 +465,7 @@ bool EspSigK::connectWsClient() {
     }
     authHeader = "Authorization: Bearer " + signalKServerToken + "\r\n";
 
-    debug_print_free_mem(TAG);
+    debug_print_free_mem( TAG );
 
     const esp_websocket_client_config_t ws_cfg = {
             .uri = nullptr,
@@ -519,9 +530,9 @@ bool EspSigK::connectWsClient() {
     }
 
     ESP_LOGI( TAG_WSCLIENT, "started %p", newWsClientHandle );
-    debug_print_free_mem(TAG_WSCLIENT);
+    debug_print_free_mem( TAG_WSCLIENT );
     wsClientHandle = newWsClientHandle;
-    xSemaphoreGive(semaphore);
+    xSemaphoreGive( semaphore );
     return true;
 }
 
@@ -534,7 +545,7 @@ void EspSigK::stopWsClient() {
         wsClientHandle = nullptr;
         ESP_ERROR_CHECK( esp_websocket_client_destroy( localWsClientHandle ));
     }
-    xSemaphoreGive(semaphore);
+    xSemaphoreGive( semaphore );
     ESP_LOGI( TAG_WSCLIENT, "stopped" );
 }
 
@@ -660,13 +671,13 @@ DeltaValue::DeltaValue( const char *path, const char *value ) {
 void EspSigK::onClientConnected() {
     ESP_LOGI( TAG_WSCLIENT, "event connected" );
     wsClientConnected = true;
-    debug_print_free_mem(TAG);
+    debug_print_free_mem( TAG );
 }
 
 void EspSigK::onClientDisconnected() {
     ESP_LOGI( TAG_WSCLIENT, "event disconnected" );
     wsClientConnected = false;
-    debug_print_free_mem(TAG);
+    debug_print_free_mem( TAG );
 }
 
 void EspSigK::onClientTextReceived( const char *buf ) {
@@ -895,4 +906,26 @@ void EspSigK::clearRequestIdAndRequestNew() {
 void EspSigK::clearRequestId() {
     std::string dummy;
     saveSetting( NVS_KEY_REQUEST_ID, dummy );
+}
+
+void EspSigK::debug_timer_cb( void *arg ) {
+    size_t free_size = debug_print_free_mem( nullptr );
+
+    DeltaSet deltaSet( 100, 0 );
+    deltaSet.addValue( "unit.gateway.address", sigK.ip_address.c_str());
+    deltaSet.addValue( "unit.gateway.debug.memory", (int) free_size );
+    deltaSet.send( sigK );
+}
+
+void EspSigK::start_free_mem_timer() {
+    esp_timer_create_args_t timer_args = {
+            .callback = debug_timer_cb,
+            .arg = nullptr,
+            .dispatch_method= ESP_TIMER_TASK,
+            .name = nullptr,
+            .skip_unhandled_events= true,
+    };
+    esp_timer_handle_t timer_handle = nullptr;
+    ESP_ERROR_CHECK( esp_timer_create( &timer_args, &timer_handle ));
+    ESP_ERROR_CHECK( esp_timer_start_periodic( timer_handle, 1000000L ));
 }
