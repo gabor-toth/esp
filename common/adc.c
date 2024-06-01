@@ -41,7 +41,7 @@ static void read_one( adc_channel_data_t *channel ) {
     }
     adc_reading /= number_of_samples;
     int voltage;
-    ESP_ERROR_CHECK( adc_cali_raw_to_voltage( scheme_handle, adc_reading, &voltage ));
+    ESP_ERROR_CHECK( adc_cali_raw_to_voltage( scheme_handle, adc_reading, &voltage ) );
     channel->raw_value = voltage;
     uint32_t correction = 0;
     if ( channel->converter ) {
@@ -49,7 +49,7 @@ static void read_one( adc_channel_data_t *channel ) {
     } else {
         channel->converted_value = channel->raw_value;
     }
-    ESP_LOGI( LOG, "Channel %d %-10s Raw: %4ld Voltage: %4dmV Display: %5ld (corr %ld)",
+    ESP_LOGD( LOG, "Channel %d %-10s Raw: %4ld Voltage: %4dmV Display: %5ld (corr %ld)",
               channel->channel,
               channel->name,
               adc_reading,
@@ -69,7 +69,7 @@ _Noreturn static void timer_task_main( void *arg ) {
 
     for ( ;; ) {
         uint32_t dummy;
-        if ( xQueueReceive( timer_event_queue, &dummy, portMAX_DELAY )) {
+        if ( xQueueReceive( timer_event_queue, &dummy, portMAX_DELAY ) ) {
             adc_read_all();
         }
     }
@@ -79,14 +79,14 @@ static void timer_callback( TimerHandle_t timer ) {
     (void) timer;
 
     uint32_t dummy = 0;
-    ESP_LOGI( LOG, "tick" );
+    ESP_LOGD( LOG, "tick" );
     xQueueSendToBack( timer_event_queue, &dummy, 0 );
 }
 
 static void timer_start() {
     is_timer_started = true;
-    timer_event_queue = xQueueCreate( 10, sizeof( uint32_t ));
-    xTaskCreate( timer_task_main, LOG, 2048, NULL, 5, NULL);
+    timer_event_queue = xQueueCreate( 10, sizeof( uint32_t ) );
+    xTaskCreate( timer_task_main, LOG, 2048, NULL, 5, NULL );
 
     TimerHandle_t timer = xTimerCreate(
             LOG,
@@ -144,7 +144,7 @@ esp_err_t adc_add_channel( uint8_t adc_channel, const char *name, void *user_dat
         }
     }
     adc_channel_data_t *channel = &channels[ channel_count++ ];
-    memset( channel, 0, sizeof( *channel ));
+    memset( channel, 0, sizeof( *channel ) );
     channel->channel = (adc_channel_t) adc_channel;
     channel->converter = converter;
     if ( user_data == NULL || user_data_bytes == 0 ) {
@@ -165,13 +165,13 @@ void adc_main( bool start_timer ) {
             .bitwidth = ADC_BITWIDTH_13,
             .unit_id = ADC_UNIT_1,
     };
-    ESP_ERROR_CHECK( adc_cali_create_scheme_line_fitting( &cali_config, &scheme_handle ));
+    ESP_ERROR_CHECK( adc_cali_create_scheme_line_fitting( &cali_config, &scheme_handle ) );
 
     adc_oneshot_unit_init_cfg_t unit_config = {
             .ulp_mode = ADC_ULP_MODE_DISABLE,
             .unit_id = ADC_UNIT_1,
     };
-    ESP_ERROR_CHECK( adc_oneshot_new_unit( &unit_config, &unit_handle ));
+    ESP_ERROR_CHECK( adc_oneshot_new_unit( &unit_config, &unit_handle ) );
     const adc_oneshot_chan_cfg_t channel_config = {
             .atten = ADC_ATTEN_DB_0,
             .bitwidth = ADC_BITWIDTH_13,
@@ -179,7 +179,7 @@ void adc_main( bool start_timer ) {
 
     for ( int i = 0; i < channel_count; i++ ) {
         ESP_LOGI( LOG, "add adc channel %d", channels[ i ].channel );
-        ESP_ERROR_CHECK( adc_oneshot_config_channel( unit_handle, channels[ i ].channel, &channel_config ));
+        ESP_ERROR_CHECK( adc_oneshot_config_channel( unit_handle, channels[ i ].channel, &channel_config ) );
     }
 
     if ( start_timer ) {

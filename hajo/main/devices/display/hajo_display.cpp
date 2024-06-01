@@ -1,5 +1,5 @@
 #include "display_main.h"
-#include "esp_log.h"
+//#include "esp_log.h"
 #include "hajo_display.h"
 #include "n2k/n2k_sender.h"
 #include "n2k/n2k_struct_parser.h"
@@ -9,7 +9,7 @@ static const char *LOG = "display";
 
 static void process_incoming_pgn_battery_status( const tN2kMsg &N2kMsg ) {
     N2kDCBatStatusData data;
-    if ( ParseN2kDCBatStatus( N2kMsg, data )) {
+    if ( ParseN2kDCBatStatus( N2kMsg, data ) ) {
 //        ESP_LOGI( LOG, "packet battery status %d: voltage %lf", data.instance, data.voltage );
         int voltageDisplayValue = (int) ( data.voltage * 10 );
         display_set_value( VOLTAGE, data.instance, voltageDisplayValue );
@@ -18,24 +18,24 @@ static void process_incoming_pgn_battery_status( const tN2kMsg &N2kMsg ) {
 
 static void process_incoming_pgn_dc_detailed_status( const tN2kMsg &N2kMsg ) {
     ParseN2kDCStatusData data;
-    if ( ParseN2kDCStatus( N2kMsg, data )) {
-        ESP_LOGI( LOG, "packet dc status %d", data.instance );
+    if ( ParseN2kDCStatus( N2kMsg, data ) ) {
+//        ESP_LOGI( LOG, "packet dc status %d", data.instance );
     }
 }
 
 static void process_incoming_pgn_battery_configuration( const tN2kMsg &N2kMsg ) {
     N2kBatConfData data;
-    if ( ParseN2kBatConf( N2kMsg, data )) {
+    if ( ParseN2kBatConf( N2kMsg, data ) ) {
         data.batCapacity = CoulombToAh( data.batCapacity );
-        ESP_LOGI( LOG, "packet battery conf %d: capacity %lf", data.instance, data.batCapacity );
+//        ESP_LOGI( LOG, "packet battery conf %d: capacity %lf", data.instance, data.batCapacity );
     }
 }
 
 static void process_incoming_pgn_fluid_level( const tN2kMsg &N2kMsg ) {
     N2kFluidLevelData data;
-    if ( ParseN2kFluidLevel( N2kMsg, data)) {
-        int levelInPercent = (int)(data.level * 100);
-        ESP_LOGI( LOG, "packet fluid level %d/%d = %lf", data.fluidType, data.instance, data.level );
+    if ( ParseN2kFluidLevel( N2kMsg, data ) ) {
+        int levelInPercent = (int) ( data.level * 100 );
+//        ESP_LOGI( LOG, "packet fluid level %d/%d = %lf", data.fluidType, data.instance, data.level );
         if ( data.fluidType == tN2kFluidType::N2kft_Fuel || data.fluidType == tN2kFluidType::N2kft_FuelGasoline ) {
             display_set_value( FUEL, data.instance, levelInPercent );
         } else if ( data.fluidType == tN2kFluidType::N2kft_Water ) {
@@ -75,12 +75,12 @@ void DisplayIncomingMessageHandler::HandleMsg( const tN2kMsg &N2kMsg ) {
         case 0x0ff4f: // ?
             break;
         default:
-            ESP_LOGI( LOG, "new packet pgn %5lx", N2kMsg.PGN );
+//            ESP_LOGI( LOG, "new packet pgn %5lx", N2kMsg.PGN );
             break;
     }
 }
 
-DisplayIncomingMessageHandler* incomingMessageHandler;
+DisplayIncomingMessageHandler *incomingMessageHandler;
 
 void setup_n2k_device( int iDev ) {
     static const unsigned long TransmitMessages[] = {
