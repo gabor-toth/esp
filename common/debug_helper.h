@@ -7,6 +7,8 @@ extern "C" {
 
 extern void debug_start_task_dump();
 
+extern void debug_print_free_mem( const char *log );
+
 #ifdef __cplusplus
 }
 #endif
