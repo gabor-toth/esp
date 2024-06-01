@@ -51,7 +51,7 @@ static void determine_device_type( int firmware_device_type ) {
     io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
     io_conf.pull_up_en = GPIO_PULLUP_ENABLE;
     gpio_config( &io_conf );
-    vTaskDelay(pdMS_TO_TICKS( 10 ));
+    vTaskDelay( pdMS_TO_TICKS( 10 ) );
 
     hardware_device_type = ( gpio_get_level( GPIO_NUM_DEVICE_TYPE_2 ) << 2 ) |
                            ( gpio_get_level( GPIO_NUM_DEVICE_TYPE_1 ) << 1 ) |
@@ -59,8 +59,8 @@ static void determine_device_type( int firmware_device_type ) {
     hardware_device_type &= 0b111;
     if ( hardware_device_type != firmware_device_type ) {
         ESP_LOGE( LOG, "Firmware %s does not match hardware %s",
-                  device_type_names[ firmware_device_type],
-                  device_type_names[ hardware_device_type ]);
+                  device_type_names[ firmware_device_type ],
+                  device_type_names[ hardware_device_type ] );
         ESP_ERROR_CHECK( ESP_ERR_NOT_SUPPORTED );
     }
     ESP_LOGI( LOG, "device type %d %s", hardware_device_type, device_type_names[ hardware_device_type ] );
@@ -72,23 +72,23 @@ static void determine_device_type( int firmware_device_type ) {
 }
 
 static void led_on() {
-    gpio_set_direction(GPIO_NUM_LED_POWER, GPIO_MODE_OUTPUT );
-    gpio_set_level(GPIO_NUM_LED_POWER, 1 );
+    gpio_set_direction( GPIO_NUM_LED_POWER, GPIO_MODE_OUTPUT );
+    gpio_set_level( GPIO_NUM_LED_POWER, 1 );
 }
 
 _Noreturn static void task_power_led( void *arg ) {
     (void) arg;
-    
+
     TickType_t flashMarker = 0;
     for ( ;; ) {
-        gpio_set_level(GPIO_NUM_LED_POWER, 1 );
-        vTaskDelayUntil(&flashMarker, pdMS_TO_TICKS(LED_TIME_ON) );
-        gpio_set_level(GPIO_NUM_LED_POWER, 0 );
-        vTaskDelayUntil(&flashMarker, pdMS_TO_TICKS(LED_TIME_GAP) );
-        gpio_set_level(GPIO_NUM_LED_POWER, 1 );
-        vTaskDelayUntil(&flashMarker, pdMS_TO_TICKS(LED_TIME_ON) );
-        gpio_set_level(GPIO_NUM_LED_POWER, 0 );
-        vTaskDelayUntil(&flashMarker, pdMS_TO_TICKS(LED_TIME_INTERVAL-2*LED_TIME_ON-LED_TIME_GAP) );
+        gpio_set_level( GPIO_NUM_LED_POWER, 1 );
+        vTaskDelayUntil( &flashMarker, pdMS_TO_TICKS( LED_TIME_ON ) );
+        gpio_set_level( GPIO_NUM_LED_POWER, 0 );
+        vTaskDelayUntil( &flashMarker, pdMS_TO_TICKS( LED_TIME_GAP ) );
+        gpio_set_level( GPIO_NUM_LED_POWER, 1 );
+        vTaskDelayUntil( &flashMarker, pdMS_TO_TICKS( LED_TIME_ON ) );
+        gpio_set_level( GPIO_NUM_LED_POWER, 0 );
+        vTaskDelayUntil( &flashMarker, pdMS_TO_TICKS( LED_TIME_INTERVAL - 2 * LED_TIME_ON - LED_TIME_GAP ) );
     }
 }
 
@@ -117,25 +117,25 @@ static void clock_configure( int max_freq_mhz ) {
             .light_sleep_enable = false
     };
 
-    ESP_ERROR_CHECK( esp_pm_configure( &pm_config ));
-    ESP_ERROR_CHECK( esp_pm_lock_create( ESP_PM_APB_FREQ_MAX, 0, "listen mode", &pm_lock_handle_listen ));
-    ESP_ERROR_CHECK( esp_pm_lock_create( ESP_PM_CPU_FREQ_MAX, 0, "display mode", &pm_lock_handle_display ));
-    ESP_ERROR_CHECK( esp_pm_lock_acquire( pm_lock_handle_listen ));
+    ESP_ERROR_CHECK( esp_pm_configure( &pm_config ) );
+    ESP_ERROR_CHECK( esp_pm_lock_create( ESP_PM_APB_FREQ_MAX, 0, "listen mode", &pm_lock_handle_listen ) );
+    ESP_ERROR_CHECK( esp_pm_lock_create( ESP_PM_CPU_FREQ_MAX, 0, "display mode", &pm_lock_handle_display ) );
+    ESP_ERROR_CHECK( esp_pm_lock_acquire( pm_lock_handle_listen ) );
 }
 
-static int own_log_vprintf(const char *format, va_list args) {
+static int own_log_vprintf( const char *format, va_list args ) {
     TaskHandle_t task = xTaskGetCurrentTaskHandle();
     TaskStatus_t taskStatus;
     vTaskGetInfo( task, &taskStatus, pdFALSE, eRunning );
-    printf( LOG_COLOR_I "%s ", taskStatus.pcTaskName);
-    return vprintf(format,args);
+    printf( LOG_COLOR_I "%s ", taskStatus.pcTaskName );
+    return vprintf( format, args );
 }
 
 void hajo_main() {
     //debug_start_task_dump();
 
-    esp_log_set_vprintf(own_log_vprintf);
-    
+    esp_log_set_vprintf( own_log_vprintf );
+
     led_on();
     xTaskCreate( task_power_led, "power_led", 1024, nullptr, 10, nullptr );
 
@@ -143,11 +143,11 @@ void hajo_main() {
     determine_device_type( DEVICE_TYPE );
     initialize_twai_driver();
 
-    ESP_ERROR_CHECK( esp_event_loop_create_default());
+    ESP_ERROR_CHECK( esp_event_loop_create_default() );
 
     int iDev = 0;
 #if DEVICE_TYPE == DEVICE_TYPE_DISPLAY || DEVICE_TYPE == DEVICE_TYPE_ALL
-    NMEA2000.SetDeviceCount(2);
+    NMEA2000.SetDeviceCount( 2 );
     hajo_fluid_main( iDev++ );
     hajo_display_main( iDev++ );
     clock_configure( 240 );
@@ -158,7 +158,7 @@ void hajo_main() {
 #endif
 #if DEVICE_TYPE == CONFIG_DEVICE_TYPE_GATEWAY || DEVICE_TYPE == DEVICE_TYPE_ALL
     clock_configure( 240 );
-    NMEA2000.SetDeviceCount(3);
+    NMEA2000.SetDeviceCount( 3 );
     hajo_logger_main( iDev++ );
     hajo_attitude_main( iDev++ );
     hajo_signalk_main( iDev++ );

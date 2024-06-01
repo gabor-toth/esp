@@ -75,11 +75,6 @@ void signalk_rest_register() {
 
     SLIST_INIT( &list_head );
 
-    signalk_rest_unhandled_pgn( 127455 );
-    signalk_rest_unhandled_pgn( 127455 );
-    signalk_rest_unhandled_pgn( 128128 );
-    signalk_rest_unhandled_pgn( 128128 );
-
     ESP_ERROR_CHECK(
             esp_event_handler_register( HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_SERVER_START,
                                         &handler_on_http_server_start, NULL ) );

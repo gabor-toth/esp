@@ -12,7 +12,7 @@
 #include "n2k/n2k_sender.h"
 #include "n2k/n2k_util.h"
 
-static const char* TAG = "hajo_signalk";
+static const char *TAG = "hajo_signalk";
 
 // see NMEA2000-SignalK-Gateway.cpp
 extern void sendN2KMessageToSignalK( const tN2kMsg &N2kMsg );
@@ -61,18 +61,18 @@ static void setup_n2k_device( int iDev ) {
 
     NMEA2000.ExtendTransmitMessages( TransmitMessages, iDev );
     NMEA2000.ExtendReceiveMessages( ReceiveMessages, iDev );
-    ESP_LOGI(TAG,"Registering SignalkIncomingMessageHandler");
+    ESP_LOGI( TAG, "Registering SignalkIncomingMessageHandler" );
     SignalkIncomingMessageHandler *incomingMessageHandler = new SignalkIncomingMessageHandler( &NMEA2000 );
     NMEA2000.AttachMsgHandler( incomingMessageHandler );
 }
 
-static void signalk_start(  void *dummy, esp_event_base_t event_base, int32_t event_id, void *event_data ) {
-    http_server_server_event_data * data = static_cast<http_server_server_event_data *>(event_data);
+static void signalk_start( void *dummy, esp_event_base_t event_base, int32_t event_id, void *event_data ) {
+    http_server_server_event_data *data = static_cast<http_server_server_event_data *>(event_data);
     ESP_LOGI( TAG, "signalk_start" );
     sigK.start( DEVICE_NAME, "n2k-gw", data->hd, data->ssid );
 }
 
-static void signalk_stop(  void *dummy, esp_event_base_t event_base, int32_t event_id, void *event_data ) {
+static void signalk_stop( void *dummy, esp_event_base_t event_base, int32_t event_id, void *event_data ) {
     ESP_LOGI( TAG, "signalk_stop start" );
     sigK.stop();
     ESP_LOGI( TAG, "signalk_stop end" );
@@ -81,11 +81,11 @@ static void signalk_stop(  void *dummy, esp_event_base_t event_base, int32_t eve
 static void signalk_register() {
     ESP_LOGI( TAG, "signalk_register" );
     ESP_ERROR_CHECK(
-            esp_event_handler_register(HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_SERVER_START,
-                                       &signalk_start, nullptr ));
+            esp_event_handler_register( HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_SERVER_START,
+                                        &signalk_start, nullptr ) );
     ESP_ERROR_CHECK(
             esp_event_handler_register( HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_SERVER_STOPPING,
-                                        &signalk_stop, nullptr ));
+                                        &signalk_stop, nullptr ) );
     sigK.init();
 }
 
@@ -107,5 +107,5 @@ void hajo_signalk_main( int iDev ) {
     signalk_rest_register();
     http_server_main();
 
-    ESP_ERROR_CHECK( wifi_main());
+    ESP_ERROR_CHECK( wifi_main() );
 }

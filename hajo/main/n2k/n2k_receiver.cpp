@@ -74,7 +74,7 @@ void n2k_wake_receiver() {
 _Noreturn static void task_main_poll( void *arg ) {
     (void) arg;
 
-    ESP_LOGI(TAG,"receive loop starting");
+    ESP_LOGI( TAG, "receive loop starting" );
     for ( ;; ) {
         // TODO make this interrupt-driven
         NMEA2000.ParseMessages();

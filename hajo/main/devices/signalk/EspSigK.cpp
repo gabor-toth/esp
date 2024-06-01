@@ -120,7 +120,7 @@ void EspSigK::setPrintDebugSerial( bool v ) {
 }
 
 void EspSigK::setupDiscovery() {
-    ESP_ERROR_CHECK( ssdp_init());
+    ESP_ERROR_CHECK( ssdp_init() );
     ssdp_config_t config = {
             .task_priority       = tskIDLE_PRIORITY + 5,
             .stack_size          = 4096,
@@ -146,7 +146,7 @@ void EspSigK::setupDiscovery() {
             .services_description = nullptr,
             .icons_description    = nullptr
     };
-    ESP_ERROR_CHECK( ssdp_start( &config ));
+    ESP_ERROR_CHECK( ssdp_start( &config ) );
 }
 
 void EspSigK::init() {
@@ -184,7 +184,7 @@ void EspSigK::getIpAddress() {
     esp_netif_get_ip_info( netif, &ip_info );
 
     char ipAddress[32];
-    snprintf( ipAddress, sizeof( ipAddress ), IPSTR, IP2STR( &ip_info.ip ));
+    snprintf( ipAddress, sizeof( ipAddress ), IPSTR, IP2STR( &ip_info.ip ) );
     ip_address = ipAddress;
 }
 
@@ -248,14 +248,14 @@ esp_err_t EspSigK::htmlDescriptionXml( httpd_req_t *r ) {
     ESP_LOGI( TAG, "Serving htmlDescriptionXml" );
     httpd_resp_set_type( r, "text/xml" );
     const char *schema = get_ssdp_schema_str();
-    httpd_resp_send( r, schema, strlen( schema ));
+    httpd_resp_send( r, schema, strlen( schema ) );
     return ESP_OK;
 }
 
 esp_err_t EspSigK::htmlIndexContents( httpd_req_t *r ) {
     ESP_LOGI( TAG, "Serving htmlIndexContents" );
     httpd_resp_set_type( r, HTTPD_TYPE_TEXT );
-    httpd_resp_send( r, EspSigKIndexContents, strlen( EspSigKIndexContents ));
+    httpd_resp_send( r, EspSigKIndexContents, strlen( EspSigKIndexContents ) );
     return ESP_OK;
 }
 
@@ -263,7 +263,7 @@ esp_err_t EspSigK::htmlSignalKEndpoints( httpd_req_t *r ) {
     ESP_LOGI( TAG, "Serving htmlSignalKEndpoints" );
 
     char wsUrl[64];
-    snprintf( wsUrl, sizeof( wsUrl ), "ws://%s:81/", sigK.ip_address.c_str());
+    snprintf( wsUrl, sizeof( wsUrl ), "ws://%s:81/", sigK.ip_address.c_str() );
 
     cJSON *result = cJSON_CreateObject();
 
@@ -279,7 +279,7 @@ esp_err_t EspSigK::htmlSignalKEndpoints( httpd_req_t *r ) {
     cJSON_Delete( result );
 
     httpd_resp_set_type( r, HTTPD_TYPE_JSON );
-    httpd_resp_send( r, jsonText, strlen( jsonText ));
+    httpd_resp_send( r, jsonText, strlen( jsonText ) );
     free( jsonText );
     return ESP_OK;
 }
@@ -300,13 +300,13 @@ void EspSigK::taskWsClientConnect( void *arg ) {
     EspSigK *_this = static_cast<EspSigK *>(arg);
     for ( ;; ) {
         uint32_t timerId;
-        if ( xQueueReceive( event_queue, &timerId, portMAX_DELAY )) {
+        if ( xQueueReceive( event_queue, &timerId, portMAX_DELAY ) ) {
             if ( timerId == TIMER_TOKEN_CHECK ) {
                 ESP_LOGI( TAG, "On pendingTokenTimer" );
                 _this->onTokenTimer();
             } else if ( timerId == TIMER_WS_CONNECT ) {
                 ESP_LOGI( TAG, "On wsClientConnectTimer" );
-                if ( !_this->connectWsClient()) {
+                if ( !_this->connectWsClient() ) {
                     _this->startWsClientConnectTimer();
                 }
             }
@@ -316,8 +316,8 @@ void EspSigK::taskWsClientConnect( void *arg ) {
 
 void EspSigK::setupWebSocket() {
     if ( !event_queue ) {
-        event_queue = xQueueCreate( 10, sizeof( int ));
-        if ( xTaskCreate( taskWsClientConnect, TAG_WSCLIENT, 3072, this, tskIDLE_PRIORITY, &wsTask ) != pdTRUE) {
+        event_queue = xQueueCreate( 10, sizeof( int ) );
+        if ( xTaskCreate( taskWsClientConnect, TAG_WSCLIENT, 3072, this, tskIDLE_PRIORITY, &wsTask ) != pdTRUE ) {
             ESP_LOGE( TAG_WSCLIENT, "Error create websocket task" );
         }
         wsClientConnectTimer = xTimerCreate(
@@ -338,13 +338,13 @@ void EspSigK::setupWebSocket() {
 
 bool EspSigK::findMDNSService() {
     debug_print_free_mem( TAG );
-    if ( signalKServerHost.empty()) {
+    if ( signalKServerHost.empty() ) {
         ESP_LOGI( TAG_WSCLIENT, "mDNS start lookup" );
 
         mdns_result_t *results = nullptr;
         esp_err_t err = mdns_query_ptr( "_signalk-ws", "_tcp", 3000, 20, &results );
         if ( err ) {
-            ESP_LOGE( TAG_WSCLIENT, "mDNS query failed: %s", esp_err_to_name( err ));
+            ESP_LOGE( TAG_WSCLIENT, "mDNS query failed: %s", esp_err_to_name( err ) );
             return false;
         }
         if ( results == nullptr ) {
@@ -357,9 +357,9 @@ bool EspSigK::findMDNSService() {
         while ( result != nullptr ) {
             if ( result->addr != nullptr ) {
                 esp_ip4_addr_t *ip = &result->addr->addr.u_addr.ip4;
-                snprintf( s, sizeof( s ), IPSTR, IP2STR( ip ));
+                snprintf( s, sizeof( s ), IPSTR, IP2STR( ip ) );
             } else {
-                strncpy( s, "null", sizeof( s ));
+                strncpy( s, "null", sizeof( s ) );
             }
             ESP_LOGI( TAG_WSCLIENT, "- host %s ip %s instance %s",
                       result->hostname ? result->hostname : "null",
@@ -440,7 +440,7 @@ void EspSigK::onWebSocketClientEvent( esp_event_base_t event_base, int32_t event
 
 void EspSigK::webSocketClientEventHandler( void *event_handler_arg, esp_event_base_t event_base, int32_t event_id,
                                            void *event_data ) {
-    ((EspSigK *) event_handler_arg )->onWebSocketClientEvent( event_base, event_id, event_data );
+    ( (EspSigK *) event_handler_arg )->onWebSocketClientEvent( event_base, event_id, event_data );
 }
 
 bool EspSigK::connectWsClient() {
@@ -449,16 +449,16 @@ bool EspSigK::connectWsClient() {
     debug_print_free_mem( TAG_WSCLIENT );
     ESP_LOGI( TAG_WSCLIENT, "starting" );
 
-    if ( !signalKServerHost.empty()) {
+    if ( !signalKServerHost.empty() ) {
         ESP_LOGI( TAG_WSCLIENT, "Using SignalK server %s:%d", signalKServerHost.c_str(), signalKServerPort );
-    } else if ( !findMDNSService()) {
+    } else if ( !findMDNSService() ) {
         return false;
     }
 
-    if ( !loadSetting( NVS_KEY_UUID, signalKUuid )) {
+    if ( !loadSetting( NVS_KEY_UUID, signalKUuid ) ) {
         setUuid();
     }
-    if ( signalKServerToken.empty() && !loadSetting( NVS_KEY_TOKEN, signalKServerToken )) {
+    if ( signalKServerToken.empty() && !loadSetting( NVS_KEY_TOKEN, signalKServerToken ) ) {
         sendAccessRequest();
         // do not retry to connect ws until we get the token
         return true;
@@ -518,13 +518,13 @@ bool EspSigK::connectWsClient() {
 
     err = esp_websocket_register_events( newWsClientHandle, WEBSOCKET_EVENT_ANY, webSocketClientEventHandler, this );
     if ( err ) {
-        ESP_LOGE( TAG_WSCLIENT, "failed to register event WEBSOCKET_EVENT_CONNECTED: %s", esp_err_to_name( err ));
+        ESP_LOGE( TAG_WSCLIENT, "failed to register event WEBSOCKET_EVENT_CONNECTED: %s", esp_err_to_name( err ) );
     }
 
     xSemaphoreTake( semaphore, portMAX_DELAY );
     err = esp_websocket_client_start( newWsClientHandle );
     if ( err ) {
-        ESP_LOGE( TAG_WSCLIENT, "esp_websocket_client_start failed with %s", esp_err_to_name( err ));
+        ESP_LOGE( TAG_WSCLIENT, "esp_websocket_client_start failed with %s", esp_err_to_name( err ) );
         esp_websocket_client_destroy( newWsClientHandle );
         return false;
     }
@@ -543,7 +543,7 @@ void EspSigK::stopWsClient() {
     if ( wsClientHandle != nullptr ) {
         esp_websocket_client_handle_t localWsClientHandle = wsClientHandle;
         wsClientHandle = nullptr;
-        ESP_ERROR_CHECK( esp_websocket_client_destroy( localWsClientHandle ));
+        ESP_ERROR_CHECK( esp_websocket_client_destroy( localWsClientHandle ) );
     }
     xSemaphoreGive( semaphore );
     ESP_LOGI( TAG_WSCLIENT, "stopped" );
@@ -597,7 +597,7 @@ void EspSigK::sendDeltaSet( DeltaSet &deltaSet ) {
 
     const std::list<DeltaValue> &deltas = deltaSet.getDeltas();
 
-    ESP_LOGD( TAG, "sending %d delta values", deltas.size());
+    ESP_LOGD( TAG, "sending %d delta values", deltas.size() );
     cJSON *result = cJSON_CreateObject();
 
     //updated array
@@ -606,12 +606,12 @@ void EspSigK::sendDeltaSet( DeltaSet &deltaSet ) {
     char bufSrc[16], bufPgn[16], bufTimestamp[16];
     itoa( deltaSet.getSource(), bufSrc, 10 );
     utoa( deltaSet.getPgn(), bufPgn, 10 );
-    snprintf( bufTimestamp, sizeof( bufTimestamp ), "%ld", N2kMillis());
+    snprintf( bufTimestamp, sizeof( bufTimestamp ), "%ld", N2kMillis() );
 
     cJSON *thisUpdate = cJSON_CreateObject();
     cJSON_AddItemToArray( updatesArr, thisUpdate );
     cJSON *source = cJSON_AddObjectToObject( thisUpdate, "source" );
-    cJSON_AddStringToObject( source, "label", hostname.c_str());
+    cJSON_AddStringToObject( source, "label", hostname.c_str() );
     cJSON_AddStringToObject( source, "type", "NMEA2000" );
     cJSON_AddStringToObject( source, "src", bufSrc );
     cJSON_AddStringToObject( source, "pgn", bufPgn );
@@ -623,9 +623,9 @@ void EspSigK::sendDeltaSet( DeltaSet &deltaSet ) {
         const DeltaValue &delta = *it;
         cJSON *thisValue = cJSON_CreateObject();
         cJSON_AddItemToArray( values, thisValue );
-        cJSON_AddStringToObject( thisValue, "path", delta.path.c_str());
-        if ( !delta.value.empty()) {
-            cJSON_AddStringToObject( thisValue, "value", delta.value.c_str());
+        cJSON_AddStringToObject( thisValue, "path", delta.path.c_str() );
+        if ( !delta.value.empty() ) {
+            cJSON_AddStringToObject( thisValue, "value", delta.value.c_str() );
         } else {
             cJSON_AddItemReferenceToObject( thisValue, "value", nullptr );
         }
@@ -690,8 +690,8 @@ void EspSigK::onClientTextReceived( const char *buf ) {
         if ( cJSON_GetObjectItem( result, "version" ) != nullptr ) {
             processFrameHello( result );
             processed = true;
-        } else if (( item = cJSON_GetObjectItem( result, "message" )) != nullptr ) {
-            ESP_LOGW( TAG_WSCLIENT, "message: %s", cJSON_GetStringValue( item ));
+        } else if ( ( item = cJSON_GetObjectItem( result, "message" ) ) != nullptr ) {
+            ESP_LOGW( TAG_WSCLIENT, "message: %s", cJSON_GetStringValue( item ) );
             processed = true;
         }
         cJSON_Delete( result );
@@ -712,8 +712,8 @@ void EspSigK::processFrameHello( cJSON *o ) {
      * }
      */
     ESP_LOGW( TAG_WSCLIENT, "connected to %s version %s",
-              cJSON_GetStringValue( cJSON_GetObjectItem( o, "name" )),
-              cJSON_GetStringValue( cJSON_GetObjectItem( o, "version" ))
+              cJSON_GetStringValue( cJSON_GetObjectItem( o, "name" ) ),
+              cJSON_GetStringValue( cJSON_GetObjectItem( o, "version" ) )
     );
     wsClientConnected = true;
 }
@@ -742,7 +742,7 @@ void EspSigK::saveSetting( const char *name, const std::string &value ) {
     if ( nvs_handle == 0 ) {
         return;
     }
-    nvs_write_string( nvs_handle, name, value.c_str());
+    nvs_write_string( nvs_handle, name, value.c_str() );
     nvs_close_storage( nvs_handle );
 }
 
@@ -765,7 +765,7 @@ void EspSigK::sendAndHandleAccessRequest() {
     ESP_LOGI( TAG_HTTPCLIENT, "request" );
     esp_err_t err = httpClientData.send();
     if ( err != ESP_OK ) {
-        ESP_LOGE( TAG_HTTPCLIENT, "HTTP POST request failed: %s", esp_err_to_name( err ));
+        ESP_LOGE( TAG_HTTPCLIENT, "HTTP POST request failed: %s", esp_err_to_name( err ) );
         goto retry;
     }
 
@@ -777,7 +777,7 @@ void EspSigK::sendAndHandleAccessRequest() {
 
     ESP_LOGI( TAG_HTTPCLIENT, R"(response %d '%s')", httpClientData.getStatusCode(), buffer );
     result = cJSON_Parse( buffer );
-    state = cJSON_GetStringValue( cJSON_GetObjectItem( result, "state" ));
+    state = cJSON_GetStringValue( cJSON_GetObjectItem( result, "state" ) );
     if ( httpClientData.getStatusCode() == 404 || httpClientData.getStatusCode() == 500 ) {
         // 500 Unable to check request: not found
         ESP_LOGW( TAG_HTTPCLIENT, "access request not found, firing new one" );
@@ -788,7 +788,7 @@ void EspSigK::sendAndHandleAccessRequest() {
         startPendingTokenTimer();
     } else if ( strcmp( state, "PENDING" ) == 0 ) {
         if ( !pendingTokenState ) {
-            char *requestId = cJSON_GetStringValue( cJSON_GetObjectItem( result, "requestId" ));
+            char *requestId = cJSON_GetStringValue( cJSON_GetObjectItem( result, "requestId" ) );
             if ( requestId == nullptr ) {
                 ESP_LOGW( TAG_HTTPCLIENT, "no requestId in response, can't wait on it" );
                 goto retry;
@@ -799,7 +799,7 @@ void EspSigK::sendAndHandleAccessRequest() {
         }
         startPendingTokenTimer();
     } else if ( strcmp( state, "COMPLETED" ) == 0 ) {
-        statusCode = (int) cJSON_GetNumberValue( cJSON_GetObjectItem( result, "statusCode" ));
+        statusCode = (int) cJSON_GetNumberValue( cJSON_GetObjectItem( result, "statusCode" ) );
         if ( statusCode == 400 ) {
             // response {
             //   "state":"COMPLETED",
@@ -810,18 +810,18 @@ void EspSigK::sendAndHandleAccessRequest() {
             //   "ip":"::ffff:192.168.72.182"
             // }
 
-            char *message = cJSON_GetStringValue( cJSON_GetObjectItem( result, "message" ));
+            char *message = cJSON_GetStringValue( cJSON_GetObjectItem( result, "message" ) );
             if ( message != nullptr ) {
                 ESP_LOGW( TAG_HTTPCLIENT, "%s", message );
             }
             clearRequestIdAndRequestNew();
         } else {
             cJSON *accessRequestObject = cJSON_GetObjectItem( result, "accessRequest" );
-            char *permission = cJSON_GetStringValue( cJSON_GetObjectItem( accessRequestObject, "permission" ));
+            char *permission = cJSON_GetStringValue( cJSON_GetObjectItem( accessRequestObject, "permission" ) );
             if ( strcmp( permission, "APPROVED" ) == 0 ) {
                 //  "accessRequest": {"permission": "APPROVED","token": "eyJhbGciOiJIUzI1NiIs...BAP8bt3tNBT1WiIttm3qM",...}
-                signalKServerToken = cJSON_GetStringValue( cJSON_GetObjectItem( accessRequestObject, "token" ));
-                ESP_LOGI( TAG_HTTPCLIENT, "got token %s", signalKServerToken.c_str());
+                signalKServerToken = cJSON_GetStringValue( cJSON_GetObjectItem( accessRequestObject, "token" ) );
+                ESP_LOGI( TAG_HTTPCLIENT, "got token %s", signalKServerToken.c_str() );
                 saveSetting( NVS_KEY_TOKEN, signalKServerToken );
                 httpClientData.release();
                 triggerWsClientConnect();
@@ -852,7 +852,7 @@ void EspSigK::prepareAccessRequest() {
     pendingTokenState = false;
     // see https://signalk.org/specification/1.7.0/doc/access_requests.html
     snprintf( post_data, sizeof( post_data ), R"({"clientId":"%s","description":"%s"})",
-              signalKUuid.c_str(), deviceName.c_str());
+              signalKUuid.c_str(), deviceName.c_str() );
     snprintf( url, sizeof( url ), "http://%s:%d/signalk/v1/access/requests", signalKServerHost.c_str(),
               signalKServerPort );
     httpClientData.setPostRequest( url, post_data );
@@ -870,11 +870,11 @@ void EspSigK::prepareCheckAccessRequest( const char *requestId ) {
 void EspSigK::sendAccessRequest() {
     std::string requestId;
     loadSetting( NVS_KEY_REQUEST_ID, requestId );
-    if ( requestId.empty()) {
+    if ( requestId.empty() ) {
         prepareAccessRequest();
     } else {
         ESP_LOGI( TAG_HTTPCLIENT, "Reusing stored requestId" );
-        prepareCheckAccessRequest( requestId.c_str());
+        prepareCheckAccessRequest( requestId.c_str() );
     }
     sendAndHandleAccessRequest();
 }
@@ -912,7 +912,7 @@ void EspSigK::debug_timer_cb( void *arg ) {
     size_t free_size = debug_print_free_mem( nullptr );
 
     DeltaSet deltaSet( 100, 0 );
-    deltaSet.addValue( "unit.gateway.address", sigK.ip_address.c_str());
+    deltaSet.addValue( "unit.gateway.address", sigK.ip_address.c_str() );
     deltaSet.addValue( "unit.gateway.debug.memory", (int) free_size );
     deltaSet.send( sigK );
 }
@@ -926,6 +926,6 @@ void EspSigK::start_free_mem_timer() {
             .skip_unhandled_events= true,
     };
     esp_timer_handle_t timer_handle = nullptr;
-    ESP_ERROR_CHECK( esp_timer_create( &timer_args, &timer_handle ));
-    ESP_ERROR_CHECK( esp_timer_start_periodic( timer_handle, 1000000L ));
+    ESP_ERROR_CHECK( esp_timer_create( &timer_args, &timer_handle ) );
+    ESP_ERROR_CHECK( esp_timer_start_periodic( timer_handle, 1000000L ) );
 }

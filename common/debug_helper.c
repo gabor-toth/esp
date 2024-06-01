@@ -11,7 +11,7 @@ static void task_dump( void *arg ) {
 
     UBaseType_t numberOfTasks = uxTaskGetNumberOfTasks();
     unsigned long ulTotalRunTime;
-    TaskStatus_t *pxTaskStatusArray = malloc( numberOfTasks * sizeof( TaskStatus_t ));
+    TaskStatus_t *pxTaskStatusArray = malloc( numberOfTasks * sizeof( TaskStatus_t ) );
 
     uxTaskGetSystemState( pxTaskStatusArray, numberOfTasks, &ulTotalRunTime );
     ulTotalRunTime /= 100UL;
@@ -39,7 +39,7 @@ void debug_start_task_dump() {
 }
 
 size_t debug_print_free_mem( const char *log ) {
-    size_t free_size = heap_caps_get_free_size(MALLOC_CAP_8BIT);
+    size_t free_size = heap_caps_get_free_size( MALLOC_CAP_8BIT );
     ESP_LOGW( log != NULL ? log : LOG, "free mem %d",
               free_size );
     return free_size;
