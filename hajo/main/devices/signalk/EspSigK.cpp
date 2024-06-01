@@ -3,6 +3,7 @@
 #include "N2kTimer.h"
 #include "NMEA2000_esp32_stream.h"
 #include "adc.h"
+#include "debug_helper.h"
 #include "esp_http_client.h"
 #include "esp_log.h"
 #include "esp_mac.h"
@@ -325,6 +326,7 @@ void EspSigK::setupWebSocket() {
 }
 
 bool EspSigK::findMDNSService() {
+    debug_print_free_mem(TAG);
     if ( signalKServerHost.empty()) {
         ESP_LOGI( TAG_WSCLIENT, "mDNS start lookup" );
 
@@ -361,6 +363,7 @@ bool EspSigK::findMDNSService() {
     }
 
     ESP_LOGI( TAG_WSCLIENT, "Found SignalK server %s:%d via mDNS", signalKServerHost.c_str(), signalKServerPort );
+    debug_print_free_mem(TAG);
     return true;
 }
 
@@ -374,13 +377,6 @@ void EspSigK::onWebSocketClientEvent( esp_event_base_t event_base, int32_t event
             onClientDisconnected();
             break;
         case WEBSOCKET_EVENT_ERROR:
-            ESP_LOGW( TAG_WSCLIENT,
-                      "event error type %d esp_tls_last_esp_err=%d esp_tls_stack_err=%d esp_transport_sock_errno=%d esp_ws_handshake_status_code=%d",
-                      data->error_handle.error_type,
-                      data->error_handle.esp_tls_last_esp_err,
-                      data->error_handle.esp_tls_stack_err,
-                      data->error_handle.esp_transport_sock_errno,
-                      data->error_handle.esp_ws_handshake_status_code );
             wsClientConnected = false;
             if ( data->error_handle.esp_ws_handshake_status_code == 401 ) {
                 ESP_LOGW( TAG_WSCLIENT, "Token invalid, requesting new one" );
@@ -389,6 +385,13 @@ void EspSigK::onWebSocketClientEvent( esp_event_base_t event_base, int32_t event
                 clearRequestId();
                 triggerWsClientConnect();
             } else {
+                ESP_LOGW( TAG_WSCLIENT,
+                          "event error type %d esp_tls_last_esp_err=%d esp_tls_stack_err=%d esp_transport_sock_errno=%d esp_ws_handshake_status_code=%d",
+                          data->error_handle.error_type,
+                          data->error_handle.esp_tls_last_esp_err,
+                          data->error_handle.esp_tls_stack_err,
+                          data->error_handle.esp_transport_sock_errno,
+                          data->error_handle.esp_ws_handshake_status_code );
                 // we have auto reconnect
                 // startWsClientConnectTimer();
             }
@@ -411,13 +414,15 @@ void EspSigK::onWebSocketClientEvent( esp_event_base_t event_base, int32_t event
         }
         case WEBSOCKET_EVENT_CLOSED:
             ESP_LOGW( TAG_WSCLIENT, "event closed" );
-            onClientDisconnected();
+            wsClientConnected = false;
+            debug_print_free_mem(TAG);
             break;
         case WEBSOCKET_EVENT_BEFORE_CONNECT:
-            //ESP_LOGI( TAG_WSCLIENT, "event before_connect" );
+            ESP_LOGW( TAG_WSCLIENT, "event before connect" );
+            debug_print_free_mem(TAG);
             break;
         default:
-            ESP_LOGI( TAG_WSCLIENT, "ignored event %ld", event_id );
+            ESP_LOGW( TAG_WSCLIENT, "ignored event %ld", event_id );
             break;
     }
 }
@@ -430,6 +435,7 @@ void EspSigK::webSocketClientEventHandler( void *event_handler_arg, esp_event_ba
 bool EspSigK::connectWsClient() {
     stopWsClient();
 
+    debug_print_free_mem(TAG_WSCLIENT);
     ESP_LOGI( TAG_WSCLIENT, "starting" );
 
     if ( !signalKServerHost.empty()) {
@@ -447,6 +453,8 @@ bool EspSigK::connectWsClient() {
         return true;
     }
     authHeader = "Authorization: Bearer " + signalKServerToken + "\r\n";
+
+    debug_print_free_mem(TAG);
 
     const esp_websocket_client_config_t ws_cfg = {
             .uri = nullptr,
@@ -476,12 +484,12 @@ bool EspSigK::connectWsClient() {
             .use_global_ca_store = false,
             .crt_bundle_attach = nullptr,
             .skip_cert_common_name_check = false,
-            .keep_alive_enable = true,
+            .keep_alive_enable = false,
             .keep_alive_idle = 0,
             .keep_alive_interval = 0,
             .keep_alive_count = 0,
             .reconnect_timeout_ms = 1000,
-            .network_timeout_ms = 1000,
+            .network_timeout_ms = 2000,
             .ping_interval_sec = 0,
             .if_name = nullptr,
     };
@@ -511,6 +519,7 @@ bool EspSigK::connectWsClient() {
     }
 
     ESP_LOGI( TAG_WSCLIENT, "started %p", newWsClientHandle );
+    debug_print_free_mem(TAG_WSCLIENT);
     wsClientHandle = newWsClientHandle;
     xSemaphoreGive(semaphore);
     return true;
@@ -617,14 +626,15 @@ void EspSigK::sendDeltaSet( DeltaSet &deltaSet ) {
     if ( printDeltaSerial ) {
         ESP_LOGI( TAG, "%s", deltaText );
     }
-    bool sent = wss_server_send_message( http_server, deltaText );
+    bool sent = false;
+//    wss_server_send_message( http_server, deltaText );
     xSemaphoreTake( semaphore, portMAX_DELAY );
     if ( wsClientConnected && wsClientHandle != nullptr ) {
-        if ( esp_websocket_client_send_text( wsClientHandle, deltaText, strlen( deltaText ), 10 ) != ESP_FAIL ) {
+        if ( esp_websocket_client_send_text( wsClientHandle, deltaText, strlen( deltaText ), 100 ) != ESP_FAIL ) {
             sent = true;
         } else {
             ESP_LOGE( TAG_WSCLIENT, "error sending delta" );
-            onClientDisconnected();
+//            onClientDisconnected();
         }
     }
     if ( sent && logged_no_ws_connection ) {
@@ -650,13 +660,13 @@ DeltaValue::DeltaValue( const char *path, const char *value ) {
 void EspSigK::onClientConnected() {
     ESP_LOGI( TAG_WSCLIENT, "event connected" );
     wsClientConnected = true;
+    debug_print_free_mem(TAG);
 }
 
 void EspSigK::onClientDisconnected() {
     ESP_LOGI( TAG_WSCLIENT, "event disconnected" );
     wsClientConnected = false;
-    // we have auto reconnect
-//    startWsClientConnectTimer();
+    debug_print_free_mem(TAG);
 }
 
 void EspSigK::onClientTextReceived( const char *buf ) {
