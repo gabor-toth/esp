@@ -7,9 +7,10 @@
 #include "esp_log.h"
 #include "esp_mac.h"
 #include "esp_netif_ip_addr.h"
-#include "nvs_main.h"
-#include "mdns.h"
 #include "http/http_server.h"
+#include "mdns.h"
+#include "n2k/n2k_sender.h"
+#include "nvs_main.h"
 #include "ssdp.h"
 #include "wifi/wifi_main.h"
 #include "ws_server.h"
@@ -911,7 +912,7 @@ void EspSigK::clearRequestId() {
 void EspSigK::debug_timer_cb( void *arg ) {
     size_t free_size = debug_print_free_mem( nullptr );
 
-    DeltaSet deltaSet( 100, 0 );
+    DeltaSet deltaSet( NMEA2000.GetN2kSource(), 0 );
     deltaSet.addValue( "unit.gateway.address", sigK.ip_address.c_str() );
     deltaSet.addValue( "unit.gateway.debug.memory", (int) free_size );
     deltaSet.send( sigK );
