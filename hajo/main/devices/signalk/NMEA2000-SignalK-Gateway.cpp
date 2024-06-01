@@ -231,6 +231,10 @@ void HandleBatteryDetailedStatus( const tN2kMsg &N2kMsg ) {
         char path[64];
         snprintf( path, sizeof(path), "electrical.batteries.%d.rippleVoltage",DCInstance+1);
         deltaSet.addValue( path, RippleVoltage);
+        snprintf( path, sizeof(path), "electrical.batteries.%d.capacity",DCInstance+1);
+        deltaSet.addValue( path, Capacity);
+        snprintf( path, sizeof(path), "electrical.batteries.%d.stateOfCharge",DCInstance+1);
+        deltaSet.addValue( path, StateOfCharge);
         deltaSet.send( sigK );
     }
 }
@@ -725,6 +729,14 @@ environment/wind/angleTrueWater
 navigation/speedOverGround
 navigation/speedThroughWater
 navigation/courseOverGroundMagnetic
+
+/navigation/lights
+/navigation/racing/startLineStb
+/navigation/racing/startLinePort
+...
+/electrical/batteries/<RegExp>/name
+/electrical/chargers
+
 
 129540L: GNSS Sats in View, pri=6, period=1000
 130312L: Temperature, pri=5, period=2000
