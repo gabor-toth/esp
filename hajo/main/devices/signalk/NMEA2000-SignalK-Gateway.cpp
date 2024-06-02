@@ -136,7 +136,7 @@ void HandlePosition( const tN2kMsg &N2kMsg ) {
     if ( ParseN2kPGN129025( N2kMsg, Latitude, Longitude )) {
         snprintf( buf, sizeof( buf ), R"({"altitude":%f,"latitude":%f,"longitude":%f})", 0.0, Latitude, Longitude );
         DeltaSet deltaSet(N2kMsg.Source, N2kMsg.PGN);
-        deltaSet.addValue( "navigation.position", buf );
+        deltaSet.addJsonValue( "navigation.position", buf );
         deltaSet.send( sigK );
     }
 }

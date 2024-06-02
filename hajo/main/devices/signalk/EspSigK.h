@@ -20,6 +20,9 @@ class DeltaValue {
 public:
     DeltaValue( const char *path, const char *value );
 
+    DeltaValue( const char *path, const char *value, bool isJson );
+
+    bool isJson;
     std::string path;
     std::string value;
 };
@@ -35,6 +38,8 @@ public:
     void addValue( const char *path, double value );
 
     void addValue( const char *path, bool value );
+
+    void addJsonValue( const char *path, const char *value );
 
     [[nodiscard]] const std::list<DeltaValue> &getDeltas() const {
         return deltas;
