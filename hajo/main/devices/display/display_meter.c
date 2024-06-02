@@ -1,3 +1,4 @@
+#include "display_main.h"
 #include "display_meter.h"
 #include "esp_log.h"
 #include "lvgl/lvgl.h"
@@ -64,8 +65,8 @@ void setup_screen() {
     lv_color_t color_bg_top = LV_COLOR_MAKE( 70, 75, 85 );
     lv_color_t color_bg_bottom = LV_COLOR_MAKE( 45, 50, 60 );
     lv_style_set_bg_color( &style_screen, color_bg_top );
-    lv_style_set_bg_grad_color( &style_screen, color_bg_bottom );
-    lv_style_set_bg_grad_dir( &style_screen, LV_GRAD_DIR_VER );
+//    lv_style_set_bg_grad_color( &style_screen, color_bg_bottom );
+//    lv_style_set_bg_grad_dir( &style_screen, LV_GRAD_DIR_VER );
     lv_obj_add_style( screen, &style_screen, LV_PART_MAIN );
 }
 
@@ -122,10 +123,10 @@ lv_obj_t *setup_water_bar( lv_obj_t *parent, int y0 ) {
     lv_style_init( &style_indic_water_deplete );
     lv_style_set_bg_opa( &style_indic_water_deplete, LV_OPA_COVER );
     lv_style_set_bg_color( &style_indic_water_deplete, color_indic_empty );
-    lv_style_set_bg_grad_color( &style_indic_water_deplete, color_indic_water );
-    lv_style_set_bg_grad_dir( &style_indic_water_deplete, LV_GRAD_DIR_VER );
-//    lv_style_set_bg_main_stop(&style_indic_water_25, 0);
-    lv_style_set_bg_grad_stop( &style_indic_water_deplete, 20 );
+//    lv_style_set_bg_grad_color( &style_indic_water_deplete, color_indic_water );
+//    lv_style_set_bg_grad_dir( &style_indic_water_deplete, LV_GRAD_DIR_VER );
+////    lv_style_set_bg_main_stop(&style_indic_water_25, 0);
+//    lv_style_set_bg_grad_stop( &style_indic_water_deplete, 20 );
 
     lv_style_init( &style_indic_water_empty );
     lv_style_set_bg_opa( &style_indic_water_empty, LV_OPA_COVER );
@@ -154,11 +155,11 @@ lv_obj_t *setup_fuel_bar( lv_obj_t *parent, int y0 ) {
 
     lv_style_init( &style_indic_fuel_empty );
     lv_style_set_bg_opa( &style_indic_fuel_empty, LV_OPA_COVER );
-    lv_style_set_bg_color( &style_indic_fuel_empty, color_indic_empty );
-    lv_style_set_bg_grad_color( &style_indic_fuel_empty, color_indic_fuel );
-    lv_style_set_bg_grad_dir( &style_indic_fuel_empty, LV_GRAD_DIR_VER );
-//    lv_style_set_bg_main_stop(&style_indic_fuel_empty, 0);
-    lv_style_set_bg_grad_stop( &style_indic_fuel_empty, 20 );
+//    lv_style_set_bg_color( &style_indic_fuel_empty, color_indic_empty );
+//    lv_style_set_bg_grad_color( &style_indic_fuel_empty, color_indic_fuel );
+//    lv_style_set_bg_grad_dir( &style_indic_fuel_empty, LV_GRAD_DIR_VER );
+////    lv_style_set_bg_main_stop(&style_indic_fuel_empty, 0);
+//    lv_style_set_bg_grad_stop( &style_indic_fuel_empty, 20 );
 
     lv_obj_t *bar = lv_bar_create( parent );
     setup_bar_common( 1, bar, &style_indic_fuel, y0 );
@@ -190,22 +191,22 @@ void setup_battery_style() {
     lv_style_init( &style_indic_battery_deplete );
     lv_style_set_bg_opa( &style_indic_battery_deplete, LV_OPA_COVER );
     lv_style_set_bg_color( &style_indic_battery_deplete, color_indic_empty );
-    lv_style_set_bg_grad_color( &style_indic_battery_deplete, color_indic_battery );
-    lv_style_set_bg_grad_dir( &style_indic_battery_deplete, LV_GRAD_DIR_VER );
-    position =
-            255 * ( BATTERY_VOLTAGE_DEPLETE - BATTERY_VOLTAGE_START ) / ( BATTERY_VOLTAGE_END - BATTERY_VOLTAGE_START );
-    lv_style_set_bg_main_stop( &style_indic_battery_deplete, position - 10 );
-    lv_style_set_bg_grad_stop( &style_indic_battery_deplete, position + 10 );
+//    lv_style_set_bg_grad_color( &style_indic_battery_deplete, color_indic_battery );
+//    lv_style_set_bg_grad_dir( &style_indic_battery_deplete, LV_GRAD_DIR_VER );
+//    position =
+//            255 * ( BATTERY_VOLTAGE_DEPLETE - BATTERY_VOLTAGE_START ) / ( BATTERY_VOLTAGE_END - BATTERY_VOLTAGE_START );
+//    lv_style_set_bg_main_stop( &style_indic_battery_deplete, position - 10 );
+//    lv_style_set_bg_grad_stop( &style_indic_battery_deplete, position + 10 );
 
     lv_style_init( &style_indic_battery_charge );
     lv_style_set_bg_opa( &style_indic_battery_charge, LV_OPA_COVER );
     lv_style_set_bg_color( &style_indic_battery_charge, color_indic_battery );
-    lv_style_set_bg_grad_color( &style_indic_battery_charge, color_indic_battery_warn );
-    lv_style_set_bg_grad_dir( &style_indic_battery_charge, LV_GRAD_DIR_VER );
-    position =
-            255 * ( BATTERY_VOLTAGE_CHARGE - BATTERY_VOLTAGE_START ) / ( BATTERY_VOLTAGE_END - BATTERY_VOLTAGE_START );
-    lv_style_set_bg_main_stop( &style_indic_battery_charge, position - 10 );
-    lv_style_set_bg_grad_stop( &style_indic_battery_charge, position + 10 );
+//    lv_style_set_bg_grad_color( &style_indic_battery_charge, color_indic_battery_warn );
+//    lv_style_set_bg_grad_dir( &style_indic_battery_charge, LV_GRAD_DIR_VER );
+//    position =
+//            255 * ( BATTERY_VOLTAGE_CHARGE - BATTERY_VOLTAGE_START ) / ( BATTERY_VOLTAGE_END - BATTERY_VOLTAGE_START );
+//    lv_style_set_bg_main_stop( &style_indic_battery_charge, position - 10 );
+//    lv_style_set_bg_grad_stop( &style_indic_battery_charge, position + 10 );
 }
 
 lv_obj_t *setup_battery_bar( lv_obj_t *parent, int y0, int index ) {
@@ -432,6 +433,9 @@ void display_meter_set_value( display_type_t type, int instance, int value ) {
     if ( !initialized ) {
         return;
     }
+    if ( !display_start_task() ) {
+        return;
+    }
     switch ( type ) {
         case FUEL:
             set_fuel_value( bar_fuel, value );
@@ -452,6 +456,7 @@ void display_meter_set_value( display_type_t type, int instance, int value ) {
             ESP_LOGW( LOG, "Unhandled display type %d", type );
             break;
     }
+    display_end_task();
 }
 
 const char *display_type_names[] = {
