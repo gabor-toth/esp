@@ -95,13 +95,14 @@ void HandleBoatSpeed( const tN2kMsg &N2kMsg ) {
     tN2kSpeedWaterReferenceType SWRT;
 
     if ( ParseN2kBoatSpeed( N2kMsg, SID, WaterReferenced, GroundReferenced, SWRT )) {
-        /*
         DeltaSet deltaSet(N2kMsg.Source, N2kMsg.PGN);
-         -1000000000.000000
-        deltaSet.addValue( "navigation.speedThroughWater", WaterReferenced );
-        deltaSet.addValue( "navigation.speedOverGround", GroundReferenced );
+        if (WaterReferenced != -1000000000.0) {
+            deltaSet.addValue( "navigation.speedThroughWater", WaterReferenced );
+        }
+        if (GroundReferenced != -1000000000.0) {
+            deltaSet.addValue( "navigation.speedOverGround", GroundReferenced );
+        }
         deltaSet.send( sigK );
-         */
     }
 }
 
@@ -115,11 +116,12 @@ void HandleDepth( const tN2kMsg &N2kMsg ) {
     double WaterDepth;
 
     if ( ParseN2kWaterDepth( N2kMsg, SID, DepthBelowTransducer, Offset, Range )) {
+        ESP_LOGD(TAG,"Depth %lf Offset %lf", DepthBelowTransducer, Offset);
         WaterDepth = DepthBelowTransducer + Offset;
         DeltaSet deltaSet(N2kMsg.Source, N2kMsg.PGN);
         deltaSet.addValue( "environment.depth.belowKeel", WaterDepth );
-        deltaSet.addValue( "environment.depth.belowTransducer", WaterDepth );
-        deltaSet.addValue( "environment.depth.belowSurface", WaterDepth);
+        deltaSet.addValue( "environment.depth.belowTransducer", DepthBelowTransducer );
+        deltaSet.addValue( "environment.depth.belowSurface", DepthBelowTransducer);
         // TODO depth/transducerToKeel
         // TODO depth/surfaceToTransducer
         deltaSet.send( sigK );
@@ -542,7 +544,7 @@ void HandleSeaTalkAlarm(const tN2kMsg &N2kMsg ) {
     uint8_t alarmPriority;
 
     if ( ParseN2kPGN65288( N2kMsg, company, sid, alarmStatus, alarmId,alarmGroup,alarmPriority)) {
-        ESP_LOGI( TAG, R"(SeaTalk alarm sid %d status %d "%s" id %d "%s" group %d "%s" priority %d)",
+        ESP_LOGD( TAG, R"(SeaTalk alarm sid %d status %d "%s" id %d "%s" group %d "%s" priority %d)",
                   sid,
                   alarmStatus, lookupName( SeaTalkAlarmStatus, sizeof(SeaTalkAlarmStatus), alarmStatus ),
                   alarmId , lookupName( SeaTalkAlarmId, sizeof(SeaTalkAlarmId), alarmId ),
