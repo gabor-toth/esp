@@ -573,24 +573,23 @@ void DeltaSet::addJsonValue( const char *path, const char *value ) {
     if ( path == nullptr || value == nullptr ) {
         return;
     }
-    DeltaValue delta = DeltaValue( path, value, true );
+    DeltaValue delta = DeltaValue( path, value, cJSON_Raw );
     deltas.push_back( delta );
 }
 
 void DeltaSet::addValue( const char *path, int value ) {
-    char buf[16];
-    itoa( value, buf, 10 );
-    addValue( path, buf );
+    DeltaValue delta = DeltaValue( path, (double) value );
+    deltas.push_back( delta );
 }
 
 void DeltaSet::addValue( const char *path, double value ) {
-    char buf[24];
-    snprintf( buf, sizeof( buf ), "%lf", value );
-    addValue( path, buf );
+    DeltaValue delta = DeltaValue( path, value );
+    deltas.push_back( delta );
 }
 
 void DeltaSet::addValue( const char *path, bool value ) {
-    addValue( path, value ? "true" : "false" );
+    DeltaValue delta = DeltaValue( path, value );
+    deltas.push_back( delta );
 }
 
 void EspSigK::sendDeltaSet( DeltaSet &deltaSet ) {
@@ -634,15 +633,28 @@ void EspSigK::sendDeltaSet( DeltaSet &deltaSet ) {
         cJSON *thisValue = cJSON_CreateObject();
         cJSON_AddItemToArray( values, thisValue );
         cJSON_AddStringToObject( thisValue, "path", delta.path.c_str() );
-        if ( !delta.value.empty() ) {
-            if ( delta.isJson) {
-                cJSON *item = cJSON_Parse( delta.value.c_str() );
+        switch ( delta.type ) {
+            case cJSON_Number:
+                cJSON_AddNumberToObject( thisValue, "value", delta.valueDouble );
+                break;
+            case cJSON_Raw: {
+                cJSON *item = cJSON_Parse( delta.valueString.c_str() );
                 cJSON_AddItemToObject( thisValue, "value", item );
-            } else {
-                cJSON_AddStringToObject( thisValue, "value", delta.value.c_str() );
+                break;
             }
-        } else {
-            cJSON_AddItemReferenceToObject( thisValue, "value", nullptr );
+            case cJSON_String:
+                if ( !delta.valueString.empty() ) {
+                    cJSON_AddStringToObject( thisValue, "value", delta.valueString.c_str() );
+                } else {
+                    cJSON_AddItemReferenceToObject( thisValue, "value", nullptr );
+                }
+                break;
+            case cJSON_True:
+                cJSON_AddBoolToObject( thisValue, "value", delta.valueBool );
+                break;
+            default:
+                ESP_LOGE(TAG,"Unhandled delta type %d", delta.type);
+                break;
         }
     }
 
@@ -680,14 +692,26 @@ void DeltaSet::send( EspSigK &espSigk ) {
 
 DeltaValue::DeltaValue( const char *path, const char *value ) {
     this->path = path;
-    this->value = value;
-    this->isJson = false;
+    this->type = cJSON_String;
+    this->valueString = value;
 }
 
-DeltaValue::DeltaValue( const char *path, const char *value, bool isJson ) {
+DeltaValue::DeltaValue( const char *path, const char *value, int type ) {
     this->path = path;
-    this->value = value;
-    this->isJson = isJson;
+    this->type = type;
+    this->valueString = value;
+}
+
+DeltaValue::DeltaValue( const char *path, double value) {
+    this->path = path;
+    this->type = cJSON_Number;
+    this->valueDouble = value;
+}
+
+DeltaValue::DeltaValue( const char *path, bool value ) {
+    this->path = path;
+    this->type = cJSON_True;
+    this->valueBool = value;
 }
 
 void EspSigK::onClientConnected() {

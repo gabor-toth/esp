@@ -20,11 +20,18 @@ class DeltaValue {
 public:
     DeltaValue( const char *path, const char *value );
 
-    DeltaValue( const char *path, const char *value, bool isJson );
+    DeltaValue( const char *path, const char *value, int type );
 
-    bool isJson;
+    DeltaValue( const char *path, double value );
+
+    DeltaValue( const char *path, bool value );
+
+    // cJSON_Raw/cJSON_Number/cJSON_String
+    int type;
     std::string path;
-    std::string value;
+    std::string valueString;
+    double valueDouble;
+    bool valueBool;
 };
 
 class DeltaSet {
