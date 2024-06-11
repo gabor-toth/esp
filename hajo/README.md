@@ -215,10 +215,13 @@ systemctl daemon-reload
 
 #### Dashboard
 
-- Install
-    - [KIP](https://github.com/mxtommy/Kip)
-    - @signalk/signalk-autopilot
+- Install from Appstore
+    - KIP (https://github.com/mxtommy/Kip)
     - signalk-alarm-silencer
+    - signalk-derived-data (https://github.com/SignalK/signalk-derived-data/blob/master/README.md)
+    - ? @signalk/signalk-autopilot
+    - ? signalk-racing-calculator
+    - ? rest-provider-signalk (https://www.npmjs.com/package/rest-provider-signalk)
 - Setup
     - Server,Settings, Options, mdns enable
     - Save, restart
