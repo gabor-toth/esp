@@ -11,11 +11,9 @@
 #include "n2k/n2k_struct_parser.h"
 #include "n2k/n2k_sender.h"
 #include "n2k/n2k_util.h"
+#include "NMEA2000-SignalK-Gateway.h"
 
 static const char *TAG = "hajo_signalk";
-
-// see NMEA2000-SignalK-Gateway.cpp
-extern void sendN2KMessageToSignalK( const tN2kMsg &N2kMsg );
 
 class SignalkIncomingMessageHandler : public tNMEA2000::tMsgHandler {
 public:

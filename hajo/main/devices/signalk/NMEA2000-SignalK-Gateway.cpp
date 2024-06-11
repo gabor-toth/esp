@@ -24,6 +24,7 @@
 #include "signalk_rest.h"
 
 #include "devices/signalk/EspSigK.h"        // For SignalK handling
+#include "NMEA2000-SignalK-Gateway.h"
 
 static const char* TAG = "n2k-gw";
 
@@ -343,22 +344,23 @@ void HandleGNSS( const tN2kMsg &N2kMsg ) {
                        nReferenceStations, ReferenceStationType, ReferenceStationID, AgeOfCorrection )) {
 
         DeltaSet deltaSet(N2kMsg.Source, N2kMsg.PGN);
-        deltaSet.addValue( "navigation.gnss.type", GNSSType );
+        deltaSet.addValue( "navigation.gnss.differentialAge", AgeOfCorrection );
+        deltaSet.addValue( "navigation.gnss.differentialReference", ReferenceStationID );
+        deltaSet.addValue( "navigation.gnss.geoidalSeparation", GeoidalSeparation );
         deltaSet.addValue( "navigation.gnss.horizontalDilution", HDOP );
         deltaSet.addValue( "navigation.gnss.positionDilution", PDOP );
-
-//        deltaSet.send( sigK );
-
         deltaSet.addValue( "navigation.gnss.satellites", nSatellites );
-        deltaSet.addValue( "navigation.gnss.geoidalSeparation", GeoidalSeparation );
-        deltaSet.addValue( "navigation.gnss.differentialAge", AgeOfCorrection );
+        deltaSet.addValue( "navigation.gnss.type", GNSSType );
 
-//        deltaSet.send( sigK );
-
-        deltaSet.addValue( "navigation.gnss.differentialReference", ReferenceStationID );
         snprintf( buf, sizeof( buf ), R"({"altitude":%f,"latitude":%f,"longitude":%f})", Altitude, Latitude,
                   Longitude );
         deltaSet.addValue( "navigation.position", buf );
+
+        time_t unix_time =  (long) ( DaysSince1970 * 24L * 60 * 60 + SecondsSinceMidnight * 1000 );
+        struct tm ts;
+        localtime_r(&unix_time, &ts );
+        strftime( buf, sizeof( buf ), "%Y-%m-%dT%H:%M:%S.000Z", &ts );
+        deltaSet.addValue( "navigation.datetime", buf );
 
         deltaSet.send( sigK );
     }
@@ -751,3 +753,35 @@ navigation.gnss.positionDilution -1000000000.000000"
 128259:
 navigation.speedOverGround -1000000000.000000"
 */
+
+extern "C" {
+
+void simulatePngs() {
+    DeltaSet deltaSet(0, 0);
+    deltaSet.addValue( "electrical.batteries.1.voltage", 11.6);
+    deltaSet.addValue( "electrical.batteries.2.voltage", 11.6);
+    deltaSet.addValue( "electrical.batteries.3.voltage", 11.6);
+    deltaSet.addValue( "environment.depth.belowKeel", 0.1 );
+    deltaSet.addValue( "environment.depth.belowSurface", 0.1);
+    deltaSet.addValue( "environment.depth.belowTransducer", 0.1 );
+    deltaSet.addValue( "environment.wind.angleApparent", 0.1 );
+    deltaSet.addValue( "environment.wind.angleTrueGround", 0.1 );
+    deltaSet.addValue( "environment.wind.angleTrueWater", 0.1 );
+    deltaSet.addValue( "environment.wind.speedApparent", 0.1 );
+    deltaSet.addValue( "environment.wind.speedTrue", 0.1 );
+    deltaSet.addValue( "navigation.attitude.pitch", 0.1 );
+    deltaSet.addValue( "navigation.attitude.roll", 0.1 );
+    deltaSet.addValue( "navigation.courseOverGroundTrue", 0.1 );
+    deltaSet.addValue( "navigation.courseGreatCircle.nextPoint.bearingTrue", 0.1 );
+    deltaSet.addValue( "navigation.datetime", "2024-06-11T00:52:00Z" );
+    deltaSet.addValue( "navigation.headingTrue", 0 );
+    deltaSet.addJsonValue( "navigation.position", R"({"altitude":0,"latitude":46.789117,"longitude":17.6058801})" );
+    deltaSet.addValue( "navigation.speedOverGround", 2.6 );
+    deltaSet.addValue( "navigation.speedThroughWater", 2.5 );
+    deltaSet.addValue( "steering.rudderAngle", 0.1 );
+    deltaSet.addValue( "tanks.freshWater.1.currentLevel", 0.25 );
+    deltaSet.addValue( "tanks.fuel.1.currentLevel", 0.1 );
+    deltaSet.send( sigK );
+}
+}
+

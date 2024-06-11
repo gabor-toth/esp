@@ -4,6 +4,9 @@
 #include "rest_util.h"
 #include "signalk_rest.h"
 #include <sys/queue.h>
+//#include "NMEA2000-SignalK-Gateway.h"
+
+extern void simulatePngs();
 
 static const char *TAG = "signalk_rest";
 
@@ -39,6 +42,13 @@ static esp_err_t unhandled_pngs_delete( httpd_req_t *req ) {
     return ESP_OK;
 }
 
+static esp_err_t simulate_pngs( httpd_req_t *req ) {
+    simulatePngs();
+    httpd_resp_sendstr( req, NULL );
+
+    return ESP_OK;
+}
+
 static void
 handler_on_http_server_start( void *dummy, esp_event_base_t event_base, int32_t event_id, void *event_data ) {
     http_server_server_event_data *data = event_data;
@@ -53,6 +63,11 @@ handler_on_http_server_start( void *dummy, esp_event_base_t event_base, int32_t 
 
     ws.method = HTTP_DELETE;
     ws.handler = unhandled_pngs_delete;
+    http_register_uri_handler( data->hd, TAG, &ws );
+
+    ws.uri = "/simulate_pngs";
+    ws.method = HTTP_PUT;
+    ws.handler = simulate_pngs;
     http_register_uri_handler( data->hd, TAG, &ws );
 }
 
