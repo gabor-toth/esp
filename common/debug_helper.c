@@ -40,7 +40,7 @@ void debug_start_task_dump() {
 
 size_t debug_print_free_mem( const char *log ) {
     size_t free_size = heap_caps_get_free_size( MALLOC_CAP_8BIT );
-    ESP_LOGW( log != NULL ? log : LOG, "free mem %d",
+    ESP_LOGD( log != NULL ? log : LOG, "free mem %d",
               free_size );
     return free_size;
 }

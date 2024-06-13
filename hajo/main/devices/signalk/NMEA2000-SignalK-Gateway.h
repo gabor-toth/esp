@@ -6,7 +6,9 @@
 extern void sendN2KMessageToSignalK( const tN2kMsg &N2kMsg );
 
 extern "C" {
-extern void simulatePngs();
+extern void pngSimulationStart();
+extern void pngSimulationStart();
+extern void pngSimulationOneOff();
 }
 
 #endif //HAJO_NMEA2000_SIGNALK_GATEWAY_H

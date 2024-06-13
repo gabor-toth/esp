@@ -6,9 +6,15 @@
 #include <sys/queue.h>
 //#include "NMEA2000-SignalK-Gateway.h"
 
-extern void simulatePngs();
+extern void pngSimulationStart();
+
+extern void pngSimulationStop();
+
+extern void pngSimulationOneOff();
 
 static const char *TAG = "signalk_rest";
+
+#define HTTP_URI_SIMULATE_PNGS "/simulate_pngs/"
 
 struct list_entry_t {
     SLIST_ENTRY( list_entry_t ) entries;
@@ -43,10 +49,17 @@ static esp_err_t unhandled_pngs_delete( httpd_req_t *req ) {
 }
 
 static esp_err_t simulate_pngs( httpd_req_t *req ) {
-    simulatePngs();
-    httpd_resp_sendstr( req, NULL );
-
-    return ESP_OK;
+    const char *mode = req->uri + strlen( HTTP_URI_SIMULATE_PNGS );
+    if ( strcmp( mode, "start" ) == 0 ) {
+        pngSimulationStart();
+    } else if ( strcmp( mode, "stop" ) == 0 ) {
+        pngSimulationStop();
+    } else if ( strcmp( mode, "one" ) == 0 ) {
+        pngSimulationOneOff();
+    } else {
+        return httpd_resp_send_err( req, HTTPD_400_BAD_REQUEST, "bad mode" );
+    }
+    return httpd_resp_sendstr( req, NULL );
 }
 
 static void
@@ -65,7 +78,7 @@ handler_on_http_server_start( void *dummy, esp_event_base_t event_base, int32_t 
     ws.handler = unhandled_pngs_delete;
     http_register_uri_handler( data->hd, TAG, &ws );
 
-    ws.uri = "/simulate_pngs";
+    ws.uri = HTTP_URI_SIMULATE_PNGS "*";
     ws.method = HTTP_PUT;
     ws.handler = simulate_pngs;
     http_register_uri_handler( data->hd, TAG, &ws );
