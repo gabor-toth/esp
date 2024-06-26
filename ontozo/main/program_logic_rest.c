@@ -56,7 +56,7 @@ static esp_err_t run_get_handler( httpd_req_t *req ) {
     }
     rest_allow_cors( req );
     rest_add_time_json( root );
-    rest_send_json_back( req, root );
+    rest_send_json_back_and_delete( req, root );
     return ESP_OK;
 }
 

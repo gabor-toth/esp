@@ -39,7 +39,7 @@ static esp_err_t state_get_handler( httpd_req_t *req ) {
 
     rest_add_time_json( root );
 
-    rest_send_json_back( req, root );
+    rest_send_json_back_and_delete( req, root );
     return ESP_OK;
 }
 
@@ -53,7 +53,7 @@ static esp_err_t pins_put_handler_inner( httpd_req_t *req, cJSON *root, bool is_
         return httpd_resp_send_err( req, HTTPD_400_BAD_REQUEST, "Id is not valid" );
     }
 
-    char *class_name = gpio_get_class_name( is_input, class );
+    const char *class_name = gpio_get_class_name( is_input, class );
 
     bool changed = false;
     PinData pin_data;

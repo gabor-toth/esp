@@ -1,6 +1,8 @@
 #ifndef ONTOZO_GPIO_LOGIC_H
 #define ONTOZO_GPIO_LOGIC_H
 
+#include "stdbool.h"
+
 // outputs
 
 #define PUMPS_CLASS 0

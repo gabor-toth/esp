@@ -1,13 +1,11 @@
-#include "gpio_define.h"
 #include "gpio_logic.h"
-#include "http/http_server.h"
+#include "http/http_discovery.h"
 #include "main_main.h"
 #include "nvs_main.h"
 #include "program.h"
 #include "program_logic.h"
 #include "program_start.h"
 #include "sntp_main.h"
-#include "wifi/wifi_main.h"
 
 void app_main( void ) {
     main_main();
@@ -17,7 +15,7 @@ void app_main( void ) {
     program_init();
 
     sntp_init_before_wifi();
-    rest_init_before_wifi();
+    discovery_register();
 
 //    wifi_connect();
 
