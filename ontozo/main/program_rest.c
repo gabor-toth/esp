@@ -1,6 +1,6 @@
-#include "lib/rest_util.h"
-#include "program_rest.h"
 #include "program_json.h"
+#include "program_rest.h"
+#include "rest_util.h"
 
 //static const char *LOG_TAG = "program_rest";
 
@@ -50,7 +50,7 @@ static esp_err_t program_put_post_handler( httpd_req_t *req, bool is_put ) {
     esp_err_t result;
 
     cJSON *root;
-    result = rest_receive_json_body( req, (rest_server_context_t *) req->user_ctx, &root );
+    result = rest_receive_json_body( req, (http_server_context_t *) req->user_ctx, &root );
     if ( result != ESP_OK ) {
         return ESP_OK;
     }
@@ -97,7 +97,7 @@ static esp_err_t program_delete_handler( httpd_req_t *req ) {
     return ESP_OK;
 }
 
-void rest_register_programs_handlers( httpd_handle_t server, rest_server_context_t *rest_context ) {
+void rest_register_programs_handlers( httpd_handle_t server, http_server_context_t *rest_context ) {
     httpd_uri_t program_put_uri = {
             .uri = "/programs",
             .method = HTTP_PUT,

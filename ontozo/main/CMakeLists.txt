@@ -1,16 +1,20 @@
 idf_component_register(
         SRCS
-        "lib/gpio_define.c"
-        "lib/gpio_task.c"
-        "lib/main_main.c"
-        "lib/nvs_main.c"
-        "lib/rest_main.c"
-        "lib/rest_server.c"
-        "lib/rest_util.c"
-        "lib/sntp_main.c"
-        "lib/system_info_rest.c"
-        "lib/wifi_connect.c"
-        "lib/gpio_json.c"
+        "../../common/gpio_define.c"
+        "../../common/gpio_json.c"
+        "../../common/gpio_task.c"
+        "../../common/http/http_discovery.c"
+        "../../common/http/http_server.c"
+        "../../common/http/http_static_file.c"
+        "../../common/main_main.c"
+        "../../common/nvs_main.c"
+        "../../common/rest_util.c"
+        "../../common/sntp_main.c"
+        "../../common/system_info_rest.c"
+        "../../common/wifi/connect.c"
+        "../../common/wifi/scan.c"
+        "../../common/wifi/wifi_connect.c"
+        "../../common/wifi/wifi_main.c"
         "gpio_logic.c"
         "gpio_rest.c"
         "program.c"
@@ -24,7 +28,7 @@ idf_component_register(
         "test_util.c"
         INCLUDE_DIRS
         "."
-        "lib"
+        "../../common"
 )
 
 if (CONFIG_EXAMPLE_WEB_DEPLOY_SF)

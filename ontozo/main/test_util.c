@@ -1,9 +1,9 @@
-#include "test_util.h"
+#include "config.h"
+#include "driver/gpio.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/timers.h"
-#include "driver/gpio.h"
-#include "lib/gpio_define.h"
-#include "config.h"
+#include "gpio_define.h"
+#include "test_util.h"
 
 static gpio_num_t output_pins[] = {
         GPIO_OUTPUT_ZONE_1,
@@ -24,6 +24,8 @@ static gpio_num_t output_pins[] = {
 static unsigned int blink_counter = NUMBER_OF_PINS - 1;
 
 static void timer_blink_callback( TimerHandle_t xTimer ) {
+    (void) xTimer;
+
     gpio_set_level( output_pins[ blink_counter ], !ENABLED_STATE( blink_counter ));
     blink_counter = ( blink_counter + 1 ) % NUMBER_OF_PINS;
     gpio_set_level( output_pins[ blink_counter ], ENABLED_STATE( blink_counter ));

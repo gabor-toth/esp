@@ -1,10 +1,10 @@
 #include <esp_log.h>
-#include "lib/rest_util.h"
-#include "program_logic_rest.h"
-#include "program_logic.h"
-#include "program.h"
-#include "lib/gpio_define.h"
+#include "gpio_define.h"
 #include "gpio_logic.h"
+#include "program.h"
+#include "program_logic.h"
+#include "program_logic_rest.h"
+#include "rest_util.h"
 
 #define RUN_PREFIX "/run/"
 #define RUN_URI RUN_PREFIX "*"
@@ -60,7 +60,7 @@ static esp_err_t run_get_handler( httpd_req_t *req ) {
     return ESP_OK;
 }
 
-void rest_register_program_logic_handlers( httpd_handle_t server, rest_server_context_t *rest_context ) {
+void rest_register_program_logic_handlers( httpd_handle_t server, http_server_context_t *rest_context ) {
     httpd_uri_t run_post_uri = {
             .uri = RUN_URI,
             .method = HTTP_POST,

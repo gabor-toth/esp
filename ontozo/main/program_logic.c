@@ -3,7 +3,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 #include "freertos/timers.h"
-#include "lib/gpio_define.h"
+#include "gpio_define.h"
 #include "gpio_logic.h"
 #include "program_logic.h"
 #include "program.h"

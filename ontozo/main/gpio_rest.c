@@ -1,14 +1,14 @@
 #include <esp_log.h>
-#include "lib/gpio_define.h"
-#include "lib/nvs_main.h"
-#include "lib/sntp_main.h"
-#include "lib/rest_util.h"
+#include "gpio_define.h"
 #include "gpio_rest.h"
+#include "nvs_main.h"
+#include "sntp_main.h"
+#include "rest_util.h"
 
 static const char *LOG_TAG = "gpio_rest";
 
 typedef struct {
-    rest_server_context_t *rest_context;
+    http_server_context_t *rest_context;
     bool type;
     int class;
 } PinHandlerContext;
@@ -106,7 +106,7 @@ static esp_err_t pins_put_handler( httpd_req_t *req ) {
     return result;
 }
 
-static void rest_register_state_handler( httpd_handle_t server, rest_server_context_t *rest_context ) {
+static void rest_register_state_handler( httpd_handle_t server, http_server_context_t *rest_context ) {
     httpd_uri_t state_get_uri = {
             .uri = "/state",
             .method = HTTP_GET,
@@ -116,7 +116,7 @@ static void rest_register_state_handler( httpd_handle_t server, rest_server_cont
     httpd_register_uri_handler( server, &state_get_uri );
 }
 
-static void rest_register_put_handlers( httpd_handle_t server, rest_server_context_t *rest_context ) {
+static void rest_register_put_handlers( httpd_handle_t server, http_server_context_t *rest_context ) {
     char uri[256];
 
     for ( int type = OUTPUTS; type <= INPUTS; type++ ) {
@@ -143,7 +143,7 @@ static void rest_register_put_handlers( httpd_handle_t server, rest_server_conte
     }
 }
 
-void rest_register_gpio_handlers( httpd_handle_t server, rest_server_context_t *rest_context ) {
+void rest_register_gpio_handlers( httpd_handle_t server, http_server_context_t *rest_context ) {
     rest_register_state_handler( server, rest_context );
     rest_register_put_handlers( server, rest_context );
 }

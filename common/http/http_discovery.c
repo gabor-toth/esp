@@ -12,11 +12,11 @@
 #include "esp_log.h"
 #include "esp_spiffs.h"
 #include "esp_wifi.h"
-#include "lwip/apps/netbiosns.h"
-#include "mdns.h"
 #include "http_events.h"
 #include "http_discovery.h"
 #include "http_server.h"
+#include "lwip/apps/netbiosns.h"
+#include "mdns.h"
 #include "wifi/wifi_main.h"
 
 static const char *TAG = "http_discovery";
@@ -44,7 +44,7 @@ static void initialise_mdns( void ) {
             "_tcp",
             80,
             serviceTxtData,
-            sizeof(serviceTxtData) / sizeof(serviceTxtData[ 0 ]) ) );
+            sizeof( serviceTxtData ) / sizeof( serviceTxtData[ 0 ] ) ) );
     /*
     ESP_ERROR_CHECK( mdns_service_subtype_add_for_host(
             CONFIG_MDNS_INSTANCE_NAME,

@@ -1,8 +1,8 @@
 #include "esp_log.h"
+#include "nvs.h"
+#include "nvs_main.h"
 #include "program.h"
 #include "program_json.h"
-#include "lib/nvs_main.h"
-#include "nvs.h"
 #include <string.h>
 
 static const char *LOG_TAG = "program";

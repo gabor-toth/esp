@@ -4,7 +4,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "lib/gpio_define.h"
+#include "gpio_define.h"
 #include "gpio_logic.h"
 #include "program_json.h"
 #include "program.h"

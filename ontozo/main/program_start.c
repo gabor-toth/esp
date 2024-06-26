@@ -1,11 +1,11 @@
+#include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 #include "freertos/timers.h"
-#include "esp_log.h"
-#include "lib/sntp_main.h"
 #include "program.h"
 #include "program_logic.h"
 #include "program_start.h"
+#include "sntp_main.h"
 
 static const char *LOG_TAG = "program_starter";
 

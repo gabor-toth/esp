@@ -2,9 +2,9 @@
 #include <string.h>
 #include <esp_log.h>
 #include "config.h"
-#include "lib/gpio_define.h"
-#include "lib/nvs_main.h"
+#include "gpio_define.h"
 #include "gpio_logic.h"
+#include "nvs_main.h"
 
 static const char *LOG_TAG = "pin_logic";
 
@@ -89,8 +89,8 @@ void gpio_define_input_pins_callback( gpio_config_t *io_conf, void *user_context
                   low_is_on, &io_conf->pin_bit_mask );
 }
 
-void gpio_changed_callback( uint32_t io_num, int state ) {
-    ESP_LOGI( LOG_TAG, "Pin %ld changed to %d", io_num, state );
+static void gpio_changed_callback( gpio_num_t io_num, int state ) {
+    ESP_LOGI( LOG_TAG, "Pin %d changed to %d", io_num, state );
 
     bool refill_state = gpio_get_pin_state( OUTPUTS, PUMPS_CLASS, PUMP_REFILL ),
             old_refill_state = refill_state;
@@ -118,7 +118,7 @@ void gpio_changed_callback( uint32_t io_num, int state ) {
     } else if ( io_num == GPIO_INPUT_BUTTON_STOP ) {
         main_state = false;
     } else {
-        ESP_LOGE( LOG_TAG, "Unhandled gpio %ld (state %d)!\n", io_num, state );
+        ESP_LOGE( LOG_TAG, "Unhandled gpio %d (state %d)!\n", io_num, state );
     }
 
     if ( old_main_state != main_state ) {
@@ -135,7 +135,7 @@ void gpio_changed_callback( uint32_t io_num, int state ) {
 }
 
 void gpio_logic_init() {
-    gpio_init( NULL );
+    gpio_init( NULL, gpio_changed_callback );
 }
 
 void gpio_pump_main( bool on ) {

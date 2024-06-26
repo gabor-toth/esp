@@ -1,13 +1,13 @@
-#include "lib/gpio_define.h"
-#include "lib/main_main.h"
-#include "lib/nvs_main.h"
-#include "lib/rest_main.h"
-#include "lib/sntp_main.h"
-#include "lib/wifi_connect.h"
+#include "gpio_define.h"
 #include "gpio_logic.h"
+#include "http/http_server.h"
+#include "main_main.h"
+#include "nvs_main.h"
 #include "program.h"
 #include "program_logic.h"
 #include "program_start.h"
+#include "sntp_main.h"
+#include "wifi/wifi_main.h"
 
 void app_main( void ) {
     main_main();
