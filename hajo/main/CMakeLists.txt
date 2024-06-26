@@ -6,12 +6,12 @@ set(SOURCES
         "../../common/gpio_define.c"
         "../../common/gpio_json.c"
         "../../common/gpio_task.c"
-        "../../common/logger.c"
-        "../../common/main_main.c"
-        "../../common/nvs_main.c"
         "../../common/http/http_discovery.c"
         "../../common/http/http_server.c"
         "../../common/http/http_static_file.c"
+        "../../common/logger.c"
+        "../../common/main_main.c"
+        "../../common/nvs_main.c"
         "../../common/rest_util.c"
         "../../common/sntp_main.c"
         "../../common/system_info_rest.c"
@@ -72,11 +72,11 @@ idf_component_register(
 )
 
 if (CONFIG_EXAMPLE_WEB_DEPLOY_SF)
-    set(WEB_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../frontend ")
+    set(WEB_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../frontend")
     if (EXISTS ${WEB_SRC_DIR}/dist/frontend)
         spiffs_create_partition_image(www ${WEB_SRC_DIR}/dist/frontend FLASH_IN_PROJECT)
     else ()
-        message(FATAL_ERROR " ${WEB_SRC_DIR}/dist/frontend doesn't exit. Please run 'ng build' in ${WEB_SRC_DIR} ")
+        message(FATAL_ERROR "${WEB_SRC_DIR}/dist/frontend doesn't exit. Please run 'ng build' in ${WEB_SRC_DIR}")
     endif ()
 endif ()
 

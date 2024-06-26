@@ -10,8 +10,6 @@
 extern "C" {
 #endif
 
-extern void gpio_init( void *user_context );
-
 #define PIN_ENABLED     1
 #define PIN_DISABLED    0
 
@@ -30,6 +28,10 @@ typedef enum {
     high_is_on, low_is_on, inherit = -1
 } PinLevelType;
 
+typedef void (*gpio_changed_callback_t)( gpio_num_t io_num, int state );
+
+extern void gpio_init( void *user_context, gpio_changed_callback_t gpio_changed_callback );
+
 extern void gpio_add_class( bool is_input, const char *name, int max_pin_count, PinLevelType level_type );
 
 extern int
@@ -40,8 +42,6 @@ extern void gpio_set_delays( bool is_input, int class_id, int index, int delay_m
 extern void gpio_define_output_pins_callback( gpio_config_t *io_conf, void *user_context );
 
 extern void gpio_define_input_pins_callback( gpio_config_t *io_conf, void *user_context );
-
-extern void gpio_changed_callback( gpio_num_t io_num, int state );
 
 extern int gpio_get_number_of_classes( bool is_input );
 
