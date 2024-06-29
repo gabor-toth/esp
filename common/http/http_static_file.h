@@ -7,9 +7,11 @@ extern "C" {
 
 #include "http_server.h"
 
-extern esp_err_t http_register_static_files_handler(httpd_handle_t server,
-                                                    http_server_context_t *http_context,
-                                                    const char *static_files_base_path );
+extern void http_static_files_register();
+
+extern esp_err_t http_static_files_register_handler( httpd_handle_t server,
+                                                     http_server_context_t *http_context,
+                                                     const char *static_files_base_path );
 
 #ifdef __cplusplus
 }

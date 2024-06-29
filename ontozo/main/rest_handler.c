@@ -35,7 +35,7 @@ handler_on_http_server_start( void *dummy, esp_event_base_t event_base, int32_t 
     rest_register_gpio_handlers( data->hd, server_context );
     rest_register_programs_handlers( data->hd, server_context );
     rest_register_program_logic_handlers( data->hd, server_context );
-    http_register_static_files_handler(data->hd, server_context, "");
+    http_static_files_register_handler( data->hd, server_context, "" );
 }
 
 void rest_register() {

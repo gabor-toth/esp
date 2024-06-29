@@ -1,6 +1,7 @@
 #include "gpio_logic.h"
 #include "http/http_discovery.h"
 #include "http/http_server.h"
+#include "http/http_static_file.h"
 #include "main_main.h"
 #include "nvs_main.h"
 #include "program.h"
@@ -21,6 +22,7 @@ void app_main( void ) {
     discovery_register();
 
     http_server_main(DEFAULT_HTTP_SERVER_CONTEXT_SIZE);
+    http_static_files_register();
     rest_register();
     ESP_ERROR_CHECK( wifi_main() );
 
