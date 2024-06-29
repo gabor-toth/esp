@@ -8,7 +8,7 @@
 static const char *LOG_TAG = "gpio_rest";
 
 typedef struct {
-    http_server_context_t *rest_context;
+    http_server_context_t *server_context;
     bool type;
     int class;
 } PinHandlerContext;
@@ -96,7 +96,7 @@ static esp_err_t pins_put_handler( httpd_req_t *req ) {
     cJSON *root;
     esp_err_t result;
 
-    result = rest_receive_json_body( req, ((PinHandlerContext *) req->user_ctx )->rest_context, &root );
+    result = rest_receive_json_body( req, ((PinHandlerContext *) req->user_ctx )->server_context, &root );
     if ( result != ESP_OK ) {
         return result;
     }
@@ -106,17 +106,17 @@ static esp_err_t pins_put_handler( httpd_req_t *req ) {
     return result;
 }
 
-static void rest_register_state_handler( httpd_handle_t server, http_server_context_t *rest_context ) {
+static void rest_register_state_handler( httpd_handle_t server, http_server_context_t *server_context ) {
     httpd_uri_t state_get_uri = {
             .uri = "/state",
             .method = HTTP_GET,
             .handler = state_get_handler,
-            .user_ctx = rest_context
+            .user_ctx = server_context
     };
     httpd_register_uri_handler( server, &state_get_uri );
 }
 
-static void rest_register_put_handlers( httpd_handle_t server, http_server_context_t *rest_context ) {
+static void rest_register_put_handlers( httpd_handle_t server, http_server_context_t *server_context ) {
     char uri[256];
 
     for ( int type = OUTPUTS; type <= INPUTS; type++ ) {
@@ -124,7 +124,7 @@ static void rest_register_put_handlers( httpd_handle_t server, http_server_conte
         for ( int class = 0; class < class_count; class++ ) {
             snprintf( uri, sizeof uri, "/%s", gpio_get_class_name( type, class ));
             PinHandlerContext *context = malloc( sizeof( PinHandlerContext ));
-            context->rest_context = rest_context;
+            context->server_context = server_context;
             context->type = type;
             context->class = class;
             httpd_uri_t uri_definition = {
@@ -143,8 +143,8 @@ static void rest_register_put_handlers( httpd_handle_t server, http_server_conte
     }
 }
 
-void rest_register_gpio_handlers( httpd_handle_t server, http_server_context_t *rest_context ) {
-    rest_register_state_handler( server, rest_context );
-    rest_register_put_handlers( server, rest_context );
+void rest_register_gpio_handlers( httpd_handle_t server, http_server_context_t *server_context ) {
+    rest_register_state_handler( server, server_context );
+    rest_register_put_handlers( server, server_context );
 }
 

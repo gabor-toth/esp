@@ -60,12 +60,12 @@ static esp_err_t run_get_handler( httpd_req_t *req ) {
     return ESP_OK;
 }
 
-void rest_register_program_logic_handlers( httpd_handle_t server, http_server_context_t *rest_context ) {
+void rest_register_program_logic_handlers( httpd_handle_t server, http_server_context_t *server_context ) {
     httpd_uri_t run_post_uri = {
             .uri = RUN_URI,
             .method = HTTP_POST,
             .handler = run_post_handler,
-            .user_ctx = rest_context
+            .user_ctx = server_context
     };
     httpd_register_uri_handler( server, &run_post_uri );
 
@@ -73,7 +73,7 @@ void rest_register_program_logic_handlers( httpd_handle_t server, http_server_co
             .uri = "/run",
             .method = HTTP_GET,
             .handler = run_get_handler,
-            .user_ctx = rest_context
+            .user_ctx = server_context
     };
     httpd_register_uri_handler( server, &run_get_uri );
 }

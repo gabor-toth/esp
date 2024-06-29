@@ -97,12 +97,12 @@ static esp_err_t program_delete_handler( httpd_req_t *req ) {
     return ESP_OK;
 }
 
-void rest_register_programs_handlers( httpd_handle_t server, http_server_context_t *rest_context ) {
+void rest_register_programs_handlers( httpd_handle_t server, http_server_context_t *server_context ) {
     httpd_uri_t program_put_uri = {
             .uri = "/programs",
             .method = HTTP_PUT,
             .handler = program_put_handler,
-            .user_ctx = rest_context
+            .user_ctx = server_context
     };
     httpd_register_uri_handler( server, &program_put_uri );
 
@@ -110,7 +110,7 @@ void rest_register_programs_handlers( httpd_handle_t server, http_server_context
             .uri = "/programs",
             .method = HTTP_POST,
             .handler = program_post_handler,
-            .user_ctx = rest_context
+            .user_ctx = server_context
     };
     httpd_register_uri_handler( server, &program_post_uri );
 
@@ -118,7 +118,7 @@ void rest_register_programs_handlers( httpd_handle_t server, http_server_context
             .uri = PROGRAMS_URI,
             .method = HTTP_DELETE,
             .handler = program_delete_handler,
-            .user_ctx = rest_context
+            .user_ctx = server_context
     };
     httpd_register_uri_handler( server, &program_delete_uri );
 
@@ -126,7 +126,7 @@ void rest_register_programs_handlers( httpd_handle_t server, http_server_context
             .uri = "/programs/*",
             .method = HTTP_GET,
             .handler = program_get_handler,
-            .user_ctx = rest_context
+            .user_ctx = server_context
     };
     httpd_register_uri_handler( server, &program_get_uri );
 
@@ -134,7 +134,7 @@ void rest_register_programs_handlers( httpd_handle_t server, http_server_context
             .uri = "/programs",
             .method = HTTP_GET,
             .handler = programs_get_handler,
-            .user_ctx = rest_context
+            .user_ctx = server_context
     };
     httpd_register_uri_handler( server, &programs_get_uri );
 }
