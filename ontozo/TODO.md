@@ -1,3 +1,10 @@
+Build
+=====
+
+```
+idf.py -p /dev/ttyUSB0 app-flash -b 3000000 && idf.py -p /dev/ttyUSB0 monitor
+```
+
 Frontend
 ========
 
