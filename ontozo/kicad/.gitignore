@@ -1,0 +1,6 @@
+\#auto_saved_files\#
+_autosave-*.kicad_sch
+*-backups/
+*-bak
+gerber/
+*.zip
