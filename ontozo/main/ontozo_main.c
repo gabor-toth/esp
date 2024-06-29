@@ -1,11 +1,14 @@
 #include "gpio_logic.h"
 #include "http/http_discovery.h"
+#include "http/http_server.h"
 #include "main_main.h"
 #include "nvs_main.h"
 #include "program.h"
 #include "program_logic.h"
 #include "program_start.h"
+#include "rest_handler.h"
 #include "sntp_main.h"
+#include "wifi/wifi_main.h"
 
 void app_main( void ) {
     main_main();
@@ -17,7 +20,9 @@ void app_main( void ) {
     sntp_init_before_wifi();
     discovery_register();
 
-//    wifi_connect();
+    http_server_main(DEFAULT_HTTP_SERVER_CONTEXT_SIZE);
+    rest_register();
+    ESP_ERROR_CHECK( wifi_main() );
 
 //    rest_init_after_wifi();
 //    sntp_init_after_wifi();
