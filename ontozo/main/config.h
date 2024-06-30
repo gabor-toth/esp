@@ -3,6 +3,10 @@
 
 #include "driver/gpio.h"
 
+// ESP32 S
+
+#if CONFIG_IDF_TARGET_ESP32
+
 #define GPIO_INPUT_LEVEL_1  GPIO_NUM_22
 #define GPIO_INPUT_LEVEL_2  GPIO_NUM_21
 #define GPIO_INPUT_LEVEL_3  GPIO_NUM_4
@@ -22,5 +26,31 @@
 #define GPIO_OUTPUT_ZONE_6          GPIO_NUM_33
 #define GPIO_OUTPUT_ZONE_7          GPIO_NUM_25
 #define GPIO_OUTPUT_ZONE_8          GPIO_NUM_13
+
+#elif CONFIG_IDF_TARGET_ESP32S2
+
+#define GPIO_INPUT_LEVEL_1  GPIO_NUM_1
+#define GPIO_INPUT_LEVEL_2  GPIO_NUM_2
+#define GPIO_INPUT_LEVEL_3  GPIO_NUM_3
+#define GPIO_INPUT_LEVEL_4  GPIO_NUM_4
+
+#define GPIO_INPUT_BUTTON_START     GPIO_NUM_13
+#define GPIO_INPUT_BUTTON_STOP      GPIO_NUM_14
+
+#define GPIO_OUTPUT_PUMP_MAIN       GPIO_NUM_37
+#define GPIO_OUTPUT_PUMP_REFILL     GPIO_NUM_38
+
+#define GPIO_OUTPUT_ZONE_1          GPIO_NUM_5
+#define GPIO_OUTPUT_ZONE_2          GPIO_NUM_6
+#define GPIO_OUTPUT_ZONE_3          GPIO_NUM_7
+#define GPIO_OUTPUT_ZONE_4          GPIO_NUM_8
+#define GPIO_OUTPUT_ZONE_5          GPIO_NUM_9
+#define GPIO_OUTPUT_ZONE_6          GPIO_NUM_10
+#define GPIO_OUTPUT_ZONE_7          GPIO_NUM_11
+#define GPIO_OUTPUT_ZONE_8          GPIO_NUM_12
+
+#else
+#error Unhandled target
+#endif
 
 #endif //ONTOZO_CONFIG_H
