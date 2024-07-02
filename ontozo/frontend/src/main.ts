@@ -12,5 +12,9 @@ import { AppModule } from './app/app.module';
 import { appConfig } from './app/app.config';
 import { AppComponent } from './app/app.component';
 
-bootstrapApplication(AppComponent, appConfig)
+bootstrapApplication(AppComponent, appConfig) {
+  providers: [
+    provideHttpClient(),
+  ]
+}
   .catch((err) => console.error(err));
