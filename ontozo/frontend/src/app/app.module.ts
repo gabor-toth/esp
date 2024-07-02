@@ -2,7 +2,7 @@ import {NgModule} from '@angular/core';
 import {BrowserModule} from '@angular/platform-browser';
 
 import {AppRoutingModule} from './app-routing.module';
-import {AppComponent} from './app.component';
+// import {AppComponent} from './app.component';
 
 import {HttpClientModule} from '@angular/common/http';
 import {PinComponent} from './pin/pin.component';
@@ -20,7 +20,7 @@ import {FlexLayoutModule} from '@angular/flex-layout';
 
 @NgModule({
     declarations: [
-        AppComponent,
+        // AppComponent,
         StateComponent,
         AdminComponent,
         ProgramsComponent,
@@ -40,7 +40,7 @@ import {FlexLayoutModule} from '@angular/flex-layout';
         FlexLayoutModule,
     ],
     providers: [],
-    bootstrap: [AppComponent]
+    // bootstrap: [AppComponent]
 })
 export class AppModule {
 }

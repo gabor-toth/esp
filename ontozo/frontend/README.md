@@ -2,13 +2,20 @@ Start
 =====
 
 ```
+sudo apt install npm
+npm install @angular/cli@18
+npm install @angular/flex-layout
+sudo apt  install curl
+curl -sL https://deb.nodesource.com/setup_18.x -o nodesource_setup.sh
+sudo bash nodesource_setup.sh
+sudo apt-get install nodejs -y
+
 ng version
 cd ontozo
 ng new frontend
 ? Would you like to add Angular routing? Yes
 ? Which stylesheet format would you like to use? SCSS   [ https://sass-lang.com/documentation/syntax#scss                ]
 
-#npm install @angular/cli
 ng add @angular/material
 
 ```

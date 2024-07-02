@@ -3,7 +3,7 @@
 
 @import "theme";
 
-$color-config: mat.get-color-config($my-app-theme);
+$color-config: mat.m2-get-color-config($my-app-theme);
 $primary-palette: map.get($color-config, 'primary');
 
 :host {
@@ -31,12 +31,12 @@ p {
 a,
 a:visited,
 a:hover {
-  color: mat.get-color-from-palette($primary-palette, 50);
+  color: mat.m2-get-color-from-palette($primary-palette, 50);
   text-decoration: none;
 }
 
 a:hover {
-  color: mat.get-color-from-palette($primary-palette, 200);
+  color: mat.m2-get-color-from-palette($primary-palette, 200);
 }
 
 fa-icon {
@@ -53,7 +53,7 @@ mat-icon.mat-icon {
   }
 
   &.on {
-    color: mat.get-color-from-palette($primary-palette, 700);
+    color: mat.m2-get-color-from-palette($primary-palette, 700);
   }
 
   &.off {
@@ -114,11 +114,11 @@ table.mat-table {
   font-weight: normal;
 
   &.mat-primary {
-    color: mat.get-color-from-palette($primary-palette, 50);
-    background-color: mat.get-color-from-palette($primary-palette, 700);
+    color: mat.m2-get-color-from-palette($primary-palette, 50);
+    background-color: mat.m2-get-color-from-palette($primary-palette, 700);
 
     &:hover {
-      color: mat.get-color-from-palette($primary-palette, 200);
+      color: mat.m2-get-color-from-palette($primary-palette, 200);
     }
   }
 
@@ -146,3 +146,6 @@ table.mat-table {
     margin-right: auto;
   }
 }
+
+html, body { height: 100%; }
+body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }

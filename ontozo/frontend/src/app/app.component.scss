@@ -3,7 +3,7 @@
 
 @import "../theme";
 
-$color-config: mat.get-color-config($my-app-theme);
+$color-config: mat.m2-get-color-config($my-app-theme);
 $primary-palette: map.get($color-config, 'primary');
 
 .toolbar {
@@ -14,8 +14,8 @@ $primary-palette: map.get($color-config, 'primary');
   left: 0;
   right: 0;
   height: 60px;
-  background-color: mat.get-color-from-palette($primary-palette, 700);
-  color: mat.get-color-from-palette($primary-palette, 50);
+  background-color: mat.m2-get-color-from-palette($primary-palette, 700);
+  color: mat.m2-get-color-from-palette($primary-palette, 50);
   font-weight: normal;
   padding-left: 0.5em;
   padding-right: 0.5em;

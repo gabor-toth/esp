@@ -2,7 +2,7 @@
 @use '@angular/material' as mat;
 @import "../../theme";
 
-$color-config: mat.get-color-config($my-app-theme);
+$color-config: mat.m2-get-color-config($my-app-theme);
 $primary-palette: map.get($color-config, 'primary');
 $foreground-palette: map.get($color-config, 'foreground');
 $foreground-disabled: map.get($foreground-palette, "disabled-button");
@@ -45,7 +45,7 @@ $foreground-disabled: map.get($foreground-palette, "disabled-button");
     width: 20px;
 
     &.on {
-      color: mat.get-color-from-palette($primary-palette, 700);
+      color: mat.m2-get-color-from-palette($primary-palette, 700);
     }
 
     &.off {
