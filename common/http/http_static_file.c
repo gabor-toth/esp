@@ -83,7 +83,7 @@ static void set_cache_forever( httpd_req_t *req, char *filepath ) {
 //    static char last_modified_header_value[32];
 //    static char max_age_header_value[32];
 
-    httpd_resp_set_hdr( req, "Cache-Control", "max-age=31536000" ); // 1 year in seconds
+    httpd_resp_set_hdr( req, "Cache-Control", "private, max-age=31536000, immutable" ); // 1 year in seconds
 
 //    struct stat file_state;
 //    stat( filepath, &file_state );

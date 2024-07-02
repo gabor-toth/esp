@@ -97,6 +97,11 @@ crw-rw---- 1 root dialout 188, 0 ápr    5 20:01 /dev/ttyUSB0
 sudo usermod -a -G dialout tothg
 ```
 
+If there's no ttyUSB0
+```
+sudo apt remove brltty
+```
+
 New project
 -----------
 
