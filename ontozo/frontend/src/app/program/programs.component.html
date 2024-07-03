@@ -8,11 +8,11 @@
     <div *ngIf="programs" class="button-holder">
         <button mat-raised-button color="primary" (click)="nextZone(); $event.stopPropagation()">
             <!--Következő zóna-->
-            <mat-icon class="material-icons-outlined">skip_next</mat-icon>
+            <mat-icon class="material-icons-outlined icon-big">skip_next</mat-icon>
         </button>
         <button mat-raised-button color="primary" (click)="stopProgram(); $event.stopPropagation()">
             <!--Stop-->
-            <mat-icon class="material-icons-outlined">stop</mat-icon>
+            <mat-icon class="material-icons-outlined icon-big">stop</mat-icon>
         </button>
     </div>
     <div *ngIf="programs">
@@ -25,7 +25,7 @@
             <!-- Name Column -->
             <ng-container matColumnDef="name">
                 <th mat-header-cell *matHeaderCellDef> Név</th>
-                <td mat-cell *matCellDef="let element"> {{element.name}}</td>
+                <td mat-cell *matCellDef="let element"> {{ element.name }}</td>
             </ng-container>
 
             <ng-container matColumnDef="enabled">
@@ -43,17 +43,17 @@
             <ng-container matColumnDef="start">
                 <th mat-header-cell *matHeaderCellDef> Indítás</th>
                 <td mat-cell *matCellDef="let element">
-                    <div class="program-start-times"> {{element.startTimes}}</div>
+                    <div class="program-start-times"> {{ element.startTimes }}</div>
                     <div class="program-days">
                         <div *ngIf="element.days.type=='on'">
                             <div *ngFor="let day of programDaysDisplay; let i = index"
                                  class="program-day {{this.hasDay(element, i)?'on':'off'}}">
-                                {{day}}
+                                {{ day }}
                             </div>
                         </div>
 
                         <div *ngIf="element.days.type=='interval'">
-                            {{element.days.intervalDays}} naponta
+                            {{ element.days.intervalDays }} naponta
                         </div>
                     </div>
                 </td>

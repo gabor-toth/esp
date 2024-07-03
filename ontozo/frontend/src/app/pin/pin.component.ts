@@ -21,7 +21,7 @@ export class PinComponent implements OnInit {
   timer: number = 0;
   stateAsString = "";
 
-  constructor( private stateService: PinService ) {
+  constructor( private pinService: PinService ) {
   }
 
   ngOnInit(): void {
@@ -52,7 +52,7 @@ export class PinComponent implements OnInit {
     clearTimeout( this.timer );
     this.timer = 0;
     let component = this;
-    this.stateService.getState().subscribe( {
+    this.pinService.getState().subscribe( {
       next( state ) {
         component.onUpdate( state );
       },
@@ -65,7 +65,7 @@ export class PinComponent implements OnInit {
 
   click( type: String, id: number, state: boolean ) {
     let component = this;
-    this.stateService.setState( type, id, state ).subscribe( {
+    this.pinService.setState( type, id, state ).subscribe( {
       complete() {
         component.updateState();
       },

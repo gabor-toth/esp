@@ -79,4 +79,16 @@ export class StateComponent implements OnInit {
       },
     } );
   }
+
+  click( type: String, id: number, state: boolean ) {
+    let component = this;
+    this.pinService.setState( type, id, state ).subscribe( {
+      complete() {
+        component.updateState();
+      },
+      error( err ) {
+        console.error( 'Error writing state', err );
+      }
+    } );
+  }
 }
