@@ -8,17 +8,17 @@ $primary-palette: map.get($color-config, 'primary');
 
 .toolbar {
   align-items: center;
-  display: flex;
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 60px;
   background-color: mat.m2-get-color-from-palette($primary-palette, 700);
   color: mat.m2-get-color-from-palette($primary-palette, 50);
+  display: flex;
   font-weight: normal;
+  height: 60px;
+  left: 0;
   padding-left: 0.5em;
   padding-right: 0.5em;
+  position: absolute;
+  right: 0;
+  top: 0;
 
   a {
     margin-right: 1em;
@@ -35,15 +35,13 @@ $primary-palette: map.get($color-config, 'primary');
 
   .active-route {
     border-style: solid;
-    border-width: 0;
-    border-bottom-width: 1px;
+    border-width: 0 0 0 1px;
   }
 }
 
 footer {
-  margin-top: 8px;
-  display: flex;
   align-items: center;
+  display: flex;
   line-height: 20px;
+  margin-top: 8px;
 }
-

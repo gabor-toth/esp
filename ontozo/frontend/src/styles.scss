@@ -14,6 +14,17 @@ $primary-palette: map.get($color-config, 'primary');
   -moz-osx-font-smoothing: grayscale;
 }
 
+html {
+  height: 100%;
+}
+
+body {
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  height: 100%;
+  margin: 0;
+}
+
+
 h1,
 h2,
 h3,
@@ -28,28 +39,28 @@ p {
   margin: 0;
 }
 
-a,
-a:visited,
-a:hover {
-  color: mat.m2-get-color-from-palette($primary-palette, 50);
-  text-decoration: none;
-}
+a {
+  &, &:visited, &:hover {
+    color: mat.m2-get-color-from-palette($primary-palette, 50);
+    text-decoration: none;
+  }
 
-a:hover {
-  color: mat.m2-get-color-from-palette($primary-palette, 200);
+  &:hover {
+    color: mat.m2-get-color-from-palette($primary-palette, 200);
+  }
 }
 
 fa-icon {
-  margin-right: 0.5em;
   font-size: 1.5em;
+  margin-right: 0.5em;
 }
 
 mat-icon.mat-icon {
   .icon-switch & {
     font-size: 36px;
     height: auto;
-    width: auto;
     margin-right: 0.1em;
+    width: auto;
   }
 
   &.on {
@@ -64,18 +75,8 @@ mat-icon.mat-icon {
 
 .content {
   margin: 72px auto 32px;
-  //padding: 0 16px;
 }
 
-
-html, body {
-  height: 100%;
-}
-
-body {
-  margin: 0;
-  font-family: Roboto, "Helvetica Neue", sans-serif;
-}
 
 .page-container {
   align-items: center;
@@ -96,8 +97,8 @@ body {
 table.mat-table {
   th.mat-header-cell,
   td.mat-cell {
-    padding-left: 12px;
     font-size: 16px;
+    padding-left: 12px;
   }
 }
 
@@ -109,19 +110,8 @@ table.mat-table {
   }
 }
 
-.mat-button, .mat-raised-button, .mat-icon-button, .mat-stroked-button, .mat-flat-button, .mat-fab, .mat-mini-fab {
-  font-size: 16px;
-  font-weight: normal;
-
-  &.mat-primary {
-    color: mat.m2-get-color-from-palette($primary-palette, 50);
-    background-color: mat.m2-get-color-from-palette($primary-palette, 700);
-
-    &:hover {
-      color: mat.m2-get-color-from-palette($primary-palette, 200);
-    }
-  }
-
+.mdc-button__label {
+  letter-spacing: normal;
 }
 
 .time-container {
@@ -146,6 +136,3 @@ table.mat-table {
     margin-right: auto;
   }
 }
-
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }

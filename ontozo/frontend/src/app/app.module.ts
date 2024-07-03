@@ -1,46 +1,38 @@
-import {NgModule} from '@angular/core';
-import {BrowserModule} from '@angular/platform-browser';
+import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
 
-// import {AppRoutingModule} from './app-routing.module';
-// import {AppComponent} from './app.component';
+import { AdminComponent } from './admin/admin.component';
+import { PinComponent } from './pin/pin.component';
+import { ProgramsComponent } from './program/programs.component';
+import { StateComponent } from './state/state.component';
 
-import {HttpClientModule} from '@angular/common/http';
-import {PinComponent} from './pin/pin.component';
-import {StateComponent} from './state/state.component';
-import {AdminComponent} from './admin/admin.component';
-import {ProgramsComponent} from './program/programs.component';
-
-import {MatTableModule} from "@angular/material/table";
-import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
-import {MatIconModule} from "@angular/material/icon";
-import {MatButtonModule} from "@angular/material/button";
-import {MatProgressSpinnerModule} from "@angular/material/progress-spinner";
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { FlexLayoutModule } from '@angular/flex-layout';
 // import {LayoutModule} from '@angular/cdk/layout';
-import {FlexLayoutModule} from '@angular/flex-layout';
+import { MatButtonModule } from "@angular/material/button";
+import { MatIconModule } from "@angular/material/icon";
+import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
+import { MatTableModule } from "@angular/material/table";
 
-@NgModule({
-    declarations: [
-        // AppComponent,
-        StateComponent,
-        AdminComponent,
-        ProgramsComponent,
-        PinComponent,
-    ],
-    imports: [
-        BrowserModule,
-        // AppRoutingModule,
-        HttpClientModule,
-        BrowserAnimationsModule,
-        MatTableModule,
-        MatIconModule,
-        MatButtonModule,
-        MatProgressSpinnerModule,
-        // https://material.angular.io/cdk/layout/overview
-        // LayoutModule,
-        FlexLayoutModule,
-    ],
-    providers: [],
-    // bootstrap: [AppComponent]
-})
+@NgModule( {
+  declarations: [
+    AdminComponent,
+    PinComponent,
+    ProgramsComponent,
+    StateComponent,
+  ],
+  imports: [
+    BrowserAnimationsModule,
+    BrowserModule,
+    FlexLayoutModule,
+    // https://material.angular.io/cdk/layout/overview
+    //LayoutModule,
+    MatButtonModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+    MatTableModule,
+  ],
+  providers: [],
+} )
 export class AppModule {
 }
