@@ -16,6 +16,9 @@ $primary-palette: map.get($color-config, 'primary');
 
 html {
   height: 100%;
+
+  --mat-table-header-headline-color: rgba(0, 0, 0, 0.54);
+  --mdc-outlined-button-label-text-tracking: 0;
 }
 
 body {
@@ -94,14 +97,6 @@ mat-icon.mat-icon {
   }
 }
 
-table.mat-table {
-  th.mat-header-cell,
-  td.mat-cell {
-    font-size: 16px;
-    padding-left: 12px;
-  }
-}
-
 .button-holder {
   margin-bottom: 0.5em;
 
@@ -110,8 +105,28 @@ table.mat-table {
   }
 }
 
-.mdc-button__label {
-  letter-spacing: normal;
+.mdc-button {
+  &.mat-mdc-raised-button > .mat-icon {
+    font-size: 24px;
+    height: 24px;
+    margin-left: 0;
+    margin-right: 0;
+    width: 24px;
+
+    &.icon-big {
+      font-size: 32px;
+      height: 32px;
+      width: 32px;
+    }
+  }
+}
+
+.mat-mdc-table {
+  .mat-mdc-header-cell,
+  .mat-mdc-cell {
+    font-size: 16px;
+    padding-left: 12px;
+  }
 }
 
 .time-container {
