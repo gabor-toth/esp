@@ -11,7 +11,7 @@ export class PinService {
 
   constructor( private http: HttpClient ) {
   }
-
+  
   getState(): Observable<PinsState> {
     return this.http.get<PinsState>( environment.baseUrl + 'state' );
   }
