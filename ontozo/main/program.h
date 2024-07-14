@@ -15,7 +15,7 @@ typedef struct {
 } ProgramZone;
 
 typedef enum {
-    unused = 0, on, interval
+    unused = 0, onDays, interval
 } ProgramDayType;
 
 typedef struct {

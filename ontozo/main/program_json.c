@@ -23,6 +23,8 @@ const char *const FIELD_TYPE = "type";
 const char *const VALUE_TYPE_INTERVAL = "interval";
 const char *const VALUE_TYPE_OFF = "off";
 const char *const VALUE_TYPE_ON_DAYS = "onDays";
+//@Deprecated
+const char *const VALUE_TYPE_ON = "on";
 const char *const VALUE_TYPE_UNUSED = "unused";
 const char *const FIELD_ON_DAYS = "onDays";
 const char *const FIELD_INTERVAL_DAYS = "intervalDays";
@@ -162,8 +164,8 @@ void read_days( const cJSON *root, Program *program ) {
         program->valid = false;
     } else {
         char *type_as_string = type_element->valuestring;
-        if ( strcmp( VALUE_TYPE_ON_DAYS, type_as_string ) == 0 ) {
-            program->days.type = on;
+        if ( strcmp( VALUE_TYPE_ON_DAYS, type_as_string ) == 0 || strcmp( VALUE_TYPE_ON, type_as_string ) == 0 ) {
+            program->days.type = onDays;
         } else if ( strcmp( VALUE_TYPE_INTERVAL, type_as_string ) == 0 ) {
             program->days.type = interval;
         } else if ( strcmp( VALUE_TYPE_OFF, type_as_string ) == 0 ) {
@@ -176,7 +178,7 @@ void read_days( const cJSON *root, Program *program ) {
     cJSON *on_days_element = cJSON_GetObjectItem( days_element, FIELD_ON_DAYS );
 
     if ( !on_days_element ) {
-        if ( program->days.type == on ) {
+        if ( program->days.type == onDays ) {
             ESP_LOGW( LOG_TAG, "has no %s", FIELD_ON_DAYS );
             program->valid = false;
         }
@@ -258,12 +260,12 @@ void write_days( cJSON *json, Program *program ) {
         },
      */
     cJSON *days = cJSON_AddObjectToObject( json, FIELD_DAYS );
-    const char *type_as_string = program->days.type == on ? VALUE_TYPE_ON_DAYS :
+    const char *type_as_string = program->days.type == onDays ? VALUE_TYPE_ON_DAYS :
                                  program->days.type == interval ? VALUE_TYPE_INTERVAL :
                                  VALUE_TYPE_UNUSED;
     cJSON_AddStringToObject( days, FIELD_TYPE, type_as_string );
 
-    if ( program->days.type == on || program->days.on_days != 0 ) {
+    if ( program->days.type == onDays || program->days.on_days != 0 ) {
         cJSON *days_array = cJSON_AddArrayToObject( days, FIELD_ON_DAYS );
         for ( int day_index = 1; day_index <= VALUE_DAY_NAMES_COUNT; day_index++ ) {
             if ( program->days.on_days & ( 1 << day_index ) ) {

@@ -29,7 +29,7 @@ static bool check_day_interval( ProgramDay *day, struct tm *timeinfo ) {
 }
 
 static bool check_day( Program *program, struct tm *timeinfo ) {
-    if ( program->days.type == on ) {
+    if ( program->days.type == onDays ) {
         return check_day_on( &program->days, timeinfo );
     } else if ( program->days.type == interval ) {
         return check_day_interval( &program->days, timeinfo );
