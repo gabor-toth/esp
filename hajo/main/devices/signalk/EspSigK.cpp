@@ -661,6 +661,10 @@ void EspSigK::sendDeltaSet( DeltaSet &deltaSet ) {
     char *deltaText = cJSON_PrintUnformatted( result );
     cJSON_Delete( result );
 
+    if ( deltaText == nullptr) {
+        ESP_LOGW( TAG, "deltaText is null" );
+        return;
+    }
     if ( printDeltaSerial ) {
         ESP_LOGI( TAG, "%s", deltaText );
     }
@@ -668,7 +672,8 @@ void EspSigK::sendDeltaSet( DeltaSet &deltaSet ) {
 //    wss_server_send_message( http_server, deltaText );
     xSemaphoreTake( semaphore, portMAX_DELAY );
     if ( wsClientConnected && wsClientHandle != nullptr ) {
-        if ( esp_websocket_client_send_text( wsClientHandle, deltaText, strlen( deltaText ), 100 ) != ESP_FAIL ) {
+        size_t deltaLen = strlen( deltaText );
+        if ( esp_websocket_client_send_text( wsClientHandle, deltaText, deltaLen, 100 ) != ESP_FAIL ) {
             sent = true;
         } else {
             ESP_LOGE( TAG_WSCLIENT, "error sending delta" );

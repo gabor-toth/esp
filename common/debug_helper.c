@@ -55,8 +55,8 @@ void debug_start_heap_dump( uint16_t period_sec ) {
 
 size_t debug_print_free_mem( const char *log ) {
     size_t free_size = heap_caps_get_free_size( MALLOC_CAP_8BIT );
-    size_t largest_size = heap_caps_get_largest_free_block( MALLOC_CAP_8BIT );
-    ESP_LOGI( log != NULL ? log : LOG, "mem free %d largest %d",
-              free_size, largest_size );
+    size_t largest_free_size = heap_caps_get_largest_free_block( MALLOC_CAP_8BIT );
+    ESP_LOGI( log != NULL ? log : LOG, "free mem %d largest %d",
+              free_size, largest_free_size );
     return free_size;
 }
