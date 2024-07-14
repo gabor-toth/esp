@@ -2,6 +2,14 @@ Build
 =====
 
 ```
+cd frontend
+ng build --configuration=production
+cd ..
+idf.py -p /dev/ttyUSB0 flash -b 3000000
+```
+
+```
+ng build --configuration=production
 idf.py -p /dev/ttyUSB0 app-flash -b 3000000 && idf.py -p /dev/ttyUSB0 monitor
 ```
 

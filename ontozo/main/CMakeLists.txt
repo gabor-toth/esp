@@ -33,9 +33,9 @@ idf_component_register(
 
 if (CONFIG_EXAMPLE_WEB_DEPLOY_SF)
     set(WEB_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../frontend")
-    if (EXISTS ${WEB_SRC_DIR}/dist/frontend)
-        spiffs_create_partition_image(www ${WEB_SRC_DIR}/dist/frontend FLASH_IN_PROJECT)
+    if (EXISTS ${WEB_SRC_DIR}/dist/frontend/browser)
+        spiffs_create_partition_image(www ${WEB_SRC_DIR}/dist/frontend/browser FLASH_IN_PROJECT)
     else ()
-        message(FATAL_ERROR "${WEB_SRC_DIR}/dist/frontend doesn't exit. Please run 'ng build' in ${WEB_SRC_DIR}")
+        message(FATAL_ERROR "${WEB_SRC_DIR}/dist/frontend/browser doesn't exit. Please run 'ng build' in ${WEB_SRC_DIR}")
     endif ()
 endif ()

@@ -1,15 +1,12 @@
-//
-// Created by gtoth00 on 2024. 05. 04..
-//
-
-#include "http_static_file.h"
-#include "http_server.h"
-#include <fcntl.h>
+#include "ctype.h"
 #include <errno.h>
-#include "rest_util.h"
 #include <esp_log.h>
 #include <esp_spiffs.h>
 #include <esp_vfs.h>
+#include "http_server.h"
+#include "http_static_file.h"
+#include <fcntl.h>
+#include "rest_util.h"
 
 static const char *TAG = "http-static";
 
@@ -40,6 +37,26 @@ static bool has_2_dots_in_file_name( char *filepath ) {
     char *p;
 
     return ( ( p = strchr( filepath, '.' ) ) != NULL ) && strchr( p + 1, '.' ) != NULL;
+}
+
+static bool is_angular_18_file( char *filepath ) {
+    char *p = strchr( filepath, '-' );
+    if ( p == NULL ) {
+        return false;
+    }
+    int chars = 0;
+    for ( p++; *p != 0 && *p != '.'; p++, chars++ ) {
+        int c = (int) *p;
+        if ( !isdigit( c ) && !isupper( c ) ) {
+            return false;
+        }
+    }
+    return chars == 8;
+}
+
+static bool is_file_cacheable( char *filepath ) {
+    return has_2_dots_in_file_name( filepath )
+           || is_angular_18_file( filepath );
 }
 
 esp_err_t init_fs( void ) {
@@ -115,7 +132,7 @@ static esp_err_t http_file_get_handler( httpd_req_t *req ) {
     }
 
     ESP_LOGI( TAG, "Sending file %s", filepath );
-    if ( has_2_dots_in_file_name( filepath ) ) {
+    if ( is_file_cacheable( filepath ) ) {
         set_cache_forever( req, filepath );
     }
     set_content_type_from_file( req, filepath );
