@@ -25,12 +25,12 @@ ESP_EVENT_DEFINE_BASE( WIFI_OWN_EVENT );
 static const char *TAG = "wifi_own";
 
 typedef struct {
-    char *ssid;
-    char *password;
+    const char *ssid;
+    const char *password;
 } known_wifi_network_t;
 
-static known_wifi_network_t known_wifi_networks[] = {
-        { .ssid = "sol", .password = "SoL37695" },
+static const known_wifi_network_t known_wifi_networks[] = {
+//        { .ssid = "sol", .password = "SoL37695" },
         { .ssid = "TothKiss", .password = "ToThKiSs" },
 //        { .ssid ="P92WG_E", .password ="22Dailymuffintime77" },
         { .ssid ="TGA", .password ="ToThKiSs01" },
