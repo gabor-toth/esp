@@ -279,7 +279,7 @@ static void init_leds_and_buttons() {
     gpio_set_level(GPIO_NUM_GATEWAY_LED_GREEN, 0 );
     gpio_set_level(GPIO_NUM_GATEWAY_LED_RED, 0 );
     
-    gpio_init( nullptr );
+    gpio_init( nullptr, nullptr );
     xTaskCreate( task_logger_led, "logger_led", 1024, nullptr, 10, nullptr );
 }
 
