@@ -25,8 +25,11 @@ static esp_err_t run_post_handler( httpd_req_t *req ) {
         rest_send_message_back( req, "moved to next" );
     } else if ( strncmp( uri, "start/", 6 /*strlen("start/")*/) == 0 ) {
         uri += 6;
-        if (( result = rest_parse_index( uri, &index, true )) != ESP_OK ) {
+        if ( ( result = rest_parse_index( uri, &index, true ) ) != ESP_OK ) {
             return rest_set_error_code( req, result, "Program index expected in URL" );
+        }
+        if ( index < 1 || index > program_get_count() ) {
+            return rest_set_error_code( req, result, "Program index is wrong" );
         }
         program_logic_start( index - 1 );
         rest_send_message_back( req, "started" );
@@ -46,10 +49,11 @@ static esp_err_t run_get_handler( httpd_req_t *req ) {
     cJSON_AddBoolToObject( root, "isProgramRunning", state.is_program_running );
     if ( state.is_program_running ) {
         cJSON_AddNumberToObject( root, "programIndex", state.program_index + 1 );
-        cJSON_AddStringToObject( root, "programName", program_get( state.program_index )->name );
+        Program *program = program_get( state.program_index );
+        cJSON_AddStringToObject( root, "programName", program->name );
         cJSON_AddNumberToObject( root, "zoneIndex", state.zone_index + 1 );
         PinData pin_data;
-        gpio_get_pin_data( OUTPUTS, ZONES_CLASS, state.zone_index, &pin_data );
+        gpio_get_pin_data( OUTPUTS, ZONES_CLASS, program->zones[ state.zone_index ].zone_id, &pin_data );
         cJSON_AddStringToObject( root, "zoneName", pin_data.name );
         cJSON_AddNumberToObject( root, "zonesCount", state.zones_count );
         cJSON_AddNumberToObject( root, "zoneLeftSeconds", state.zone_left_seconds );

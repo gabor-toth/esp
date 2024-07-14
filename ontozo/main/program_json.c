@@ -20,8 +20,9 @@ static char *const FIELD_START_TIMES = "startTimes";
 static char *const FIELD_ZONE_ID = "zoneId";
 static char *const FIELD_ZONES = "zones";
 const char *const FIELD_TYPE = "type";
-const char *const VALUE_TYPE_ON = "on";
 const char *const VALUE_TYPE_INTERVAL = "interval";
+const char *const VALUE_TYPE_OFF = "off";
+const char *const VALUE_TYPE_ON_DAYS = "onDays";
 const char *const VALUE_TYPE_UNUSED = "unused";
 const char *const FIELD_ON_DAYS = "onDays";
 const char *const FIELD_INTERVAL_DAYS = "intervalDays";
@@ -42,7 +43,7 @@ const char *const VALUE_DAY_NAMES[] = { "", "Mon", "Tue", "Wed", "Thu", "Fri", "
 static void read_head( const cJSON *root, Program *program ) {
     {
         cJSON *name_element = cJSON_GetObjectItem( root, FIELD_NAME );
-        if ( name_element == NULL) {
+        if ( name_element == NULL ) {
             ESP_LOGW( LOG_TAG, "has no %s", FIELD_NAME );
             program->valid = false;
         } else {
@@ -51,13 +52,13 @@ static void read_head( const cJSON *root, Program *program ) {
     }
     {
         cJSON *index_element = cJSON_GetObjectItem( root, FIELD_INDEX );
-        if ( index_element != NULL) {
+        if ( index_element != NULL ) {
             program->index = index_element->valueint;
         }
     }
     {
         cJSON *enabled_element = cJSON_GetObjectItem( root, FIELD_ENABLED );
-        if ( enabled_element != NULL) {
+        if ( enabled_element != NULL ) {
             program->enabled = enabled_element->valueint;
         }
     }
@@ -71,7 +72,7 @@ static void read_start_times( const cJSON *root, Program *program ) {
         ],
      */
     cJSON *start_times_element = cJSON_GetObjectItem( root, FIELD_START_TIMES );
-    if ( start_times_element == NULL) {
+    if ( start_times_element == NULL ) {
         ESP_LOGW( LOG_TAG, "has no %s", FIELD_START_TIMES );
         program->valid = false;
         return;
@@ -98,7 +99,7 @@ void read_zones( const cJSON *root, Program *program ) {
         ],
      */
     cJSON *zones_element = cJSON_GetObjectItem( root, FIELD_ZONES );
-    if ( zones_element == NULL) {
+    if ( zones_element == NULL ) {
         ESP_LOGW( LOG_TAG, "has no %s", FIELD_ZONES );
         program->valid = false;
         return;
@@ -111,7 +112,7 @@ void read_zones( const cJSON *root, Program *program ) {
         cJSON *zone_id_element = cJSON_GetObjectItem( zone_element, FIELD_ZONE_ID );
         if ( zone_id_element ) {
             int zone_id = zone_id_element->valueint - 1;
-            if ( !gpio_is_valid_index( OUTPUTS, ZONES_CLASS, zone_id )) {
+            if ( !gpio_is_valid_index( OUTPUTS, ZONES_CLASS, zone_id ) ) {
                 program->valid = false;
             } else {
                 program->zones[ i ].zone_id = zone_id;
@@ -149,7 +150,7 @@ void read_days( const cJSON *root, Program *program ) {
         },
      */
     cJSON *days_element = cJSON_GetObjectItem( root, FIELD_DAYS );
-    if ( days_element == NULL) {
+    if ( days_element == NULL ) {
         ESP_LOGW( LOG_TAG, "has no %s", FIELD_DAYS );
         program->valid = false;
         return;
@@ -161,10 +162,12 @@ void read_days( const cJSON *root, Program *program ) {
         program->valid = false;
     } else {
         char *type_as_string = type_element->valuestring;
-        if ( strcmp( VALUE_TYPE_ON, type_as_string ) == 0 ) {
+        if ( strcmp( VALUE_TYPE_ON_DAYS, type_as_string ) == 0 ) {
             program->days.type = on;
         } else if ( strcmp( VALUE_TYPE_INTERVAL, type_as_string ) == 0 ) {
             program->days.type = interval;
+        } else if ( strcmp( VALUE_TYPE_OFF, type_as_string ) == 0 ) {
+            program->days.type = unused;
         } else {
             ESP_LOGW( LOG_TAG, "wrong %s %s", FIELD_TYPE, type_as_string );
             program->valid = false;
@@ -214,11 +217,10 @@ void read_days( const cJSON *root, Program *program ) {
     }
 }
 
-
 void program_read_from_string( const char *json_string, Program **program_out ) {
     *program_out = NULL;
     cJSON *root = cJSON_Parse( json_string );
-    if ( root == NULL) {
+    if ( root == NULL ) {
         return;
     }
     program_read_from_json( root, program_out );
@@ -256,7 +258,7 @@ void write_days( cJSON *json, Program *program ) {
         },
      */
     cJSON *days = cJSON_AddObjectToObject( json, FIELD_DAYS );
-    const char *type_as_string = program->days.type == on ? VALUE_TYPE_ON :
+    const char *type_as_string = program->days.type == on ? VALUE_TYPE_ON_DAYS :
                                  program->days.type == interval ? VALUE_TYPE_INTERVAL :
                                  VALUE_TYPE_UNUSED;
     cJSON_AddStringToObject( days, FIELD_TYPE, type_as_string );
@@ -264,8 +266,8 @@ void write_days( cJSON *json, Program *program ) {
     if ( program->days.type == on || program->days.on_days != 0 ) {
         cJSON *days_array = cJSON_AddArrayToObject( days, FIELD_ON_DAYS );
         for ( int day_index = 1; day_index <= VALUE_DAY_NAMES_COUNT; day_index++ ) {
-            if ( program->days.on_days & ( 1 << day_index )) {
-                cJSON_AddItemToArray( days_array, cJSON_CreateString( VALUE_DAY_NAMES[ day_index ] ));
+            if ( program->days.on_days & ( 1 << day_index ) ) {
+                cJSON_AddItemToArray( days_array, cJSON_CreateString( VALUE_DAY_NAMES[ day_index ] ) );
             }
         }
     }
@@ -293,7 +295,7 @@ void write_start_times( cJSON *json, Program *program ) {
     for ( int i = 0; i < program->start_times_count; i++ ) {
         int start_time = program->start_times[ i ];
         snprintf( format_buf, sizeof format_buf, "%02d:%02d", start_time / 100, start_time % 100 );
-        cJSON_AddItemToArray( array, cJSON_CreateString( format_buf ));
+        cJSON_AddItemToArray( array, cJSON_CreateString( format_buf ) );
     }
 }
 
@@ -337,7 +339,7 @@ void programs_write_to_json( char **json_out ) {
     int count = program_get_count();
     for ( int i = 0; i < count; i++ ) {
         Program *program = program_get( i );
-        if ( program == NULL) {
+        if ( program == NULL ) {
             continue;
         }
         cJSON *item = cJSON_CreateObject();
