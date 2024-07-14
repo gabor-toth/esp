@@ -38,6 +38,7 @@ set(SOURCES
         "devices/logger/sdcard.c"
         "devices/signalk/EspSigK.cpp"
         "devices/signalk/HttpRequest.cpp"
+        "devices/signalk/n2k_simulator.cpp"
         "devices/signalk/NMEA2000-SignalK-Gateway.cpp"
         "devices/signalk/hajo_signalk.cpp"
         "devices/signalk/signalk_rest.c"
@@ -46,11 +47,11 @@ set(SOURCES
         "fonts/rubik_12_subpx.c"
         "fonts/rubik_18.c"
         "fonts/rubik_18_subpx.c"
-        "n2k/N2kRaymarine.cpp"
         "n2k/n2k_receiver.cpp"
         "n2k/n2k_sender.cpp"
         "n2k/n2k_struct_parser.cpp"
         "n2k/n2k_util.cpp"
+        "n2k/N2kRaymarine.cpp"
         "hajo_main.cpp"
 )
 
