@@ -168,7 +168,7 @@ void read_days( const cJSON *root, Program *program ) {
             program->days.type = onDays;
         } else if ( strcmp( VALUE_TYPE_INTERVAL, type_as_string ) == 0 ) {
             program->days.type = interval;
-        } else if ( strcmp( VALUE_TYPE_OFF, type_as_string ) == 0 ) {
+        } else if ( strcmp( VALUE_TYPE_OFF, type_as_string ) == 0 || strcmp( VALUE_TYPE_UNUSED, type_as_string ) == 0 ) {
             program->days.type = unused;
         } else {
             ESP_LOGW( LOG_TAG, "wrong %s %s", FIELD_TYPE, type_as_string );
@@ -246,7 +246,7 @@ void program_read_from_json( cJSON *root, Program **program_out ) {
 void write_head( cJSON *json, Program *program ) {
     cJSON_AddNumberToObject( json, FIELD_INDEX, program->index );
     cJSON_AddStringToObject( json, FIELD_NAME, program->name );
-    cJSON_AddBoolToObject( json, FIELD_ENABLED, program->enabled );
+    cJSON_AddBoolToObject( json, FIELD_ENABLED, program->enabled && program->days.type != unused );
 }
 
 void write_days( cJSON *json, Program *program ) {

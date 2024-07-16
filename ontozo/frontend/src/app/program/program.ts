@@ -5,7 +5,7 @@ export interface ProgramZone {
 
 export enum ProgramDayType {
   unused,
-  on,
+  onDays,
   interval
 }
 
