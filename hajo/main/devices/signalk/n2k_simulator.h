@@ -3,7 +3,7 @@
 
 extern "C" {
 extern void pngSimulationStart();
-extern void pngSimulationStart();
+extern void pngSimulationStop();
 extern void pngSimulationOneOff();
 }
 
