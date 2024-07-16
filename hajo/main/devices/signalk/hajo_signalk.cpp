@@ -103,7 +103,7 @@ void hajo_signalk_main( int iDev ) {
     wss_register();
     signalk_register();
     signalk_rest_register();
-    http_server_main(DEFAULT_HTTP_SERVER_CONTEXT_SIZE);
+    http_server_main(0);
 
     ESP_ERROR_CHECK( wifi_main() );
 }
