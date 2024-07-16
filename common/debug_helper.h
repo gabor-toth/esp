@@ -6,8 +6,11 @@ extern "C" {
 #endif
 
 #include "stddef.h"
-    
-extern void debug_start_task_dump();
+#include "stdint.h"
+
+extern void debug_start_task_dump( uint16_t period_sec );
+
+extern void debug_start_heap_dump( uint16_t period_sec );
 
 extern size_t debug_print_free_mem( const char *log );
 
