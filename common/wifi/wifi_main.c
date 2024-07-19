@@ -30,10 +30,10 @@ typedef struct {
 } known_wifi_network_t;
 
 static const known_wifi_network_t known_wifi_networks[] = {
-//        { .ssid = "sol", .password = "SoL37695" },
-        { .ssid = "TothKiss", .password = "ToThKiSs" },
+        { .ssid = "sol", .password = "SoL37695" },
+//        { .ssid = "TothKiss", .password = "ToThKiSs" },
 //        { .ssid ="P92WG_E", .password ="22Dailymuffintime77" },
-        { .ssid ="TGA", .password ="ToThKiSs01" },
+//        { .ssid ="TGA", .password ="ToThKiSs01" },
 //        { .ssid ="DIGI-02300875", .password ="qnZFucU6" },
 };
 
