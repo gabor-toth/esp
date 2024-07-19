@@ -25,11 +25,11 @@ static void set_initial_pump_states() {
     gpio_set_pin_state_forced( OUTPUTS, PUMPS_CLASS, PUMP_MAIN, false );
     gpio_set_pin_state_forced( OUTPUTS, PUMPS_CLASS, PUMP_REFILL, false );
 
-    // reached( level0 ) && reached( level1 )
     bool refillState = !reached( level4 )
-                       || !reached( level3 )
-                       || !reached( level2 )
-                       || !reached( level1 );
+//                       || !reached( level3 )
+//                       || !reached( level2 )
+//                       || !reached( level1 )
+                       ;
     ESP_LOGI( LOG_TAG, "Levels: 1-%d 2-%d 3-%d 4-%d refillPump-%d", level1, level2, level3, level4, refillState );
     gpio_set_pin_state( OUTPUTS, PUMPS_CLASS, PUMP_REFILL,
                         refillState );
@@ -103,9 +103,7 @@ static void gpio_changed_callback( gpio_num_t io_num, int state ) {
         } else {
             refill_state = true;
         }
-    } else if ( io_num == GPIO_INPUT_LEVEL_3 ) {
-        // no change for this sensor
-    } else if ( io_num == GPIO_INPUT_LEVEL_2 ) {
+    } else if ( io_num == GPIO_INPUT_LEVEL_3 || io_num == GPIO_INPUT_LEVEL_2 ) {
         if ( state == PIN_ENABLED ) {
             main_state = true;
         }
