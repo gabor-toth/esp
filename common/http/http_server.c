@@ -29,8 +29,10 @@ static esp_err_t open_fn_callback( httpd_handle_t hd, int sockfd ) {
             .hd = hd,
             .sockfd = sockfd
     };
-    return esp_event_post( HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_FILE_DESCRIPTOR_OPEN, &data, sizeof( data ),
-                           portMAX_DELAY );
+    ESP_ERROR_CHECK( esp_event_post( HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_FILE_DESCRIPTOR_OPEN, &data, sizeof( data ),
+                                     portMAX_DELAY ) );
+    ESP_LOGI( TAG, "Socket %d opened", sockfd );
+    return ESP_OK;
 }
 
 static void close_fn_callback( httpd_handle_t hd, int sockfd ) {
@@ -40,6 +42,8 @@ static void close_fn_callback( httpd_handle_t hd, int sockfd ) {
     };
     ESP_ERROR_CHECK( esp_event_post( HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_FILE_DESCRIPTOR_CLOSE,
                                      &data, sizeof( data ), portMAX_DELAY ) );
+    close( sockfd );
+    ESP_LOGI( TAG, "Socket %d closed", sockfd );
 }
 
 static void free_global_user_ctx( void *ctx ) {

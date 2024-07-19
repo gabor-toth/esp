@@ -127,6 +127,7 @@ static esp_err_t http_file_get_handler( httpd_req_t *req ) {
     if ( fd == -1 ) {
         ESP_LOGW( TAG, "Failed to open file : %s", filepath );
         snprintf( error_message, sizeof( error_message ), "Failed to read file: %d", errno );
+        httpd_resp_set_hdr( req, "Connection", "close" );
         httpd_resp_send_err( req, HTTPD_404_NOT_FOUND, error_message );
         return ESP_FAIL;
     }
@@ -148,8 +149,9 @@ static esp_err_t http_file_get_handler( httpd_req_t *req ) {
             /* Send the buffer contents as HTTP response chunk */
             if ( httpd_resp_send_chunk( req, chunk, read_bytes ) != ESP_OK ) {
                 close( fd );
-                ESP_LOGE( TAG, "File sending failed!" );
+                ESP_LOGE( TAG, "File sending failed: %d %s", errno, strerror( errno ) );
                 /* Abort sending file */
+                httpd_resp_set_hdr( req, "Connection", "close" );
                 httpd_resp_sendstr_chunk( req, NULL );
                 /* Respond with 500 Internal Server Error */
                 httpd_resp_send_err( req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to send file" );
@@ -161,6 +163,7 @@ static esp_err_t http_file_get_handler( httpd_req_t *req ) {
     close( fd );
     ESP_LOGI( TAG, "File sending complete" );
     /* Respond with an empty chunk to signal HTTP response completion */
+    httpd_resp_set_hdr( req, "Connection", "close" );
     httpd_resp_send_chunk( req, NULL, 0 );
     return ESP_OK;
 }
