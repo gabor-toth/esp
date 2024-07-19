@@ -11,9 +11,7 @@
 extern "C" {
 #endif
 
-extern void sntp_init_before_wifi();
-
-extern void sntp_init_after_wifi();
+extern void sntp_main();
 
 extern bool sntp_is_time_set();
 

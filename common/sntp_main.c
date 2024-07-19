@@ -1,11 +1,14 @@
 #include "sdkconfig.h"
 
 #if defined(CONFIG_EXAMPLE_CONNECT_WIFI)
+
 #include <string.h>
 #include <time.h>
 #include <stdbool.h>
+#include "esp_event.h"
 #include "esp_log.h"
 #include "esp_sntp.h"
+#include "esp_wifi_types.h"
 #include "sntp_main.h"
 
 static const char *LOG_TAG = "sntp";
@@ -48,7 +51,7 @@ static void check_if_time_is_set( void ) {
     time( &now );
     localtime_r( &now, &timeinfo );
     // Is time set? If not, tm_year will be (1970 - 1900).
-    if ( timeinfo.tm_year < ( 2016 - 1900 )) {
+    if ( timeinfo.tm_year < ( 2016 - 1900 ) ) {
         is_time_set = false;
         ESP_LOGI( LOG_TAG, "Time is not set yet, waiting for NTP." );
     } else {
@@ -63,7 +66,8 @@ void sntp_init_before_wifi() {
 #endif
 }
 
-void sntp_init_after_wifi() {
+static void sntp_init_after_wifi( void *event_handler_arg, esp_event_base_t event_base,
+                                  int32_t event_id, void *event_data ) {
     ESP_LOGI( LOG_TAG, "Initializing SNTP" );
     esp_sntp_setoperatingmode( SNTP_OPMODE_POLL );
 
@@ -93,16 +97,33 @@ void sntp_init_after_wifi() {
     ESP_LOGI( LOG_TAG, "List of configured NTP servers:" );
 
     for ( uint8_t i = 0; i < SNTP_MAX_SERVERS; ++i ) {
-        if ( esp_sntp_getservername( i )) {
-            ESP_LOGI( LOG_TAG, "server %d: %s", i, esp_sntp_getservername( i ));
+        if ( esp_sntp_getservername( i ) ) {
+            ESP_LOGI( LOG_TAG, "server %d: %s", i, esp_sntp_getservername( i ) );
         } else {
             // we have either IPv4 or IPv6 address, let's print it
             char buff[INET6_ADDRSTRLEN];
             ip_addr_t const *ip = esp_sntp_getserver( i );
-            if ( ipaddr_ntoa_r( ip, buff, INET6_ADDRSTRLEN ) != NULL)
+            if ( ipaddr_ntoa_r( ip, buff, INET6_ADDRSTRLEN ) != NULL )
                 ESP_LOGI( LOG_TAG, "server %d: %s", i, buff );
         }
     }
     check_if_time_is_set();
 }
+
+static void handler_on_wifi_disconnect( void *event_handler_arg, esp_event_base_t event_base,
+                                        int32_t event_id, void *event_data ) {
+    esp_sntp_stop();
+}
+
+void sntp_main() {
+    sntp_init_before_wifi();
+
+    ESP_ERROR_CHECK(
+            esp_event_handler_register( WIFI_EVENT, WIFI_EVENT_STA_CONNECTED,
+                                        &sntp_init_after_wifi, NULL ) );
+    ESP_ERROR_CHECK(
+            esp_event_handler_register( WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED,
+                                        &handler_on_wifi_disconnect, NULL ) );
+}
+
 #endif
