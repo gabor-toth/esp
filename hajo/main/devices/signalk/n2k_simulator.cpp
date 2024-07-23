@@ -15,7 +15,7 @@ static const char *TAG = "n2k-sim";
 
 static esp_timer_handle_t tick_timer = nullptr;
 
-static int16_t currentTick = 0;
+static int32_t currentTick = 0;
 static unsigned char sid = 0;
 
 static uint16_t DaysSince1970;
@@ -29,8 +29,12 @@ static double Longitude = 17.6058801;
 static double WindSpeed = KnotsToms( 8.0 ); // m/s
 static double WindAngle = COG + DegToRad( 45.0 ); // rad
 
+static double BatteryVoltage1 = 12.8;
+static double BatteryVoltage2 = 12.8;
+static double BatteryVoltage3 = 12.8;
 static double DepthBelowTransducer = 3.2;
-static double BatteryVoltage = 12.8;
+static double FluidLevelFuel = 75.0;
+static double FluidLevelWater = 65.0;
 
 static void sendBatStatus( unsigned char BatteryInstance, double BatteryVoltage ) {
     tN2kMsg N2kMsg;
@@ -70,22 +74,22 @@ static const char *SenderTypeNames[] = {
 };
 */
 
-static int16_t nextTickPerSenderType[SendMax] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-static int16_t nextTickForLog = 0;
-static int16_t sentPacket = 0;
+static uint32_t nextTickPerSenderType[SendMax] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+static uint32_t nextTickForLog = 0;
+static uint16_t sentPacket = 0;
 
 static void logCount() {
     if ( nextTickForLog >= currentTick ) {
         return;
     }
-    ESP_LOGI(TAG,"Sent %d packets", sentPacket );
+    ESP_LOGI( TAG, "Sent %d packets", sentPacket );
     nextTickForLog = currentTick + pdMS_TO_TICKS( 1000 );
     sentPacket = 0;
 }
 
-static bool isTime( SenderType senderType, uint16_t microseconds ) {
-    uint16_t ticks = pdMS_TO_TICKS( microseconds );
-    int16_t nextTick = nextTickPerSenderType[ senderType ];
+static bool isTime( SenderType senderType, uint16_t milliseconds ) {
+    uint32_t ticks = pdMS_TO_TICKS( milliseconds );
+    uint32_t nextTick = nextTickPerSenderType[ senderType ];
     if ( nextTick >= currentTick ) {
         return false;
     }
@@ -96,32 +100,84 @@ static bool isTime( SenderType senderType, uint16_t microseconds ) {
     return true;
 }
 
+class Animator {
+private:
+    double &value;
+    double deltaPerMs;
+    uint16_t maxSteps;
+    uint16_t currentStep;
+public:
+    Animator( double &value, double amplitude, uint16_t millisecondsPerCycle )
+            : value( value ) {
+        deltaPerMs = amplitude / ( (double)millisecondsPerCycle / TICK_PERIOD_MS );
+        maxSteps = millisecondsPerCycle / TICK_PERIOD_MS;
+        currentStep = maxSteps / 2;
+    };
+
+    void animate() {
+        value += deltaPerMs;
+        if ( --currentStep == 0 ) {
+            currentStep = maxSteps;
+            deltaPerMs = -deltaPerMs;
+        }
+    }
+
+};
+
+static Animator animators[] = {
+//        "SendAttitude",
+//        "SendBattery",
+        Animator(BatteryVoltage1,0.5, 15000),
+        Animator(BatteryVoltage2,1.0, 10000),
+        Animator(BatteryVoltage3,1.5, 10000),
+//        "SendCogSog",
+//        "SendDepth",
+        Animator(DepthBelowTransducer,1.0, 15000),
+//        "SendFluid",
+        Animator(FluidLevelFuel,10.0, 20000),
+        Animator(FluidLevelWater,10.0, 15000),
+//        "SendHeading",
+//        "SendGNSS",
+//        "SendLatLon",
+//        "SendRudder",
+//        "SendSpeed",
+//        "SendWindSpeed",
+        Animator(WindSpeed,KnotsToms(4.0), 60000),
+        Animator(WindAngle,DegToRad(10.0), 60000),
+//        "SendMax",
+};
+
+static void animate() {
+    for( auto &animator: animators) {
+        animator.animate();
+    }
+}
 static void onSimulatorTick( void *arg ) {
     sid++;
-
-    logCount();
 
     // animation
     SecondsSinceMidnight += TICK_PERIOD_MS / 1000.0;
     currentTick++;
+    logCount();
+    animate();
 
     if ( isTime( SendBattery, 1500 ) ) {
         // electrical.batteries.[1,2,3].voltage, 1500ms
         {
             tN2kMsg N2kMsg;
-            SetN2kDCBatStatus( N2kMsg, 0, BatteryVoltage );
+            SetN2kDCBatStatus( N2kMsg, 1, BatteryVoltage1 );
             sendN2KMessageToSignalK( N2kMsg );
             sentPacket++;
         }
         {
             tN2kMsg N2kMsg;
-            SetN2kDCBatStatus( N2kMsg, 1, BatteryVoltage );
+            SetN2kDCBatStatus( N2kMsg, 2, BatteryVoltage2 );
             sendN2KMessageToSignalK( N2kMsg );
             sentPacket++;
         }
         {
             tN2kMsg N2kMsg;
-            SetN2kDCBatStatus( N2kMsg, 2, BatteryVoltage );
+            SetN2kDCBatStatus( N2kMsg, 3, BatteryVoltage3 );
             sendN2KMessageToSignalK( N2kMsg );
             sentPacket++;
         }
@@ -132,7 +188,7 @@ static void onSimulatorTick( void *arg ) {
         {
             tN2kMsg N2kMsg;
             // environment.depth.*, 1000ms
-            SetN2kWaterDepth( N2kMsg, sid, DepthBelowTransducer, -1.8 );
+            SetN2kWaterDepth( N2kMsg, sid, DepthBelowTransducer, 1.8 );
             sendN2KMessageToSignalK( N2kMsg );
             sentPacket++;
         }
@@ -252,13 +308,13 @@ static void onSimulatorTick( void *arg ) {
         // tanks.[freshWater,fuel].1.currentLevel, 2500ms
         {
             tN2kMsg N2kMsg;
-            SetN2kFluidLevel( N2kMsg, 1, N2kft_Fuel, 0.65, N2kDoubleNA );
+            SetN2kFluidLevel( N2kMsg, 1, N2kft_Fuel, FluidLevelFuel, N2kDoubleNA );
             sendN2KMessageToSignalK( N2kMsg );
             sentPacket++;
         }
         {
             tN2kMsg N2kMsg;
-            SetN2kFluidLevel( N2kMsg, 1, N2kft_Water, 0.75, N2kDoubleNA );
+            SetN2kFluidLevel( N2kMsg, 1, N2kft_Water, FluidLevelWater, N2kDoubleNA );
             sendN2KMessageToSignalK( N2kMsg );
             sentPacket++;
         }
