@@ -95,4 +95,14 @@ menu "Own Configuration"
             help
                 Max number of the STA connects to AP.
     endmenu
+
+    menu "SignalK channels"
+        config SIGNALK_OVER_ACTISENSE
+            bool "Over UART/Actisense"
+            default y
+
+        config SIGNALK_OVER_WIFI
+            bool "Over Wifi"
+            default n
+    endmenu
 endmenu

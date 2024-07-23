@@ -252,10 +252,10 @@ void gpio_define_output_pins_callback( gpio_config_t *io_conf, void *user_contex
 void gpio_define_input_pins_callback( gpio_config_t *io_conf, void *user_context ) {
     gpio_add_class( INPUTS, "buttons", 2, low_is_on );
     
-    gpio_add_pin( INPUTS, BUTTONS_CLASS, GPIO_NUM_GATEWAY_BUTTON_1,
-                  low_is_on, &io_conf->pin_bit_mask );
-    gpio_add_pin( INPUTS, BUTTONS_CLASS, GPIO_NUM_GATEWAY_BUTTON_2,
-                  low_is_on, &io_conf->pin_bit_mask );
+//    gpio_add_pin( INPUTS, BUTTONS_CLASS, GPIO_NUM_GATEWAY_BUTTON_1,
+//                  low_is_on, &io_conf->pin_bit_mask );
+//    gpio_add_pin( INPUTS, BUTTONS_CLASS, GPIO_NUM_GATEWAY_BUTTON_2,
+//                  low_is_on, &io_conf->pin_bit_mask );
 }
 
 void gpio_changed_callback( gpio_num_t io_num, int state ) {

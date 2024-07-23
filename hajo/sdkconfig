@@ -459,6 +459,13 @@ CONFIG_EXAMPLE_WEB_MOUNT_POINT="/www"
 # CONFIG_OWN_WIFI_AP_MANUAL_CONFIG is not set
 CONFIG_ESP_MAX_STA_CONN=4
 # end of Wifi access point
+
+#
+# SignalK channels
+#
+CONFIG_SIGNALK_OVER_ACTISENSE=y
+# CONFIG_SIGNALK_OVER_WIFI is not set
+# end of SignalK channels
 # end of Own Configuration
 
 #

@@ -15,18 +15,29 @@
 // Read PGNs from NMEA2000-Bus and send as SignalK to server
 // Version 0.1, 06.02.2021, AK-Homberger
 
+#include "sdkconfig.h"
+#include "n2k_gateway_wifi.h"
+
+#if CONFIG_SIGNALK_OVER_WIFI
+
+#include "devices/signalk/EspSigK.h"        // For SignalK handling
 #include "esp_log.h"
-#include "NMEA2000.h"
+#include "esp_wifi.h"
+#include "EspSigK.h"
+#include "hajo_signalk.h"
+#include "http/http_discovery.h"
+#include "http/http_events.h"
+#include "http/http_server.h"
+#include "n2k/N2kRaymarine.h"
 #include "N2kMessages.h"
 #include "N2kMsg.h"
 #include "N2kTypes.h"
-#include "n2k/N2kRaymarine.h"
+#include "NMEA2000.h"
 #include "signalk_rest.h"
+#include "wifi/wifi_main.h"
+#include "ws_server.h"
 
-#include "devices/signalk/EspSigK.h"        // For SignalK handling
-#include "NMEA2000-SignalK-Gateway.h"
-
-static const char* TAG = "n2k-gw";
+static const char *TAG = "n2k-gw";
 
 // Set the information for other bus devices, which messages we support
 //const unsigned long ReceiveMessages[] PROGMEM = {/*126992L,*/ // System time
@@ -609,7 +620,7 @@ void HandleProductInformation( const tN2kMsg &N2kMsg ) {
 
 // see https://signalk.org/specification/1.5.0/doc/vesselsBranch.html
 
-void sendN2KMessageToSignalK(const tN2kMsg &N2kMsg ) {
+void sendN2KMessageToSignalKOverWifi(const tN2kMsg &N2kMsg ) {
     // set CONFIG_NMEA2000_MSG_DEBUG=y in sdkconfig to see low level messages
     ESP_LOGI(TAG,"Sending PGN %05lx %06ld", N2kMsg.PGN, N2kMsg.PGN);
     switch ( N2kMsg.PGN ) {
@@ -715,6 +726,41 @@ void sendN2KMessageToSignalK(const tN2kMsg &N2kMsg ) {
     }
     ESP_LOGD(TAG,"Sent");
 }
+
+static void signalk_start( void *dummy, esp_event_base_t event_base, int32_t event_id, void *event_data ) {
+    http_server_server_event_data *data = static_cast<http_server_server_event_data *>(event_data);
+    ESP_LOGI( TAG, "signalk_start" );
+    sigK.start( DEVICE_NAME, "n2k-gw", data->hd, data->ssid );
+}
+
+static void signalk_stop( void *dummy, esp_event_base_t event_base, int32_t event_id, void *event_data ) {
+    ESP_LOGI( TAG, "signalk_stop start" );
+    sigK.stop();
+    ESP_LOGI( TAG, "signalk_stop end" );
+}
+
+static void signalk_register() {
+    ESP_LOGI( TAG, "signalk_register" );
+    ESP_ERROR_CHECK(
+            esp_event_handler_register( HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_SERVER_START,
+                                        &signalk_start, nullptr ) );
+    ESP_ERROR_CHECK(
+            esp_event_handler_register( HTTP_SERVER_EVENT, HTTP_SERVER_EVENT_SERVER_STOPPING,
+                                        &signalk_stop, nullptr ) );
+    sigK.init();
+}
+
+void setupSignalkOverWifi() {
+    discovery_register();
+    wss_register();
+    signalk_register();
+    signalk_rest_register();
+    http_server_main(0);
+
+    ESP_ERROR_CHECK( wifi_main() );
+}
+
+#endif
 
 /*
  * Seatalk PilotMode mode 64 "bad_index" sub 0 data 2

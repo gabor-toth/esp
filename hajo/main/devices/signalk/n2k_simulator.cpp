@@ -5,7 +5,7 @@
 #include "n2k_simulator.h"
 #include "N2kMessages.h"
 #include "N2kMsg.h"
-#include "NMEA2000-SignalK-Gateway.h"
+#include "n2k_gateway.h"
 
 extern "C" {
 
@@ -266,7 +266,7 @@ void pngSimulationOneOff() {
     deltaSet.addValue( "steering.rudderAngle", 0.1 );
     deltaSet.addValue( "tanks.freshWater.1.currentLevel", 0.25 );
     deltaSet.addValue( "tanks.fuel.1.currentLevel", 0.1 );
-    deltaSet.send( sigK );
+//    deltaSet.send( sigK );
 }
 
 }
