@@ -465,6 +465,7 @@ CONFIG_ESP_MAX_STA_CONN=4
 #
 CONFIG_SIGNALK_OVER_ACTISENSE=y
 # CONFIG_SIGNALK_OVER_WIFI is not set
+CONFIG_SIGNALK_START_SIMULATOR=y
 # end of SignalK channels
 # end of Own Configuration
 

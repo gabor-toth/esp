@@ -104,5 +104,9 @@ menu "Own Configuration"
         config SIGNALK_OVER_WIFI
             bool "Over Wifi"
             default n
+
+        config SIGNALK_START_SIMULATOR
+            bool "Start simulator on startup"
+            default n
     endmenu
 endmenu

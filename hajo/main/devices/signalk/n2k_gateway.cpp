@@ -1,4 +1,5 @@
 #include "n2k_gateway.h"
+#include "n2k_simulator.h"
 #include "sdkconfig.h"
 
 #if CONFIG_SIGNALK_OVER_ACTISENSE
@@ -27,5 +28,8 @@ void setupSignalkChannels() {
 #endif
 #if CONFIG_SIGNALK_OVER_WIFI
     setupSignalkOverWifi();
+#endif
+#if CONFIG_SIGNALK_START_SIMULATOR
+    pngSimulationStart();
 #endif
 }
