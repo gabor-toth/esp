@@ -233,8 +233,8 @@ systemctl daemon-reload
     - connect to local, don't login,
     - request token, approve in SignalK (timeout = NEVER)
     - go to Storage tab, save layout to global/default
-    - log in with kip/kip
-    - go to Storage tab, copy global/default to user/default
+    - go to SignalK tab, log in with kip/kip
+    - go to Storage tab, copy remote global/default to remote user/default
 - todo
     - self.electrical.batteries.1.voltage
 
