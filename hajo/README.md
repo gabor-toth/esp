@@ -216,12 +216,40 @@ systemctl daemon-reload
 #### Dashboard
 
 - Install from Appstore
-    - KIP (https://github.com/mxtommy/Kip)
-    - signalk-alarm-silencer
-    - signalk-derived-data (https://github.com/SignalK/signalk-derived-data/blob/master/README.md)
-    - ? @signalk/signalk-autopilot
-    - ? signalk-racing-calculator
-    - ? rest-provider-signalk (https://www.npmjs.com/package/rest-provider-signalk)
+    - mandatory
+        - @mxtommy/kip (https://github.com/mxtommy/Kip)
+        - @signalk/charts-plugin
+        - @signalk/course-provider
+        - @signalk/set-system-time
+        - signalk-alarm-silencer
+        - signalk-derived-data (https://github.com/SignalK/signalk-derived-data/blob/master/README.md)
+        - signalk-racing-calculator
+    - optional
+        - signalk-fixed-position
+        - @signalk/signalk-autopilot
+        - rest-provider-signalk (https://www.npmjs.com/package/rest-provider-signalk)
+    - installed on test PI
+      @mxtommy/kip
+      @signalk/charts-plugin
+      @signalk/course-provider
+      @signalk/freeboard-sk
+      @signalk/instrumentpanel
+      @signalk/resources-provider
+      @signalk/set-system-time
+      @signalk/signalk-autopilot
+      @signalk/signalk-to-nmea0183
+      @signalk/udp-nmea-plugin
+      @signalk/vesselpositions
+      rest-provider-signalk
+      signalk-alarm-silencer
+      signalk-avg-paths
+      signalk-derived-data
+      signalk-fixed-position
+      signalk-n2kais-to-nmea0183
+      signalk-racing-calculator
+      signalk-to-batch-format
+      signalk-to-nmea2000
+
 - Setup
     - Server,Settings, Options, mdns enable
     - Save, restart
@@ -235,6 +263,14 @@ systemctl daemon-reload
     - go to Storage tab, save layout to global/default
     - go to SignalK tab, log in with kip/kip
     - go to Storage tab, copy remote global/default to remote user/default
+- offline maps
+    - see https://pysselilivet.blogspot.com/2021/09/signal-k-charts-offline-online.html
+      ```shell
+      cd ~/.signalk/charts
+      wget https://ftp.gwdg.de/pub/misc/openstreetmap/openseamap/charts/mbtiles/OSM-OpenCPN2-Lake_Balaton.mbtiles
+      ```
+    - click Submit in plugin
+    - check result: http://192.168.72.180/signalk/v2/api/resources/charts
 - todo
     - self.electrical.batteries.1.voltage
 

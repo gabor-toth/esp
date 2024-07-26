@@ -143,7 +143,7 @@ static Animator animators[] = {
 //        "SendSpeed",
 //        "SendWindSpeed",
         Animator(WindSpeed,KnotsToms(4.0), 60000),
-        Animator(WindAngle,DegToRad(10.0), 60000),
+        Animator(WindAngle,DegToRad(20.0), 30000),
 //        "SendMax",
 };
 
@@ -261,9 +261,16 @@ static void onSimulatorTick( void *arg ) {
 
     if ( isTime( SendHeading, 100 ) ) {
         {
-            // navigation.headingTrue, 100ms
+            // navigation.headingMagnetic, 100ms
             tN2kMsg N2kMsg;
-            SetN2kMagneticHeading( N2kMsg, sid, COG );
+            SetN2kMagneticHeading( N2kMsg, sid, COG + DegToRad(6.0));
+            sendN2KMessageToSignalK( N2kMsg );
+            sentPacket++;
+        }
+        {
+            // navigation.headingMagnetic, 100ms
+            tN2kMsg N2kMsg;
+            SetN2kTrueHeading( N2kMsg, sid, COG );
             sendN2KMessageToSignalK( N2kMsg );
             sentPacket++;
         }
