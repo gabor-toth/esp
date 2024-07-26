@@ -1,3 +1,4 @@
+#include "config.h"
 #include "driver/gpio.h"
 #include "driver/uart.h"
 #include "n2k_gateway_actisense.h"
@@ -37,7 +38,8 @@ void setupSignalkOverActisense() {
             .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
     };
     ESP_ERROR_CHECK( uart_param_config( UART_NUM, &uart_config ) );
-    ESP_ERROR_CHECK( uart_set_pin( UART_NUM, GPIO_NUM_33, GPIO_NUM_21, GPIO_NUM_NC, GPIO_NUM_NC ) );
+    ESP_ERROR_CHECK(
+            uart_set_pin( UART_NUM, GPIO_NUM_GATEWAY_UART_TX, GPIO_NUM_GATEWAY_UART_RX, GPIO_NUM_NC, GPIO_NUM_NC ) );
     const int uart_buffer_size = ( 1024 * 2 );
     QueueHandle_t uart_queue;
     ESP_ERROR_CHECK( uart_driver_install( UART_NUM, uart_buffer_size,

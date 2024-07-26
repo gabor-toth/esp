@@ -215,7 +215,7 @@ _Noreturn static void task_main_test_sdcard( void *arg ) {
 
 _Noreturn static void task_logger_led( void *arg ) {
     (void) arg;
-    
+
     TickType_t flashMarker = 0;
     for ( ;; ) {
         gpio_num_t led1 = GPIO_NUM_NC;
@@ -251,7 +251,7 @@ void gpio_define_output_pins_callback( gpio_config_t *io_conf, void *user_contex
 
 void gpio_define_input_pins_callback( gpio_config_t *io_conf, void *user_context ) {
     gpio_add_class( INPUTS, "buttons", 2, low_is_on );
-    
+
 //    gpio_add_pin( INPUTS, BUTTONS_CLASS, GPIO_NUM_GATEWAY_BUTTON_1,
 //                  low_is_on, &io_conf->pin_bit_mask );
 //    gpio_add_pin( INPUTS, BUTTONS_CLASS, GPIO_NUM_GATEWAY_BUTTON_2,
@@ -265,9 +265,9 @@ void gpio_changed_callback( gpio_num_t io_num, int state ) {
             ESP_LOGI( LOG, "Logging turned %s", logging_on ? "on" : "off" );
             led_mode = logging_on ? led_mode_green_red : led_mode_green;
         }
-//    } else if ( io_num == GPIO_NUM_GATEWAY_BUTTON_2 ) {
-//        if ( state == 0 ) {
-//        }
+    } else if ( io_num == GPIO_NUM_GATEWAY_BUTTON_2 ) {
+        if ( state == 0 ) {
+        }
     } else {
         ESP_LOGW( LOG, "Unhandled gpio %d changed to %d", io_num, state );
     }
@@ -278,7 +278,7 @@ static void init_leds_and_buttons() {
     gpio_set_direction(GPIO_NUM_GATEWAY_LED_RED, GPIO_MODE_OUTPUT );
     gpio_set_level(GPIO_NUM_GATEWAY_LED_GREEN, 0 );
     gpio_set_level(GPIO_NUM_GATEWAY_LED_RED, 0 );
-    
+
     gpio_init( nullptr, nullptr );
     xTaskCreate( task_logger_led, "logger_led", 1024, nullptr, 10, nullptr );
 }
@@ -286,10 +286,10 @@ static void init_leds_and_buttons() {
 void hajo_logger_main( int iDev ) {
     logging_on = false;
     init_leds_and_buttons();
-    
+
     setup_n2k_device( iDev );
 
     n2k_sender_register_loopback( process_incoming_pgn );
-    
+
     xTaskCreate( task_main_test_sdcard, "test_sdcard", 4096, nullptr, 5, nullptr );
 }

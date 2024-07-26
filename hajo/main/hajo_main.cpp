@@ -8,7 +8,6 @@
 #include "devices/display/hajo_display.h"
 #include "devices/fridge/fridge.h"
 #include "devices/fluid/hajo_fluid.h"
-#include "devices/logger/hajo_logger.h"
 #include "devices/signalk/hajo_signalk.h"
 #include "devices/signalk/EspSigK.h"
 #include "nvs_main.h"
@@ -159,7 +158,6 @@ void hajo_main() {
 #if DEVICE_TYPE == CONFIG_DEVICE_TYPE_GATEWAY || DEVICE_TYPE == DEVICE_TYPE_ALL
     clock_configure( 240 );
     NMEA2000.SetDeviceCount( 3 );
-    hajo_logger_main( iDev++ );
     hajo_attitude_main( iDev++ );
     hajo_signalk_main( iDev++ );
 #endif
