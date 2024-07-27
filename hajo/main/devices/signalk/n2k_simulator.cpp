@@ -76,15 +76,15 @@ static const char *SenderTypeNames[] = {
 
 static uint32_t nextTickPerSenderType[SendMax] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 static uint32_t nextTickForLog = 0;
-static uint16_t sentPacket = 0;
+static uint16_t sentPackets = 0;
 
 static void logCount() {
     if ( nextTickForLog >= currentTick ) {
         return;
     }
-    ESP_LOGI( TAG, "Sent %d packets", sentPacket );
+    ESP_LOGI( TAG, "Sent %d packets", sentPackets );
     nextTickForLog = currentTick + pdMS_TO_TICKS( 1000 );
-    sentPacket = 0;
+    sentPackets = 0;
 }
 
 static bool isTime( SenderType senderType, uint16_t milliseconds ) {
@@ -167,19 +167,19 @@ static void onSimulatorTick( void *arg ) {
             tN2kMsg N2kMsg;
             SetN2kDCBatStatus( N2kMsg, 1, BatteryVoltage1 );
             sendN2KMessageToSignalK( N2kMsg );
-            sentPacket++;
+            sentPackets++;
         }
         {
             tN2kMsg N2kMsg;
             SetN2kDCBatStatus( N2kMsg, 2, BatteryVoltage2 );
             sendN2KMessageToSignalK( N2kMsg );
-            sentPacket++;
+            sentPackets++;
         }
         {
             tN2kMsg N2kMsg;
             SetN2kDCBatStatus( N2kMsg, 3, BatteryVoltage3 );
             sendN2KMessageToSignalK( N2kMsg );
-            sentPacket++;
+            sentPackets++;
         }
         return;
     }
@@ -190,7 +190,7 @@ static void onSimulatorTick( void *arg ) {
             // environment.depth.*, 1000ms
             SetN2kWaterDepth( N2kMsg, sid, DepthBelowTransducer, 1.8 );
             sendN2KMessageToSignalK( N2kMsg );
-            sentPacket++;
+            sentPackets++;
         }
         return;
     }
@@ -201,21 +201,21 @@ static void onSimulatorTick( void *arg ) {
             tN2kMsg N2kMsg;
             SetN2kWindSpeed( N2kMsg, sid, WindSpeed, WindAngle, N2kWind_Apparent );
             sendN2KMessageToSignalK( N2kMsg );
-            sentPacket++;
+            sentPackets++;
         }
         {
             // environment.wind.angleTrueGround, environment.wind.speedTrue, 100ms
             tN2kMsg N2kMsg;
             SetN2kWindSpeed( N2kMsg, sid, WindSpeed, WindAngle, N2kWind_True_boat );
             sendN2KMessageToSignalK( N2kMsg );
-            sentPacket++;
+            sentPackets++;
         }
         {
             // environment.wind.angleTrueWater, environment.wind.speedTrue, 100ms
             tN2kMsg N2kMsg;
             SetN2kWindSpeed( N2kMsg, sid, WindSpeed, WindAngle, N2kWind_True_water );
             sendN2KMessageToSignalK( N2kMsg );
-            sentPacket++;
+            sentPackets++;
         }
         return;
     }
@@ -225,7 +225,7 @@ static void onSimulatorTick( void *arg ) {
         tN2kMsg N2kMsg;
         static int pitch = 3;
         SetN2kAttitude( N2kMsg, 0, 0.0, pitch / 180.0, 0.0 );
-        sentPacket++;
+        sentPackets++;
         return;
     }
 
@@ -235,7 +235,7 @@ static void onSimulatorTick( void *arg ) {
             // navigation.courseOverGroundTrue, navigation.speedOverGround, 250ms
             SetN2kCOGSOGRapid( N2kMsg, sid, N2khr_true, COG, SOG );
             sendN2KMessageToSignalK( N2kMsg );
-            sentPacket++;
+            sentPackets++;
         }
         return;
     }
@@ -254,7 +254,7 @@ static void onSimulatorTick( void *arg ) {
                         N2kDoubleNA, N2kDoubleNA, N2kDoubleNA,
                         1, N2kGNSSt_GPS, 0, 0 );
             sendN2KMessageToSignalK( N2kMsg );
-            sentPacket++;
+            sentPackets++;
         }
         return;
     }
@@ -265,14 +265,14 @@ static void onSimulatorTick( void *arg ) {
             tN2kMsg N2kMsg;
             SetN2kMagneticHeading( N2kMsg, sid, COG + DegToRad(6.0));
             sendN2KMessageToSignalK( N2kMsg );
-            sentPacket++;
+            sentPackets++;
         }
         {
             // navigation.headingMagnetic, 100ms
             tN2kMsg N2kMsg;
             SetN2kTrueHeading( N2kMsg, sid, COG );
             sendN2KMessageToSignalK( N2kMsg );
-            sentPacket++;
+            sentPackets++;
         }
         return;
     }
@@ -283,7 +283,7 @@ static void onSimulatorTick( void *arg ) {
             tN2kMsg N2kMsg;
             SetN2kLatLonRapid( N2kMsg, Latitude, Longitude );
             sendN2KMessageToSignalK( N2kMsg );
-            sentPacket++;
+            sentPackets++;
         }
         return;
     }
@@ -294,7 +294,7 @@ static void onSimulatorTick( void *arg ) {
             tN2kMsg N2kMsg;
             SetN2kBoatSpeed( N2kMsg, sid, SOG, N2kDoubleNA, N2kSWRT_Paddle_wheel );
             sendN2KMessageToSignalK( N2kMsg );
-            sentPacket++;
+            sentPackets++;
         }
         return;
     }
@@ -306,7 +306,7 @@ static void onSimulatorTick( void *arg ) {
             tN2kMsg N2kMsg;
             SetN2kRudder( N2kMsg, DegToRad( RudderPosition ) );
             sendN2KMessageToSignalK( N2kMsg );
-            sentPacket++;
+            sentPackets++;
         }
         return;
     }
@@ -317,13 +317,13 @@ static void onSimulatorTick( void *arg ) {
             tN2kMsg N2kMsg;
             SetN2kFluidLevel( N2kMsg, 1, N2kft_Fuel, FluidLevelFuel, N2kDoubleNA );
             sendN2KMessageToSignalK( N2kMsg );
-            sentPacket++;
+            sentPackets++;
         }
         {
             tN2kMsg N2kMsg;
             SetN2kFluidLevel( N2kMsg, 1, N2kft_Water, FluidLevelWater, N2kDoubleNA );
             sendN2KMessageToSignalK( N2kMsg );
-            sentPacket++;
+            sentPackets++;
         }
         return;
     }
