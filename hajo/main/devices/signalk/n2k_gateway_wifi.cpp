@@ -755,7 +755,7 @@ void setupSignalkOverWifi() {
     wss_register();
     signalk_register();
     signalk_rest_register();
-    http_server_main(0);
+    http_server_main(GLOBAL_USER_CONTEXT_WS_KEEP_ALIVE);
 
     ESP_ERROR_CHECK( wifi_main() );
 }
