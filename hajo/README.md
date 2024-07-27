@@ -213,6 +213,35 @@ systemctl daemon-reload
 - login
 - TBC
 
+#### Canboat
+
+```shell
+sudo raspi-config
+```
+
+- Interface Options
+- Serial Portű
+- No (login shell)
+- Yes (serial)
+- Reboot
+
+https://github.com/canboat/canboat/wiki/Building
+
+```shell
+sudo apt install git
+git clone https://github.com/canboat/canboat
+cd canboat
+make
+sudo make install
+
+actisense-serial -d /dev/ttyS0
+```
+
+- Server
+- Data connectiions
+- type: NMEA 2000, id: n2k
+- source: Actisense NGT-1 (canboat), port /dev/ttyS0, baud 115200
+
 #### Dashboard
 
 - Install from Appstore
