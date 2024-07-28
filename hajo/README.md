@@ -316,6 +316,7 @@ nmcli con add con-name hotspot ifname wlan0 type wifi ssid "sol"
 nmcli con modify hotspot ipv4.method shared ipv4.address 192.168.77.1/24
 nmcli con modify hotspot wifi-sec.key-mgmt wpa-psk
 nmcli con modify hotspot wifi-sec.psk "SoL37695"
+nmcli con modify hotspot 802-11-wireless.channel 7
 nmcli con modify hotspot 802-11-wireless.mode ap 802-11-wireless.band bg 802-11-wireless.channel 2 ipv4.method shared
 nmcli con modify hotspot 802-11-wireless-security.proto rsn
 
