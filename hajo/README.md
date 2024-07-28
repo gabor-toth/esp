@@ -303,6 +303,15 @@ actisense-serial -d /dev/ttyS0
 - todo
     - self.electrical.batteries.1.voltage
 
+### Amend PNGs in Signalk
+
+See
+
+- signalk-server/node_modules/@signalk/n2k-signalk/raymarine/index.js
+- /usr/lib/node_modules/signalk-server/node_modules/@canboat/pgns/canboat.json
+- signalk-server/node_modules/@canboat/pgns/pgns.json
+- signalk-server/node_modules/@canboat/pgns/canboat.json
+
 ### Wifi AP
 
 On Debian 12 (Bookworm), see

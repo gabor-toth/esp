@@ -6,6 +6,7 @@
 #include "N2kMessages.h"
 #include "N2kMsg.h"
 #include "n2k_gateway.h"
+#include "n2k/N2kRaymarine.h"
 
 extern "C" {
 
@@ -188,7 +189,7 @@ static void onSimulatorTick( void *arg ) {
         {
             tN2kMsg N2kMsg;
             // environment.depth.*, 1000ms
-            SetN2kWaterDepth( N2kMsg, sid, DepthBelowTransducer, 1.8 );
+            SetN2kWaterDepth( N2kMsg, sid, DepthBelowTransducer, -1.8 );
             sendN2KMessageToSignalK( N2kMsg );
             sentPackets++;
         }
@@ -203,20 +204,21 @@ static void onSimulatorTick( void *arg ) {
             sendN2KMessageToSignalK( N2kMsg );
             sentPackets++;
         }
-        {
-            // environment.wind.angleTrueGround, environment.wind.speedTrue, 100ms
-            tN2kMsg N2kMsg;
-            SetN2kWindSpeed( N2kMsg, sid, WindSpeed, WindAngle, N2kWind_True_boat );
-            sendN2KMessageToSignalK( N2kMsg );
-            sentPackets++;
-        }
-        {
-            // environment.wind.angleTrueWater, environment.wind.speedTrue, 100ms
-            tN2kMsg N2kMsg;
-            SetN2kWindSpeed( N2kMsg, sid, WindSpeed, WindAngle, N2kWind_True_water );
-            sendN2KMessageToSignalK( N2kMsg );
-            sentPackets++;
-        }
+        // Raymarine device does not send these, they are derived using speedThroughWater
+//        {
+//            // environment.wind.angleTrueGround, environment.wind.speedTrue, 100ms
+//            tN2kMsg N2kMsg;
+//            SetN2kWindSpeed( N2kMsg, sid, WindSpeed, WindAngle, N2kWind_True_boat );
+//            sendN2KMessageToSignalK( N2kMsg );
+//            sentPackets++;
+//        }
+//        {
+//            // environment.wind.angleTrueWater, environment.wind.speedTrue, 100ms
+//            tN2kMsg N2kMsg;
+//            SetN2kWindSpeed( N2kMsg, sid, WindSpeed, WindAngle, N2kWind_True_water );
+//            sendN2KMessageToSignalK( N2kMsg );
+//            sentPackets++;
+//        }
         return;
     }
 
@@ -250,8 +252,8 @@ static void onSimulatorTick( void *arg ) {
             tN2kMsg N2kMsg;
             SetN2kGNSS( N2kMsg, sid, DaysSince1970, SecondsSinceMidnight,
                         Latitude, Longitude, N2kDoubleNA,
-                        N2kGNSSt_GPS, N2kGNSSm_noGNSS, 1,
-                        N2kDoubleNA, N2kDoubleNA, N2kDoubleNA,
+                        N2kGNSSt_GPS, N2kGNSSm_GNSSfix,  N2kGNSSi_noIntegrityChecking,
+                        7, 2, N2kDoubleNA, N2kDoubleNA,
                         1, N2kGNSSt_GPS, 0, 0 );
             sendN2KMessageToSignalK( N2kMsg );
             sentPackets++;
@@ -263,17 +265,25 @@ static void onSimulatorTick( void *arg ) {
         {
             // navigation.headingMagnetic, 100ms
             tN2kMsg N2kMsg;
-            SetN2kMagneticHeading( N2kMsg, sid, COG + DegToRad(6.0));
+            SetN2kPGN65359( N2kMsg, sid, N2kDoubleNA, COG + DegToRad(6.0));
             sendN2KMessageToSignalK( N2kMsg );
             sentPackets++;
         }
-        {
-            // navigation.headingMagnetic, 100ms
-            tN2kMsg N2kMsg;
-            SetN2kTrueHeading( N2kMsg, sid, COG );
-            sendN2KMessageToSignalK( N2kMsg );
-            sentPackets++;
-        }
+//        {
+        // TODO navigation.headingMagnetic 	n2k.104 (autopilot)  (65359)
+//        {
+//            // navigation.headingMagnetic, 100ms
+//            tN2kMsg N2kMsg;
+//            SetN2kMagneticHeading( N2kMsg, sid, COG + DegToRad(6.0));
+//            sendN2KMessageToSignalK( N2kMsg );
+//            sentPackets++;
+//        }
+//            // navigation.headingMagnetic, 100ms
+//            tN2kMsg N2kMsg;
+//            SetN2kTrueHeading( N2kMsg, sid, COG );
+//            sendN2KMessageToSignalK( N2kMsg );
+//            sentPackets++;
+//        }
         return;
     }
 
@@ -315,18 +325,22 @@ static void onSimulatorTick( void *arg ) {
         // tanks.[freshWater,fuel].1.currentLevel, 2500ms
         {
             tN2kMsg N2kMsg;
-            SetN2kFluidLevel( N2kMsg, 1, N2kft_Fuel, FluidLevelFuel, N2kDoubleNA );
+            SetN2kFluidLevel( N2kMsg, 0, N2kft_Fuel, FluidLevelFuel, N2kDoubleNA );
             sendN2KMessageToSignalK( N2kMsg );
             sentPackets++;
         }
         {
             tN2kMsg N2kMsg;
-            SetN2kFluidLevel( N2kMsg, 1, N2kft_Water, FluidLevelWater, N2kDoubleNA );
+            SetN2kFluidLevel( N2kMsg, 0, N2kft_Water, FluidLevelWater, N2kDoubleNA );
             sendN2KMessageToSignalK( N2kMsg );
             sentPackets++;
         }
         return;
     }
+
+    // steering.autopilot.state 	n2k.104  (126720)
+    // tanks.fuel.0.currentLevel 	0.0006  ratio	07/28 12:47:24	n2k.29  (127505)
+    // tanks.freshWater.0.currentLevel 	0.005   ratio	07/28 12:47:24	n2k.29  (127505)
 }
 
 void pngSimulationStart() {

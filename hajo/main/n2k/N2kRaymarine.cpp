@@ -17,102 +17,111 @@
 65360: // Autopilot heading. From pilot. Transmitted only when pilot is auto.
  */
 
-bool ParseN2kPGN65288(const tN2kMsg &N2kMsg, uint16_t &company, uint8_t &sid, uint8_t &alarmStatus, uint8_t &alarmId,
-                      uint8_t &alarmGroup, uint8_t &alarmPriority) {
-    if (N2kMsg.PGN != 65288L) { return false; }
+bool ParseN2kPGN65288( const tN2kMsg &N2kMsg, uint16_t &company, uint8_t &sid, uint8_t &alarmStatus, uint8_t &alarmId,
+                       uint8_t &alarmGroup, uint8_t &alarmPriority ) {
+    if ( N2kMsg.PGN != 65288L ) { return false; }
 
     int Index = 0;
-    company = N2kMsg.Get2ByteUInt(Index);
-    sid = N2kMsg.GetByte(Index);
-    alarmStatus = N2kMsg.GetByte(Index);
-    alarmId = N2kMsg.GetByte(Index);
-    alarmGroup = N2kMsg.GetByte(Index);
-    alarmPriority = N2kMsg.GetByte(Index);
+    company = N2kMsg.Get2ByteUInt( Index );
+    sid = N2kMsg.GetByte( Index );
+    alarmStatus = N2kMsg.GetByte( Index );
+    alarmId = N2kMsg.GetByte( Index );
+    alarmGroup = N2kMsg.GetByte( Index );
+    alarmPriority = N2kMsg.GetByte( Index );
 
     return true;
 }
 
-bool ParseN2kPGN65361(const tN2kMsg &N2kMsg, uint8_t &alarmId, uint8_t &alarmGroup) {
-    if (N2kMsg.PGN != 65361L) { return false; }
+bool ParseN2kPGN65361( const tN2kMsg &N2kMsg, uint8_t &alarmId, uint8_t &alarmGroup ) {
+    if ( N2kMsg.PGN != 65361L ) { return false; }
 
     int Index = 0;
-    alarmId = N2kMsg.GetByte(Index);
-    alarmGroup = N2kMsg.GetByte(Index);
+    alarmId = N2kMsg.GetByte( Index );
+    alarmGroup = N2kMsg.GetByte( Index );
 
     return true;
 }
 
-bool ParseN2kPGN61184(const tN2kMsg &N2kMsg, uint8_t &proprietaryID, uint8_t &variant, uint8_t &wirelessSetting,
-                      uint8_t &wiredSetting, uint8_t &beepControl) {
-    if (N2kMsg.PGN != 61184L) { return false; }
+bool ParseN2kPGN61184( const tN2kMsg &N2kMsg, uint8_t &proprietaryID, uint8_t &variant, uint8_t &wirelessSetting,
+                       uint8_t &wiredSetting, uint8_t &beepControl ) {
+    if ( N2kMsg.PGN != 61184L ) { return false; }
 
     int Index = 0;
-    proprietaryID = N2kMsg.GetByte(Index);
-    variant = N2kMsg.GetByte(Index);
-    if (proprietaryID == 1) {
-        wirelessSetting = N2kMsg.GetByte(Index);
-        wiredSetting = N2kMsg.GetByte(Index);
+    proprietaryID = N2kMsg.GetByte( Index );
+    variant = N2kMsg.GetByte( Index );
+    if ( proprietaryID == 1 ) {
+        wirelessSetting = N2kMsg.GetByte( Index );
+        wiredSetting = N2kMsg.GetByte( Index );
         beepControl = 0;
     } else {
         wirelessSetting = 0;
         wiredSetting = 0;
-        beepControl = N2kMsg.GetByte(Index);
+        beepControl = N2kMsg.GetByte( Index );
     }
 
     return true;
 }
 
-bool ParseN2kPGN65360(const tN2kMsg &N2kMsg, uint16_t &company, uint8_t &sid, uint16_t &targetHeadingTrue,
-                      uint16_t &targetHeadingMagnetic) {
-    if (N2kMsg.PGN != 65360L) { return false; }
+bool ParseN2kPGN65360( const tN2kMsg &N2kMsg, uint16_t &company, uint8_t &sid, double &targetHeadingTrue,
+                       double &targetHeadingMagnetic ) {
+    if ( N2kMsg.PGN != 65360L ) { return false; }
 
     int Index = 0;
-    company = N2kMsg.Get2ByteUInt(Index);
-    sid = N2kMsg.GetByte(Index);
-    targetHeadingTrue = N2kMsg.Get2ByteUInt(Index);
-    targetHeadingMagnetic = N2kMsg.Get2ByteUInt(Index);
+    company = N2kMsg.Get2ByteUInt( Index );
+    sid = N2kMsg.GetByte( Index );
+    targetHeadingTrue = N2kMsg.Get2ByteUDouble( 0.0001, Index );
+    targetHeadingMagnetic = N2kMsg.Get2ByteUDouble( 0.0001, Index );
 
     return true;
 }
 
-bool ParseN2kPGN65359(const tN2kMsg &N2kMsg, uint16_t &company, uint8_t &sid, uint16_t &headingTrue,
-                      uint16_t &headingMagnetic) {
-    if (N2kMsg.PGN != 65359L) { return false; }
+bool ParseN2kPGN65359( const tN2kMsg &N2kMsg, uint8_t &sid, double &headingTrue, double &headingMagnetic ) {
+    if ( N2kMsg.PGN != 65359L ) { return false; }
 
     int Index = 0;
-    company = N2kMsg.Get2ByteUInt(Index);
-    sid = N2kMsg.GetByte(Index);
-    headingTrue = N2kMsg.Get2ByteUInt(Index);
-    headingMagnetic = N2kMsg.Get2ByteUInt(Index);
+    N2kMsg.Get2ByteUInt( Index );
+    sid = N2kMsg.GetByte( Index );
+    headingTrue = N2kMsg.Get2ByteUDouble( 0.0001, Index );
+    headingMagnetic = N2kMsg.Get2ByteUDouble( 0.0001, Index );
 
     return true;
 }
 
-bool ParseN2kPGN65379(const tN2kMsg &N2kMsg, uint16_t &company, uint16_t &pilotMode, uint8_t &subMode,
-                      uint8_t &pilotModeData) {
-    if (N2kMsg.PGN != 65379L) { return false; }
+void SetN2kPGN65359( tN2kMsg &N2kMsg, uint8_t sid, double headingTrue, double headingMagnetic ) {
+    N2kMsg.SetPGN( 65359L );
+    //N2kMsg.Priority = 2;
+    N2kMsg.Add2ByteUInt( RAYMARINE_MANUFACTURER_INDUSTRY );
+    N2kMsg.AddByte( sid );
+    N2kMsg.Add2ByteUDouble( headingTrue, 0.0001 );
+    N2kMsg.Add2ByteUDouble( headingMagnetic, 0.0001 );
+    N2kMsg.AddByte( 0 );
+}
+
+bool ParseN2kPGN65379( const tN2kMsg &N2kMsg, uint16_t &company, uint16_t &pilotMode, uint8_t &subMode,
+                       uint8_t &pilotModeData ) {
+    if ( N2kMsg.PGN != 65379L ) { return false; }
 
     int Index = 0;
-    company = N2kMsg.Get2ByteUInt(Index);
+    company = N2kMsg.Get2ByteUInt( Index );
     // 0: standby, 64: auto
-    pilotMode = N2kMsg.Get2ByteUInt(Index);
-    subMode = N2kMsg.GetByte(Index);
-    pilotModeData = N2kMsg.GetByte(Index);
+    pilotMode = N2kMsg.Get2ByteUInt( Index );
+    subMode = N2kMsg.GetByte( Index );
+    pilotModeData = N2kMsg.GetByte( Index );
     // reserved
 
     return true;
 }
 
-bool ParseN2kPGN126720(const tN2kMsg &N2kMsg, int &Index, uint16_t &ManufacturerCode, uint8_t &Reserved,
-                       uint8_t &IndustryCode, uint16_t &ProprietaryID) {
-    if (N2kMsg.PGN != 126720L) { return false; }
+bool ParseN2kPGN126720( const tN2kMsg &N2kMsg, int &Index, uint16_t &ManufacturerCode, uint8_t &Reserved,
+                        uint8_t &IndustryCode, uint16_t &ProprietaryID ) {
+    if ( N2kMsg.PGN != 126720L ) { return false; }
 
     Index = 0;
-    uint16_t v = N2kMsg.Get2ByteUInt(Index);
-    ManufacturerCode = v & ((1 << 11) - 1);
-    Reserved = (v >> 11) & 0x03;
-    IndustryCode = (v >> 13) & 0x07;
-    ProprietaryID = N2kMsg.Get2ByteUInt(Index);
+    uint16_t v = N2kMsg.Get2ByteUInt( Index );
+    ManufacturerCode = v & ( ( 1 << 11 ) - 1 );
+    Reserved = ( v >> 11 ) & 0x03;
+    IndustryCode = ( v >> 13 ) & 0x07;
+    ProprietaryID = N2kMsg.Get2ByteUInt( Index );
 
     return true;
 }
@@ -161,12 +170,12 @@ const char *SeaTalkDisplayColor[4] = {
 };
 
 const LookupEntry SeaTalkPilotMode16[6] = {
-        {0, "Standby"},
-        {1, "Starting"},
-        {64, "Auto, compass commanded"},
-        {256, "Vane, Wind Mode"},
-        {384, "Track Mode"},
-        {385, "No Drift, COG referenced (In track, course changes)"},
+        { 0,   "Standby" },
+        { 1,   "Starting" },
+        { 64,  "Auto, compass commanded" },
+        { 256, "Vane, Wind Mode" },
+        { 384, "Track Mode" },
+        { 385, "No Drift, COG referenced (In track, course changes)" },
 };
 
 const char *SeaTalkAlarmStatus[3] = {

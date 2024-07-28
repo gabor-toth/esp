@@ -18,26 +18,30 @@ extern const char *SeaTalkKeystroke[10];
 extern const char *SeaTalkNetworkGroup[11];
 extern const LookupEntry SeaTalkPilotMode16[6];
 
-extern bool ParseN2kPGN61184(const tN2kMsg &N2kMsg, uint8_t &proprietaryID, uint8_t &variant, uint8_t &wirelessSetting,
-                             uint8_t &wiredSetting, uint8_t &beepControl);
+extern bool ParseN2kPGN61184( const tN2kMsg &N2kMsg, uint8_t &proprietaryID, uint8_t &variant, uint8_t &wirelessSetting,
+                              uint8_t &wiredSetting, uint8_t &beepControl );
 
-extern bool ParseN2kPGN65288(const tN2kMsg &N2kMsg, uint16_t &company, uint8_t &sid, uint8_t &alarmStatus,
-                             uint8_t &alarmId, uint8_t &alarmGroup, uint8_t &alarmPriority);
+extern bool ParseN2kPGN65288( const tN2kMsg &N2kMsg, uint16_t &company, uint8_t &sid, uint8_t &alarmStatus,
+                              uint8_t &alarmId, uint8_t &alarmGroup, uint8_t &alarmPriority );
 
-extern bool ParseN2kPGN65359(const tN2kMsg &N2kMsg, uint16_t &company, uint8_t &sid, uint16_t &headingTrue,
-                             uint16_t &headingMagnetic);
+extern bool ParseN2kPGN65359( const tN2kMsg &N2kMsg, uint8_t &sid, double &headingTrue,
+                              double &headingMagnetic );
 
-extern bool ParseN2kPGN65360(const tN2kMsg &N2kMsg, uint16_t &company, uint8_t &sid, uint16_t &targetHeadingTrue,
-                             uint16_t &targetHeadingMagnetic);
+extern void SetN2kPGN65359( tN2kMsg &N2kMsg, uint8_t sid, double headingTrue,
+                            double headingMagnetic );
 
-extern bool ParseN2kPGN65361(const tN2kMsg &N2kMsg, uint8_t &alarmId, uint8_t &alarmGroup);
+extern bool ParseN2kPGN65360( const tN2kMsg &N2kMsg, uint16_t &company, uint8_t &sid, double &targetHeadingTrue,
+                              double &targetHeadingMagnetic );
 
-extern bool ParseN2kPGN65379(const tN2kMsg &N2kMsg, uint16_t &company, uint16_t &pilotMode, uint8_t &subMode,
-                             uint8_t &pilotModeData);
+extern bool ParseN2kPGN65361( const tN2kMsg &N2kMsg, uint8_t &alarmId, uint8_t &alarmGroup );
 
-extern bool ParseN2kPGN126720(const tN2kMsg &N2kMsg, int &Index, uint16_t &ManufacturerCode, uint8_t &Reserved,
-                              uint8_t &IndustryCode, uint16_t &ProprietaryID);
+extern bool ParseN2kPGN65379( const tN2kMsg &N2kMsg, uint16_t &company, uint16_t &pilotMode, uint8_t &subMode,
+                              uint8_t &pilotModeData );
 
+extern bool ParseN2kPGN126720( const tN2kMsg &N2kMsg, int &Index, uint16_t &ManufacturerCode, uint8_t &Reserved,
+                               uint8_t &IndustryCode, uint16_t &ProprietaryID );
+
+#define RAYMARINE_MANUFACTURER_INDUSTRY ((uint16_t)((4<<13)|(0<11)|(1851)))
 /*
 1	Manufacturer Code	1851: Raymarine	0 .. 2045, 11 bits lookup MANUFACTURER_CODE
 2	Reserved			2 bits RESERVED
