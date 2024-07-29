@@ -105,10 +105,6 @@ menu "Own Configuration"
             bool "Over Wifi"
             default n
 
-        config SIGNALK_START_SIMULATOR
-            bool "Start simulator on startup"
-            default n
-
         config SIGNALK_LOG_FREE_MEM
             bool "Log free memory every second"
             default n

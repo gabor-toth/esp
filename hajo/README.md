@@ -247,6 +247,7 @@ actisense-serial -d /dev/ttyS0
 - Install from Appstore
     - mandatory
         - @mxtommy/kip (https://github.com/mxtommy/Kip)
+        - @signalk/freeboard-sk
         - @signalk/charts-plugin
         - @signalk/course-provider
         - @signalk/set-system-time
@@ -257,28 +258,14 @@ actisense-serial -d /dev/ttyS0
         - signalk-fixed-position
         - @signalk/signalk-autopilot
         - rest-provider-signalk (https://www.npmjs.com/package/rest-provider-signalk)
-    - installed on test PI
-      @mxtommy/kip
-      @signalk/charts-plugin
-      @signalk/course-provider
-      @signalk/freeboard-sk
-      @signalk/instrumentpanel
-      @signalk/resources-provider
-      @signalk/set-system-time
-      @signalk/signalk-autopilot
-      @signalk/signalk-to-nmea0183
-      @signalk/udp-nmea-plugin
-      @signalk/vesselpositions
-      rest-provider-signalk
-      signalk-alarm-silencer
-      signalk-avg-paths
-      signalk-derived-data
-      signalk-fixed-position
-      signalk-n2kais-to-nmea0183
-      signalk-racing-calculator
-      signalk-to-batch-format
-      signalk-to-nmea2000
-
+- Derived data
+    - Magnetic Variation
+    - True Heading
+    - Course DTG, XTE, BRG, etc
+    - Velocity Made Good towards next waypoint
+    - Velocity Made Good to wind
+- Course Data provider
+    - GreatCircle
 - Setup
     - Server,Settings, Options, mdns enable
     - Save, restart
@@ -402,3 +389,8 @@ wpa_supplicant -B -c /etc/wpa_supplicant/wpa_supplicant.conf -i wlan0
 wpa_cli terminate -i wlan0
 ```
 
+## Build
+
+```shell
+idf.py -p /dev/ttyUSB0 flash -b 3000000 -DCONFIG_DEVICE_TYPE=GATEWAY -DCONFIG_START_SIMULATOR=y
+```
