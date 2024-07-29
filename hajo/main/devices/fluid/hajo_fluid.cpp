@@ -160,18 +160,17 @@ static bool send_adc_fluid_level( int index, tN2kMsg &message ) {
     adc_get_channel_value( data->adc_channel_high, &channel_data_h );
     gpio_set_level( data->drive_gpio_pin, 0 );
 
-    uint32_t display_value;
+    uint32_t valueInPercent;
     double rmes;
-    convert_fluid_level( channel_data_l.display_value, channel_data_h.display_value, &display_value, &rmes );
+    convert_fluid_level( channel_data_l.display_value, channel_data_h.display_value, &valueInPercent, &rmes );
 
     ESP_LOGD( TAG, "Channel %d %-10s Raw: %4ld Rmes: %lf Display: %5ld",
               channel_data_h.channel,
               channel_data_h.name,
               channel_data_h.raw_value,
               rmes,
-              display_value );
+              valueInPercent );
 
-    double valueInPercent = display_value / 100.0;
     SetN2kFluidLevel( message,
                       data->instance,
                       (tN2kFluidType) data->type,
@@ -191,15 +190,15 @@ static bool send_water_fluid_level( int index, tN2kMsg &message ) {
     // TODO add a bit delay to stabilize voltage
 
     if ( gpio_get_level( PIN_WATER_4 ) == 0 ) {
-        valueInPercent = 1.00;
+        valueInPercent = 100;
     } else if ( gpio_get_level( PIN_WATER_3 ) == 0 ) {
-        valueInPercent = 0.75;
+        valueInPercent = 75;
     } else if ( gpio_get_level( PIN_WATER_2 ) == 0 ) {
-        valueInPercent = 0.50;
+        valueInPercent = 50;
     } else if ( gpio_get_level( PIN_WATER_1 ) == 0 ) {
-        valueInPercent = 0.25;
+        valueInPercent = 25;
     } else {
-        valueInPercent = 0.0;
+        valueInPercent = 0;
     }
 
     gpio_set_direction( PIN_WATER_0, GPIO_MODE_DISABLE );
@@ -213,8 +212,6 @@ static bool send_water_fluid_level( int index, tN2kMsg &message ) {
                       valueInPercent,
                       capacity != 0 ? capacity : N2kDoubleNA // capacity
     );
-
-    gpio_set_level( PIN_WATER_0, 0 );
 
     return true;
 }

@@ -325,13 +325,13 @@ static void onSimulatorTick( void *arg ) {
         // tanks.[freshWater,fuel].1.currentLevel, 2500ms
         {
             tN2kMsg N2kMsg;
-            SetN2kFluidLevel( N2kMsg, 0, N2kft_Fuel, FluidLevelFuel, N2kDoubleNA );
+            SetN2kFluidLevel( N2kMsg, 0, N2kft_Fuel, FluidLevelFuel, 60 );
             sendN2KMessageToSignalK( N2kMsg );
             sentPackets++;
         }
         {
             tN2kMsg N2kMsg;
-            SetN2kFluidLevel( N2kMsg, 0, N2kft_Water, FluidLevelWater, N2kDoubleNA );
+            SetN2kFluidLevel( N2kMsg, 0, N2kft_Water, FluidLevelWater, 85 );
             sendN2KMessageToSignalK( N2kMsg );
             sentPackets++;
         }
