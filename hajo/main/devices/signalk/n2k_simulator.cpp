@@ -52,6 +52,7 @@ typedef enum {
     SendHeading,
     SendGNSS,
     SendLatLon,
+    SendPilot,
     SendRudder,
     SendSpeed,
     SendWindSpeed,
@@ -68,6 +69,7 @@ static const char *SenderTypeNames[] = {
         "SendHeading",
         "SendGNSS",
         "SendLatLon",
+        "SendPilot",
         "SendRudder",
         "SendSpeed",
         "SendWindSpeed",
@@ -75,7 +77,7 @@ static const char *SenderTypeNames[] = {
 };
 */
 
-static uint32_t nextTickPerSenderType[SendMax] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+static uint32_t nextTickPerSenderType[SendMax] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 static uint32_t nextTickForLog = 0;
 static uint16_t sentPackets = 0;
 
@@ -140,6 +142,7 @@ static Animator animators[] = {
 //        "SendHeading",
 //        "SendGNSS",
 //        "SendLatLon",
+//        "SendPilot",
 //        "SendRudder",
 //        "SendSpeed",
 //        "SendWindSpeed",
@@ -166,19 +169,19 @@ static void onSimulatorTick( void *arg ) {
         // electrical.batteries.[1,2,3].voltage, 1500ms
         {
             tN2kMsg N2kMsg;
-            SetN2kDCBatStatus( N2kMsg, 1, BatteryVoltage1 );
+            SetN2kDCBatStatus( N2kMsg, 0, BatteryVoltage1 );
             sendN2KMessageToSignalK( N2kMsg );
             sentPackets++;
         }
         {
             tN2kMsg N2kMsg;
-            SetN2kDCBatStatus( N2kMsg, 2, BatteryVoltage2 );
+            SetN2kDCBatStatus( N2kMsg, 1, BatteryVoltage2 );
             sendN2KMessageToSignalK( N2kMsg );
             sentPackets++;
         }
         {
             tN2kMsg N2kMsg;
-            SetN2kDCBatStatus( N2kMsg, 3, BatteryVoltage3 );
+            SetN2kDCBatStatus( N2kMsg, 2, BatteryVoltage3 );
             sendN2KMessageToSignalK( N2kMsg );
             sentPackets++;
         }
@@ -250,6 +253,7 @@ static void onSimulatorTick( void *arg ) {
     if ( isTime( SendGNSS, 1000 ) ) {
         {
             tN2kMsg N2kMsg;
+            // TODO navigation.datetime = "1970-01-01T00:02:12.07000Z"
             SetN2kGNSS( N2kMsg, sid, DaysSince1970, SecondsSinceMidnight,
                         Latitude, Longitude, N2kDoubleNA,
                         N2kGNSSt_GPS, N2kGNSSm_GNSSfix,  N2kGNSSi_noIntegrityChecking,
@@ -269,21 +273,6 @@ static void onSimulatorTick( void *arg ) {
             sendN2KMessageToSignalK( N2kMsg );
             sentPackets++;
         }
-//        {
-        // TODO navigation.headingMagnetic 	n2k.104 (autopilot)  (65359)
-//        {
-//            // navigation.headingMagnetic, 100ms
-//            tN2kMsg N2kMsg;
-//            SetN2kMagneticHeading( N2kMsg, sid, COG + DegToRad(6.0));
-//            sendN2KMessageToSignalK( N2kMsg );
-//            sentPackets++;
-//        }
-//            // navigation.headingMagnetic, 100ms
-//            tN2kMsg N2kMsg;
-//            SetN2kTrueHeading( N2kMsg, sid, COG );
-//            sendN2KMessageToSignalK( N2kMsg );
-//            sentPackets++;
-//        }
         return;
     }
 
@@ -322,7 +311,7 @@ static void onSimulatorTick( void *arg ) {
     }
 
     if ( isTime( SendFluid, 2500 ) ) {
-        // tanks.[freshWater,fuel].1.currentLevel, 2500ms
+        // tanks.[freshWater,fuel].0.currentLevel, 2500ms
         {
             tN2kMsg N2kMsg;
             SetN2kFluidLevel( N2kMsg, 0, N2kft_Fuel, FluidLevelFuel, 60 );
@@ -338,9 +327,17 @@ static void onSimulatorTick( void *arg ) {
         return;
     }
 
-    // steering.autopilot.state 	n2k.104  (126720)
-    // tanks.fuel.0.currentLevel 	0.0006  ratio	07/28 12:47:24	n2k.29  (127505)
-    // tanks.freshWater.0.currentLevel 	0.005   ratio	07/28 12:47:24	n2k.29  (127505)
+    if ( isTime( SendPilot, 2500 ) ) {
+        {
+            tN2kMsg N2kMsg;
+            SetN2kPGN126720( N2kMsg, SEATALK_PILOT_MODE_Standby, 0, 0 );
+            sendN2KMessageToSignalK( N2kMsg );
+            sentPackets++;
+        }
+    }
+
+    // navigation.log
+    // navigation.trip.log
 }
 
 void pngSimulationStart() {

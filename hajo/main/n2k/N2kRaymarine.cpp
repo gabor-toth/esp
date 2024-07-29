@@ -126,6 +126,39 @@ bool ParseN2kPGN126720( const tN2kMsg &N2kMsg, int &Index, uint16_t &Manufacture
     return true;
 }
 
+void SetN2kPGN126720( tN2kMsg &N2kMsg, uint8_t pilotMode, uint8_t subMode, uint8_t pilotModeData ) {
+    N2kMsg.SetPGN( 126720L );
+    N2kMsg.Add2ByteUInt( RAYMARINE_MANUFACTURER_INDUSTRY );
+    N2kMsg.Add2ByteUInt( SEATALK_PROPRIETARY_ID );
+    N2kMsg.AddByte( 132 );
+    N2kMsg.Add3ByteInt( 0 );
+    /*
+      if (
+        (mode == 0 || mode == 'Standby' || mode == 68 || mode == 72) &&
+        subMode == 0
+      ) {
+        return 'standby'
+      } else if (
+        mode == 'Wind' &&
+        (subMode == 0 || subMode == 4 || subMode == 8 || subMode == 12)
+      ) {
+        // submodes: 0=on course,  4=off course pt/stb, 8=wind shift, submode 12 tbd
+        return 'wind'
+      } else if (mode == 'Track' && subMode == 0) {
+        return 'route'
+      } else if (mode == 'Auto' && (subMode == 0 || subMode == 4)) {
+        //subMode 4 means offcourse
+        return 'auto'
+      }
+     */
+    // Pilot Mode
+    N2kMsg.AddByte( pilotMode );
+    // Sub Mode
+    N2kMsg.AddByte( subMode );
+    // Pilot Mode Data
+    N2kMsg.AddByte( pilotModeData );
+}
+
 const char *SeaTalkKeystroke[10] = {
         "Auto",
         "Standby",

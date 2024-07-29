@@ -18,6 +18,9 @@ extern const char *SeaTalkKeystroke[10];
 extern const char *SeaTalkNetworkGroup[11];
 extern const LookupEntry SeaTalkPilotMode16[6];
 
+#define RAYMARINE_MANUFACTURER_INDUSTRY ((uint16_t)((4<<13)|(0<11)|(1851)))
+#define SEATALK_PROPRIETARY_ID 33264
+
 extern bool ParseN2kPGN61184( const tN2kMsg &N2kMsg, uint8_t &proprietaryID, uint8_t &variant, uint8_t &wirelessSetting,
                               uint8_t &wiredSetting, uint8_t &beepControl );
 
@@ -41,19 +44,12 @@ extern bool ParseN2kPGN65379( const tN2kMsg &N2kMsg, uint16_t &company, uint16_t
 extern bool ParseN2kPGN126720( const tN2kMsg &N2kMsg, int &Index, uint16_t &ManufacturerCode, uint8_t &Reserved,
                                uint8_t &IndustryCode, uint16_t &ProprietaryID );
 
-#define RAYMARINE_MANUFACTURER_INDUSTRY ((uint16_t)((4<<13)|(0<11)|(1851)))
-/*
-1	Manufacturer Code	1851: Raymarine	0 .. 2045, 11 bits lookup MANUFACTURER_CODE
-2	Reserved			2 bits RESERVED
-3	Industry Code	4: Marine Industry 0 .. 6, 3 bits lookup INDUSTRY_CODE
-4	Proprietary ID	33264: 0x81f0 0 .. 65533, 16 bits unsigned NUMBER
-5	command	132: 0x84 0 .. 253, 8 bits unsigned NUMBER
-6	Unknown 1			,24 bits BINARY
-7	Pilot Mode 0 .. 253, 8 bits lookup SEATALK_PILOT_MODE
-8	Sub Mode 0 .. 253, 8 bits unsigned NUMBER
-9	Pilot Mode Data			,8 bits BINARY
-10	Unknown 2			,80 bits BINARY
- */
+#define SEATALK_PILOT_MODE_Standby  64
+#define SEATALK_PILOT_MODE_Auto     66
+#define SEATALK_PILOT_MODE_Wind     70
+#define SEATALK_PILOT_MODE_Track    74
+
+extern void SetN2kPGN126720( tN2kMsg &N2kMsg, uint8_t pilotMode, uint8_t subMode, uint8_t pilotModeData );
 
 // see https://github.com/AK-Homberger/NMEA2000-SeatalkNG-AlarmBuzzer/blob/master/NMEA2000-Alarm-Buzzer/NMEA2000-Alarm-Buzzer.ino
 // see https://github.com/canboat/canboat/blob/master/analyzer/pgn.h
