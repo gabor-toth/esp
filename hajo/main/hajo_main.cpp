@@ -151,7 +151,7 @@ void hajo_main() {
     hajo_display_main( iDev++ );
     clock_configure( 240 );
 #endif
-#if DEVICE_TYPE == DEVICE_TYPE_MONITOR || DEVICE_TYPE == DEVICE_TYPE_ALL
+#if DEVICE_TYPE == DEVICE_TYPE_BATTERY || DEVICE_TYPE == DEVICE_TYPE_ALL
     hajo_battery_main( iDev++ );
     clock_configure( 80 );
 #endif

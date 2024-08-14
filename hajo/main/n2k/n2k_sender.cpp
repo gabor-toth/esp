@@ -9,8 +9,6 @@
 using namespace std;
 
 static const char *TAG = "n2k_sender";
-#define LOG_LEVEL   ESP_LOG_INFO
-#define LOG(format, ... ) ESP_LOG_LEVEL_LOCAL(LOG_LEVEL, TAG, format, ##__VA_ARGS__)
 
 typedef struct loopback_callback_node_t {
     struct loopback_callback_node_t* next;
@@ -69,7 +67,7 @@ _Noreturn static void task_main( void *arg ) {
             }
             iterator->Scheduler.UpdateNextTime();
 
-            //LOG( "sending for %s", iterator->Description );
+            ESP_LOGD( TAG, "sending for %s", iterator->Description );
             int index;
             tN2kMsg N2kMsg;
             for ( index = 0; iterator->SendFunction( index, N2kMsg ); index++ ) {
@@ -81,7 +79,7 @@ _Noreturn static void task_main( void *arg ) {
                 }
             }
             if ( index == 0 ) {
-                //LOG( "nothing to send for %s", iterator->Description );
+                //ESP_LOGD( TAG, "nothing to send for %s", iterator->Description );
             }
         }
     }
@@ -93,7 +91,7 @@ static void timer_callback( TimerHandle_t ) {
 }
 
 void n2k_sender_on_open() {
-    LOG( "n2k_sender_on_open" );
+    ESP_LOGI( TAG, "n2k_sender_on_open" );
     vector<tN2kSendMessage>::iterator iterator;
     for ( iterator = sendMessages.begin(); iterator != sendMessages.end(); iterator++ ) {
         if ( iterator->Scheduler.IsEnabled()) {
@@ -123,7 +121,7 @@ void nk2_register_sender( tN2kSendFunction sendFunction,
                 nullptr,
                 timer_callback );
         xTimerStart( timer, portMAX_DELAY );
-        LOG( "timer started for %s with %dms interval", TAG, interval_ms );
+        ESP_LOGD( TAG, "timer started for %s with %dms interval", TAG, interval_ms );
     }
 }
 
