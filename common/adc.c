@@ -18,11 +18,11 @@ typedef struct {
     int raw_value;
     uint32_t converted_value;
     void *user_data;
-} adc_channel_data_t;
+} adc_channel_internal_t;
 
 // static variables
 
-static adc_channel_data_t channels[MAX_CHANNELS];
+static adc_channel_internal_t channels[MAX_CHANNELS];
 static int channel_count = 0;
 static int number_of_samples = 16;  // Multisampling, was originally 64
 static int sampling_interval_seconds = 1;
@@ -31,7 +31,7 @@ static adc_cali_handle_t scheme_handle = NULL;
 static adc_oneshot_unit_handle_t unit_handle = NULL;
 static QueueHandle_t timer_event_queue = NULL;
 
-static void read_one( adc_channel_data_t *channel ) {
+static void read_one( adc_channel_internal_t *channel ) {
     uint32_t adc_reading = 0;
     for ( int i = 0; i < number_of_samples; i++ ) {
         int raw = 0;
@@ -49,7 +49,7 @@ static void read_one( adc_channel_data_t *channel ) {
     } else {
         channel->converted_value = channel->raw_value;
     }
-    ESP_LOGD( LOG, "Channel %d %-10s Raw: %4ld Voltage: %4dmV Display: %5ld (corr %ld)",
+    ESP_LOGI( LOG, "Channel %d %-10s Raw: %4ld Voltage: %4dmV Display: %5ld (corr %ld)",
               channel->channel,
               channel->name,
               adc_reading,
@@ -111,7 +111,7 @@ esp_err_t adc_get_channel_value( int index, adc_channel_value_t *channel_value )
     if ( !is_timer_started ) {
         read_one( &channels[ index ] );
     }
-    adc_channel_data_t *channel = &channels[ index ];
+    adc_channel_internal_t *channel = &channels[ index ];
     channel_value->channel = channel->channel;
     channel_value->name = channel->name;
     channel_value->user_data = channel->user_data;
@@ -119,6 +119,17 @@ esp_err_t adc_get_channel_value( int index, adc_channel_value_t *channel_value )
     channel_value->display_value = channel->converter != NULL
                                    ? channel->converted_value
                                    : channel->raw_value;
+    return ESP_OK;
+}
+
+esp_err_t adc_get_channel_data( int index, adc_channel_data_t *channel_value ) {
+    if ( index < 0 || index > channel_count ) {
+        return ESP_FAIL;
+    }
+    adc_channel_internal_t *channel = &channels[ index ];
+    channel_value->channel = channel->channel;
+    channel_value->name = channel->name;
+    channel_value->user_data = channel->user_data;
     return ESP_OK;
 }
 
@@ -143,7 +154,7 @@ esp_err_t adc_add_channel( uint8_t adc_channel, const char *name, void *user_dat
             ESP_ERROR_CHECK( ESP_ERR_INVALID_ARG );
         }
     }
-    adc_channel_data_t *channel = &channels[ channel_count++ ];
+    adc_channel_internal_t *channel = &channels[ channel_count++ ];
     memset( channel, 0, sizeof( *channel ) );
     channel->channel = (adc_channel_t) adc_channel;
     channel->converter = converter;

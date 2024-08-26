@@ -33,30 +33,30 @@ static void convert_battery_voltage( uint32_t raw_value, uint32_t *display_value
 }
 
 static void setup_adc() {
-    battery_multiplier = (battery_rmes + battery_rtop) / (double) battery_rmes;
-    
+    battery_multiplier = ( battery_rmes + battery_rtop ) / (double) battery_rmes;
+
     battery_user_data data;
     data = {
             .instance = 0,
             .capacity_ah = 900,
-            .ripple_voltage_mv = 11000
+            .ripple_voltage_mv = 10000
     };
-    adc_add_channel( 2, "motor", &data, sizeof(data), convert_battery_voltage );
-    
+    adc_add_channel( 2, "motor", &data, sizeof( data ), convert_battery_voltage );
+
     data = {
             .instance = 1,
             .capacity_ah = 900,
-            .ripple_voltage_mv = 11000
+            .ripple_voltage_mv = 10000
     };
-    adc_add_channel( 4, "munka1", &data, sizeof(data), convert_battery_voltage );
-    
+    adc_add_channel( 4, "munka1", &data, sizeof( data ), convert_battery_voltage );
+
     data = {
             .instance = 2,
             .capacity_ah = 1100,
-            .ripple_voltage_mv = 11000
+            .ripple_voltage_mv = 10000
     };
-    adc_add_channel( 6, "munka2", &data, sizeof(data), convert_battery_voltage );
-    
+    adc_add_channel( 6, "munka2", &data, sizeof( data ), convert_battery_voltage );
+
     adc_main( false );
 }
 
@@ -67,11 +67,11 @@ static void setup_n2k_device( int iDev ) {
             N2K_PGN_BATTERY_CONFIGURATION,
             0
     };
-    
+
     static const unsigned long ReceiveMessages[] = {
             0
     };
-    
+
     static const tNMEA2000::tProductInformation ProductInformation = {
             2100,                        // N2kVersion
             100,                        // Manufacturer's product code
@@ -82,9 +82,9 @@ static void setup_n2k_device( int iDev ) {
             0,                       // CertificationLevel
             1                         // LoadEquivalency
     };
-    
+
     NMEA2000.SetProductInformation( &ProductInformation, iDev );
-    
+
     // device class & function: https://manualzz.com/doc/12647142/nmea2000-class-and-function-codes
     NMEA2000.SetDeviceInformation( n2k_get_device_id(),      // Unique number. Use e.g. Serial number.
                                    170,    // Device function=Battery.
@@ -93,14 +93,14 @@ static void setup_n2k_device( int iDev ) {
                                    4,       // Marine
                                    iDev
     );
-    
+
     NMEA2000.ExtendTransmitMessages( TransmitMessages, iDev );
     NMEA2000.ExtendReceiveMessages( ReceiveMessages, iDev );
 }
 
 static bool send_battery_status( int index, tN2kMsg &message ) {
     static uint8_t sid = 0;
-    
+
     int channel_count = adc_number_of_channels();
     if ( index >= channel_count ) {
         return false;
@@ -108,7 +108,7 @@ static bool send_battery_status( int index, tN2kMsg &message ) {
     if ( index == 0 ) {
         sid++;
     }
-    
+
     adc_channel_value_t channel_data;
     adc_get_channel_value( index, &channel_data );
     battery_user_data *user_data = static_cast<battery_user_data *>(channel_data.user_data);
@@ -124,7 +124,7 @@ static bool send_battery_status( int index, tN2kMsg &message ) {
 
 static bool send_dc_status( int index, tN2kMsg &message ) {
     static uint8_t sid = 0;
-    
+
     int channel_count = adc_number_of_channels();
     if ( index >= channel_count ) {
         return false;
@@ -132,9 +132,9 @@ static bool send_dc_status( int index, tN2kMsg &message ) {
     if ( index == 0 ) {
         sid++;
     }
-    
-    adc_channel_value_t channel_data;
-    adc_get_channel_value( index, &channel_data );
+
+    adc_channel_data_t channel_data;
+    adc_get_channel_data( index, &channel_data );
     battery_user_data *user_data = static_cast<battery_user_data *>(channel_data.user_data);
 //    SetN2kDCStatus( N2kMsg, 1, 1, N2kDCt_Battery, 56, 92, 38500, 0.012 );
     SetN2kDCStatus( message,
@@ -155,9 +155,9 @@ static bool send_battery_config( int index, tN2kMsg &message ) {
     if ( index >= channel_count ) {
         return false;
     }
-    
-    adc_channel_value_t channel_data;
-    adc_get_channel_value( index, &channel_data );
+
+    adc_channel_data_t channel_data;
+    adc_get_channel_data( index, &channel_data );
     battery_user_data *user_data = static_cast<battery_user_data *>(channel_data.user_data);
 //    SetN2kBatConf( N2kMsg, 1, N2kDCbt_Gel, N2kDCES_Yes, N2kDCbnv_12v, N2kDCbc_LeadAcid, AhToCoulomb( 420 ), 53, 1.251, 75 );
     SetN2kBatConf( message,

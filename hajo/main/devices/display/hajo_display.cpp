@@ -1,5 +1,5 @@
 #include "display_main.h"
-//#include "esp_log.h"
+#include "esp_log.h"
 #include "hajo_display.h"
 #include "n2k/n2k_sender.h"
 #include "n2k/n2k_struct_parser.h"
