@@ -1,5 +1,5 @@
 (module "1844772" (layer F.Cu)
-  (descr "1844772-3")
+  (descr "1844772")
   (tags "Connector")
   (fp_text reference J** (at 7.620 4.21) (layer F.SilkS)
     (effects (font (size 1.27 1.27) (thickness 0.254)))
