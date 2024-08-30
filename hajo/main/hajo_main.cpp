@@ -10,6 +10,7 @@
 #include "devices/fluid/hajo_fluid.h"
 #include "devices/signalk/hajo_signalk.h"
 #include "devices/signalk/EspSigK.h"
+#include "devices/witmotion//wit_main.h"
 #include "nvs_main.h"
 #include "n2k/n2k_receiver.h"
 
@@ -146,17 +147,18 @@ void hajo_main() {
 
     int iDev = 0;
 #if DEVICE_TYPE == DEVICE_TYPE_DISPLAY || DEVICE_TYPE == DEVICE_TYPE_ALL
+    clock_configure( 240 );
     NMEA2000.SetDeviceCount( 2 );
     hajo_fluid_main( iDev++ );
     hajo_display_main( iDev++ );
-    clock_configure( 240 );
 #endif
 #if DEVICE_TYPE == DEVICE_TYPE_BATTERY || DEVICE_TYPE == DEVICE_TYPE_ALL
-    hajo_battery_main( iDev++ );
     clock_configure( 80 );
+    hajo_battery_main( iDev++ );
 #endif
 #if DEVICE_TYPE == CONFIG_DEVICE_TYPE_GATEWAY || DEVICE_TYPE == DEVICE_TYPE_ALL
     clock_configure( 240 );
+//    wit_main();
     NMEA2000.SetDeviceCount( 3 );
     hajo_attitude_main( iDev++ );
     hajo_signalk_main( iDev++ );

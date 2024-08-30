@@ -331,13 +331,13 @@ nmtui
 On Debian 12 (Bookworm):
 
 ```
-nmcli dev show wlan1
+nmcli dev show wlan0
 nmcli dev wifi list
 nmcli connection show
 
 #nmcli dev set wlan1 autoconnect yes
-nmcli dev wifi connect TothKiss password ******** ifname wlan1
-nmcli dev wifi connect TGA password ******** ifname wlan1
+nmcli dev wifi connect TothKiss password ******** ifname wlan0
+nmcli dev wifi connect TGA password ******** ifname wlan0
 #nmcli connection modify TothKiss connection.autoconnect yes
 
 systemctl restart NetworkManager
@@ -358,19 +358,6 @@ See
 - https://forums.raspberrypi.com/viewtopic.php?t=211853
 - https://stackoverflow.com/questions/66514910/enable-predictable-network-interfaces-via-shell-on-raspberry-pi
 - https://forums.raspberrypi.com/viewtopic.php?t=198946
-
-#### Setup
-
-```
-sudo vi /etc/wpa_supplicant/wpa_supplicant.conf
-  country=HU
-  
-  network={
-      ssid="TothKiss"
-      psk="ToThKiSs"
-  }
-sudo killall -HUP wpa_supplicant
-```
 
 ### Others
 

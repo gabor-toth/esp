@@ -45,6 +45,8 @@ set(SOURCES
         "devices/signalk/hajo_signalk.cpp"
         "devices/signalk/signalk_rest.c"
         "devices/wap/wap_main.c"
+        "devices/witmotion/wit_c_sdk.c"
+        "devices/witmotion/wit_main.c"
         "fonts/rubik_12.c"
         "fonts/rubik_12_subpx.c"
         "fonts/rubik_18.c"

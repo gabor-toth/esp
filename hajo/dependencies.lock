@@ -1,27 +1,39 @@
 dependencies:
   espressif/esp_websocket_client:
-    component_hash: null
+    dependencies: []
     source:
-      path: /home/tothg/own/projects/esp/hajo/components/espressif__esp_websocket_client
+      path: /home/apa/projects/esp/hajo/components/espressif__esp_websocket_client
       type: local
     version: 1.2.3
   espressif/mdns:
     component_hash: 31117d76cae83a6d83ffd7f035f6fdae5bd05b914fc30b641afeb208b84de19a
+    dependencies:
+    - name: idf
+      require: private
+      version: '>=5.0'
     source:
-      service_url: https://api.components.espressif.com/
+      registry_url: https://components.espressif.com/
       type: service
     version: 1.3.2
   espressif/mpu6050:
     component_hash: d69219ccb141372b863c511749ffbeab28417ac71c205d7ed7030c308e1b6832
+    dependencies:
+    - name: idf
+      require: private
+      version: '>=4.0'
     source:
-      service_url: https://api.components.espressif.com/
+      registry_url: https://components.espressif.com/
       type: service
     version: 1.2.0
   idf:
-    component_hash: null
     source:
       type: idf
     version: 5.2.1
-manifest_hash: 531333fdc6aeaa1314ceca13f9095aa301960a7fc585b9690fd5d1dd0e36767d
+direct_dependencies:
+- espressif/esp_websocket_client
+- espressif/mdns
+- espressif/mpu6050
+- idf
+manifest_hash: 70cc299d6ddb37036556bb2114f48f88962f75945f4f73028119ef2006d6f540
 target: esp32s2
-version: 1.0.0
+version: 2.0.0
