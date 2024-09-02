@@ -259,11 +259,15 @@ actisense-serial -d /dev/ttyS0
         - @signalk/signalk-autopilot
         - rest-provider-signalk (https://www.npmjs.com/package/rest-provider-signalk)
 - Derived data
-    - Magnetic Variation
-    - True Heading
-    - Course DTG, XTE, BRG, etc
-    - Velocity Made Good towards next waypoint
-    - Velocity Made Good to wind
+    - Heading: Magnetic Variation
+    - Submit
+    - Heading: True Heading
+    - Course data
+        - Course DTG, XTE, BRG, etc
+        - Velocity Made Good towards next waypoint
+        - Velocity Made Good to wind
+    - optional
+        - Course data: Wind shift
 - Course Data provider
     - GreatCircle
 - Setup
