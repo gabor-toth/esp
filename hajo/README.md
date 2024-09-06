@@ -220,7 +220,7 @@ sudo raspi-config
 ```
 
 - Interface Options
-- Serial Portű
+- Serial Port
 - No (login shell)
 - Yes (serial)
 - Reboot

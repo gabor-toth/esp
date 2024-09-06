@@ -41,10 +41,10 @@ void setupSignalkOverActisense() {
     ESP_ERROR_CHECK(
             uart_set_pin( UART_NUM, GPIO_NUM_GATEWAY_UART_TX, GPIO_NUM_GATEWAY_UART_RX, GPIO_NUM_NC, GPIO_NUM_NC ) );
     const int uart_buffer_size = ( 1024 * 2 );
-//    QueueHandle_t uart_queue;
+    QueueHandle_t uart_queue;
     ESP_ERROR_CHECK( uart_driver_install( UART_NUM, uart_buffer_size,
-                                          uart_buffer_size, 0, NULL, 0 ) );
-//                                          uart_buffer_size, 10, &uart_queue, 0 ) );
+//                                          uart_buffer_size, 0, NULL, 0 ) );
+                                          uart_buffer_size, 10, &uart_queue, 0 ) );
 }
 
 #endif
