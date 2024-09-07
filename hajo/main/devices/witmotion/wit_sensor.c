@@ -29,7 +29,8 @@ static QueueHandle_t process_event_queue = NULL;
 static volatile QueueHandle_t scan_event_queue = NULL;
 static volatile bool gotMessage;
 static volatile bool processing;
-float fAcc[3], fGyro[3], fAngle[3];
+static volatile bool hasAngleData;
+static float fAcc[3], fGyro[3], fAngle[3];
 
 static void SensorUartSend( uint8_t *p_data, uint32_t uiSize ) {
     uart_write_bytes( UART_NUM, (const char *) p_data, uiSize );
@@ -86,16 +87,17 @@ _Noreturn static void process_task( void *pvParameters ) {
             fAngle[ i ] = (float) sReg[ Roll + i ] / 32768.0f * 180.0f;
         }
         if ( dataUpdate & ACC_UPDATE ) {
-            ESP_LOGI( LOG, "acc:%.3f %.3f %.3f", fAcc[ 0 ], fAcc[ 1 ], fAcc[ 2 ] );
+            ESP_LOGD( LOG, "acc:%.3f %.3f %.3f", fAcc[ 0 ], fAcc[ 1 ], fAcc[ 2 ] );
         }
         if ( dataUpdate & GYRO_UPDATE ) {
-            ESP_LOGI( LOG, "gyro:%.3f %.3f %.3f", fGyro[ 0 ], fGyro[ 1 ], fGyro[ 2 ] );
+            ESP_LOGD( LOG, "gyro:%.3f %.3f %.3f", fGyro[ 0 ], fGyro[ 1 ], fGyro[ 2 ] );
         }
         if ( dataUpdate & ANGLE_UPDATE ) {
-            ESP_LOGI( LOG, "angle:%.3f %.3f %.3f", fAngle[ 0 ], fAngle[ 1 ], fAngle[ 2 ] );
+            ESP_LOGD( LOG, "angle:%.3f %.3f %.3f", fAngle[ 0 ], fAngle[ 1 ], fAngle[ 2 ] );
+            hasAngleData = true;
         }
         if ( dataUpdate & MAG_UPDATE ) {
-            ESP_LOGI( LOG, "mag:%d %d %d", sReg[ HX ], sReg[ HY ], sReg[ HZ ] );
+            ESP_LOGD( LOG, "mag:%d %d %d", sReg[ HX ], sReg[ HY ], sReg[ HZ ] );
         }
     }
 }
@@ -220,12 +222,33 @@ static void scan_task( void *pvParameters ) {
     vTaskDelete( NULL );
 }
 
-void startScanning() {
+static void startScanning() {
     xTaskCreate( scan_task, "wit_scan", 4096, NULL, 5, NULL );
 }
 
-void wit_start_sensor() {
-    processing = false;
+bool wit_sensor_is_available() {
+    return hasAngleData;
+}
+
+void wit_sensor_get_pitch_and_roll( float *pitch, float *roll ) {
+    if ( hasAngleData ) {
+        *pitch = fAngle[ 0 ];
+        *roll = fAngle[ 1 ];
+    } else {
+        *pitch = *roll = 0;
+    }
+}
+
+void wit_sensor_get_heading( float *heading ) {
+    if ( hasAngleData ) {
+        *heading = fAngle[ 2 ];
+    } else {
+        *heading = 0;
+    }
+}
+
+void wit_sensor_start() {
+    hasAngleData = processing = false;
     UartInit( 9600 );
 
     process_event_queue = xQueueCreate( 10, sizeof( int ) );

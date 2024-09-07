@@ -1,3 +1,4 @@
+#include "esp_log.h"
 #include "wit_main.h"
 #include "wit_sensor.h"
 #include "n2k/n2k_sender.h"
@@ -49,10 +50,18 @@ static bool n2k_send_attitude( int index, tN2kMsg &message ) {
 
     switch ( index ) {
         case 0:
-            SetN2kAttitude( message, sid, 0.0, fAngle[ 0 ], fAngle[ 1 ] );
+            if ( wit_sensor_is_available() ) {
+                float pitch, roll;
+                wit_sensor_get_pitch_and_roll( &pitch, &roll );
+                SetN2kAttitude( message, sid, 0.0, DegToRad( pitch ), DegToRad( roll ) );
+            }
             return true;
         case 1:
-            SetN2kTrueHeading( message, sid, fAngle[ 2 ] );;
+            if ( wit_sensor_is_available() ) {
+                float heading;
+                wit_sensor_get_heading( &heading );
+                SetN2kTrueHeading( message, sid, DegToRad( heading ) );
+            }
             return true;
         default:
             return false;
@@ -60,6 +69,7 @@ static bool n2k_send_attitude( int index, tN2kMsg &message ) {
 }
 
 void wit_main( int iDev ) {
+    wit_sensor_start();
     setup_n2k_device( iDev );
     nk2_register_sender( n2k_send_attitude, "attitude", N2K_PGN_ATTITUDE_INTERVAL_MS, 320, true );
 }

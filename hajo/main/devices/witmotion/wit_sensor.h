@@ -5,9 +5,12 @@
 extern "C" {
 #endif
 
-extern void wit_start_sensor();
+extern void wit_sensor_start();
+extern bool wit_sensor_is_available();
 
-extern volatile float fAngle[3];
+extern void wit_sensor_get_pitch_and_roll( float *pitch, float *roll );
+
+extern void wit_sensor_get_heading( float *heading );
 
 #ifdef __cplusplus
 }
