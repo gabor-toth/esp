@@ -2,8 +2,6 @@
 #include "esp_log.h"
 #include "../n2k/n2k_sender.h"
 
-static const char* LOG = "nodeinfo";
-
 #define MANUFACTURER_CODE_OWN ((1<<12)-1)
 #define INDUSTRY_CODE_MARINE (4)
 #define PROPRIETARY_ID_WON 33264xxxx
@@ -22,15 +20,13 @@ void SetN2kPGN130881( tN2kMsg &N2kMsg ) {
 }
 
 static bool send_node_info( int index, tN2kMsg &message ) {
-    if ( index != 0) {
+    if ( index != 0 ) {
         return false;
     }
-    ESP_LOGI(LOG, "send_node_info");
     SetN2kPGN130881( message );
     return true;
 }
 
 void node_info_main() {
-    ESP_LOGI(LOG, "node_info_main");
     nk2_register_sender( send_node_info, "node_info", 1000, 98, true );
 }

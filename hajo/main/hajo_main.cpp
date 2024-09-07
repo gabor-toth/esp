@@ -3,7 +3,6 @@
 #include "esp_event.h"
 #include "esp_log.h"
 #include "esp_pm.h"
-#include "devices/attitude/hajo_attitude.h"
 #include "devices/battery/hajo_battery.h"
 #include "devices/display/hajo_display.h"
 #include "devices/fridge/fridge.h"
@@ -30,14 +29,14 @@ static const char *LOG = "hajo_main";
 static int hardware_device_type = 0xff;
 
 static const char *device_type_names[] = {
-        "unknown 0",        // 000
-        "n2kgw & logger",   // 001
-        "unknown 2",        // 010
-        "unknown 3",        // 011
-        "unknown 4",        // 100
+        "unused 0",         // 000
+        "n2k gateway",      // 001
+        "unused 2",         // 010
+        "unused 3",         // 011
+        "unused 4",         // 100
         "fluid & display",  // 101
         "battery monitor",  // 110
-        "unknown 7",        // 111
+        "unused 7",         // 111
 };
 
 static void determine_device_type( int firmware_device_type ) {
@@ -161,7 +160,7 @@ void hajo_main() {
     clock_configure( 240 );
     NMEA2000.SetDeviceCount( 3 );
     wit_main( iDev++ );
-//    hajo_attitude_main( iDev++ );
+    //hajo_attitude_main( iDev++ );
     hajo_signalk_main( iDev++ );
 #endif
 #if DEVICE_TYPE == DEVICE_TYPE_FRIDGE || DEVICE_TYPE == DEVICE_TYPE_ALL
