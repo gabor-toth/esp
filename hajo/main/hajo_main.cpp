@@ -160,7 +160,7 @@ void hajo_main() {
 #if DEVICE_TYPE == CONFIG_DEVICE_TYPE_GATEWAY || DEVICE_TYPE == DEVICE_TYPE_ALL
     clock_configure( 240 );
     NMEA2000.SetDeviceCount( 3 );
-    wit_main();
+    wit_main( iDev++ );
 //    hajo_attitude_main( iDev++ );
     hajo_signalk_main( iDev++ );
 #endif

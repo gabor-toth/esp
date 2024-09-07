@@ -3,8 +3,8 @@
 #include "driver/i2c.h"
 #include "esp_log.h"
 #include "mpu6050.h"
-#include "n2k/n2k_struct_parser.h"
 #include "n2k/n2k_sender.h"
+#include "n2k/n2k_struct_parser.h"
 #include "n2k/n2k_util.h"
 #include <cmath>
 

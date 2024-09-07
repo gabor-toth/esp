@@ -29,6 +29,7 @@ static QueueHandle_t process_event_queue = NULL;
 static volatile QueueHandle_t scan_event_queue = NULL;
 static volatile bool gotMessage;
 static volatile bool processing;
+float fAcc[3], fGyro[3], fAngle[3];
 
 static void SensorUartSend( uint8_t *p_data, uint32_t uiSize ) {
     uart_write_bytes( UART_NUM, (const char *) p_data, uiSize );
@@ -78,8 +79,6 @@ _Noreturn static void process_task( void *pvParameters ) {
         if ( dataUpdate == 0 ) {
             continue;
         }
-
-        float fAcc[3], fGyro[3], fAngle[3];
 
         for ( int i = 0; i < 3; i++ ) {
             fAcc[ i ] = (float) sReg[ AX + i ] / 32768.0f * 16.0f;
@@ -225,7 +224,7 @@ void startScanning() {
     xTaskCreate( scan_task, "wit_scan", 4096, NULL, 5, NULL );
 }
 
-void wit_main() {
+void wit_start_sensor() {
     processing = false;
     UartInit( 9600 );
 
@@ -240,4 +239,3 @@ void wit_main() {
 
     startScanning();
 }
-

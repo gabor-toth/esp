@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-extern void wit_main();
+extern void wit_main( int iDev );
 
 #ifdef __cplusplus
 }
