@@ -1,5 +1,6 @@
 #include "wit_main.h"
 #include "wit_c_sdk.h"
+#include "config.h"
 #include "driver/uart.h"
 #include "driver/gpio.h"
 #include "esp_log.h"
@@ -13,14 +14,15 @@ static const char *LOG = "wit";
 
 #define BUF_SIZE 1024
 
-#define ACC_UPDATE        0x01
-#define GYRO_UPDATE        0x02
+#define ACC_UPDATE      0x01
+#define GYRO_UPDATE     0x02
 #define ANGLE_UPDATE    0x04
-#define MAG_UPDATE        0x08
-#define READ_UPDATE        0x80
+#define MAG_UPDATE      0x08
+#define READ_UPDATE     0x80
 
 static QueueHandle_t process_event_queue = NULL;
 static volatile bool gotMessage;
+static volatile bool processing;
 
 static void SensorUartSend( uint8_t *p_data, uint32_t uiSize ) {
     uart_write_bytes( UART_NUM, (const char *) p_data, uiSize );
@@ -38,19 +40,20 @@ static void UartInit( uint32_t baud_rate ) {
             .source_clk = UART_SCLK_DEFAULT,
     };
 
-//    ESP_ERROR_CHECK( uart_driver_install( UART_NUM, BUF_SIZE * 2, 0, 0, NULL, 0 ) );
+    ESP_ERROR_CHECK( uart_driver_install( UART_NUM, BUF_SIZE * 2, 0, 0, NULL, 0 ) );
     ESP_ERROR_CHECK( uart_param_config( UART_NUM, &uart_config ) );
-    ESP_ERROR_CHECK( uart_set_pin( UART_NUM, GPIO_NUM_5, GPIO_NUM_3, -1, -1 ) );
+    ESP_ERROR_CHECK( uart_set_pin( UART_NUM, GPIO_NUM_GATEWAY_WITMOTION_TX, GPIO_NUM_GATEWAY_WITMOTION_RX, -1, -1 ) );
 }
 
 _Noreturn static void receive_task( void *pvParameters ) {
-    unsigned char ucTemp;
+    unsigned char ucTemp[16];
 
-    UartInit( 9600 );
-
+    processing = true;
     while ( 1 ) {
-        if ( uart_read_bytes( UART_NUM, &ucTemp, 1, portMAX_DELAY ) == 1 )
-            WitSerialDataIn( ucTemp );
+        int read = uart_read_bytes( UART_NUM, ucTemp, sizeof( ucTemp ), portMAX_DELAY );
+        for ( int i = 0; i < read; i++ ) {
+            WitSerialDataIn( ucTemp[ i ] );
+        }
     }
 }
 
@@ -89,8 +92,8 @@ _Noreturn static void process_task( void *pvParameters ) {
     }
 }
 
-static void DelayMs( uint16_t usMs ) {
-    vTaskDelay( usMs / portTICK_PERIOD_MS );
+static void DelayMs( uint16_t millis ) {
+    vTaskDelay( pdMS_TO_TICKS( millis ) );
 }
 
 static void SensorDataUpdate( uint32_t uiReg, uint32_t uiRegNum ) {
@@ -126,14 +129,15 @@ static void SensorDataUpdate( uint32_t uiReg, uint32_t uiRegNum ) {
         uiReg++;
     }
     gotMessage = true;
-    xQueueSendToBack( process_event_queue, &dataUpdate, 0 );
+    if ( processing ) {
+        xQueueSendToBack( process_event_queue, &dataUpdate, 0 );
+    }
 }
 
-_Noreturn static void scan_task( void *pvParameters ) {
+static void scan_task( void *pvParameters ) {
     unsigned char ucTemp;
 
     ESP_LOGI( LOG, "start scan" );
-    UartInit( 9600 );
 
     int i, iRetry;
     uint32_t c_uiBaud[10] = { 0, 4800, 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600 };
@@ -162,6 +166,7 @@ _Noreturn static void scan_task( void *pvParameters ) {
 //    if ( WitSetOutputRate( RRATE_10HZ ) != WIT_HAL_OK ) {
 //    }
         // if(WitSetBandwidth(BANDWIDTH_256HZ) != WIT_HAL_OK)
+        xTaskCreate( receive_task, "wit_receive", 4096, NULL, 5, NULL );
     } else {
         ESP_LOGE( LOG, "can not find sensor" );
     }
@@ -169,8 +174,10 @@ _Noreturn static void scan_task( void *pvParameters ) {
 }
 
 void wit_main() {
+    processing = false;
+    UartInit( 9600 );
+
     process_event_queue = xQueueCreate( 10, sizeof( int ) );
-    xTaskCreate( receive_task, "wit_receive", 4096, NULL, 5, NULL );
     xTaskCreate( process_task, "wit_process", 4096, NULL, 5, NULL );
 
     WitInit( WIT_PROTOCOL_NORMAL, 0x50 );
@@ -180,3 +187,4 @@ void wit_main() {
 
     xTaskCreate( scan_task, "wit_scan", 4096, NULL, 5, NULL );
 }
+
