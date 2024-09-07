@@ -10,11 +10,11 @@ typedef bool (*tN2kSendFunction)( int index, tN2kMsg &message );
 
 typedef void (*n2k_loopback_callback)( const tN2kMsg &message );
 
-void nk2_register_sender( tN2kSendFunction sendFunction,
-                          const char *description,
-                          uint32_t periodMs,
-                          uint32_t offsetMs,
-                          bool enabled );
+extern void nk2_register_sender( tN2kSendFunction sendFunction,
+                                 const char *description,
+                                 uint32_t periodMs,
+                                 uint32_t offsetMs,
+                                 bool enabled );
 
 extern void n2k_sender_on_open();
 

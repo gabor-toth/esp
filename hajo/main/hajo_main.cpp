@@ -13,6 +13,7 @@
 #include "devices/witmotion//wit_main.h"
 #include "nvs_main.h"
 #include "n2k/n2k_receiver.h"
+#include "nodeinfo/nodeinfo.h"
 
 #define LED_TIME_ON 20
 #define LED_TIME_GAP 200
@@ -158,15 +159,16 @@ void hajo_main() {
 #endif
 #if DEVICE_TYPE == CONFIG_DEVICE_TYPE_GATEWAY || DEVICE_TYPE == DEVICE_TYPE_ALL
     clock_configure( 240 );
-//    wit_main();
     NMEA2000.SetDeviceCount( 3 );
-    hajo_attitude_main( iDev++ );
+    wit_main();
+//    hajo_attitude_main( iDev++ );
     hajo_signalk_main( iDev++ );
 #endif
 #if DEVICE_TYPE == DEVICE_TYPE_FRIDGE || DEVICE_TYPE == DEVICE_TYPE_ALL
     fridge_main();
 #endif
 
+    node_info_main();
     n2k_init();
 }
 
