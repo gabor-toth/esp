@@ -34,8 +34,6 @@ set(SOURCES
         "devices/fridge/fridge_fan.cpp"
         "devices/fridge/fridge_temp.cpp"
         "devices/fluid/hajo_fluid.cpp"
-        "devices/logger/hajo_logger.cpp"
-        "devices/logger/sdcard.c"
         "devices/signalk/EspSigK.cpp"
         "devices/signalk/HttpRequest.cpp"
         "devices/signalk/n2k_gateway.cpp"
@@ -56,6 +54,7 @@ set(SOURCES
         "n2k/n2k_struct_parser.cpp"
         "n2k/n2k_util.cpp"
         "n2k/N2kRaymarine.cpp"
+        "nodeinfo/nodeinfo.cpp"
         "hajo_main.cpp"
 )
 
