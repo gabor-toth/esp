@@ -12,6 +12,7 @@ static const char *LOG = "wit";
 
 #define UART_NUM UART_NUM_0
 
+// >= UART_HW_FIFO_LEN(uart_num)
 #define BUF_SIZE 1024
 
 #define ACC_UPDATE      0x01
@@ -20,7 +21,12 @@ static const char *LOG = "wit";
 #define MAG_UPDATE      0x08
 #define READ_UPDATE     0x80
 
+#define DEFAULT_FREQUENCY_HZ    (1)
+#define SCAN_DELAY_FREQUENCY    (2)
+#define SCAN_DELAY_MS           (1000/DEFAULT_FREQUENCY_HZ*SCAN_DELAY_FREQUENCY)
+
 static QueueHandle_t process_event_queue = NULL;
+static volatile QueueHandle_t scan_event_queue = NULL;
 static volatile bool gotMessage;
 static volatile bool processing;
 
@@ -37,18 +43,21 @@ static void UartInit( uint32_t baud_rate ) {
             .parity    = UART_PARITY_DISABLE,
             .stop_bits = UART_STOP_BITS_1,
             .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+            .rx_flow_ctrl_thresh = 0,
             .source_clk = UART_SCLK_DEFAULT,
     };
 
-    ESP_ERROR_CHECK( uart_driver_install( UART_NUM, BUF_SIZE * 2, 0, 0, NULL, 0 ) );
     ESP_ERROR_CHECK( uart_param_config( UART_NUM, &uart_config ) );
-    ESP_ERROR_CHECK( uart_set_pin( UART_NUM, GPIO_NUM_GATEWAY_WITMOTION_TX, GPIO_NUM_GATEWAY_WITMOTION_RX, -1, -1 ) );
+    ESP_ERROR_CHECK( uart_set_pin( UART_NUM,
+                                   GPIO_NUM_GATEWAY_WITMOTION_TX, GPIO_NUM_GATEWAY_WITMOTION_RX,
+                                   GPIO_NUM_NC, GPIO_NUM_NC ) );
+    ESP_ERROR_CHECK( uart_driver_install( UART_NUM, BUF_SIZE, BUF_SIZE,
+                                          0, NULL, 0 ) );
 }
 
 _Noreturn static void receive_task( void *pvParameters ) {
     unsigned char ucTemp[16];
 
-    processing = true;
     while ( 1 ) {
         int read = uart_read_bytes( UART_NUM, ucTemp, sizeof( ucTemp ), portMAX_DELAY );
         for ( int i = 0; i < read; i++ ) {
@@ -131,26 +140,44 @@ static void SensorDataUpdate( uint32_t uiReg, uint32_t uiRegNum ) {
     gotMessage = true;
     if ( processing ) {
         xQueueSendToBack( process_event_queue, &dataUpdate, 0 );
+    } else if ( scan_event_queue != NULL ) {
+        int dummy = 0;
+        xQueueSendToBack( scan_event_queue, &dummy, 0 );
     }
 }
 
-static void scan_task( void *pvParameters ) {
-    unsigned char ucTemp;
+static void startProcessing() {
+    processing = true;
+}
 
-    ESP_LOGI( LOG, "start scan" );
+static void scan_timer( TimerHandle_t xTimer ) {
+    int dummy = 0;
+    xQueueSendToBack( scan_event_queue, &dummy, 0 );
+}
 
-    int i, iRetry;
-    uint32_t c_uiBaud[10] = { 0, 4800, 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600 };
+static bool findSensor() {
+    scan_event_queue = xQueueCreate( 10, sizeof( int ) );
+    TimerHandle_t timer = xTimerCreate( NULL, pdMS_TO_TICKS( SCAN_DELAY_MS ), false, NULL, scan_timer );
+
     bool found = false;
-
-    for ( i = 1; i < 10; i++ ) {
-        ESP_LOGI( LOG, "trying baud %lu", c_uiBaud[ i ] );
+    int i, iRetry;
+    uint32_t c_uiBaud[10] = {
+            //4800,
+            115200,
+            9600,
+            19200, 38400, 57600, 230400, 460800, 921600 };
+    for ( i = 0; i < sizeof( c_uiBaud ) / sizeof( c_uiBaud[ 0 ] ) && !found; i++ ) {
         uart_set_baudrate( UART_NUM, c_uiBaud[ i ] );
+        uint32_t effective_baud_rate = 0;
+        uart_get_baudrate( UART_NUM, &effective_baud_rate );
+        ESP_LOGI( LOG, "trying baud %lu (effective %lu)", c_uiBaud[ i ], effective_baud_rate );
+        gotMessage = false;
         iRetry = 2;
         do {
-            gotMessage = false;
             WitReadReg( AX, 3 );
-            DelayMs( 100 );
+            xTimerStart( timer, portMAX_DELAY );
+            int dummy;
+            xQueueReceive( scan_event_queue, &dummy, portMAX_DELAY );
             if ( gotMessage ) {
                 ESP_LOGI( LOG, "found sensor with baud %lu", c_uiBaud[ i ] );
                 found = true;
@@ -159,18 +186,43 @@ static void scan_task( void *pvParameters ) {
             iRetry--;
         } while ( iRetry );
     }
+
+    xTimerDelete( timer, portMAX_DELAY );
+
+    QueueHandle_t queue = scan_event_queue;
+    scan_event_queue = NULL;
+    vQueueDelete( queue );
+
+    return found;
+}
+
+static void configureSensor() {
+    if ( WitSetUartBaud( WIT_BAUD_115200 ) != WIT_HAL_OK ) {
+        ESP_LOGE( LOG, "Failed to set wit baud rate to 115200 (%d)", WIT_BAUD_115200 );
+    } else {
+        uart_set_baudrate( UART_NUM, 115200 );
+    }
+    if ( WitSetOutputRate( RRATE_10HZ ) != WIT_HAL_OK ) {
+        ESP_LOGE( LOG, "Failed to set output rate to 10Hz (%d)", WIT_BAUD_115200 );
+    }
+    // if(WitSetBandwidth(BANDWIDTH_256HZ) != WIT_HAL_OK)
+}
+
+static void scan_task( void *pvParameters ) {
+    ESP_LOGI( LOG, "start scan" );
+
+    bool found = findSensor();
     if ( found ) {
-//    if ( WitSetUartBaud( WIT_BAUD_115200 ) != WIT_HAL_OK ) {
-//    }
-//    uart_set_baudrate( UART_NUM, 115200 );
-//    if ( WitSetOutputRate( RRATE_10HZ ) != WIT_HAL_OK ) {
-//    }
-        // if(WitSetBandwidth(BANDWIDTH_256HZ) != WIT_HAL_OK)
-        xTaskCreate( receive_task, "wit_receive", 4096, NULL, 5, NULL );
+        configureSensor();
+        startProcessing();
     } else {
         ESP_LOGE( LOG, "can not find sensor" );
     }
     vTaskDelete( NULL );
+}
+
+void startScanning() {
+    xTaskCreate( scan_task, "wit_scan", 4096, NULL, 5, NULL );
 }
 
 void wit_main() {
@@ -179,12 +231,13 @@ void wit_main() {
 
     process_event_queue = xQueueCreate( 10, sizeof( int ) );
     xTaskCreate( process_task, "wit_process", 4096, NULL, 5, NULL );
+    xTaskCreate( receive_task, "wit_receive", 4096, NULL, 5, NULL );
 
     WitInit( WIT_PROTOCOL_NORMAL, 0x50 );
     WitSerialWriteRegister( SensorUartSend );
     WitRegisterCallBack( SensorDataUpdate );
     WitDelayMsRegister( DelayMs );
 
-    xTaskCreate( scan_task, "wit_scan", 4096, NULL, 5, NULL );
+    startScanning();
 }
 

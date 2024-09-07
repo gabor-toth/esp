@@ -30,22 +30,23 @@ void sendN2KMessageToSignalKOverActisense( const tN2kMsg &N2kMsg ) {
 
 void setupSignalkOverActisense() {
     uart_config_t uart_config = {
-//            .baud_rate = 921600,
             .baud_rate = 115200,
             .data_bits = UART_DATA_8_BITS,
             .parity = UART_PARITY_DISABLE,
             .stop_bits = UART_STOP_BITS_1,
             .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+            .rx_flow_ctrl_thresh = 0,
+            .source_clk = UART_SCLK_DEFAULT,
     };
     ESP_ERROR_CHECK( uart_param_config( UART_NUM, &uart_config ) );
-    ESP_ERROR_CHECK(
-            uart_set_pin( UART_NUM, GPIO_NUM_GATEWAY_ACTISENSE_TX, GPIO_NUM_GATEWAY_ACTISENSE_RX, GPIO_NUM_NC,
-                          GPIO_NUM_NC ) );
-    const int uart_buffer_size = ( 1024 * 2 );
-    QueueHandle_t uart_queue;
-    ESP_ERROR_CHECK( uart_driver_install( UART_NUM, uart_buffer_size,
-//                                          uart_buffer_size, 0, NULL, 0 ) );
-                                          uart_buffer_size, 10, &uart_queue, 0 ) );
+    ESP_ERROR_CHECK( uart_set_pin( UART_NUM,
+                                   GPIO_NUM_GATEWAY_ACTISENSE_TX, GPIO_NUM_GATEWAY_ACTISENSE_RX,
+                                   GPIO_NUM_NC, GPIO_NUM_NC ) );
+    const int uart_buffer_size = 1024;
+//    QueueHandle_t uart_queue;
+    ESP_ERROR_CHECK( uart_driver_install( UART_NUM, uart_buffer_size, uart_buffer_size,
+                                          0, nullptr, 0 ) );
+//                                          uart_buffer_size, 10, &uart_queue, 0 ) );
 }
 
 #endif
