@@ -8,6 +8,7 @@
 static void setup_n2k_device( int iDev ) {
     static const unsigned long TransmitMessages[] = {
             N2K_PGN_ATTITUDE,
+            N2K_PGN_HEADING,
             0
     };
 
@@ -56,7 +57,20 @@ static bool n2k_send_attitude( int index, tN2kMsg &message ) {
                 SetN2kAttitude( message, sid, 0.0, DegToRad( pitch ), DegToRad( roll ) );
             }
             return true;
-        case 1:
+        default:
+            return false;
+    }
+}
+
+static bool n2k_send_heading( int index, tN2kMsg &message ) {
+    static uint8_t sid = 0;
+
+    if ( index == 0 ) {
+        sid++;
+    }
+
+    switch ( index ) {
+        case 0:
             if ( wit_sensor_is_available() ) {
                 float heading;
                 wit_sensor_get_heading( &heading );
@@ -71,5 +85,6 @@ static bool n2k_send_attitude( int index, tN2kMsg &message ) {
 void wit_main( int iDev ) {
     wit_sensor_start();
     setup_n2k_device( iDev );
+    nk2_register_sender( n2k_send_heading, "heading", N2K_PGN_HEADING_INTERVAL_MS, 325, true );
     nk2_register_sender( n2k_send_attitude, "attitude", N2K_PGN_ATTITUDE_INTERVAL_MS, 320, true );
 }

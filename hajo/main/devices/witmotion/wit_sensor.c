@@ -1,10 +1,11 @@
-#include "wit_main.h"
-#include "wit_c_sdk.h"
 #include "config.h"
 #include "driver/uart.h"
 #include "driver/gpio.h"
 #include "esp_log.h"
+#include "math.h"
 #include "stdbool.h"
+#include "wit_c_sdk.h"
+#include "wit_main.h"
 
 // see https://github.com/WITMOTION/WitStandardProtocol_JY901/blob/main/ESP32/ESP32_sdk/main/main.c
 
@@ -36,11 +37,10 @@ static void SensorUartSend( uint8_t *p_data, uint32_t uiSize ) {
     uart_write_bytes( UART_NUM, (const char *) p_data, uiSize );
 }
 
-static void UartInit( uint32_t baud_rate ) {
-    /* Configure parameters of an UART driver,
-     * communication pins and install the driver */
+static void uart_init() {
+    /* Configure parameters of an UART driver,communication pins and install the driver */
     uart_config_t uart_config = {
-            .baud_rate = (int) baud_rate,
+            .baud_rate = 9600,
             .data_bits = UART_DATA_8_BITS,
             .parity    = UART_PARITY_DISABLE,
             .stop_bits = UART_STOP_BITS_1,
@@ -55,6 +55,10 @@ static void UartInit( uint32_t baud_rate ) {
                                    GPIO_NUM_NC, GPIO_NUM_NC ) );
     ESP_ERROR_CHECK( uart_driver_install( UART_NUM, BUF_SIZE, BUF_SIZE,
                                           0, NULL, 0 ) );
+}
+
+static void DelayMs( uint16_t millis ) {
+    vTaskDelay( pdMS_TO_TICKS( millis ) );
 }
 
 _Noreturn static void receive_task( void *pvParameters ) {
@@ -100,10 +104,6 @@ _Noreturn static void process_task( void *pvParameters ) {
             ESP_LOGD( LOG, "mag:%d %d %d", sReg[ HX ], sReg[ HY ], sReg[ HZ ] );
         }
     }
-}
-
-static void DelayMs( uint16_t millis ) {
-    vTaskDelay( pdMS_TO_TICKS( millis ) );
 }
 
 static void SensorDataUpdate( uint32_t uiReg, uint32_t uiRegNum ) {
@@ -241,7 +241,7 @@ void wit_sensor_get_pitch_and_roll( float *pitch, float *roll ) {
 
 void wit_sensor_get_heading( float *heading ) {
     if ( hasAngleData ) {
-        *heading = fAngle[ 2 ];
+        *heading = (float) fmod( 360.0 + 90.0 - fAngle[ 2 ], 360.0 );
     } else {
         *heading = 0;
     }
@@ -249,7 +249,7 @@ void wit_sensor_get_heading( float *heading ) {
 
 void wit_sensor_start() {
     hasAngleData = processing = false;
-    UartInit( 9600 );
+    uart_init();
 
     process_event_queue = xQueueCreate( 10, sizeof( int ) );
     xTaskCreate( process_task, "wit_process", 4096, NULL, 5, NULL );
