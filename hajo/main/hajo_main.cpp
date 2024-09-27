@@ -7,6 +7,7 @@
 #include "devices/display/hajo_display.h"
 #include "devices/fridge/fridge.h"
 #include "devices/fluid/hajo_fluid.h"
+#include "devices/rudder/hajo_rudder.h"
 #include "devices/signalk/hajo_signalk.h"
 #include "devices/signalk/EspSigK.h"
 #include "devices/witmotion//wit_main.h"
@@ -33,13 +34,13 @@ static const char *device_type_names[] = {
         "n2k gateway",      // 001
         "unused 2",         // 010
         "unused 3",         // 011
-        "unused 4",         // 100
+        "rudder",           // 100
         "fluid & display",  // 101
         "battery monitor",  // 110
         "unused 7",         // 111
 };
 
-static void determine_device_type( int firmware_device_type ) {
+static bool determine_device_type( int firmware_device_type ) {
     gpio_config_t io_conf = {};
 
     io_conf.intr_type = GPIO_INTR_DISABLE;
@@ -61,7 +62,8 @@ static void determine_device_type( int firmware_device_type ) {
         ESP_LOGE( LOG, "Firmware %s does not match hardware %s",
                   device_type_names[ firmware_device_type ],
                   device_type_names[ hardware_device_type ] );
-        ESP_ERROR_CHECK( ESP_ERR_NOT_SUPPORTED );
+        //ESP_ERROR_CHECK( ESP_ERR_NOT_SUPPORTED );
+        return false;
     }
     ESP_LOGI( LOG, "device type %d %s", hardware_device_type, device_type_names[ hardware_device_type ] );
 
@@ -69,6 +71,7 @@ static void determine_device_type( int firmware_device_type ) {
     io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
     io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
     gpio_config( &io_conf );
+    return true;
 }
 
 static void led_on() {
@@ -140,21 +143,26 @@ void hajo_main() {
     xTaskCreate( task_power_led, "power_led", 1024, nullptr, 10, nullptr );
 
     nvs_init();
-    determine_device_type( DEVICE_TYPE );
+    if ( !determine_device_type( DEVICE_TYPE ) ) {
+        return;
+    }
     initialize_twai_driver();
 
     ESP_ERROR_CHECK( esp_event_loop_create_default() );
 
     int iDev = 0;
+#if DEVICE_TYPE == DEVICE_TYPE_BATTERY || DEVICE_TYPE == DEVICE_TYPE_ALL
+    clock_configure( 80 );
+    hajo_battery_main( iDev++ );
+#endif
 #if DEVICE_TYPE == DEVICE_TYPE_DISPLAY || DEVICE_TYPE == DEVICE_TYPE_ALL
     clock_configure( 240 );
     NMEA2000.SetDeviceCount( 2 );
     hajo_fluid_main( iDev++ );
     hajo_display_main( iDev++ );
 #endif
-#if DEVICE_TYPE == DEVICE_TYPE_BATTERY || DEVICE_TYPE == DEVICE_TYPE_ALL
-    clock_configure( 80 );
-    hajo_battery_main( iDev++ );
+#if DEVICE_TYPE == DEVICE_TYPE_FRIDGE || DEVICE_TYPE == DEVICE_TYPE_ALL
+    fridge_main();
 #endif
 #if DEVICE_TYPE == CONFIG_DEVICE_TYPE_GATEWAY || DEVICE_TYPE == DEVICE_TYPE_ALL
     clock_configure( 240 );
@@ -163,8 +171,10 @@ void hajo_main() {
     //hajo_attitude_main( iDev++ );
     hajo_signalk_main( iDev++ );
 #endif
-#if DEVICE_TYPE == DEVICE_TYPE_FRIDGE || DEVICE_TYPE == DEVICE_TYPE_ALL
-    fridge_main();
+#if DEVICE_TYPE == DEVICE_TYPE_RUDDER || DEVICE_TYPE == DEVICE_TYPE_ALL
+    NMEA2000.SetDeviceCount( 1 );
+//    clock_configure( 80 );
+//    hajo_rudder_main( iDev++ );
 #endif
 
     node_info_main();

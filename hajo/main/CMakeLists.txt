@@ -34,6 +34,7 @@ set(SOURCES
         "devices/fridge/fridge_fan.cpp"
         "devices/fridge/fridge_temp.cpp"
         "devices/fluid/hajo_fluid.cpp"
+        "devices/rudder/hajo_rudder.cpp"
         "devices/signalk/EspSigK.cpp"
         "devices/signalk/HttpRequest.cpp"
         "devices/signalk/n2k_gateway.cpp"
@@ -90,6 +91,7 @@ if (CONFIG_DEVICE_TYPE)
     string(COMPARE EQUAL ${CONFIG_DEVICE_TYPE} "DISPLAY" is_device_type_display)
     string(COMPARE EQUAL ${CONFIG_DEVICE_TYPE} "FRIDGE" is_device_type_fridge)
     string(COMPARE EQUAL ${CONFIG_DEVICE_TYPE} "GATEWAY" is_device_type_gateway)
+    string(COMPARE EQUAL ${CONFIG_DEVICE_TYPE} "RUDDER" is_device_type_rudder)
     if (is_device_type_battery)
         add_compile_definitions(CONFIG_DEVICE_TYPE_BATTERY=1)
     elseif (is_device_type_fridge)
@@ -98,8 +100,10 @@ if (CONFIG_DEVICE_TYPE)
         add_compile_definitions(CONFIG_DEVICE_TYPE_DISPLAY=1)
     elseif (is_device_type_gateway)
         add_compile_definitions(CONFIG_DEVICE_TYPE_GATEWAY=1)
+    elseif (is_device_type_rudder)
+        add_compile_definitions(CONFIG_DEVICE_TYPE_RUDDER=1)
     else ()
-        message(FATAL_ERROR "Unknown CONFIG_DEVICE_TYPE ${CONFIG_DEVICE_TYPE}, should be BATTERY/DISPLAY/FRIDGE/GATEWAY")
+        message(FATAL_ERROR "Unknown CONFIG_DEVICE_TYPE ${CONFIG_DEVICE_TYPE}, should be BATTERY/DISPLAY/FRIDGE/GATEWAY/RUDDER")
     endif ()
     #else ()
     #message(FATAL_ERROR "Set CONFIG_DEVICE_TYPE like 'idf.py build -DCONFIG_DEVICE_TYPE=GATEWAY'")
@@ -108,6 +112,7 @@ UNSET(is_device_type_battery CACHE)
 UNSET(is_device_type_display CACHE)
 UNSET(is_device_type_fridge CACHE)
 UNSET(is_device_type_gateway CACHE)
+UNSET(is_device_type_rudder CACHE)
 
 if (CONFIG_START_SIMULATOR)
     string(COMPARE EQUAL ${CONFIG_START_SIMULATOR} "y" is_start_simulator)

@@ -108,10 +108,10 @@ esp_err_t adc_get_channel_value( int index, adc_channel_value_t *channel_value )
     if ( index < 0 || index > channel_count ) {
         return ESP_FAIL;
     }
-    if ( !is_timer_started ) {
-        read_one( &channels[ index ] );
-    }
     adc_channel_internal_t *channel = &channels[ index ];
+    if ( !is_timer_started ) {
+        read_one( channel );
+    }
     channel_value->channel = channel->channel;
     channel_value->name = channel->name;
     channel_value->user_data = channel->user_data;
