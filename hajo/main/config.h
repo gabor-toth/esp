@@ -2,7 +2,6 @@
 #define HAJO_CONFIG_H
 
 #define N2K_GPIO_NUM_RX         GPIO_NUM_16
-#define N2K_GPIO_NUM_STANDBY    GPIO_NUM_10
 #define N2K_GPIO_NUM_TX         GPIO_NUM_17
 
 #define GPIO_NUM_GATEWAY_ACTISENSE_TX     GPIO_NUM_37 // SDO

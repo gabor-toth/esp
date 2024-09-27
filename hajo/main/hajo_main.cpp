@@ -21,7 +21,6 @@
 
 #define ESP32_CAN_TX_PIN N2K_GPIO_NUM_TX
 #define ESP32_CAN_RX_PIN N2K_GPIO_NUM_RX
-#define ESP32_CAN_STANDBY_PIN N2K_GPIO_NUM_STANDBY
 
 #include "NMEA2000_CAN.h"
 
@@ -105,20 +104,6 @@ _Noreturn static void task_power_led( void *arg ) {
     }
 }
 
-static void initialize_twai_driver() {
-#if N2K_GPIO_NUM_STANDBY != GPIO_NUM_NC
-    gpio_config_t io_conf = {};
-
-    io_conf.intr_type = GPIO_INTR_DISABLE;
-    io_conf.mode = GPIO_MODE_OUTPUT_OD;
-    io_conf.pin_bit_mask = BIT( N2K_GPIO_NUM_STANDBY );
-    io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
-    io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
-    gpio_config( &io_conf );
-    gpio_set_level( N2K_GPIO_NUM_STANDBY, 0 );
-#endif
-}
-
 esp_pm_lock_handle_t pm_lock_handle_display;
 esp_pm_lock_handle_t pm_lock_handle_listen;
 
@@ -156,7 +141,6 @@ void hajo_main() {
     if ( !determine_device_type( DEVICE_TYPE ) ) {
         return;
     }
-    initialize_twai_driver();
 
     ESP_ERROR_CHECK( esp_event_loop_create_default() );
 
