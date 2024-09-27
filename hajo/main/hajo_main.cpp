@@ -25,19 +25,22 @@
 
 #include "NMEA2000_CAN.h"
 
+#define TO_3_BITS(X)    ((X)&4?'1':'0'),((X)&2?'1':'0'),((X)&1?'1':'0')
+
 static const char *LOG = "hajo_main";
 
 static int hardware_device_type = 0xff;
 
 static const char *device_type_names[] = {
-        "unused 0",         // 000
-        "n2k gateway",      // 001
-        "unused 2",         // 010
-        "unused 3",         // 011
-        "rudder",           // 100
-        "fluid & display",  // 101
-        "battery monitor",  // 110
-        "unused 7",         // 111
+        "unused 0",         //  000
+        "n2k gateway",      //  001
+        "unused 2",         //  010
+        "unused 3",         //  011
+        "rudder",           //  100
+        "fluid & display",  //  101
+        "battery monitor",  //  110
+        "unused 7",         //  111
+        "DEVICE_TYPE_ALL",  // 1000
 };
 
 static bool determine_device_type( int firmware_device_type ) {
@@ -58,10 +61,17 @@ static bool determine_device_type( int firmware_device_type ) {
                            ( gpio_get_level( GPIO_NUM_DEVICE_TYPE_1 ) << 1 ) |
                            gpio_get_level( GPIO_NUM_DEVICE_TYPE_0 );
     hardware_device_type &= 0b111;
+    if ( DEVICE_TYPE_ALL == firmware_device_type ) {
+        ESP_LOGE( LOG, "No firmware device type specified (DEVICE_TYPE_ALL), hardware is \"%s\" (%c%c%c), check the end of config.h",
+                  device_type_names[ hardware_device_type ],
+                  TO_3_BITS(hardware_device_type) );
+    }
     if ( hardware_device_type != firmware_device_type ) {
-        ESP_LOGE( LOG, "Firmware %s does not match hardware %s",
+        ESP_LOGE( LOG, "Firmware \"%s\" (%c%c%c) does not match hardware \"%s\" (%c%c%c)",
                   device_type_names[ firmware_device_type ],
-                  device_type_names[ hardware_device_type ] );
+                  TO_3_BITS(firmware_device_type),
+                  device_type_names[ hardware_device_type ],
+                  TO_3_BITS(hardware_device_type) );
         //ESP_ERROR_CHECK( ESP_ERR_NOT_SUPPORTED );
         return false;
     }
@@ -172,9 +182,9 @@ void hajo_main() {
     hajo_signalk_main( iDev++ );
 #endif
 #if DEVICE_TYPE == DEVICE_TYPE_RUDDER || DEVICE_TYPE == DEVICE_TYPE_ALL
+    clock_configure( 240 );
     NMEA2000.SetDeviceCount( 1 );
-//    clock_configure( 80 );
-//    hajo_rudder_main( iDev++ );
+    hajo_rudder_main( iDev++ );
 #endif
 
     node_info_main();
