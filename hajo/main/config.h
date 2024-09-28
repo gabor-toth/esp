@@ -24,7 +24,7 @@
 #define DEVICE_TYPE_DISPLAY     0b0101
 #define DEVICE_TYPE_BATTERY     0b0110
 #define DEVICE_TYPE_UNKNOWN_7   0b0111
-#define DEVICE_TYPE_ALL         0b1000
+#define DEVICE_TYPE_ALL         0b1000  // this is just to enable compilation of the whole project in CLion
 
 #define GPIO_ATTITUDE_GND       GPIO_NUM_11
 #define GPIO_ATTITUDE_3V3       GPIO_NUM_12

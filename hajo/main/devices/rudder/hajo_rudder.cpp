@@ -1,6 +1,7 @@
 #include "adc.h"
 #include "cmath"
 #include "driver/gpio.h"
+#include "esp_log.h"
 #include "hajo_rudder.h"
 #include "n2k/n2k_sender.h"
 #include "n2k/n2k_struct_parser.h"
@@ -8,31 +9,30 @@
 
 #define PIN_RUDDER_ADC_DRIVE GPIO_NUM_11
 
-static int battery_rmes = 16900;
-static int battery_rtop = 316000;
-static int battery_offset = -50;
-static double battery_multiplier;
+static const char *LOG = "rudder";
 
-typedef struct {
-    uint8_t instance;
-    uint32_t capacity_ah;
-    uint32_t ripple_voltage_mv;
-} battery_user_data;
+static int r_bottom = 680;
+static int r_sensor = 5400;
+static int r_top = 16900;
+static double u_total = 3.3;
+static double i_total = u_total / ( r_bottom + r_sensor + r_top );
+static double u_center = i_total * ( r_bottom + r_sensor / 2.0 );
+static double u_diff = i_total * ( r_sensor / 2.0 );
+static int direction = -1;
+static int display_multiplier = 10;
+static int max_degree = 90 * display_multiplier;
+static int correction_offset = 2;
+static int display_scale = 1;
 
-static void convert_value( uint32_t raw_value, uint32_t *display_value, uint32_t *correction ) {
-    double value;
-    if ( raw_value <= 100 ) {
-        value = 0.0;
+static void convert_value( int millivolts, int *display_value, int *correction ) {
+    double u = millivolts / 1000.0;
+    double value = ( u - u_center ) / ( u_diff / 2 ) * max_degree * direction + correction_offset;
+    *correction = correction_offset;
+    *display_value = lround( value * display_scale );
+    if ( *display_value  > max_degree*display_scale || *display_value  < -max_degree*display_scale ) {
+//        *display_value  = INT_MIN;
         *correction = 0;
-    } else {
-        // U=(Rtop+Rmes)/Rmes*Umes
-        value = raw_value * battery_multiplier + battery_offset;
-        *correction = battery_offset;
     }
-    if ( value < 0.0 ) {
-        value = 0.0;
-    }
-    *display_value = lround( value );
 }
 
 static void setup_adc_drive_pins() {
@@ -44,12 +44,25 @@ static void setup_adc_drive_pins() {
     io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
     io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
     gpio_config( &io_conf );
+
+    gpio_set_level( PIN_RUDDER_ADC_DRIVE, 1 );
 }
 
 static void setup_adc() {
-    adc_add_channel( 8, "position", nullptr, 0, convert_value );
+    ESP_LOGI(LOG,"Calculating with Rbottom=%d Rsensor=%d Rtop=%d Utotal=%.2lfV Itotal=%03duA Ucenter=%03dmV Udiff=%03dmV max=%.1lf° correction=%d° direction=%d",
+             r_bottom,
+             r_sensor,
+             r_top,
+             u_total,
+             (int)(i_total*1000000),
+             (int)(u_center*1000),
+             (int)(u_diff*1000),
+             max_degree / (double)display_multiplier,
+             correction_offset,
+             direction
+    );
 
-    gpio_set_level( PIN_RUDDER_ADC_DRIVE, 1 );
+    adc_add_channel( 8, "position", nullptr, 0, convert_value );
     adc_main( false );
 }
 
@@ -94,25 +107,15 @@ static bool send_rudder( int index, tN2kMsg &message ) {
         return false;
     }
 
-    /*
-    Wire colours	Expected resistance measurement
-    Red to Green	5k Ohms (5000 ohms, +/- 10%) steady
-    Blue to Red	    Approx. 1.6k to 3.3k ohms, roughly 2.5k ohms when the wheel is centred (+/-10%)
-    Blue to Green	Approx. 3.3k to 1.6k ohms, roughly 2.5k ohms when the wheel is centred (+/-10%)
-     */
     adc_channel_value_t channel_data;
-
-    gpio_set_level( PIN_RUDDER_ADC_DRIVE, 1 );
     adc_get_channel_value( 0, &channel_data );
-    gpio_set_level( PIN_RUDDER_ADC_DRIVE, 0 );
-    /*
+
     SetN2kRudder( message,
-                  channel_data.display_value / 1000.0, // radians
+                  channel_data.display_value != INT_MIN ? DegToRad(channel_data.display_value/(double)display_scale) :  N2kDoubleNA , // radians
                   0, // instance
                   N2kRDO_NoDirectionOrder,
                   N2kDoubleNA // angleOrder
     );
-     */
     return true;
 }
 
@@ -120,5 +123,7 @@ void hajo_rudder_main( int iDev ) {
     setup_adc_drive_pins();
     setup_adc();
     setup_n2k_device( iDev );
-    nk2_register_sender( send_rudder, "rudder", N2K_PGN_RUDDER_INTERVAL_MS, 65, true );
+
+    ESP_LOGI(LOG, "sizeof int=%d long=%d uint32_t=%d float=%d double=%d", sizeof(int), sizeof(long), sizeof(uint32_t), sizeof(float), sizeof(double));
+    nk2_register_sender( send_rudder, "rudder", N2K_PGN_RUDDER_INTERVAL_MS*10, 65, true );
 }

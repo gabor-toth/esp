@@ -1,8 +1,8 @@
 Short term
 ==========
 
-- logger
-    - correction
+- gateway
+    - pitch correction
 - hűtő
     - ASR-03DA, ASR-02DD Szilárdtest relé https://www.hestore.hu/prod_10035237.html
     - relé 3v SMT https://www.hestore.hu/prod_10039590.html
@@ -14,10 +14,6 @@ Nyák
 
 - kijelző
     - BC557 helyett MOSFET, hogy ne legyen feszültségesés?
-- battery
-    - nyákon bevágás a csavar helyén
-- logger
-    - debugger csatlakozó
 
 Before go live
 ==============
@@ -28,13 +24,14 @@ Before go live
 Long term plans
 ===============
 
-- data logger to SD card
 - configuration via ISO-11783 commands
 - configuration on display
     - dimmer
     - off timer
-- configuration on logger
-    - correction for pitch/
+- configuration rudder
+    - direction, offset, R values
+- configuration on gateway
+    - correction for pitch
 
 ```
 Display 1
