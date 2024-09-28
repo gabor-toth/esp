@@ -16,7 +16,7 @@ typedef struct {
     const char *name;
     adc_value_converter converter;
     int raw_value;
-    uint32_t converted_value;
+    int converted_value;
     void *user_data;
 } adc_channel_internal_t;
 
@@ -24,7 +24,7 @@ typedef struct {
 
 static adc_channel_internal_t channels[MAX_CHANNELS];
 static int channel_count = 0;
-static int number_of_samples = 16;  // Multisampling, was originally 64
+static int number_of_samples = 8;  // Multisampling, was originally 64
 static int sampling_interval_seconds = 1;
 static bool is_timer_started = false;
 static adc_cali_handle_t scheme_handle = NULL;
@@ -32,7 +32,8 @@ static adc_oneshot_unit_handle_t unit_handle = NULL;
 static QueueHandle_t timer_event_queue = NULL;
 
 static void read_one( adc_channel_internal_t *channel ) {
-    uint32_t adc_reading = 0;
+    ESP_LOGI( LOG, "start adc reading" );
+    int adc_reading = 0;
     for ( int i = 0; i < number_of_samples; i++ ) {
         int raw = 0;
         // TODO ESP_ERROR_CHECK == ESP_ERR_TIMEOUT
@@ -43,13 +44,13 @@ static void read_one( adc_channel_internal_t *channel ) {
     int voltage;
     ESP_ERROR_CHECK( adc_cali_raw_to_voltage( scheme_handle, adc_reading, &voltage ) );
     channel->raw_value = voltage;
-    uint32_t correction = 0;
+    int correction = 0;
     if ( channel->converter ) {
-        channel->converter( channel->raw_value, &channel->converted_value, &correction );
+        channel->converter( voltage, &channel->converted_value, &correction );
     } else {
-        channel->converted_value = channel->raw_value;
+        channel->converted_value = voltage;
     }
-    ESP_LOGI( LOG, "Channel %d %-10s Raw: %4ld Voltage: %4dmV Display: %5ld (corr %ld)",
+    ESP_LOGI( LOG, "Channel %d %-10s Raw: %4d Voltage: %4dmV Display: %5d (corr %d)",
               channel->channel,
               channel->name,
               adc_reading,

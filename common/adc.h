@@ -15,8 +15,8 @@ extern int adc_number_of_channels();
 typedef struct {
     int channel;
     const char *name;
-    uint32_t raw_value;
-    uint32_t display_value;
+    int raw_value;
+    int display_value;
     void *user_data;
 } adc_channel_value_t;
 
@@ -26,9 +26,9 @@ typedef struct {
     void *user_data;
 } adc_channel_data_t;
 
-typedef void (*adc_value_converter)( uint32_t raw_value,
-                                     uint32_t *display_value,
-                                     uint32_t *correction );
+typedef void (*adc_value_converter)( int millivolts,
+                                     int *display_value,
+                                     int *correction );
 
 extern esp_err_t adc_get_channel_value( int index,
                                         adc_channel_value_t *channel_value );

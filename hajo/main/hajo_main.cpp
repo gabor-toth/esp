@@ -166,7 +166,7 @@ void hajo_main() {
     hajo_signalk_main( iDev++ );
 #endif
 #if DEVICE_TYPE == DEVICE_TYPE_RUDDER || DEVICE_TYPE == DEVICE_TYPE_ALL
-    clock_configure( 240 );
+    clock_configure( 80 );
     NMEA2000.SetDeviceCount( 1 );
     hajo_rudder_main( iDev++ );
 #endif

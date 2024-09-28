@@ -12,18 +12,18 @@ static double battery_multiplier;
 
 typedef struct {
     uint8_t instance;
-    uint32_t capacity_ah;
-    uint32_t ripple_voltage_mv;
+    int capacity_ah;
+    int ripple_voltage_mv;
 } battery_user_data;
 
-static void convert_battery_voltage( uint32_t raw_value, uint32_t *display_value, uint32_t *correction ) {
+static void convert_battery_voltage( int millivolts, int *display_value, int *correction ) {
     double value;
-    if ( raw_value <= 100 ) {
+    if ( millivolts <= 100 ) {
         value = 0.0;
         *correction = 0;
     } else {
         // U=(Rtop+Rmes)/Rmes*Umes
-        value = raw_value * battery_multiplier + battery_offset;
+        value = millivolts * battery_multiplier + battery_offset;
         *correction = battery_offset;
     }
     if ( value < 0.0 ) {

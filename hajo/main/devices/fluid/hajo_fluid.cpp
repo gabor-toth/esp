@@ -38,14 +38,13 @@ typedef struct {
 int fluid_count = 0;
 fluid_user_data fluid_data[MAX_FLUID_COUNT];
 
-//static void convert_fluid_level( uint32_t voltageBottom, uint32_t *display_value, uint32_t *correction ) {
-static void
-convert_fluid_level( uint32_t voltageBottom, uint32_t voltageTop, uint32_t *display_value, double *rmes_back ) {
+//static void convert_fluid_level( int voltageBottom, int *display_value, int *correction ) {
+static void convert_fluid_level( int voltageBottom, int voltageTop, int *display_value, double *rmes_back ) {
     // Rmes=Rtop/(U/Umes-1)-Rbottom
     // 0% = 2 Ohm, 100% = 180 Ohm
     double i = ( voltageBottom / 1000.0 ) / fluid_rbottom;
     double rmes = ( voltageTop - voltageBottom ) / 1000.0 / i;
-    uint32_t value;
+    int value;
     if ( rmes <= fluid_rmes_min ) {
         value = 0;
     } else if ( rmes >= fluid_rmes_max ) {
@@ -59,7 +58,7 @@ convert_fluid_level( uint32_t voltageBottom, uint32_t voltageTop, uint32_t *disp
     if ( rmes_back != nullptr ) {
         *rmes_back = rmes;
     }
-    ESP_LOGD( TAG, "convert b=%ld t=%ld i=%lf rmes=%lf value=%ld",
+    ESP_LOGD( TAG, "convert b=%d t=%d i=%lf rmes=%lf value=%d",
                      voltageBottom, voltageTop, i, rmes, *display_value );
 }
 
@@ -160,15 +159,15 @@ static bool send_adc_fluid_level( int index, tN2kMsg &message ) {
     adc_get_channel_value( data->adc_channel_high, &channel_data_h );
     gpio_set_level( data->drive_gpio_pin, 0 );
 
-    uint32_t valueInPercent;
-    double rmes;
-    convert_fluid_level( channel_data_l.display_value, channel_data_h.display_value, &valueInPercent, &rmes );
+    int valueInPercent;
+    double r_mes;
+    convert_fluid_level( channel_data_l.display_value, channel_data_h.display_value, &valueInPercent, &r_mes );
 
-    ESP_LOGD( TAG, "Channel %d %-10s Raw: %4ld Rmes: %lf Display: %5ld",
+    ESP_LOGD( TAG, "Channel %d %-10s Raw: %4d Rmes: %lf Display: %5d",
               channel_data_h.channel,
               channel_data_h.name,
               channel_data_h.raw_value,
-              rmes,
+              r_mes,
               valueInPercent );
 
     SetN2kFluidLevel( message,
