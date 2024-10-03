@@ -54,9 +54,15 @@ _Noreturn static void task_main( void *arg ) {
     (void) arg;
 
     for ( ;; ) {
-        void *dummy;
+        tN2kMsg *message;
 
-        if ( !xQueueReceive( timer_event_queue, &dummy, portMAX_DELAY )) {
+        if ( !xQueueReceive( timer_event_queue, &message, portMAX_DELAY )) {
+            continue;
+        }
+
+        if ( message != nullptr ) {
+            NMEA2000.SendMsg( *message );
+            delete message;
             continue;
         }
 
@@ -125,8 +131,12 @@ void nk2_register_sender( tN2kSendFunction sendFunction,
     }
 }
 
+void n2k_sender_send(const tN2kMsg &message ) {
+
+}
+
 void n2k_sender_register_loopback( n2k_loopback_callback callback ) {
-    loopback_callback_node_t * node = (loopback_callback_node_t*)malloc(sizeof(loopback_callback_node_t));
+    auto * node = (loopback_callback_node_t*)malloc(sizeof(loopback_callback_node_t));
     node->next = loopback_callbacks;
     node->callback = callback;
     loopback_callbacks = node;

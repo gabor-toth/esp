@@ -20,4 +20,6 @@ extern void n2k_sender_on_open();
 
 extern void n2k_sender_register_loopback( n2k_loopback_callback callback );
 
+extern void n2k_sender_send( const tN2kMsg &message );
+
 #endif //HAJO_N2K_SENDER_H

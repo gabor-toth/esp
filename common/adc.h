@@ -8,9 +8,9 @@
 extern "C" {
 #endif
 
-extern void adc_main_oneshot( bool start_timer );
+// on shot
 
-extern void adc_main_continuous();
+extern void adc_main_oneshot( bool start_timer );
 
 extern int adc_number_of_channels();
 
@@ -47,6 +47,12 @@ extern esp_err_t adc_add_channel( uint8_t adc_channel,
                                   adc_value_converter converter );
 
 extern void adc_read_all();
+
+// continuous
+
+typedef void (*adc_continuous_data_callback_t)( int average_raw_value, int average_voltage_value );
+
+extern void adc_main_continuous( adc_continuous_data_callback_t callback );
 
 #ifdef __cplusplus
 }
