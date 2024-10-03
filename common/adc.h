@@ -8,7 +8,9 @@
 extern "C" {
 #endif
 
-extern void adc_main( bool start_timer );
+extern void adc_main_oneshot( bool start_timer );
+
+extern void adc_main_continuous();
 
 extern int adc_number_of_channels();
 

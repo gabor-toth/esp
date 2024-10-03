@@ -63,7 +63,7 @@ static void setup_adc() {
     );
 
     adc_add_channel( 8, "position", nullptr, 0, convert_value );
-    adc_main( false );
+    adc_main_oneshot( false );
 }
 
 static void setup_n2k_device( int iDev ) {

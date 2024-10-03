@@ -57,7 +57,7 @@ static void setup_adc() {
     };
     adc_add_channel( 6, "munka2", &data, sizeof( data ), convert_battery_voltage );
 
-    adc_main( false );
+    adc_main_oneshot( false );
 }
 
 static void setup_n2k_device( int iDev ) {

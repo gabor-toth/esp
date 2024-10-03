@@ -91,7 +91,7 @@ static void setup_adc() {
     adc_add_channel( PIN_ADC_1_LOW - 1, "uzemanyag_l", nullptr, 0, nullptr );
     adc_add_channel( PIN_ADC_1_HIGH - 1, "uzemanyag_h", nullptr, 0, nullptr );
     gpio_set_level( data.drive_gpio_pin, 1 );
-    adc_main( false );
+    adc_main_oneshot( false );
 }
 
 static void setup_water_drive_pins() {
