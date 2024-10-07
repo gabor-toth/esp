@@ -32,10 +32,10 @@ static int hardware_device_type = 0xff;
 
 static const char *device_type_names[] = {
         "unused 0",         //  000
-        "n2k gateway",      //  001
+        "rudder",           //  001
         "unused 2",         //  010
         "unused 3",         //  011
-        "rudder",           //  100
+        "n2k gateway",      //  100
         "fluid & display",  //  101
         "battery monitor",  //  110
         "unused 7",         //  111
@@ -146,19 +146,23 @@ void hajo_main() {
 
     int iDev = 0;
 #if DEVICE_TYPE == DEVICE_TYPE_BATTERY || DEVICE_TYPE == DEVICE_TYPE_ALL
+#define HAS_DEVICE 1
     clock_configure( 80 );
     hajo_battery_main( iDev++ );
 #endif
 #if DEVICE_TYPE == DEVICE_TYPE_DISPLAY || DEVICE_TYPE == DEVICE_TYPE_ALL
+#define HAS_DEVICE 1
     clock_configure( 240 );
     NMEA2000.SetDeviceCount( 2 );
     hajo_fluid_main( iDev++ );
     hajo_display_main( iDev++ );
 #endif
 #if DEVICE_TYPE == DEVICE_TYPE_FRIDGE || DEVICE_TYPE == DEVICE_TYPE_ALL
+#define HAS_DEVICE 1
     fridge_main();
 #endif
-#if DEVICE_TYPE == CONFIG_DEVICE_TYPE_GATEWAY || DEVICE_TYPE == DEVICE_TYPE_ALL
+#if DEVICE_TYPE == DEVICE_TYPE_GATEWAY || DEVICE_TYPE == DEVICE_TYPE_ALL
+#define HAS_DEVICE 1
     clock_configure( 240 );
     NMEA2000.SetDeviceCount( 3 );
     wit_main( iDev++ );
@@ -166,11 +170,14 @@ void hajo_main() {
     hajo_signalk_main( iDev++ );
 #endif
 #if DEVICE_TYPE == DEVICE_TYPE_RUDDER || DEVICE_TYPE == DEVICE_TYPE_ALL
+#define HAS_DEVICE 1
     clock_configure( 80 );
     NMEA2000.SetDeviceCount( 1 );
     hajo_rudder_main( iDev++ );
 #endif
-
+#if !HAS_DEVICE
+#error No device compiled, check your config and the command line.
+#endif
     node_info_main();
     n2k_init();
 }

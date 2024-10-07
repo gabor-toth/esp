@@ -162,7 +162,7 @@ static bool findSensor() {
 
     bool found = false;
     int i, iRetry;
-    uint32_t c_uiBaud[10] = {
+    uint32_t c_uiBaud[] = {
             //4800,
             115200,
             9600,
@@ -184,7 +184,7 @@ static bool findSensor() {
                 found = true;
                 break;
             }
-            iRetry--;
+            //iRetry--;
         } while ( iRetry );
     }
 
@@ -201,10 +201,15 @@ static void configureSensor() {
     if ( WitSetUartBaud( WIT_BAUD_115200 ) != WIT_HAL_OK ) {
         ESP_LOGE( LOG, "Failed to set wit baud rate to 115200 (%d)", WIT_BAUD_115200 );
     } else {
-        uart_set_baudrate( UART_NUM, 115200 );
+        int baudrate = 115200;
+        uart_set_baudrate( UART_NUM, baudrate );
+        ESP_LOGI( LOG, "Set baud rate to %d", baudrate );
     }
+    int outputRate = 10;
     if ( WitSetOutputRate( RRATE_10HZ ) != WIT_HAL_OK ) {
-        ESP_LOGE( LOG, "Failed to set output rate to 10Hz (%d)", WIT_BAUD_115200 );
+        ESP_LOGE( LOG, "Failed to set output rate to %dHz (%d)", outputRate, RRATE_10HZ );
+    } else {
+        ESP_LOGI( LOG, "Set output rate to %dHz", outputRate );
     }
     // if(WitSetBandwidth(BANDWIDTH_256HZ) != WIT_HAL_OK)
 }

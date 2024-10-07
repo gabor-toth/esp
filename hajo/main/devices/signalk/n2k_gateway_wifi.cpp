@@ -751,6 +751,8 @@ static void signalk_register() {
 }
 
 void setupSignalkOverWifi() {
+    ESP_LOGI( TAG, "Starting SignalK over WiFi" );
+
     discovery_register();
     wss_register();
     signalk_register();
