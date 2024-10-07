@@ -5890,7 +5890,7 @@
 	)
 	(symbol
 		(lib_id "Device:C_Polarized")
-		(at 139.7 99.06 0)
+		(at 139.7 99.06 180)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -5898,7 +5898,7 @@
 		(dnp no)
 		(uuid "9aff1b0e-b6f6-4d69-8eb5-858d6f75a37c")
 		(property "Reference" "C5"
-			(at 143.51 96.9009 0)
+			(at 135.89 101.2191 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5907,7 +5907,7 @@
 			)
 		)
 		(property "Value" "0.1u"
-			(at 143.51 99.4409 0)
+			(at 135.89 98.6791 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5916,7 +5916,7 @@
 			)
 		)
 		(property "Footprint" "Capacitor_THT:CP_Radial_D5.0mm_P2.50mm"
-			(at 140.6652 102.87 0)
+			(at 138.7348 95.25 0)
 			(effects
 				(font
 					(size 1.27 1.27)
