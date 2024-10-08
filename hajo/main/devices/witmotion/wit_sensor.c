@@ -167,25 +167,27 @@ static bool findSensor() {
             115200,
             9600,
             19200, 38400, 57600, 230400, 460800, 921600 };
-    for ( i = 0; i < sizeof( c_uiBaud ) / sizeof( c_uiBaud[ 0 ] ) && !found; i++ ) {
-        uart_set_baudrate( UART_NUM, c_uiBaud[ i ] );
-        uint32_t effective_baud_rate = 0;
-        uart_get_baudrate( UART_NUM, &effective_baud_rate );
-        ESP_LOGI( LOG, "trying baud %lu (effective %lu)", c_uiBaud[ i ], effective_baud_rate );
-        gotMessage = false;
-        iRetry = 2;
-        do {
-            WitReadReg( AX, 3 );
-            xTimerStart( timer, portMAX_DELAY );
-            int dummy;
-            xQueueReceive( scan_event_queue, &dummy, portMAX_DELAY );
-            if ( gotMessage ) {
-                ESP_LOGI( LOG, "found sensor with baud %lu", c_uiBaud[ i ] );
-                found = true;
-                break;
-            }
-            //iRetry--;
-        } while ( iRetry );
+    while ( !found ) {
+        for ( i = 0; i < sizeof( c_uiBaud ) / sizeof( c_uiBaud[ 0 ] ) && !found; i++ ) {
+            uart_set_baudrate( UART_NUM, c_uiBaud[ i ] );
+            uint32_t effective_baud_rate = 0;
+            uart_get_baudrate( UART_NUM, &effective_baud_rate );
+            ESP_LOGI( LOG, "trying baud %lu (effective %lu)", c_uiBaud[ i ], effective_baud_rate );
+            gotMessage = false;
+            iRetry = 2;
+            do {
+                WitReadReg( AX, 3 );
+                xTimerStart( timer, portMAX_DELAY );
+                int dummy;
+                xQueueReceive( scan_event_queue, &dummy, portMAX_DELAY );
+                if ( gotMessage ) {
+                    ESP_LOGI( LOG, "found sensor with baud %lu", c_uiBaud[ i ] );
+                    found = true;
+                    break;
+                }
+                iRetry--;
+            } while ( iRetry );
+        }
     }
 
     xTimerDelete( timer, portMAX_DELAY );
