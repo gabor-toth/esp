@@ -5,78 +5,6 @@
 - https://github.com/SignalK/signalk-server#how-to-get-signal-k-server
 - https://github.com/SignalK/signalk-server/blob/master/docker/README.md#quickstart
 
-## In Docker
-
-```
-docker run -d --init  --name signalk-server -p 3000:3000 -v $(pwd):/home/node/.signalk cr.signalk.io/signalk/signalk-server
-```
-
-## Local
-
-```
-sudo apt isntall libavahi-compat-libdnssd-dev
-sudo npm install -g mdns
-sudo npm install -g signalk-server
-
-```
-
-## Requests
-
-```
-curl -X GET http://10.128.65.180:3000/signalk
-{"endpoints":{"v1":{"version":"2.4.1","
-signalk-http":"http://10.128.65.180:3000/signalk/v1/api/","signalk-ws":"ws://10.128.65.180:3000/signalk/v1/stream","signalk-tcp":"tcp://10.128.65.180:8375"}},"server":{"id":"signalk-server-node","version":"2.4.1"}}
-```
-
-```
-wscat -c "ws://10.128.65.180:3000/signalk/v1/stream?subscribe=all"
-Connected (press CTRL+C to quit)
-< {"name":"signalk-server","version":"2.4.1","self":"vessels.urn:mrn:signalk:uuid:
-59e1f1c9-9e32-4340-a1d0-656512c48f0a","roles":["master","main"],"timestamp":"2023-11-22T12:55:47.852Z"}
-< {"context":"vessels.urn:mrn:signalk:uuid:59e1f1c9-9e32-4340-a1d0-656512c48f0a","updates":[{"$source":"defaults","
-timestamp":"2023-11-22T12:43:36.969Z","
-values":[{"path":"","value":{"uuid":"urn:mrn:signalk:uuid:59e1f1c9-9e32-4340-a1d0-656512c48f0a"}}]}]}
-```
-
-## Other links
-
-- [Discovery and Connection Establishment](https://signalk.org/specification/1.7.0/doc/connection.html)
-- [Streaming API](https://signalk.org/specification/1.7.0/doc/streaming_api.html)
-
-## Service Sniffer
-
-```
-sudo apt install gssdp-tools
-
-# MDNS
-avahi-browse -r -a -t
-avahi-browse -r _signalk-ws._tcp
-avahi-browse -r _signalk-http._tcp
-
-# SSDP
-gssdp-device-sniffer -i docker0
-gssdp-device-sniffer -i enp7s0
-gssdp-device-sniffer -i wlp0s20f3
-```
-
-## URLs
-
-http://192.168.72.182/description.xml
-http://192.168.72.182/index.html
-http://192.168.72.182/signalk
-ws://182.72.168.192:81/
-
-## MDNS
-
-```
-+ docker0 IPv4 6d65d96b9f13                                  _signalk-ws._tcp     local
-= docker0 IPv4 6d65d96b9f13                                  _signalk-ws._tcp     local
-  hostname = [6d65d96b9f13.local]
-  address = [172.17.0.2]
-  port = [3000]
-  txt = ["vuuid=urn:mrn:signalk:uuid:7f446102-b734-40b4-a384-0ed9ee12579c" "self=urn:mrn:signalk:uuid:7f446102-b734-40b4-a384-0ed9ee12579c" "roles=master, main" "swvers=2.4.1" "swname=signalk-server" "txtvers=1"]
-```
-
 # Raspberry PI
 
 ## Install
@@ -117,7 +45,7 @@ echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKcyI/bADRtxOoJ1hDOtbntHil+7zQbVbTIEuE
 sudo su
 apt -y update
 apt -y upgrade
-apt -y install traceroute vim
+apt -y install lsb-release traceroute vim
 sed -i 's/raspberrypi/solpi/' /etc/hosts
 hostnamectl set-hostname solpi
 sed -i '/history-search/ s/# //' /etc/inputrc
@@ -187,8 +115,13 @@ Source link?
 
 ```
 sudo su
+# install v18 on bookworm (needed for Zero)
+apt -y install nodejs npm
+# install latest (v22 at the time being)
 curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
-apt -y install nodejs libnss-mdns avahi-utils libavahi-compat-libdnssd-dev
+apt -y install nodejs
+# continue for all
+apt -y install libnss-mdns avahi-utils libavahi-compat-libdnssd-dev
 apt-mark auto libnss-mdns
 npm install -g npm@latest
 npm install -g --unsafe-perm signalk-server -y # will take a while
@@ -201,17 +134,12 @@ signalk-server-setup
 # Do you want to use port 80? Yes
 # Do you want to enable SSL? No
 
-vi /etc/systemd/system/signalk.service
-  # add at the end
-  [Unit]
-  Wants=network.target
+cat >>/etc/systemd/system/signalk.service <<EOF
+[Unit]
+Wants=network.target
+EOF
 systemctl daemon-reload
 ```
-
-- go to http://192.168.72.191/
-- create an admin account admin/signalk
-- login
-- TBC
 
 #### Canboat
 
@@ -228,22 +156,27 @@ sudo raspi-config
 https://github.com/canboat/canboat/wiki/Building
 
 ```shell
-sudo apt install git
+sudo apt -y install git
 git clone https://github.com/canboat/canboat
 cd canboat
 make
 sudo make install
 
-actisense-serial -d /dev/ttyS0
+sudo usermod -a -G dialout signalk
+# log out and in
+actisense-serial -d /dev/ttyAMA0
 ```
 
 - Server
-- Data connectiions
+- Data connections
 - type: NMEA 2000, id: n2k
 - source: Actisense NGT-1 (canboat), port /dev/ttyS0, baud 115200
 
 #### Dashboard
 
+- go to http://192.168.72.191/
+- create an admin account admin/signalk
+- login
 - Install from Appstore
     - mandatory
         - @mxtommy/kip (https://github.com/mxtommy/Kip)
@@ -259,6 +192,8 @@ actisense-serial -d /dev/ttyS0
         - @signalk/signalk-autopilot
         - rest-provider-signalk (https://www.npmjs.com/package/rest-provider-signalk)
 - Derived data
+    - Engines: main
+    - Batteries: 0,1,2
     - Heading: Magnetic Variation
     - Submit
     - Heading: True Heading
@@ -267,7 +202,7 @@ actisense-serial -d /dev/ttyS0
         - Velocity Made Good towards next waypoint
         - Velocity Made Good to wind
     - optional
-        - Course data: Wind shift
+        - Wind: Wind shift
 - Course Data provider
     - GreatCircle
 - Setup
@@ -289,8 +224,8 @@ actisense-serial -d /dev/ttyS0
       cd ~/.signalk/charts
       wget https://ftp.gwdg.de/pub/misc/openstreetmap/openseamap/charts/mbtiles/OSM-OpenCPN2-Lake_Balaton.mbtiles
       ```
-    - click Submit in plugin
-    - check result: http://192.168.72.180/signalk/v2/api/resources/charts
+    - click Submit in "Signal K Charts" plugin
+    - check result: http://192.168.72.191/signalk/v2/api/resources/charts
 - todo
     - self.electrical.batteries.1.voltage
 
@@ -385,3 +320,78 @@ wpa_cli terminate -i wlan0
 ```shell
 idf.py -p /dev/ttyUSB0 flash -b 3000000 -DCONFIG_DEVICE_TYPE=GATEWAY -DCONFIG_START_SIMULATOR=y
 ```
+
+# Local testing
+
+## In Docker
+
+```
+docker run -d --init  --name signalk-server -p 3000:3000 -v $(pwd):/home/node/.signalk cr.signalk.io/signalk/signalk-server
+```
+
+## Local
+
+```
+sudo apt isntall libavahi-compat-libdnssd-dev
+sudo npm install -g mdns
+sudo npm install -g signalk-server
+
+```
+
+## Requests
+
+```
+curl -X GET http://10.128.65.180:3000/signalk
+{"endpoints":{"v1":{"version":"2.4.1","
+signalk-http":"http://10.128.65.180:3000/signalk/v1/api/","signalk-ws":"ws://10.128.65.180:3000/signalk/v1/stream","signalk-tcp":"tcp://10.128.65.180:8375"}},"server":{"id":"signalk-server-node","version":"2.4.1"}}
+```
+
+```
+wscat -c "ws://10.128.65.180:3000/signalk/v1/stream?subscribe=all"
+Connected (press CTRL+C to quit)
+< {"name":"signalk-server","version":"2.4.1","self":"vessels.urn:mrn:signalk:uuid:
+59e1f1c9-9e32-4340-a1d0-656512c48f0a","roles":["master","main"],"timestamp":"2023-11-22T12:55:47.852Z"}
+< {"context":"vessels.urn:mrn:signalk:uuid:59e1f1c9-9e32-4340-a1d0-656512c48f0a","updates":[{"$source":"defaults","
+timestamp":"2023-11-22T12:43:36.969Z","
+values":[{"path":"","value":{"uuid":"urn:mrn:signalk:uuid:59e1f1c9-9e32-4340-a1d0-656512c48f0a"}}]}]}
+```
+
+## Other links
+
+- [Discovery and Connection Establishment](https://signalk.org/specification/1.7.0/doc/connection.html)
+- [Streaming API](https://signalk.org/specification/1.7.0/doc/streaming_api.html)
+
+## Service Sniffer
+
+```
+sudo apt install gssdp-tools
+
+# MDNS
+avahi-browse -r -a -t
+avahi-browse -r _signalk-ws._tcp
+avahi-browse -r _signalk-http._tcp
+
+# SSDP
+gssdp-device-sniffer -i docker0
+gssdp-device-sniffer -i enp7s0
+gssdp-device-sniffer -i wlp0s20f3
+```
+
+## URLs
+
+http://192.168.72.182/description.xml
+http://192.168.72.182/index.html
+http://192.168.72.182/signalk
+ws://182.72.168.192:81/
+
+## MDNS
+
+```
++ docker0 IPv4 6d65d96b9f13                                  _signalk-ws._tcp     local
+= docker0 IPv4 6d65d96b9f13                                  _signalk-ws._tcp     local
+  hostname = [6d65d96b9f13.local]
+  address = [172.17.0.2]
+  port = [3000]
+  txt = ["vuuid=urn:mrn:signalk:uuid:7f446102-b734-40b4-a384-0ed9ee12579c" "self=urn:mrn:signalk:uuid:7f446102-b734-40b4-a384-0ed9ee12579c" "roles=master, main" "swvers=2.4.1" "swname=signalk-server" "txtvers=1"]
+```
+
