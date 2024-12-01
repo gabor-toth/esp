@@ -256,9 +256,7 @@ static void onSimulatorTick( void *arg ) {
             // TODO navigation.datetime = "1970-01-01T00:02:12.07000Z"
             SetN2kGNSS( N2kMsg, sid, DaysSince1970, SecondsSinceMidnight,
                         Latitude, Longitude, N2kDoubleNA,
-                        N2kGNSSt_GPS, N2kGNSSm_GNSSfix,  N2kGNSSi_noIntegrityChecking,
-                        7, 2, N2kDoubleNA, N2kDoubleNA,
-                        1, N2kGNSSt_GPS, 0, 0 );
+                        N2kGNSSt_GPS, N2kGNSSm_GNSSfix, 0, N2kDoubleNA );
             sendN2KMessageToSignalK( N2kMsg );
             sentPackets++;
         }
