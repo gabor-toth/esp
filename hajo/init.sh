@@ -3,7 +3,7 @@ if [ $(basename $0) == "init.sh" ]; then
   exit
 fi
 
-base_dir=$(readlink -f $(dirname ${BASH_SOURCE[0]})/..)
+base_dir=$(readlink -f $(dirname ${BASH_SOURCE[0]}))
 
 . $base_dir/../esp-idf/export.sh
 
