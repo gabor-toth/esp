@@ -61,7 +61,7 @@ rm -rf $HOME/.espressif/
 ./install.sh esp32 esp32s2
 . ./export.sh
 cd tools
-./idf_tools.py install cmake
+./idf_tools.py install cmake install-python-env
 popd
 ```
 
