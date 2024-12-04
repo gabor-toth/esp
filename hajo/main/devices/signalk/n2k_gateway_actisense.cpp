@@ -47,6 +47,7 @@ const tN2kMsg*  HandleTimeAndDate( const tN2kMsg &N2kMsg , tN2kMsg& newN2kMsg ) 
     if (ParseN2kPGN129033( N2kMsg,DaysSince1970, SecondsSinceMidnight,LocalOffset) ) {
         correctGpsWeekIfNeeded(DaysSince1970);
         SetN2kPGN129033(newN2kMsg, DaysSince1970, SecondsSinceMidnight, LocalOffset);
+        newN2kMsg.Source = N2kMsg.Source;
         return &newN2kMsg;
     }
     return &N2kMsg;
@@ -80,6 +81,7 @@ const tN2kMsg* HandleGNSS( const tN2kMsg& N2kMsg, tN2kMsg& newN2kMsg )  {
                         GNSSMethod,N2kGNSSi_noIntegrityChecking,
                         nSatellites, HDOP, PDOP, GeoidalSeparation,
                         nReferenceStations, ReferenceStationType, ReferenceStationID, AgeOfCorrection);
+        newN2kMsg.Source = N2kMsg.Source;
         return &newN2kMsg;
     }
     return &N2kMsg;
