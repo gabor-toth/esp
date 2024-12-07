@@ -77,6 +77,10 @@ _Noreturn static void task_main( void *arg ) {
             int index;
             tN2kMsg N2kMsg;
             for ( index = 0; iterator->SendFunction( index, N2kMsg ); index++ ) {
+                if ( N2kMsg.PGN == 0 ) {
+                    ESP_LOGW(TAG, "Empty PNG for %s", iterator->Description );
+                    continue;
+                }
                 NMEA2000.SendMsg( N2kMsg );
                 loopback_callback_node_t * node = loopback_callbacks;
                 while ( node != nullptr ) {

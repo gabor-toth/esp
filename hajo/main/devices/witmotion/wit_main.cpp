@@ -49,17 +49,13 @@ static bool n2k_send_attitude( int index, tN2kMsg &message ) {
         sid++;
     }
 
-    switch ( index ) {
-        case 0:
-            if ( wit_sensor_is_available() ) {
-                float pitch, roll;
-                wit_sensor_get_pitch_and_roll( &pitch, &roll );
-                SetN2kAttitude( message, sid, 0.0, DegToRad( pitch ), DegToRad( roll ) );
-            }
-            return true;
-        default:
-            return false;
+    if ( index > 0 || !wit_sensor_is_available() ) {
+        return false;
     }
+    float pitch, roll;
+    wit_sensor_get_pitch_and_roll( &pitch, &roll );
+    SetN2kAttitude( message, sid, 0.0, DegToRad( pitch ), DegToRad( roll ) );
+    return true;
 }
 
 static bool n2k_send_heading( int index, tN2kMsg &message ) {
@@ -69,17 +65,13 @@ static bool n2k_send_heading( int index, tN2kMsg &message ) {
         sid++;
     }
 
-    switch ( index ) {
-        case 0:
-            if ( wit_sensor_is_available() ) {
-                float heading;
-                wit_sensor_get_heading( &heading );
-                SetN2kTrueHeading( message, sid, DegToRad( heading ) );
-            }
-            return true;
-        default:
-            return false;
+    if ( index > 0 || !wit_sensor_is_available() ) {
+        return false;
     }
+    float heading;
+    wit_sensor_get_heading( &heading );
+    SetN2kTrueHeading( message, sid, DegToRad( heading ) );
+    return true;
 }
 
 void wit_main( int iDev ) {
