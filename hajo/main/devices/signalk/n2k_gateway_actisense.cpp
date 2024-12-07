@@ -88,6 +88,7 @@ const tN2kMsg* HandleGNSS( const tN2kMsg& N2kMsg, tN2kMsg& newN2kMsg )  {
 }
 
 void sendN2KMessageToSignalKOverActisense( const tN2kMsg &N2kMsg ) {
+    char dataAsString[128+1];
     tN2kMsg newN2kMsg;
     const tN2kMsg* N2kMsgToSend;
     switch ( N2kMsg.PGN ) {
@@ -101,7 +102,18 @@ void sendN2KMessageToSignalKOverActisense( const tN2kMsg &N2kMsg ) {
             N2kMsgToSend = &N2kMsg;
             break;
     }
+
+#if CONFIG_SIGNALK_DEBUG_PACKAGE
+    char *p = dataAsString;
+    for ( int i = 0; i < N2kMsg.DataLen && i < sizeof(dataAsString)/2;i++, p+=2) {
+        sprintf(p, "%02x", N2kMsg.Data[i]);
+    }
+    *p = 0;
+    ESP_LOGD(TAG,"Sending PGN %05lx %06ld src %02x dst %02x len %d data %s", N2kMsg.PGN, N2kMsg.PGN,
+             N2kMsg.Source, N2kMsg.Destination, N2kMsg.DataLen,
+             dataAsString );
     N2kMsgToSend->SendInActisenseFormat( &serialN2kStream );
+#endif
 }
 
 void setupSignalkOverActisense() {

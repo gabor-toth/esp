@@ -475,34 +475,12 @@ CONFIG_PARTITION_TABLE_MD5=y
 #
 
 #
-# mDNS
-#
-CONFIG_EXAMPLE_MDNS_HOST_NAME="n2k-gateway"
-CONFIG_MDNS_INSTANCE_NAME="N2K Gateway"
-# end of mDNS
-
-#
-# HTTP server
-#
-CONFIG_EXAMPLE_WEB_DEPLOY_SEMIHOST=y
-# CONFIG_EXAMPLE_WEB_DEPLOY_SF is not set
-CONFIG_EXAMPLE_HOST_PATH_TO_MOUNT="PATH-TO-WEB-DIST_DIR"
-CONFIG_EXAMPLE_WEB_MOUNT_POINT="/www"
-# end of HTTP server
-
-#
-# Wifi access point
-#
-# CONFIG_OWN_WIFI_AP_MANUAL_CONFIG is not set
-CONFIG_ESP_MAX_STA_CONN=4
-# end of Wifi access point
-
-#
 # SignalK channels
 #
 CONFIG_SIGNALK_OVER_ACTISENSE=y
 # CONFIG_SIGNALK_OVER_WIFI is not set
 # CONFIG_SIGNALK_LOG_FREE_MEM is not set
+# CONFIG_SIGNALK_DEBUG_PACKAGE is not set
 # end of SignalK channels
 # end of Own Configuration
 
