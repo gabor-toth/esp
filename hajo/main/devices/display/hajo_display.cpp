@@ -5,7 +5,7 @@
 #include "n2k/n2k_struct_parser.h"
 #include "n2k/n2k_util.h"
 
-static const char *LOG = "display";
+//static const char *LOG = "display";
 
 static void process_incoming_pgn_battery_status( const tN2kMsg &N2kMsg ) {
     N2kDCBatStatusData data;
@@ -110,7 +110,7 @@ void setup_n2k_device( int iDev ) {
     NMEA2000.AttachMsgHandler( incomingMessageHandler );
 }
 
-static void process_incoming_pgn( const tN2kMsg &message ) {
+static void process_incoming_pgn( const tN2kMsg &message, int deviceIndex ) {
     incomingMessageHandler->HandleMsg( message );
 }
 

@@ -12,12 +12,12 @@ void SetN2kPGN130881( tN2kMsg &N2kMsg ) {
     N2kMsg.SetPGN( 65410L );
     N2kMsg.Add2ByteUInt( MANUFACTURER_INDUSTRY_OWN );
     N2kMsg.AddByte( 1 ); //
-    N2kMsg.Add2ByteUInt( 0 ); // Internal Device Temperature
-    N2kMsg.Add2ByteUInt( 0 ); // supply voltage
+    N2kMsg.Add2ByteUInt( N2kUInt16NA ); // Internal Device Temperature
+    N2kMsg.Add2ByteUInt( N2kUInt16NA ); // supply voltage
     N2kMsg.AddByte( 0 );  // reserved
 }
 
-static bool send_node_info( int index, tN2kMsg &message ) {
+static bool send_node_info( int index, tN2kMsg &message, int &deviceIndex ) {
     if ( index != 0 ) {
         return false;
     }

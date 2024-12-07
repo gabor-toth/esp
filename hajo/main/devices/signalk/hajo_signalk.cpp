@@ -55,7 +55,7 @@ static void setup_n2k_device( int iDev ) {
     NMEA2000.AttachMsgHandler( incomingMessageHandler );
 }
 
-static void process_incoming_pgn( const tN2kMsg &N2kMsg ) {
+static void process_incoming_pgn( const tN2kMsg &N2kMsg, int deviceIndex ) {
     sendN2KMessageToSignalK( N2kMsg );
 }
 

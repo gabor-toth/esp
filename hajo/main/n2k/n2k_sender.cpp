@@ -8,6 +8,8 @@
 
 using namespace std;
 
+#define HEARTBEAT_INTERVAL  10000
+
 static const char *TAG = "n2k_sender";
 
 typedef struct loopback_callback_node_t {
@@ -50,10 +52,10 @@ static vector<tN2kSendMessage> sendMessages;
 
 static QueueHandle_t timer_event_queue = nullptr;
 
-static void callLoopbackListeners( const tN2kMsg &N2kMsg ) {
+static void callLoopbackListeners( const tN2kMsg &N2kMsg , int deviceIndex) {
     loopback_callback_node_t * node = loopback_callbacks;
     while ( node != nullptr ) {
-        node->callback( N2kMsg );
+        node->callback( N2kMsg, deviceIndex );
         node=node->next;
     }
 }
@@ -94,7 +96,7 @@ _Noreturn static void task_main( void *arg ) {
                     continue;
                 }
                 NMEA2000.SendMsg( N2kMsg, deviceIndex );
-                callLoopbackListeners( N2kMsg );
+                callLoopbackListeners( N2kMsg, deviceIndex );
             }
             //if ( index == 0 ) {
             //    ESP_LOGD( TAG, "nothing to send for %s", iterator->Description );
@@ -104,8 +106,8 @@ _Noreturn static void task_main( void *arg ) {
 }
 
 static void heartbeatCallback(const tN2kMsg& N2kMsg, int deviceIndex) {
-    ESP_LOGI(TAG,"send heartbeat for %d", deviceIndex);
-    callLoopbackListeners( N2kMsg );
+    //ESP_LOGI(TAG,"send heartbeat for %d", deviceIndex);
+    callLoopbackListeners( N2kMsg, deviceIndex );
 }
 
 static void timer_callback( TimerHandle_t ) {
@@ -115,7 +117,7 @@ static void timer_callback( TimerHandle_t ) {
 
 void n2k_sender_on_open() {
     ESP_LOGI( TAG, "n2k_sender_on_open" );
-    NMEA2000.SetHeartbeatIntervalAndOffset(1000, 114, -1, heartbeatCallback);
+    NMEA2000.SetHeartbeatIntervalAndOffset(HEARTBEAT_INTERVAL, HEARTBEAT_INTERVAL/6, -1, heartbeatCallback);
     vector<tN2kSendMessage>::iterator iterator;
     for ( iterator = sendMessages.begin(); iterator != sendMessages.end(); iterator++ ) {
         if ( iterator->Scheduler.IsEnabled()) {
