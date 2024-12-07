@@ -50,6 +50,14 @@ static vector<tN2kSendMessage> sendMessages;
 
 static QueueHandle_t timer_event_queue = nullptr;
 
+static void callLoopbackListeners( const tN2kMsg &N2kMsg ) {
+    loopback_callback_node_t * node = loopback_callbacks;
+    while ( node != nullptr ) {
+        node->callback( N2kMsg );
+        node=node->next;
+    }
+}
+
 _Noreturn static void task_main( void *arg ) {
     (void) arg;
 
@@ -61,7 +69,7 @@ _Noreturn static void task_main( void *arg ) {
         }
 
         if ( message != nullptr ) {
-            NMEA2000.SendMsg( *message );
+            NMEA2000.SendMsg( *message, 0 );
             delete message;
             continue;
         }
@@ -76,23 +84,28 @@ _Noreturn static void task_main( void *arg ) {
             ESP_LOGD( TAG, "sending for %s", iterator->Description );
             int index;
             tN2kMsg N2kMsg;
-            for ( index = 0; iterator->SendFunction( index, N2kMsg ); index++ ) {
+            for( index = 0;; index++ ) {
+                int deviceIndex = 0;
+                if ( !iterator->SendFunction( index, N2kMsg, deviceIndex ) ) {
+                    break;
+                }
                 if ( N2kMsg.PGN == 0 ) {
                     ESP_LOGW(TAG, "Empty PNG for %s", iterator->Description );
                     continue;
                 }
-                NMEA2000.SendMsg( N2kMsg );
-                loopback_callback_node_t * node = loopback_callbacks;
-                while ( node != nullptr ) {
-                    node->callback( N2kMsg );
-                    node=node->next;
-                }
+                NMEA2000.SendMsg( N2kMsg, deviceIndex );
+                callLoopbackListeners( N2kMsg );
             }
-            if ( index == 0 ) {
-                //ESP_LOGD( TAG, "nothing to send for %s", iterator->Description );
-            }
+            //if ( index == 0 ) {
+            //    ESP_LOGD( TAG, "nothing to send for %s", iterator->Description );
+            //}
         }
     }
+}
+
+static void heartbeatCallback(const tN2kMsg& N2kMsg, int deviceIndex) {
+    ESP_LOGI(TAG,"send heartbeat for %d", deviceIndex);
+    callLoopbackListeners( N2kMsg );
 }
 
 static void timer_callback( TimerHandle_t ) {
@@ -102,6 +115,7 @@ static void timer_callback( TimerHandle_t ) {
 
 void n2k_sender_on_open() {
     ESP_LOGI( TAG, "n2k_sender_on_open" );
+    NMEA2000.SetHeartbeatIntervalAndOffset(1000, 114, -1, heartbeatCallback);
     vector<tN2kSendMessage>::iterator iterator;
     for ( iterator = sendMessages.begin(); iterator != sendMessages.end(); iterator++ ) {
         if ( iterator->Scheduler.IsEnabled()) {
@@ -136,7 +150,6 @@ void nk2_register_sender( tN2kSendFunction sendFunction,
 }
 
 void n2k_sender_send(const tN2kMsg &message ) {
-
 }
 
 void n2k_sender_register_loopback( n2k_loopback_callback callback ) {

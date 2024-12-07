@@ -6,7 +6,7 @@
 
 extern tNMEA2000 &NMEA2000;
 
-typedef bool (*tN2kSendFunction)( int index, tN2kMsg &message );
+typedef bool (*tN2kSendFunction)( int index, tN2kMsg &message, int &deviceIndex );
 
 typedef void (*n2k_loopback_callback)( const tN2kMsg &message );
 
