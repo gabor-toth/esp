@@ -6,6 +6,8 @@
    software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
    CONDITIONS OF ANY KIND, either express or implied.
 */
+
+#if defined(CONFIG_ESP_MAX_STA_CONN)
 #include <string.h>
 #include <lwip/ip4_addr.h>
 #include "esp_mac.h"
@@ -192,3 +194,4 @@ void wap_start_wps() {
     
     // E (15688) wpa: WPS: fail event msg=12 config_error=13 error_indication=0
 }
+#endif

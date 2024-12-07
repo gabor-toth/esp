@@ -10,6 +10,7 @@
 
 static const char *TAG = "http-static";
 
+#if defined(CONFIG_EXAMPLE_CONNECT_WIFI) && defined(CONFIG_EXAMPLE_WEB_MOUNT_POINT)
 #define FILE_PATH_MAX (ESP_VFS_PATH_MAX + 128)
 
 #define CHECK_FILE_EXTENSION( filename, ext ) (strcasecmp(&(filename)[strlen(filename) - strlen(ext)], ext) == 0)
@@ -191,3 +192,5 @@ void http_static_files_register( void ) {
     ESP_ERROR_CHECK( init_fs() );
     // call http_static_files_register_handler as last to register it as a fallback handler
 }
+
+#endif

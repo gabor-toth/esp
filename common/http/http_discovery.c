@@ -1,7 +1,7 @@
 #include "sdkconfig.h"
 #include "http_discovery.h"
 
-#if defined(CONFIG_EXAMPLE_CONNECT_WIFI)
+#if defined(CONFIG_EXAMPLE_CONNECT_WIFI) && defined(CONFIG_EXAMPLE_MDNS_HOST_NAME)
 /* HTTP Restful API Server Example
 
    This example code is in the Public Domain (or CC0 licensed, at your option.)
