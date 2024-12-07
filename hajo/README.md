@@ -233,6 +233,7 @@ actisense-serial -d /dev/ttyAMA0
 
 See
 
+- /usr/lib/node_modules/signalk-server/node_modules/@signalk/n2k-signalk/n2kMapper.js
 - /usr/lib/node_modules/signalk-server/node_modules/@signalk/n2k-signalk/raymarine/index.js
 - /usr/lib/node_modules/signalk-server/node_modules/@signalk/n2k-signalk/pgns/129029.js
 - /usr/lib/node_modules/signalk-server/node_modules/@canboat/pgns/canboat.json

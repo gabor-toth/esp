@@ -9,14 +9,12 @@
 #define MANUFACTURER_INDUSTRY_OWN ((uint16_t)((INDUSTRY_CODE_MARINE<<13)|(0<11)|(MANUFACTURER_CODE_OWN)))
 
 void SetN2kPGN130881( tN2kMsg &N2kMsg ) {
-    N2kMsg.SetPGN( 130881L );
+    N2kMsg.SetPGN( 65410L );
     N2kMsg.Add2ByteUInt( MANUFACTURER_INDUSTRY_OWN );
-    N2kMsg.AddByte( 0 );
-    N2kMsg.AddByte( 0 ); // Internal Device Temperature
-    N2kMsg.AddByte( 0 );
-    N2kMsg.AddByte( 0 );
-    N2kMsg.AddByte( 0 );
-    N2kMsg.AddByte( 0 );
+    N2kMsg.AddByte( 1 ); //
+    N2kMsg.Add2ByteUInt( 0 ); // Internal Device Temperature
+    N2kMsg.Add2ByteUInt( 0 ); // supply voltage
+    N2kMsg.AddByte( 0 );  // reserved
 }
 
 static bool send_node_info( int index, tN2kMsg &message ) {
