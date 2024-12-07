@@ -18,6 +18,7 @@ static const char *TAG = "hajo_atti";
 #define CONFIG_RETRIES  5
 
 static mpu6050_handle_t gyroscope;
+static int myDeviceIndex;
 
 static complimentary_angle_t correction = {
         .roll = 0.0,
@@ -70,7 +71,7 @@ void setup_gyroscope() {
     ESP_ERROR_CHECK(mpu6050_wake_up( gyroscope ) );
 }
 
-static bool send_attitude( int index, tN2kMsg &msg ) {
+static bool send_attitude( int index, tN2kMsg &msg, int &deviceIndex ) {
 //    mpu6050_gyro_value_t gyro_value;
 //    mpu6050_get_gyro( gyroscope, &gyro_value );
     mpu6050_acce_value_t acce_value;
@@ -102,6 +103,7 @@ static bool send_attitude( int index, tN2kMsg &msg ) {
 #endif
     // values are in rad, see https://signalk.org/specification/1.5.0/doc/vesselsBranch.html#vesselsregexpnavigationattitude
     LOG("SetN2kAttitude");
+    deviceIndex = myDeviceIndex;
     SetN2kAttitude( msg, index, 0.0, angle.pitch, angle.roll );
     return true;
 }
@@ -142,16 +144,17 @@ static void setup_n2k_device( int iDev ) {
     NMEA2000.ExtendReceiveMessages( ReceiveMessages, iDev );
 }
 
-static bool n2k_send_attitude( int index, tN2kMsg &message ) {
+static bool n2k_send_attitude( int index, tN2kMsg &message, int &deviceIndex ) {
     switch ( index ) {
         case 0:
-            return send_attitude( index, message );
+            return send_attitude( index, message, deviceIndex );
         default:
             return false;
     }
 }
 
 void hajo_attitude_main( int iDev ) {
+    myDeviceIndex = iDev;
     LOG("hajo_attitude_main");
 
     // TODO read correction from nvs

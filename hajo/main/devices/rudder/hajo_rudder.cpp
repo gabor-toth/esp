@@ -24,6 +24,7 @@ static int display_multiplier = 10;
 static int max_degree = 90 * display_multiplier;
 static int correction_offset = 2;
 static int display_scale = 1;
+static int myDeviceIndex;
 
 static void convert_value( int millivolts, int *display_value, int *correction ) {
     double u = millivolts / 1000.0;
@@ -89,7 +90,8 @@ static void setup_n2k_device( int iDev ) {
     NMEA2000.ExtendReceiveMessages( ReceiveMessages, iDev );
 }
 
-static bool send_rudder( int index, tN2kMsg &message ) {
+static bool send_rudder( int index, tN2kMsg &message, int& deviceIndex ) {
+    deviceIndex = myDeviceIndex;
     if ( index > 0 ) {
         return false;
     }
@@ -118,7 +120,7 @@ static void adc_callback(  int average_raw_value, int average_voltage_value ) {
                   N2kRDO_NoDirectionOrder,
                   N2kDoubleNA // angleOrder
     );
-    NMEA2000.SendMsg( message );
+    NMEA2000.SendMsg( message, myDeviceIndex );
 }
 
 static void setup_adc() {
@@ -144,6 +146,7 @@ static void setup_adc() {
 }
 
 void hajo_rudder_main( int iDev ) {
+    myDeviceIndex = iDev;
     setup_adc_drive_pins();
     setup_adc();
     setup_n2k_device( iDev );

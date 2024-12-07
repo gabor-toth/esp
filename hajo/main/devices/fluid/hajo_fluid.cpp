@@ -11,6 +11,7 @@
 static double fluid_rbottom = 51.1;
 static double fluid_rmes_min = 2;
 static double fluid_rmes_max = 180;
+static int myDeviceIndex;
 
 static const char *TAG = "hajo_fluid";
 //#define ESP_LOG ESP_LOGD
@@ -146,7 +147,7 @@ static void setup_n2k_device( int iDev ) {
     NMEA2000.ExtendReceiveMessages( ReceiveMessages, iDev );
 }
 
-static bool send_adc_fluid_level( int index, tN2kMsg &message ) {
+static bool send_adc_fluid_level( int index, tN2kMsg &message, int &deviceIndex ) {
     adc_channel_value_t channel_data_l;
     adc_channel_value_t channel_data_h;
 
@@ -170,6 +171,7 @@ static bool send_adc_fluid_level( int index, tN2kMsg &message ) {
               r_mes,
               valueInPercent );
 
+    deviceIndex = myDeviceIndex;
     SetN2kFluidLevel( message,
                       data->instance,
                       (tN2kFluidType) data->type,
@@ -179,7 +181,7 @@ static bool send_adc_fluid_level( int index, tN2kMsg &message ) {
     return true;
 }
 
-static bool send_water_fluid_level( int index, tN2kMsg &message ) {
+static bool send_water_fluid_level( int index, tN2kMsg &message , int &deviceIndex) {
     double valueInPercent;
 
     ESP_LOGD( TAG, "water[%d]", index );
@@ -205,6 +207,7 @@ static bool send_water_fluid_level( int index, tN2kMsg &message ) {
     ESP_LOGD( TAG, "water level %3d%%", (int) ( valueInPercent * 100 ) );
 
     int capacity = 85;
+    deviceIndex = myDeviceIndex;
     SetN2kFluidLevel( message,
                       index - 1,
                       N2kft_Water,
@@ -215,18 +218,19 @@ static bool send_water_fluid_level( int index, tN2kMsg &message ) {
     return true;
 }
 
-static bool n2k_send_fluid_level( int index, tN2kMsg &message ) {
+static bool n2k_send_fluid_level( int index, tN2kMsg &message , int &deviceIndex) {
     switch ( index ) {
         case 0:
-            return send_adc_fluid_level( index, message );
+            return send_adc_fluid_level( index, message , deviceIndex);
         case 1:
-            return send_water_fluid_level( index, message );
+            return send_water_fluid_level( index, message, deviceIndex );
         default:
             return false;
     }
 }
 
 void hajo_fluid_main( int iDev ) {
+    myDeviceIndex = iDev;
     setup_adc_drive_pins();
     setup_adc();
 

@@ -9,6 +9,7 @@ static int battery_rmes = 16900;
 static int battery_rtop = 316000;
 static int battery_offset = -50;
 static double battery_multiplier;
+static int myDeviceIndex;
 
 typedef struct {
     uint8_t instance;
@@ -98,13 +99,14 @@ static void setup_n2k_device( int iDev ) {
     NMEA2000.ExtendReceiveMessages( ReceiveMessages, iDev );
 }
 
-static bool send_battery_status( int index, tN2kMsg &message ) {
+static bool send_battery_status( int index, tN2kMsg &message, int &deviceIndex ) {
     static uint8_t sid = 0;
 
     int channel_count = adc_number_of_channels();
     if ( index >= channel_count ) {
         return false;
     }
+    deviceIndex = myDeviceIndex;
     if ( index == 0 ) {
         sid++;
     }
@@ -122,13 +124,14 @@ static bool send_battery_status( int index, tN2kMsg &message ) {
     return true;
 }
 
-static bool send_dc_status( int index, tN2kMsg &message ) {
+static bool send_dc_status( int index, tN2kMsg &message, int &deviceIndex ) {
     static uint8_t sid = 0;
 
     int channel_count = adc_number_of_channels();
     if ( index >= channel_count ) {
         return false;
     }
+    deviceIndex = myDeviceIndex;
     if ( index == 0 ) {
         sid++;
     }
@@ -150,11 +153,12 @@ static bool send_dc_status( int index, tN2kMsg &message ) {
     return true;
 }
 
-static bool send_battery_config( int index, tN2kMsg &message ) {
+static bool send_battery_config( int index, tN2kMsg &message, int &deviceIndex ) {
     int channel_count = adc_number_of_channels();
     if ( index >= channel_count ) {
         return false;
     }
+    deviceIndex = myDeviceIndex;
 
     adc_channel_data_t channel_data;
     adc_get_channel_data( index, &channel_data );
@@ -175,6 +179,7 @@ static bool send_battery_config( int index, tN2kMsg &message ) {
 }
 
 void hajo_battery_main( int iDev ) {
+    myDeviceIndex = iDev;
     setup_adc();
     setup_n2k_device( iDev );
     nk2_register_sender( send_battery_status, "battery_status", N2K_PGN_BATTERY_STATUS_INTERVAL_MS, 60, true );

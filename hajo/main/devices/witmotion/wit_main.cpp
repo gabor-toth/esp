@@ -5,6 +5,8 @@
 #include "n2k/n2k_struct_parser.h"
 #include "n2k/n2k_util.h"
 
+static int myDeviceIndex;
+
 static void setup_n2k_device( int iDev ) {
     static const unsigned long TransmitMessages[] = {
             N2K_PGN_ATTITUDE,
@@ -42,9 +44,10 @@ static void setup_n2k_device( int iDev ) {
     NMEA2000.ExtendReceiveMessages( ReceiveMessages, iDev );
 }
 
-static bool n2k_send_attitude( int index, tN2kMsg &message ) {
+static bool n2k_send_attitude( int index, tN2kMsg &message, int &deviceIndex ) {
     static uint8_t sid = 0;
 
+    deviceIndex = myDeviceIndex;
     if ( index == 0 ) {
         sid++;
     }
@@ -58,9 +61,10 @@ static bool n2k_send_attitude( int index, tN2kMsg &message ) {
     return true;
 }
 
-static bool n2k_send_heading( int index, tN2kMsg &message ) {
+static bool n2k_send_heading( int index, tN2kMsg &message, int &deviceIndex ) {
     static uint8_t sid = 0;
 
+    deviceIndex = myDeviceIndex;
     if ( index == 0 ) {
         sid++;
     }
@@ -75,6 +79,7 @@ static bool n2k_send_heading( int index, tN2kMsg &message ) {
 }
 
 void wit_main( int iDev ) {
+    myDeviceIndex = iDev;
     wit_sensor_start();
     setup_n2k_device( iDev );
     nk2_register_sender( n2k_send_heading, "heading", N2K_PGN_HEADING_INTERVAL_MS, 325, true );
