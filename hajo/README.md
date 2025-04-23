@@ -118,7 +118,7 @@ sudo su
 # install v18 on bookworm (needed for Zero)
 apt -y install nodejs npm
 # install latest (v22 at the time being)
-curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
 apt -y install nodejs
 # continue for all
 apt -y install libnss-mdns avahi-utils libavahi-compat-libdnssd-dev
@@ -139,6 +139,15 @@ cat >>/etc/systemd/system/signalk.service <<EOF
 Wants=network.target
 EOF
 systemctl daemon-reload
+```
+
+For local debugging
+
+```
+npm install --unsafe-perm signalk-server -y
+./node_modules/.bin/signalk-server-setup
+/home/apa/.signalk/signalk-server
+#/usr/bin/node --inspect ...
 ```
 
 #### Canboat
@@ -170,7 +179,7 @@ actisense-serial -d /dev/ttyAMA0
 - Server
 - Data connections
 - type: NMEA 2000, id: n2k
-- source: Actisense NGT-1 (canboat), port /dev/ttyS0, baud 115200
+- source: Actisense NGT-1 (canboat), port /dev/ttyAMA0, baud 115200
 
 #### Dashboard
 
@@ -187,10 +196,11 @@ actisense-serial -d /dev/ttyAMA0
         - signalk-alarm-silencer
         - signalk-derived-data (https://github.com/SignalK/signalk-derived-data/blob/master/README.md)
         - signalk-racing-calculator
-    - optional
-        - signalk-fixed-position
-        - @signalk/signalk-autopilot
-        - rest-provider-signalk (https://www.npmjs.com/package/rest-provider-signalk)
+        - signalk-generic-pgn-parser
+        - optional
+            - signalk-fixed-position
+            - @signalk/signalk-autopilot
+            - rest-provider-signalk (https://www.npmjs.com/package/rest-provider-signalk)
 - Derived data
     - Engines: main
     - Batteries: 0,1,2
@@ -226,40 +236,61 @@ actisense-serial -d /dev/ttyAMA0
       ```
     - click Submit in "Signal K Charts" plugin
     - check result: http://192.168.72.191/signalk/v2/api/resources/charts
+- heartbneat
+    - configure signalk-generic-pgn-parser
 - todo
     - self.electrical.batteries.1.voltage
 
-### Amend PNGs in Signalk
+### Amend PGNs in Signalk
 
-See
+Check whether PGN definition is there
 
-- /usr/lib/node_modules/signalk-server/node_modules/@signalk/n2k-signalk/n2kMapper.js
-- /usr/lib/node_modules/signalk-server/node_modules/@signalk/n2k-signalk/raymarine/index.js
-- /usr/lib/node_modules/signalk-server/node_modules/@signalk/n2k-signalk/pgns/129029.js
 - /usr/lib/node_modules/signalk-server/node_modules/@canboat/pgns/canboat.json
 - /usr/lib/node_modules/signalk-server/node_modules/@canboat/pgns/pgns.json
 - /usr/lib/node_modules/signalk-server/node_modules/@canboat/pgns/canboat.json
 
-### Wifi AP
+Implement mapper here
 
-On Debian 12 (Bookworm), see
+- /usr/lib/node_modules/signalk-server/node_modules/@signalk/n2k-signalk/n2kMapper.js
+- /usr/lib/node_modules/signalk-server/node_modules/@signalk/n2k-signalk/raymarine/index.js
+- /usr/lib/node_modules/signalk-server/node_modules/@signalk/n2k-signalk/raymarine/129029.js
 
-- https://raspberrytips.com/access-point-setup-raspberry-pi/
+### SignalK plugin development
+
+See
+
+- development: https://demo.signalk.org/documentation/develop/plugins/server_plugin.html
+- npm link: https://docs.npmjs.com/cli/v9/commands/npm-link
 
 ```
-rasp-config
-  Localization, Wifi coubtra, HU, Finish
+cd projects/signalk-generic-pgn-parser
+sudo npm link
+cd ~/.signalk/
+npm link signalk-generic-pgn-parser
+```
+
+### Wifi AP
+
+On Debian 12 (Bookworm), see https://raspberrytips.com/access-point-setup-raspberry-pi/
+
+```
+raspi-config
+  Localization, Wifi country, HU, Finish
 nmcli con add con-name hotspot ifname wlan0 type wifi ssid "sol"
 nmcli con modify hotspot ipv4.method shared ipv4.address 192.168.77.1/24
 nmcli con modify hotspot wifi-sec.key-mgmt wpa-psk
 nmcli con modify hotspot wifi-sec.psk "SoL37695"
-nmcli con modify hotspot 802-11-wireless.channel 7
 nmcli con modify hotspot 802-11-wireless.mode ap 802-11-wireless.band bg 802-11-wireless.channel 2 ipv4.method shared
+nmcli con modify hotspot 802-11-wireless.channel 7
 nmcli con modify hotspot 802-11-wireless-security.proto rsn
 
 nmcli connection down hotspot
 nmcli connection up hotspot
+```
 
+USer interface
+
+```
 nmtui
 ```
 

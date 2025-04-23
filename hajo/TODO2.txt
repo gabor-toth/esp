@@ -20,13 +20,10 @@ n2k-signalk: unable to detect can name for src 115
 
 
 TypeError: Cannot read properties of undefined (reading 'toString')
-    at N2kMapper.<anonymous> (/usr/lib/node_modules/signalk-server/node_modules/@signalk/streams/n2k-signalk.js:57:2
-
+    at N2kMapper.<anonymous> (/usr/lib/node_modules/signalk-server/node_modules/@signalk/streams/n2k-signalk.js:57:26
     at N2kMapper.emit (node:events:519:28)
     at N2kMapper.toDelta (/usr/lib/node_modules/signalk-server/node_modules/@signalk/n2k-signalk/n2kMapper.js:150:14
-
-    at ToSignalK._transform (/usr/lib/node_modules/signalk-server/node_modules/@signalk/streams/n2k-signalk.js:113:3
-
+    at ToSignalK._transform (/usr/lib/node_modules/signalk-server/node_modules/@signalk/streams/n2k-signalk.js:113:34
     at Transform._write (node:internal/streams/transform:171:8)
     at writeOrBuffer (node:internal/streams/writable:564:12)
     at _write (node:internal/streams/writable:493:10)
@@ -36,10 +33,20 @@ TypeError: Cannot read properties of undefined (reading 'toString')
     at addChunk (node:internal/streams/readable:559:12)
     at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
     at Readable.push (node:internal/streams/readable:391:5)
-    at Interface.<anonymous> (/usr/lib/node_modules/signalk-server/node_modules/@signalk/streams/n2kAnalyzer.js:52:1
-
+    at Interface.<anonymous> (/usr/lib/node_modules/signalk-server/node_modules/@signalk/streams/n2kAnalyzer.js:52:12
     at Interface.emit (node:events:519:28)
     at [_onLine] [as _onLine] (node:internal/readline/interface:417:12)
+
+
+
+/usr/lib/node_modules/signalk-server/node_modules/@signalk/streams/canboatjs.js:  this.analyzerOutEvent = options.analyzerOutEvent || 'N2KAnalyzerOut'
+/usr/lib/node_modules/signalk-server/node_modules/@signalk/streams/n2kAnalyzer.js:  this.analyzerOutEvent = options.analyzerOutEvent || 'N2KAnalyzerOut'
+/usr/lib/node_modules/signalk-server/node_modules/signalk-n2kais-to-nmea0183/index.js:    app.on("N2KAnalyzerOut", n2kCallback)
+/usr/lib/node_modules/signalk-server/node_modules/signalk-n2kais-to-nmea0183/index.js:      app.removeListener("N2KAnalyzerOut", n2kCallback)
+/usr/lib/node_modules/signalk-server/node_modules/@canboat/canboatjs/lib/candevice.js:      options.app.on(options.analyzerOutEvent || 'N2KAnalyzerOut', this.n2kMessage.bind(this))
+/usr/lib/node_modules/signalk-server/node_modules/@canboat/canboatjs/lib/venus.js:      this.options.app.emit(this.options.analyzerOutEvent || 'N2KAnalyzerOut', pgn)
+/usr/lib/node_modules/signalk-server/node_modules/@canboat/canboatjs/lib/ydgw02.js:    this.options.app.emit(this.options.analyzerOutEvent || 'N2KAnalyzerOut', pgn)
+/usr/lib/node_modules/signalk-server/lib/interfaces/playground.js:                        app.emit('N2KAnalyzerOut', n2k);
 
 
 
