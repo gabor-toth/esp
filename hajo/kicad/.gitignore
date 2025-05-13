@@ -1,6 +1,6 @@
-*-backups/
-gerber/
-*.zip
 \#auto_saved_files\#
 _autosave-*.kicad_sch
-
+*-backups/
+fp-info-cache
+gerber/
+*.zip
