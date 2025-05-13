@@ -20,7 +20,7 @@
 - select Hungarian layout and normal keyboard
 - set hostname to 'signalk'
 - create user 'signalk' with password 'signalk'
-- login with that credentials
+- login with those credentials
 - set up ssh server
 
 ```
@@ -219,11 +219,11 @@ actisense-serial -d /dev/ttyAMA0
     - Server,Settings, Options, mdns enable
     - Save, restart
 - Create user kip, set pwd kip, admin or at least r/w
-- Link: http://192.168.72.180/@mxtommy/kip
+- Link: http://192.168.72.156/@mxtommy/kip
 - Copy demo page to local user
     - load demo
     - menu Configuration, Settings,
-    - connect to local, don't login,
+    - connect to local, don't log in,
     - request token, approve in SignalK (timeout = NEVER)
     - go to Storage tab, save layout to global/default
     - go to SignalK tab, log in with kip/kip
@@ -235,7 +235,7 @@ actisense-serial -d /dev/ttyAMA0
       wget https://ftp.gwdg.de/pub/misc/openstreetmap/openseamap/charts/mbtiles/OSM-OpenCPN2-Lake_Balaton.mbtiles
       ```
     - click Submit in "Signal K Charts" plugin
-    - check result: http://192.168.72.191/signalk/v2/api/resources/charts
+    - check results: http://192.168.72.156/signalk/v2/api/resources/charts
 - heartbneat
     - configure signalk-generic-pgn-parser
 - todo
@@ -332,8 +332,8 @@ See
 #### Connect to box
 
 ```
-ssh signalk@192.168.72.189
-ssh signalk@192.168.72.191
+ssh signalk@192.168.72.156
+ssh signalk@192.168.77.1
 ```
 
 #### Wifi Commands
@@ -427,4 +427,3 @@ ws://182.72.168.192:81/
   port = [3000]
   txt = ["vuuid=urn:mrn:signalk:uuid:7f446102-b734-40b4-a384-0ed9ee12579c" "self=urn:mrn:signalk:uuid:7f446102-b734-40b4-a384-0ed9ee12579c" "roles=master, main" "swvers=2.4.1" "swname=signalk-server" "txtvers=1"]
 ```
-
