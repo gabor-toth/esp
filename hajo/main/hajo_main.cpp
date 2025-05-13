@@ -32,8 +32,8 @@ static int hardware_device_type = 0xff;
 
 static const char *device_type_names[] = {
         "unused 0",         //  000
-        "rudder",           //  001
-        "unused 2",         //  010
+        "fridge",           //  001
+        "rudder",           //  010
         "unused 3",         //  011
         "n2k gateway",      //  100
         "fluid & display",  //  101
