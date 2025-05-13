@@ -5,29 +5,60 @@
 #include "esp_attr.h"
 #include "esp_log.h"
 #include "fridge.h"
+#include "fridge_config.h"
 
 static const char *TAG = "fridge";
 
-#define FAN_1_OUT_POWER GPIO_NUM_1
-#define FAN_1_OUT_PWM   GPIO_NUM_2
-#define FAN_1_IN_SENSE  GPIO_NUM_3
-#define FAN_2_OUT_POWER GPIO_NUM_4
-#define FAN_2_OUT_PWM   GPIO_NUM_5
-#define FAN_2_IN_SENSE  GPIO_NUM_6
-#define FAN_3_OUT_POWER GPIO_NUM_7
-#define FAN_3_OUT_PWM   GPIO_NUM_8
-#define FAN_3_IN_SENSE  GPIO_NUM_9
-
-#define NUMBER_OF_DEVICES   3
+#define NUMBER_OF_DEVICES   1
 
 #define PCNT_HIGH_LIMIT    (30000)
 
-static const gpio_num_t gpios_power[NUMBER_OF_DEVICES]= { FAN_1_OUT_POWER, FAN_2_OUT_POWER, FAN_3_OUT_POWER};
-static const gpio_num_t gpios_pwm[NUMBER_OF_DEVICES]= { FAN_1_OUT_PWM, FAN_2_OUT_PWM, FAN_3_OUT_PWM};
-static const gpio_num_t gpios_sense[NUMBER_OF_DEVICES]= { FAN_1_IN_SENSE, FAN_2_IN_SENSE, FAN_3_IN_SENSE};
+static const gpio_num_t gpios_power[NUMBER_OF_DEVICES]= {
+        FAN_1_OUT_POWER,
+#if NUMBER_OF_DEVICES >=2
+        FAN_2_OUT_POWER,
+#endif
+#if NUMBER_OF_DEVICES >=3
+        FAN_3_OUT_POWER,
+#endif
+};
+static const gpio_num_t gpios_pwm[NUMBER_OF_DEVICES]= {
+        FAN_1_OUT_PWM,
+#if NUMBER_OF_DEVICES >=2
+        FAN_2_OUT_PWM,
+#endif
+#if NUMBER_OF_DEVICES >=3
+        FAN_3_OUT_PWM,
+#endif
+};
+static const gpio_num_t gpios_sense[NUMBER_OF_DEVICES]= {
+        FAN_1_IN_SENSE,
+#if NUMBER_OF_DEVICES >=2
+        FAN_2_IN_SENSE,
+#endif
+#if NUMBER_OF_DEVICES >=3
+        FAN_3_IN_SENSE,
+#endif
+};
 
-static pcnt_unit_handle_t unit_handles[NUMBER_OF_DEVICES] = { nullptr, nullptr, nullptr };
-static int previous_counter[NUMBER_OF_DEVICES] = { 0, 0, 0 };
+static pcnt_unit_handle_t unit_handles[NUMBER_OF_DEVICES] = {
+        nullptr,
+#if NUMBER_OF_DEVICES >=2
+        nullptr,
+#endif
+#if NUMBER_OF_DEVICES >=3
+        nullptr,
+#endif
+};
+static int previous_counter[NUMBER_OF_DEVICES] = {
+        0,
+#if NUMBER_OF_DEVICES >=2
+        0,
+#endif
+#if NUMBER_OF_DEVICES >=3
+        0,
+#endif
+};
 
 void fridge_fan_set_duty_cycle( int index, double _duty_cycle ) {
     auto channel = (ledc_channel_t) index;
@@ -48,9 +79,7 @@ void fridge_fan_timer_handler() {
             count = PCNT_HIGH_LIMIT - previous_counter[ i ] + current_counter;
         }
         previous_counter[ i ] = current_counter;
-//        if ( i == 0 ) {
-            ESP_LOGI( TAG, "Channel %d count %d, RPM %d", i, count, count * 60 / 2 );
-//        }
+        ESP_LOGI( TAG, "Channel %d count %d RPM %d", i, count, count * 60 / 2 );
     }
 }
 
@@ -140,8 +169,9 @@ static void setup_fridge_pwm() {
             .timer_sel      = LEDC_TIMER_0,
             .duty           = 0, // Set duty to 0%
             .hpoint         = 0,
+            .sleep_mode     = LEDC_SLEEP_MODE_NO_ALIVE_NO_PD,
             .flags{
-                    .output_invert = 1
+                    .output_invert = 0
             }
     };
 

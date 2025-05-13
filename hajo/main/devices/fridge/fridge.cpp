@@ -12,7 +12,7 @@ static const char *TAG = "fridge";
 
 
 #if DO_ANIMATION
-#define ANIMATION_SECS   10
+#define ANIMATION_SECS   3
 
 static double duty_cycle;
 static bool ascending;
@@ -21,7 +21,7 @@ static int animation_counter;
 
 static void timer_callback( void *arg ) {
     fridge_fan_timer_handler();
-    fridge_temp_timer_handler();
+    //fridge_temp_timer_handler();
 
 #if DO_ANIMATION
     if ( --animation_counter == 0 ) {

@@ -1,26 +1,39 @@
 #include "driver/gpio.h"
-#include "driver/ledc.h"
-#include "driver/pulse_cnt.h"
 #include "ds18b20.h"
 #include "esp_attr.h"
 #include "esp_log.h"
-#include "esp_timer.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/semphr.h"
 #include "fridge.h"
+#include "fridge_config.h"
 #include "owb_gpio.h"
-
-#define TEMP_1_IN  GPIO_NUM_10
-#define TEMP_2_IN  GPIO_NUM_11
-#define TEMP_3_IN  GPIO_NUM_12
-#define TEMP_4_IN  GPIO_NUM_13
 
 static const char *TAG = "fridge";
 
-#define NUMBER_OF_DEVICES   2
+#define NUMBER_OF_DEVICES   1
 
-static const gpio_num_t gpios_data[NUMBER_OF_DEVICES] = { TEMP_1_IN, TEMP_2_IN/*, TEMP_3_IN, TEMP_4_IN */};
-static float corrections[NUMBER_OF_DEVICES] = { 0.44, -0.44 };
+static const gpio_num_t gpios_data[NUMBER_OF_DEVICES] = {
+        TEMP_1_IN,
+#if NUMBER_OF_DEVICES >=2
+        TEMP_2_IN,
+#endif
+#if NUMBER_OF_DEVICES >=3
+        TEMP_3_IN,
+#endif
+#if NUMBER_OF_DEVICES >=4
+        TEMP_4_IN,
+#endif
+};
+static float corrections[NUMBER_OF_DEVICES] = {
+        0.44,
+#if NUMBER_OF_DEVICES >=2
+        -0.44,
+#endif
+#if NUMBER_OF_DEVICES >=3
+        0.0,
+#endif
+#if NUMBER_OF_DEVICES >=4
+        0.0,
+#endif
+};
 static owb_gpio_driver_info driver_info[NUMBER_OF_DEVICES];
 static OneWireBus *buses[NUMBER_OF_DEVICES];
 static DS18B20_Info *devices[NUMBER_OF_DEVICES];
