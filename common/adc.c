@@ -25,7 +25,7 @@ typedef struct {
 
 static adc_channel_internal_t channels[MAX_CHANNELS];
 static int channel_count = 0;
-static int number_of_samples = 8;  // Multisampling, was originally 64
+static int number_of_samples = 64;  // Multisampling, was originally 64
 static int sampling_interval_seconds = 1;
 static bool is_timer_started = false;
 static adc_cali_handle_t scheme_handle = NULL;
@@ -49,16 +49,19 @@ static adc_continuous_data_callback_t continuous_data_callback;
 // code
 
 static void read_one( adc_channel_internal_t *channel ) {
-    int adc_reading = 0;
+    int sum_reading = 0;
+    int count_reading = 0;
     for ( int i = 0; i < number_of_samples; i++ ) {
         int raw = 0;
         // TODO ESP_ERROR_CHECK == ESP_ERR_TIMEOUT
-        adc_oneshot_read( oneshot_unit_handle, channel->channel, &raw );
-        adc_reading += raw;
+        if ( ESP_OK == adc_oneshot_read( oneshot_unit_handle, channel->channel, &raw ) ) {
+            sum_reading += raw;
+            count_reading++;
+        }
     }
-    adc_reading /= number_of_samples;
+    int average_raw = sum_reading / count_reading;
     int voltage;
-    ESP_ERROR_CHECK( adc_cali_raw_to_voltage( scheme_handle, adc_reading, &voltage ) );
+    ESP_ERROR_CHECK( adc_cali_raw_to_voltage( scheme_handle, average_raw, &voltage ) );
     channel->raw_value = voltage;
     int correction = 0;
     if ( channel->converter ) {
@@ -66,13 +69,14 @@ static void read_one( adc_channel_internal_t *channel ) {
     } else {
         channel->converted_value = voltage;
     }
-    ESP_LOGI( LOG, "Channel %d %-10s Raw: %4d Voltage: %4dmV Display: %5d (corr %d)",
+    ESP_LOGI( LOG, "Channel %d %-10s Raw: %4d Voltage: %4dmV Display: %5d (corr %d, samples %d)",
               channel->channel,
               channel->name,
-              adc_reading,
+              average_raw,
               channel->raw_value,
               channel->converted_value,
-              correction );
+              correction,
+              count_reading );
 }
 
 void adc_read_all() {
@@ -196,13 +200,14 @@ void adc_main_oneshot( bool start_timer ) {
     ESP_ERROR_CHECK( adc_cali_create_scheme_line_fitting( &cali_config, &scheme_handle ) );
 
     adc_oneshot_unit_init_cfg_t unit_config = {
+            .clk_src = ADC_RTC_CLK_SRC_DEFAULT,
             .ulp_mode = ADC_ULP_MODE_DISABLE,
             .unit_id = ADC_UNIT_1,
     };
     ESP_ERROR_CHECK( adc_oneshot_new_unit( &unit_config, &oneshot_unit_handle ) );
     const adc_oneshot_chan_cfg_t channel_config = {
-            .atten = ADC_ATTEN_DB_0,
-            .bitwidth = ADC_BITWIDTH_13,
+            .atten = cali_config.atten,
+            .bitwidth = cali_config.bitwidth,
     };
 
     for ( int i = 0; i < channel_count; i++ ) {

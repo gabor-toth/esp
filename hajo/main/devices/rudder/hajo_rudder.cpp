@@ -7,38 +7,37 @@
 #include "n2k/n2k_struct_parser.h"
 #include "n2k/n2k_util.h"
 
-#define PIN_RUDDER_ADC_DRIVE GPIO_NUM_11
-#define USE_CONTINUOUS 1
+#define PIN_RUDDER_ADC_DRIVE    GPIO_NUM_3
+#define ADC_CHANNEL_IN          4            // GPIO_NUM_5
+#define USE_CONTINUOUS          0
 
 static const char *LOG = "rudder";
 
-static int r_bottom = 680;
-static int r_sensor = 5400;
+static int r_bottom = 681;
+static int r_sensor = 4810;
 static int r_top = 16900;
-static double u_total = 3.3;
+static double u_total = 3.23;
 static double i_total = u_total / ( r_bottom + r_sensor + r_top );
 static double u_center = i_total * ( r_bottom + r_sensor / 2.0 );
 static double u_diff = i_total * ( r_sensor / 2.0 );
-static int direction = -1;
+static int direction = 1;
 static int display_multiplier = 10;
 static int max_degree = 90 * display_multiplier;
-static int correction_offset = 2;
-static int display_scale = 1;
+static double correction_offset = -3.4;
 static int myDeviceIndex;
+
+// yn = w × xn + (1 – w) × yn – 1
 
 static void convert_value( int millivolts, int *display_value, int *correction ) {
     double u = millivolts / 1000.0;
-    double value = ( u - u_center ) / ( u_diff / 2 ) * max_degree * direction + correction_offset;
+    double value = ( u - u_center ) / u_diff * max_degree * direction + correction_offset * display_multiplier;
     if ( correction != nullptr) {
-        *correction = correction_offset;
+        *correction = (int)(correction_offset * display_multiplier);
     }
-    *display_value = lround( value * display_scale );
-    if ( *display_value  > max_degree*display_scale || *display_value  < -max_degree*display_scale ) {
-        //*display_value  = INT_MIN;
-        if ( correction != nullptr) {
-            *correction = 0;
-        }
-    }
+    *display_value = (int) lround( value  );
+//    if ( *display_value  > max_degree|| *display_value  < -max_degree ) {
+//        *display_value  = INT_MIN;
+//    }
 }
 
 static void setup_adc_drive_pins() {
@@ -100,7 +99,7 @@ static bool send_rudder( int index, tN2kMsg &message, int& deviceIndex ) {
     adc_get_channel_value( 0, &channel_data );
 
     SetN2kRudder( message,
-                  channel_data.display_value != INT_MIN ? DegToRad(channel_data.display_value/(double)display_scale) :  N2kDoubleNA , // radians
+                  channel_data.display_value != INT_MIN ? DegToRad(channel_data.display_value) :  N2kDoubleNA , // radians
                   0, // instance
                   N2kRDO_NoDirectionOrder,
                   N2kDoubleNA // angleOrder
@@ -115,7 +114,7 @@ static void adc_callback(  int average_raw_value, int average_voltage_value ) {
 
     ESP_LOGI( LOG, "Raw: %4d Voltage: %4dmV Display: %5d", average_raw_value, average_voltage_value, display_value );
     SetN2kRudder( message,
-                  display_value != INT_MIN ? DegToRad(display_value/(double)display_scale) :  N2kDoubleNA , // radians
+                  display_value != INT_MIN ? DegToRad(display_value) :  N2kDoubleNA , // radians
                   0, // instance
                   N2kRDO_NoDirectionOrder,
                   N2kDoubleNA // angleOrder
@@ -124,20 +123,25 @@ static void adc_callback(  int average_raw_value, int average_voltage_value ) {
 }
 
 static void setup_adc() {
-    ESP_LOGI(LOG,"Calculating with Rbottom=%d Rsensor=%d Rtop=%d Utotal=%.2lfV Itotal=%03duA Ucenter=%03dmV Udiff=%03dmV max=%.1lf° correction=%d° direction=%d",
+    ESP_LOGI(LOG,"Calculating with Rbottom=%d Rsensor=%d Rtop=%d "
+                 "Utotal=%.2lfV Itotal=%03duA "
+                 "Ulow=%03dmV Ucenter=%03dmV Uhigh=%03dmV "
+                 "Udiff=%03dmV max=%.1lf° correction=%.2f° direction=%d",
              r_bottom,
              r_sensor,
              r_top,
              u_total,
              (int)(i_total*1000000),
+             (int)(r_bottom * i_total*1000),
              (int)(u_center*1000),
+             (int)((r_bottom+r_sensor) * i_total*1000),
              (int)(u_diff*1000),
              max_degree / (double)display_multiplier,
              correction_offset,
              direction
     );
 
-    adc_add_channel( 8, "position", nullptr, 0, convert_value );
+    adc_add_channel( ADC_CHANNEL_IN, "position", nullptr, 0, convert_value );
 #if USE_CONTINUOUS
     adc_main_continuous(adc_callback);
 #else
@@ -151,8 +155,7 @@ void hajo_rudder_main( int iDev ) {
     setup_adc();
     setup_n2k_device( iDev );
 
-    ESP_LOGI(LOG, "sizeof int=%d long=%d uint32_t=%d float=%d double=%d", sizeof(int), sizeof(long), sizeof(uint32_t), sizeof(float), sizeof(double));
 #if !USE_CONTINUOUS
-    nk2_register_sender( send_rudder, "rudder", N2K_PGN_RUDDER_INTERVAL_MS*10, 65, true );
+    nk2_register_sender( send_rudder, "rudder", N2K_PGN_RUDDER_INTERVAL_MS, 65, true );
 #endif
 }
