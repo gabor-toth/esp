@@ -3,6 +3,8 @@
 
 #include "NMEA2000.h"
 #include "N2kMessages.h"
+#include "n2k/n2k_struct_parser.h"
+#include "n2k/n2k_util.h"
 
 extern tNMEA2000 &NMEA2000;
 

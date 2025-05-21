@@ -13,49 +13,49 @@ static const char *TAG = "fridge";
 
 #define PCNT_HIGH_LIMIT    (30000)
 
-static const gpio_num_t gpios_power[NUMBER_OF_DEVICES]= {
+static const gpio_num_t gpios_power[NUMBER_OF_DEVICES] = {
         FAN_1_OUT_POWER,
-#if NUMBER_OF_DEVICES >=2
+#if NUMBER_OF_DEVICES >= 2
         FAN_2_OUT_POWER,
 #endif
-#if NUMBER_OF_DEVICES >=3
+#if NUMBER_OF_DEVICES >= 3
         FAN_3_OUT_POWER,
 #endif
 };
-static const gpio_num_t gpios_pwm[NUMBER_OF_DEVICES]= {
+static const gpio_num_t gpios_pwm[NUMBER_OF_DEVICES] = {
         FAN_1_OUT_PWM,
-#if NUMBER_OF_DEVICES >=2
+#if NUMBER_OF_DEVICES >= 2
         FAN_2_OUT_PWM,
 #endif
-#if NUMBER_OF_DEVICES >=3
+#if NUMBER_OF_DEVICES >= 3
         FAN_3_OUT_PWM,
 #endif
 };
-static const gpio_num_t gpios_sense[NUMBER_OF_DEVICES]= {
+static const gpio_num_t gpios_sense[NUMBER_OF_DEVICES] = {
         FAN_1_IN_SENSE,
-#if NUMBER_OF_DEVICES >=2
+#if NUMBER_OF_DEVICES >= 2
         FAN_2_IN_SENSE,
 #endif
-#if NUMBER_OF_DEVICES >=3
+#if NUMBER_OF_DEVICES >= 3
         FAN_3_IN_SENSE,
 #endif
 };
 
 static pcnt_unit_handle_t unit_handles[NUMBER_OF_DEVICES] = {
         nullptr,
-#if NUMBER_OF_DEVICES >=2
+#if NUMBER_OF_DEVICES >= 2
         nullptr,
 #endif
-#if NUMBER_OF_DEVICES >=3
+#if NUMBER_OF_DEVICES >= 3
         nullptr,
 #endif
 };
 static int previous_counter[NUMBER_OF_DEVICES] = {
         0,
-#if NUMBER_OF_DEVICES >=2
+#if NUMBER_OF_DEVICES >= 2
         0,
 #endif
-#if NUMBER_OF_DEVICES >=3
+#if NUMBER_OF_DEVICES >= 3
         0,
 #endif
 };
@@ -91,7 +91,7 @@ static void setup_fridge_pcnt() {
     gpio_config_t io_conf = {};
 
     io_conf.pin_bit_mask = 0;
-    for(auto gpio : gpios_power) {
+    for ( auto gpio: gpios_power ) {
         gpio_set_level( gpio, 1 );
         io_conf.pin_bit_mask |= BIT( gpio );
     }
@@ -121,10 +121,10 @@ static void setup_fridge_pcnt() {
             }
     };
 
-    for (int i = 0; i < NUMBER_OF_DEVICES; i++) {
+    for ( int i = 0; i < NUMBER_OF_DEVICES; i++ ) {
         pcnt_unit_handle_t unit_handle = nullptr;
         ESP_ERROR_CHECK( pcnt_new_unit( &unit_config, &unit_handle ) );
-        unit_handles[i] = unit_handle;
+        unit_handles[ i ] = unit_handle;
 
         pcnt_glitch_filter_config_t filer_config = {
                 .max_glitch_ns = 10000, // 10us
@@ -132,7 +132,7 @@ static void setup_fridge_pcnt() {
         ESP_ERROR_CHECK( pcnt_unit_set_glitch_filter( unit_handle, &filer_config ) );
 
         pcnt_channel_handle_t channel_handle = nullptr;
-        channel_config.edge_gpio_num = gpios_sense[i];
+        channel_config.edge_gpio_num = gpios_sense[ i ];
         ESP_ERROR_CHECK( pcnt_new_channel( unit_handle, &channel_config, &channel_handle ) );
         ESP_ERROR_CHECK( pcnt_channel_set_edge_action( channel_handle, PCNT_CHANNEL_EDGE_ACTION_INCREASE,
                                                        PCNT_CHANNEL_EDGE_ACTION_HOLD ) );
@@ -175,9 +175,9 @@ static void setup_fridge_pwm() {
             }
     };
 
-    for( int i = 0; i < NUMBER_OF_DEVICES; i++ ) {
+    for ( int i = 0; i < NUMBER_OF_DEVICES; i++ ) {
         // Prepare and then apply the LEDC PWM channel configuration
-        ledc_channel.gpio_num       = gpios_pwm[i];
+        ledc_channel.gpio_num = gpios_pwm[ i ];
         ledc_channel.channel = static_cast<ledc_channel_t>(LEDC_CHANNEL_0 + i);
         ESP_ERROR_CHECK( ledc_channel_config( &ledc_channel ) );
     }

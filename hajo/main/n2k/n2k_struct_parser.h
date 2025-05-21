@@ -188,4 +188,7 @@ extern bool ParseN2kAttitude( const tN2kMsg &N2kMsg, N2kAttitudeData &data );
 #define N2K_PGN_HEADING 0x1F112 // 127250
 #define N2K_PGN_HEADING_INTERVAL_MS 100
 
+#define N2K_PGN_TEMPERATURE 0x1FD08 // 130312
+#define N2K_PGN_TEMPERATURE_INTERVAL_MS 2000
+
 #endif //HAJO_N2K_STRUCT_PARSER_H

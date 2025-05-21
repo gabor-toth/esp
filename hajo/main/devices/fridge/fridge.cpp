@@ -1,10 +1,7 @@
-//#include "driver/gpio.h"
-//#include "driver/ledc.h"
-//#include "driver/pulse_cnt.h"
-//#include "esp_attr.h"
 #include "esp_log.h"
 #include "esp_timer.h"
 #include "fridge.h"
+#include "n2k/n2k_sender.h"
 
 #define DO_ANIMATION 0
 
@@ -19,9 +16,11 @@ static bool ascending;
 static int animation_counter;
 #endif
 
+static int myDeviceIndex;
+
 static void timer_callback( void *arg ) {
     fridge_fan_timer_handler();
-    //fridge_temp_timer_handler();
+    fridge_temp_timer_handler();
 
 #if DO_ANIMATION
     if ( --animation_counter == 0 ) {
@@ -52,17 +51,74 @@ static void setup_fridge_timer() {
 
     esp_timer_handle_t timer = nullptr;
     esp_err_t stat = esp_timer_create( &tca, &timer );
-    if (stat != ESP_OK) {
-        ESP_LOGE(TAG,"Failed to create timer, err 0x%x\n",stat);
+    if ( stat != ESP_OK ) {
+        ESP_LOGE( TAG, "Failed to create timer, err 0x%x\n", stat );
         return;
     }
-    esp_timer_start_periodic(timer, 1000000L);
+    esp_timer_start_periodic( timer, 1000000L );
 }
 
+static void setup_n2k_device( int iDev ) {
+    static const unsigned long TransmitMessages[] = {
+            N2K_PGN_RUDDER,
+            0
+    };
 
-void fridge_main() {
+    static const unsigned long ReceiveMessages[] = {
+            0
+    };
+
+    static const tNMEA2000::tProductInformation ProductInformation = {
+            2100,                    // N2kVersion
+            101,                     // Manufacturer's product code
+            "Fridge extension",      // Manufacturer's Model ID
+            "1.0.0 (2024-09-24)",    // Manufacturer's Software version code
+            "1.0.0 (2024-09-24)",    // Manufacturer's Model version
+            "00000001",              // Manufacturer's Model serial code
+            0,                       // CertificationLevel
+            1                        // LoadEquivalency
+    };
+
+    NMEA2000.SetProductInformation( &ProductInformation, iDev );
+
+    // device class & function: https://manualzz.com/doc/12647142/nmea2000-class-and-function-codes
+    NMEA2000.SetDeviceInformation( n2k_get_device_id(),      // Unique number. Use e.g. Serial number.
+                                   130,    // Temperature
+                                   75,        // Device class=Sensor Communication Interface
+                                   2046,  // Just chosen free from code list on https://github.com/ieb/EngineMonitor/blob/master/20120726%20nmea%202000%20class%20%26%20function%20codes%20v%202.00.pdf
+                                   4,       // Marine
+                                   iDev
+    );
+
+    NMEA2000.ExtendTransmitMessages( TransmitMessages, iDev );
+    NMEA2000.ExtendReceiveMessages( ReceiveMessages, iDev );
+}
+
+static bool send_temperature( int index, tN2kMsg &message, int& deviceIndex ) {
+    deviceIndex = myDeviceIndex;
+    if ( index > 0 ) {
+        return false;
+    }
+
+//    adc_channel_value_t channel_data;
+//    adc_get_channel_value( 0, &channel_data );
+//
+//    SetN2kTemperature( message,
+//                  channel_data.display_value != INT_MIN ? DegToRad(channel_data.display_value/(double)display_scale) :  N2kDoubleNA , // radians
+//                  0, // instance
+//                  N2kRDO_NoDirectionOrder,
+//                  N2kDoubleNA // angleOrder
+//    );
+    return true;
+}
+
+void fridge_main( int iDev ) {
+    myDeviceIndex = iDev;
     fridge_fan_setup();
     fridge_temp_setup();
+    setup_n2k_device( iDev );
+
+    nk2_register_sender( send_temperature, "fridge", N2K_PGN_TEMPERATURE_INTERVAL_MS*10, 65, true );
 
 #if DO_ANIMATION
     duty_cycle = 0.0;

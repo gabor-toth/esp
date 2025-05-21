@@ -1,7 +1,7 @@
 #ifndef HAJO_FRIDGE_H
 #define HAJO_FRIDGE_H
 
-extern void fridge_main();
+extern void fridge_main( int iDev );
 
 extern void fridge_fan_setup();
 

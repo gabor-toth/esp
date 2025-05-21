@@ -145,22 +145,27 @@ void hajo_main() {
     ESP_ERROR_CHECK( esp_event_loop_create_default() );
 
     int iDev = 0;
-#if DEVICE_TYPE == DEVICE_TYPE_BATTERY || DEVICE_TYPE == DEVICE_TYPE_ALL
-#define HAS_DEVICE 1
-    clock_configure( 80 );
-    hajo_battery_main( iDev++ );
+
+#if DEVICE_TYPE == DEVICE_TYPE_UNKNOWN_0 || DEVICE_TYPE == DEVICE_TYPE_ALL
 #endif
-#if DEVICE_TYPE == DEVICE_TYPE_DISPLAY || DEVICE_TYPE == DEVICE_TYPE_ALL
-#define HAS_DEVICE 1
-    clock_configure( 240 );
-    NMEA2000.SetDeviceCount( 2 );
-    hajo_fluid_main( iDev++ );
-    hajo_display_main( iDev++ );
-#endif
+
 #if DEVICE_TYPE == DEVICE_TYPE_FRIDGE || DEVICE_TYPE == DEVICE_TYPE_ALL
 #define HAS_DEVICE 1
-    fridge_main();
+    clock_configure( 80 );
+    NMEA2000.SetDeviceCount( 1 );
+    fridge_main( iDev++ );
 #endif
+
+#if DEVICE_TYPE == DEVICE_TYPE_RUDDER || DEVICE_TYPE == DEVICE_TYPE_ALL
+#define HAS_DEVICE 1
+    clock_configure( 80 );
+    NMEA2000.SetDeviceCount( 1 );
+    hajo_rudder_main( iDev++ );
+#endif
+
+#if DEVICE_TYPE == DEVICE_TYPE_UNKNOWN_3 || DEVICE_TYPE == DEVICE_TYPE_ALL
+#endif
+
 #if DEVICE_TYPE == DEVICE_TYPE_GATEWAY || DEVICE_TYPE == DEVICE_TYPE_ALL
 #define HAS_DEVICE 1
     clock_configure( 240 );
@@ -169,12 +174,24 @@ void hajo_main() {
     //hajo_attitude_main( iDev++ );
     hajo_signalk_main( iDev++ );
 #endif
-#if DEVICE_TYPE == DEVICE_TYPE_RUDDER || DEVICE_TYPE == DEVICE_TYPE_ALL
+
+#if DEVICE_TYPE == DEVICE_TYPE_DISPLAY || DEVICE_TYPE == DEVICE_TYPE_ALL
+#define HAS_DEVICE 1
+    clock_configure( 240 );
+    NMEA2000.SetDeviceCount( 2 );
+    hajo_fluid_main( iDev++ );
+    hajo_display_main( iDev++ );
+#endif
+
+#if DEVICE_TYPE == DEVICE_TYPE_BATTERY || DEVICE_TYPE == DEVICE_TYPE_ALL
 #define HAS_DEVICE 1
     clock_configure( 80 );
-    NMEA2000.SetDeviceCount( 1 );
-    hajo_rudder_main( iDev++ );
+    hajo_battery_main( iDev++ );
 #endif
+
+#if DEVICE_TYPE == DEVICE_TYPE_UNKNOWN_7 || DEVICE_TYPE == DEVICE_TYPE_ALL
+#endif
+
 #if !HAS_DEVICE
 #error No device compiled, check your config and the command line.
 #endif
