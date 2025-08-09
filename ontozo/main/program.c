@@ -21,7 +21,7 @@ static void get_nvs_key( uint index, char *name_buffer, int name_buffer_size ) {
 }
 
 Program *program_constructor() {
-    Program *program = calloc( 1, sizeof( Program ));
+    Program *program = calloc( 1, sizeof( Program ) );
     return program;
 }
 
@@ -55,7 +55,7 @@ static void write_program_to_nvs( Program *program ) {
 static void program_add_to_list( Program *program ) {
     if ( program_count == program_max_count ) {
         program_max_count += PROGRAM_INITIAL_COUNT;
-        programs = reallocarray( program, sizeof( Program * ), program_max_count );
+        programs = reallocarray( program, program_max_count, sizeof( Program * ) );
     }
     programs[ program_count++ ] = program;
 }
