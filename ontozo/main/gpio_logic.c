@@ -5,6 +5,7 @@
 #include "gpio_define.h"
 #include "gpio_logic.h"
 #include "nvs_main.h"
+#include "program_logic.h"
 
 static const char *LOG_TAG = "pin_logic";
 
@@ -29,7 +30,7 @@ static void set_initial_pump_states() {
 //                       || !reached( level3 )
 //                       || !reached( level2 )
 //                       || !reached( level1 )
-                       ;
+    ;
     ESP_LOGI( LOG_TAG, "Levels: 1-%d 2-%d 3-%d 4-%d refillPump-%d", level1, level2, level3, level4, refillState );
     gpio_set_pin_state( OUTPUTS, PUMPS_CLASS, PUMP_REFILL,
                         refillState );
@@ -58,7 +59,6 @@ void gpio_define_output_pins_callback( gpio_config_t *io_conf, void *user_contex
         gpio_add_pin( OUTPUTS, PUMPS_CLASS, pump_pins[ i ],
                       inherit,
                       &io_conf->pin_bit_mask );
-
     }
     for ( int i = 0; i < sizeof zone_pins / sizeof zone_pins[ 0 ]; i++ ) {
         gpio_add_pin( OUTPUTS, ZONES_CLASS, zone_pins[ i ],
@@ -120,11 +120,11 @@ static void gpio_changed_callback( gpio_num_t io_num, int state ) {
     }
 
     if ( old_main_state != main_state ) {
-        // TODO notify program handler
         if ( !main_state ) {
             ESP_LOGI( LOG_TAG, "Turning main pum off" );
             gpio_set_pin_state( OUTPUTS, PUMPS_CLASS, PUMP_MAIN, main_state );
         }
+        program_logic_pump_state_change( main_state );
     }
     if ( old_refill_state != refill_state ) {
         ESP_LOGI( LOG_TAG, "Turning refill pump %s", refill_state ? "on" : "off" );

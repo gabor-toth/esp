@@ -19,6 +19,8 @@ extern void program_logic_move_to_next_program();
 
 extern void program_logic_stop();
 
+extern void program_logic_pump_state_change( bool is_on );
+
 extern void program_logic_get_state( RunningProgramState *state );
 
 #endif //ONTOZO_PROGRAM_LOGIC_H

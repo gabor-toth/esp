@@ -13,6 +13,7 @@
 #define COMMAND_NEXT_ZONE       3
 #define COMMAND_NEXT_PROGRAM    4
 #define COMMAND_QUEUE_START     5
+#define COMMAND_PUMP_STATE      6
 
 static const char *LOG_TAG = "program_logic";
 
@@ -22,12 +23,14 @@ static const char *command_names[] = {
         "stop",
         "next_zone",
         "next_program",
-        "queue"
+        "queue",
+        "pump_state",
 };
 
 typedef struct {
     int command;
     int program;
+    bool pump_state;
 } program_command_t;
 
 struct queue_item_t {
@@ -82,16 +85,17 @@ static void start_next_zone() {
     }
 }
 
-static void fire_command( int command, int program ) {
+static void fire_command( int command, int program, bool pump_state ) {
     program_command_t program_command = {
             .command = command,
-            .program = program
+            .program = program,
+            .pump_state = pump_state
     };
     xQueueSend( gpio_evt_queue, &program_command, 0 );
 }
 
 static void timer_callback( TimerHandle_t unused ) {
-    fire_command( COMMAND_NEXT_ZONE, current_program_index );
+    fire_command( COMMAND_NEXT_ZONE, current_program_index, false );
 }
 
 static void start_program( int index ) {
@@ -170,6 +174,10 @@ static void stop_all_programs() {
     }
 }
 
+static void pump_state_changed( bool is_on ) {
+    // TODO add logic
+}
+
 _Noreturn static void task_main( void *unused ) {
     for ( ;; ) {
         program_command_t data;
@@ -199,7 +207,11 @@ _Noreturn static void task_main( void *unused ) {
                 case COMMAND_STOP:
                     stop_all_programs();
                     break;
+                case COMMAND_PUMP_STATE:
+                    pump_state_changed( data.pump_state );
+                    break;
                 default:
+                    ESP_LOGE( LOG_TAG, "Unhandled command %d", command );
                     break;
             }
         }
@@ -207,19 +219,19 @@ _Noreturn static void task_main( void *unused ) {
 }
 
 void program_logic_start( int index ) {
-    fire_command( COMMAND_QUEUE_START, index );
+    fire_command( COMMAND_QUEUE_START, index, false );
 }
 
 void program_logic_move_to_next_zone() {
-    fire_command( COMMAND_NEXT_ZONE, current_program_index );
+    fire_command( COMMAND_NEXT_ZONE, current_program_index, false );
 }
 
 void program_logic_move_to_next_program() {
-    fire_command( COMMAND_NEXT_PROGRAM, current_program_index );
+    fire_command( COMMAND_NEXT_PROGRAM, current_program_index, false );
 }
 
 void program_logic_stop() {
-    fire_command( COMMAND_STOP, current_program_index );
+    fire_command( COMMAND_STOP, current_program_index, false );
 }
 
 void program_logic_get_state( RunningProgramState *state ) {
@@ -234,6 +246,10 @@ void program_logic_get_state( RunningProgramState *state ) {
     } else {
         state->is_program_running = false;
     }
+}
+
+void program_logic_pump_state_change( bool is_on ) {
+    fire_command( COMMAND_PUMP_STATE, -1, is_on );
 }
 
 void program_logic_init() {
