@@ -15,6 +15,8 @@ extern void program_logic_start( int index );
 
 extern void program_logic_move_to_next_zone();
 
+extern void program_logic_move_to_next_program();
+
 extern void program_logic_stop();
 
 extern void program_logic_get_state( RunningProgramState *state );
