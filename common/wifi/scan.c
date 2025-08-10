@@ -21,6 +21,15 @@
 
 // OWN start
 #include "wifi_main.h"
+static const char *TAG = "wifi-scan";
+static QueueHandle_t evt_queue = NULL;
+
+typedef struct {
+    void *sta_netif;
+    esp_event_base_t event_base;
+    int32_t event_id;
+    void *event_data;
+} event_callback_parameters;
 
 // see esp-idf/examples/wifi/scan/main/scan.c
 // winmergeu C:\Espressif\frameworks\esp-idf-v5.2.1\examples\wifi\scan\main\scan.c C:\Users\gtoth00\projects\own\esp\common\wifi\scan.c
@@ -150,8 +159,31 @@ static void print_cipher_type(int pairwise_cipher, int group_cipher)
 }
 */
 
+_Noreturn static void task_wifi_scan( void *arg ) {
+    for ( ;; ) {
+        event_callback_parameters parameters;
+        if ( xQueueReceive( evt_queue, &parameters, portMAX_DELAY ) ) {
+            wifi_handler_on_scan_done( parameters.sta_netif, parameters.event_base, parameters.event_id,parameters.event_data );
+        }
+    }
+}
+
+static void on_wifi_scanned(void *sta_netif, esp_event_base_t event_base,
+                            int32_t event_id, void *event_data) {
+    event_callback_parameters parameters = {
+            .sta_netif = sta_netif,
+            .event_base = event_base,
+            .event_id = event_id,
+            .event_data = event_data
+    };
+    xQueueSend(evt_queue , &parameters, portMAX_DELAY);
+}
+
 /* Initialize Wi-Fi as sta and set scan method */
 void wifi_scan(void) {
+    evt_queue = xQueueCreate( 10, sizeof( event_callback_parameters ) );
+    xTaskCreate( task_wifi_scan, TAG, 4096, NULL, 10, NULL );
+
     ESP_ERROR_CHECK(esp_netif_init());
     // OWN commented out
     // ESP_ERROR_CHECK(esp_event_loop_create_default());
@@ -164,11 +196,11 @@ void wifi_scan(void) {
     // OWN start
 #if ASYNC_WIFI_INIT
     ESP_ERROR_CHECK( esp_wifi_set_mode( WIFI_MODE_STA ));
+    // will be deregistered in wifi_handler_on_scan_done
+    ESP_ERROR_CHECK( esp_event_handler_register( WIFI_EVENT, WIFI_EVENT_SCAN_DONE, &on_wifi_scanned,
+                                                 sta_netif ));
     ESP_ERROR_CHECK( esp_wifi_start());
 
-    // will be deregistered in wifi_handler_on_scan_done
-    ESP_ERROR_CHECK( esp_event_handler_register( WIFI_EVENT, WIFI_EVENT_SCAN_DONE, &wifi_handler_on_scan_done,
-                                                 sta_netif ));
     wifi_scan_start();
 #else
     // OWN end

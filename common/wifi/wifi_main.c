@@ -22,20 +22,21 @@ extern esp_err_t example_wifi_connect( void );
 
 ESP_EVENT_DEFINE_BASE( WIFI_OWN_EVENT );
 
-static const char *TAG = "wifi_own";
+static const char *TAG = "wifi-main";
 
 typedef struct {
     const char *ssid;
     const char *password;
 } known_wifi_network_t;
 
-static const known_wifi_network_t known_wifi_networks[] = {
-        { .ssid = "sol", .password = "SoL37695" },
-//        { .ssid = "TothKiss", .password = "ToThKiSs" },
+static const known_wifi_network_t known_wifi_networks
+[] = {
+                { .ssid = "sol", .password = "SoL37695" },
+                { .ssid = "TothKiss", .password = "ToThKiSs" },
 //        { .ssid ="P92WG_E", .password ="22Dailymuffintime77" },
 //        { .ssid ="TGA", .password ="ToThKiSs01" },
 //        { .ssid ="DIGI-02300875", .password ="qnZFucU6" },
-};
+        };
 
 static int selected_network_index;
 static int selected_channel;
@@ -75,6 +76,8 @@ static void find_known_wifi( wifi_ap_record_t *ap_info, uint16_t ap_count ) {
             }
         }
     }
+    ESP_LOGI( TAG, "selected SSID %s channel %2d", known_wifi_networks[ selected_network_index ].ssid,
+              selected_channel );
 }
 
 static void log_free_memory( const char *event ) {
@@ -123,8 +126,7 @@ void wifi_handler_on_scan_done( void *sta_netif, esp_event_base_t event_base,
     find_known_wifi( ap_info, ap_count );
     free( ap_info );
 
-    ESP_ERROR_CHECK(
-            esp_event_handler_unregister( WIFI_EVENT, WIFI_EVENT_SCAN_DONE, &wifi_handler_on_scan_done ) );
+    esp_event_handler_unregister( WIFI_EVENT, WIFI_EVENT_SCAN_DONE, &wifi_handler_on_scan_done );
 
     esp_wifi_stop();
     esp_netif_destroy_default_wifi( (esp_netif_t *) sta_netif );
