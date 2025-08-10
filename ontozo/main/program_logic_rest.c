@@ -20,9 +20,12 @@ static esp_err_t run_post_handler( httpd_req_t *req ) {
     if ( strcmp( uri, "stop" ) == 0 ) {
         program_logic_stop();
         rest_send_message_back( req, "stopped" );
-    } else if ( strcmp( uri, "next" ) == 0 ) {
+    } else if ( strcmp( uri, "next/zone" ) == 0 ) {
         program_logic_move_to_next_zone();
-        rest_send_message_back( req, "moved to next" );
+        rest_send_message_back( req, "moved to next zone" );
+    } else if ( strcmp( uri, "next/program" ) == 0 ) {
+        program_logic_move_to_next_program();
+        rest_send_message_back( req, "moved to next program" );
     } else if ( strncmp( uri, "start/", 6 /*strlen("start/")*/) == 0 ) {
         uri += 6;
         if ( ( result = rest_parse_index( uri, &index, true ) ) != ESP_OK ) {

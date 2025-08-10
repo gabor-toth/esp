@@ -4,7 +4,7 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { ProgramService } from "./program.service";
 import { animate, state, style, transition, trigger } from '@angular/animations';
 import { RunService } from "./run.service";
- 
+
 @Component( {
   selector: 'app-program',
   templateUrl: './programs.component.html',
@@ -77,6 +77,16 @@ export class ProgramsComponent implements OnInit {
 
   nextZone() {
     this.runService.nextZone().subscribe( {
+      next( dummy ) {
+      },
+      error( err ) {
+        console.error( 'Error moving to next zone', err );
+      },
+    } );
+  }
+
+  nextProgram() {
+    this.runService.nextProgram().subscribe( {
       next( dummy ) {
       },
       error( err ) {

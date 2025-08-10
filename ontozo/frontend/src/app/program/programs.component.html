@@ -7,12 +7,16 @@
 
     <div *ngIf="programs" class="button-holder">
         <button mat-raised-button color="primary" (click)="nextZone(); $event.stopPropagation()">
-            <!--Következő zóna-->
-            <mat-icon class="material-icons-outlined icon-big">skip_next</mat-icon>
+            <!-- next zone-->
+            <mat-icon class="material-icons-outlined icon-big">keyboard_arrow_right</mat-icon>
+        </button>
+        <button mat-raised-button color="primary" (click)="nextProgram(); $event.stopPropagation()">
+            <!-- next program -->
+            <mat-icon class="material-icons-outlined icon-big">keyboard_double_arrow_right</mat-icon>
         </button>
         <button mat-raised-button color="primary" (click)="stopProgram(); $event.stopPropagation()">
             <!--Stop-->
-            <mat-icon class="material-icons-outlined icon-big">stop</mat-icon>
+            <mat-icon class="material-icons-outlined icon-big">cancel</mat-icon>
         </button>
     </div>
     <div *ngIf="programs">

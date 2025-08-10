@@ -8,7 +8,7 @@ import { RunState } from "./run";
   providedIn: 'root'
 } )
 export class RunService {
- 
+
   constructor( private http: HttpClient ) {
   }
 
@@ -27,7 +27,12 @@ export class RunService {
   }
 
   nextZone(): Observable<Object> {
-    let url = environment.baseUrl + 'run/next';
+    let url = environment.baseUrl + 'run/next/zone';
+    return this.http.post( url, null );
+  }
+
+  nextProgram(): Observable<Object> {
+    let url = environment.baseUrl + 'run/next/program';
     return this.http.post( url, null );
   }
 }
