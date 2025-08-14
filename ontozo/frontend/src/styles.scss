@@ -151,3 +151,19 @@ mat-icon.mat-icon {
     margin-right: auto;
   }
 }
+
+.card-level {
+  background-color: #fafafa;
+  border: 1px solid #eee;
+  box-sizing: border-box;
+  height: 70px;
+  width: 50px;
+
+  &.filled {
+    background-color: mat.m2-get-color-from-palette($primary-palette, 700);
+  }
+
+  &.empty {
+    background-color: #e6ee9c; /* Colors.line.shade200*/
+  }
+}

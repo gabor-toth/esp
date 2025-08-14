@@ -26,18 +26,6 @@ $foreground-icon: map.get($foreground-palette, "icon");
     }
   }
 
-  .card-level {
-    background-color: #fafafa;
-    border: 1px solid #eee;
-    box-sizing: border-box;
-    height: 70px;
-    width: 40px;
-
-    &.filled {
-      background-color: mat.m2-get-color-from-palette($primary-palette, 700);
-    }
-  }
-
   .card {
     border: 1px solid rgba(0, 0, 0, 0.12);
     box-sizing: border-box;

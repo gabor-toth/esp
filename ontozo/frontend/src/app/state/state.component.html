@@ -20,7 +20,7 @@
         <div class="column-container">
             <h2>Szintek</h2>
             <div *ngIf="pinState && pinState.inputs" class="card-container">
-                <div *ngFor="let level of pinState.inputs.levels" class="card-level {{level.on?'filled':''}}">
+                <div *ngFor="let level of pinState.inputs.levels" class="card-level {{level.on?'filled':'empty'}}">
                 </div>
             </div>
             <div *ngIf="!pinState" class="load-spinner">

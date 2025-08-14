@@ -19,18 +19,6 @@ $foreground-palette: map.get($color-config, 'foreground');
     }
   }
 
-  .card-level {
-    background-color: #fafafa;
-    border: 1px solid #eee;
-    box-sizing: border-box;
-    height: 70px;
-    width: 40px;
-
-    &.filled {
-      background-color: mat.m2-get-color-from-palette($primary-palette, 700);
-    }
-  }
-
   button.card {
     height: 70px;
     width: 160px;

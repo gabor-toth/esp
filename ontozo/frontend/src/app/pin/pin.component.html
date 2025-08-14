@@ -5,7 +5,7 @@
                 (click)="click('pumps',pump.id,!pump.on)">
             <mat-icon *ngIf="pump.on" class="material-icons-outlined on">toggle_on</mat-icon>
             <mat-icon *ngIf="!pump.on" class="material-icons-outlined off">toggle_off</mat-icon>
-            <span>{{pump.name}}</span>
+            <span>{{ pump.name }}</span>
         </button>
     </div>
     <div *ngIf="!state" class="load-spinner">
@@ -18,7 +18,7 @@
                 (click)="click('zones',zone.id,!zone.on)">
             <mat-icon *ngIf="zone.on" class="material-icons-outlined on">toggle_on</mat-icon>
             <mat-icon *ngIf="!zone.on" class="material-icons-outlined off">toggle_off</mat-icon>
-            <span>{{zone.name}}</span>
+            <span>{{ zone.name }}</span>
         </button>
     </div>
     <div *ngIf="!state" class="load-spinner">
@@ -27,7 +27,7 @@
 
     <h2>Szintek</h2>
     <div *ngIf="state && state.inputs" class="card-container">
-        <div *ngFor="let level of state.inputs.levels" class="card-level {{level.on?'filled':''}}">
+        <div *ngFor="let level of state.inputs.levels" class="card-level {{level.on?'filled':'empty'}}">
         </div>
     </div>
     <div *ngIf="!state" class="load-spinner">
@@ -41,7 +41,7 @@
                 (click)="click('buttons',button.id,!button.on)">
             <mat-icon *ngIf="button.on" class="material-icons-outlined on">toggle_on</mat-icon>
             <mat-icon *ngIf="!button.on" class="material-icons-outlined off">toggle_off</mat-icon>
-            <span>{{button.name}}</span>
+            <span>{{ button.name }}</span>
         </button>
     </div>
     <div *ngIf="!state" class="load-spinner">
@@ -49,6 +49,6 @@
     </div>
 
     <div class="time-container">
-        {{remoteTime!}}
+        {{ remoteTime! }}
     </div>
 </div>
