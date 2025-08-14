@@ -9,9 +9,11 @@ import { environment } from '../../environments/environment';
 } )
 export class PinService {
 
+  timer: number = 0;
+
   constructor( private http: HttpClient ) {
   }
-  
+
   getState(): Observable<PinsState> {
     return this.http.get<PinsState>( environment.baseUrl + 'state' );
   }

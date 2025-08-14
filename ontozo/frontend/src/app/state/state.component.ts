@@ -4,6 +4,9 @@ import { PinService } from "../pin/pin.service";
 import { animate, state, style, transition, trigger } from "@angular/animations";
 import { RunService } from "../program/run.service";
 import { RunState } from "../program/run";
+import { PinUpdater } from "../pin/pin.updater";
+import { Subscription } from "rxjs";
+import { RunUpdater } from "../program/run.updater";
 
 @Component( {
   selector: 'app-state',
@@ -21,25 +24,38 @@ export class StateComponent implements OnInit {
   pinState: PinsState | undefined;
   runState: RunState | undefined;
   remoteTime: String | undefined;
-  timer: number = 0;
   pinStateAsString = "";
   programStateAsString = "";
+  pinUpdaterSubscription?: Subscription;
+  runUpdaterSubscription?: Subscription;
 
-  constructor( private pinService: PinService, private runService: RunService ) {
+  constructor( private pinService: PinService,
+               private pinUpdater: PinUpdater,
+               private runService: RunService,
+               private runUpdater: RunUpdater ) {
   }
 
   ngOnInit(): void {
-    this.updateState();
-    this.scheduleUpdate();
+    this.subscribeForUpdates();
   }
 
-  private scheduleUpdate() {
-    if ( this.timer ) {
-      clearTimeout( this.timer );
-    }
-    this.timer = setInterval( () => {
-      this.updateState();
-    }, 10000 );
+  ngOnDestroy(): void {
+    this.pinUpdaterSubscription?.unsubscribe();
+    this.runUpdaterSubscription?.unsubscribe();
+  }
+
+  private subscribeForUpdates() {
+    let component = this;
+    this.pinUpdaterSubscription = this.pinUpdater.subscribe( {
+      next( state ) {
+        component.onUpdatePinState( state );
+      },
+    } );
+    this.runUpdaterSubscription = this.runUpdater.subscribe( {
+      next( state ) {
+        component.onUpdateRunState( state );
+      },
+    } );
   }
 
   private onUpdatePinState( newState: PinsState ) {
@@ -60,31 +76,12 @@ export class StateComponent implements OnInit {
     }
   }
 
-  private updateState() {
-    let component = this;
-    this.pinService.getState().subscribe( {
-      next( state ) {
-        component.onUpdatePinState( state );
-      },
-      error( err ) {
-        console.error( 'Error reading state', err );
-      },
-    } );
-    this.runService.getState().subscribe( {
-      next( state ) {
-        component.onUpdateRunState( state );
-      },
-      error( err ) {
-        console.error( 'Error reading state', err );
-      },
-    } );
-  }
-
   click( type: String, id: number, state: boolean ) {
     let component = this;
     this.pinService.setState( type, id, state ).subscribe( {
       complete() {
-        component.updateState();
+        component.pinUpdater.updateState();
+        component.runUpdater.updateState();
       },
       error( err ) {
         console.error( 'Error writing state', err );
