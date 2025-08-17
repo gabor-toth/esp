@@ -1,51 +1,68 @@
 <div class="page-container">
-    <div fxFlex fxLayout="row" fxLayout.sm="column" fxLayout.xs="column" fxLayoutGap="25px" fxLayoutAlign="center none">
+    <div fxFlex fxLayout="row" fxLayout.sm="column" fxLayout.xs="column" fxLayoutGap="25px" fxLayoutAlign="center none"
+         class="state-pump">
         <!--fxFlex fxLayoutAlign="center" class="card" -->
-        <div class="column-container">
-            <h2>Pumpák</h2>
-            <div *ngIf="pinState && pinState.outputs" class="card-container">
-                <button *ngFor="let pump of pinState.outputs.pumps" mat-stroked-button color="foreground"
-                        class="card icon-switch"
-                        (click)="click('pumps',pump.id,!pump.on)">
-                    <mat-icon *ngIf="pump.on" class="material-icons-outlined on">toggle_on</mat-icon>
-                    <mat-icon *ngIf="!pump.on" class="material-icons-outlined off">toggle_off</mat-icon>
-                    <span>{{ pump.name }}</span>
-                </button>
-            </div>
-            <div *ngIf="!pinState" class="load-spinner">
-                <mat-spinner diameter="30"></mat-spinner>
+        <h2>Pumpák</h2>
+        <div *ngIf="pinState && pinState.outputs" class="card-container">
+            <button *ngFor="let pump of pinState.outputs.pumps" mat-stroked-button color="foreground"
+                    class="card icon-switch"
+                    (click)="click('pumps',pump.id,!pump.on)">
+                <mat-icon *ngIf="pump.on" class="material-icons-outlined on">toggle_on</mat-icon>
+                <mat-icon *ngIf="!pump.on" class="material-icons-outlined off">toggle_off</mat-icon>
+                <span>{{ pump.name }}</span>
+            </button>
+        </div>
+        <div *ngIf="!pinState" class="load-spinner">
+            <mat-spinner diameter="30"></mat-spinner>
+        </div>
+    </div>
+
+    <div fxFlex fxLayout="row" fxLayout.sm="column" fxLayout.xs="column" fxLayoutGap="25px" fxLayoutAlign="center none"
+         class="state-level">
+        <h2>Szintek</h2>
+        <div *ngIf="pinState && pinState.inputs" class="card-container">
+            <div *ngFor="let level of pinState.inputs.levels" class="card-level {{level.on?'filled':'empty'}}">
             </div>
         </div>
+        <div *ngIf="!pinState" class="load-spinner">
+            <mat-spinner diameter="30"></mat-spinner>
+        </div>
+    </div>
 
-        <div class="column-container">
-            <h2>Szintek</h2>
-            <div *ngIf="pinState && pinState.inputs" class="card-container">
-                <div *ngFor="let level of pinState.inputs.levels" class="card-level {{level.on?'filled':'empty'}}">
+    <div fxFlex fxLayout="row" fxLayout.sm="column" fxLayout.xs="column" fxLayoutGap="25px" fxLayoutAlign="center none"
+         class="state-program">
+        <h2>Futó program</h2>
+        <div *ngIf="runState" class="card-container">
+            <mat-icon *ngIf="!runState.running" class="material-icons-outlined icon-hotel">hotel
+            </mat-icon>
+            <div *ngIf="runState.running">
+                <div class="desc">
+                    {{ runState.name }} {{ ( runState.duration * 1000 ) | date:'m:ss' }}
                 </div>
-            </div>
-            <div *ngIf="!pinState" class="load-spinner">
-                <mat-spinner diameter="30"></mat-spinner>
+                <div class="desc">
+                    <div *ngFor="let zone of runState.zones">
+                        {{ zone.name }} {{ ( zone.duration * 1000 ) | date:'m:ss' }}
+                    </div>
+                    <!--                    Zóna: {{ runState.zoneName }} ({{ runState.zoneIndex }}/{{ runState.zonesCount }}),-->
+                    <!--                    <mat-icon class="material-icons-outlined icon-timer">timer</mat-icon>-->
+                    <!--                    {{ runState.zoneLeftSeconds }} mp-->
+                </div>
             </div>
         </div>
-
-        <div class="column-container">
-            <h2>Program</h2>
-            <div *ngIf="runState" class="card-container">
-                <mat-icon *ngIf="!runState.isProgramRunning" class="material-icons-outlined icon-hotel">hotel
-                </mat-icon>
-                <div *ngIf="runState.isProgramRunning">
-                    <div class="desc">
-                        Futó program: {{ runState.programName }}
-                    </div>
-                    <div class="desc">
-                        Zóna: {{ runState.zoneName }} ({{ runState.zoneIndex }}/{{ runState.zonesCount }}),
-                        <mat-icon class="material-icons-outlined icon-timer">timer</mat-icon>
-                        {{ runState.zoneLeftSeconds }} mp
-                    </div>
+        <div *ngIf="!runState" class="load-spinner">
+            <mat-spinner diameter="30"></mat-spinner>
+        </div>
+    </div>
+    <div *ngIf="queueState" fxFlex fxLayout="row" fxLayout.sm="column" fxLayout.xs="column" fxLayoutGap="25px"
+         fxLayoutAlign="center none"
+         class="state-program">
+        <h2>Sorbanálló programok</h2>
+        <div *ngFor="let queued of queueState">
+            <div class="desc">
+                {{ queued.name }} {{ ( queued.duration * 1000 ) | date:'m:ss' }}
+                <div *ngFor="let zone of queued.zones">
+                    {{ zone.name }} {{ ( zone.duration * 1000 ) | date:'m:ss' }}
                 </div>
-            </div>
-            <div *ngIf="!runState" class="load-spinner">
-                <mat-spinner diameter="30"></mat-spinner>
             </div>
         </div>
     </div>

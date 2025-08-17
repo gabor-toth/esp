@@ -18,7 +18,6 @@ $foreground-icon: map.get($foreground-palette, "icon");
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  margin-top: 16px;
 
   @media screen and (max-width: 767px) {
     & > *:not(.circle-link) {
@@ -65,5 +64,11 @@ $foreground-icon: map.get($foreground-palette, "icon");
   mat-icon.icon-hotel {
     color: $foreground-icon;
   }
+
 }
 
+.state-program {
+  .icon-hotel {
+    margin: auto;
+  }
+}

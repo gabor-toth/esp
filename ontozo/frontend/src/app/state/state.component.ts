@@ -3,7 +3,7 @@ import { PinsState } from "../pin/pin";
 import { PinService } from "../pin/pin.service";
 import { animate, state, style, transition, trigger } from "@angular/animations";
 import { RunService } from "../program/run.service";
-import { RunState } from "../program/run";
+import { RunProgramState, RunState } from "../program/run";
 import { PinUpdater } from "../pin/pin.updater";
 import { Subscription } from "rxjs";
 import { RunUpdater } from "../program/run.updater";
@@ -22,7 +22,8 @@ import { RunUpdater } from "../program/run.updater";
 } )
 export class StateComponent implements OnInit {
   pinState: PinsState | undefined;
-  runState: RunState | undefined;
+  runState: RunProgramState | undefined;
+  queueState: RunProgramState[] | undefined;
   remoteTime: String | undefined;
   pinStateAsString = "";
   programStateAsString = "";
@@ -71,9 +72,34 @@ export class StateComponent implements OnInit {
   private onUpdateRunState( newState: RunState ) {
     let newStateAsString = JSON.stringify( newState );
     if ( newStateAsString != this.programStateAsString ) {
-      this.runState = newState;
+      if ( newState.isProgramRunning ) {
+        this.runState = newState.programs[ 0 ];
+        this.runState.running = true;
+        for ( let zoneIndex = 0; this.runState.zones.length; zoneIndex++ ) {
+          let zone = this.runState.zones[ zoneIndex ];
+          if ( zone.running ) {
+            zone.duration = zone.leftSeconds;
+            if ( zoneIndex > 0 ) {
+              this.runState.zones = this.runState.zones.slice( zoneIndex );
+            }
+            break;
+          }
+        }
+        this.calculateDuration( this.runState );
+        this.queueState = newState.programs.slice( 1 );
+        this.queueState.forEach( ( p ) => this.calculateDuration( p ) );
+      } else {
+        this.runState = <RunProgramState>{};
+        this.queueState = undefined;
+      }
       this.programStateAsString = newStateAsString;
     }
+  }
+
+  private calculateDuration( program: RunProgramState ) {
+    let duration = 0;
+    program.zones.forEach( ( zone ) => duration += zone.duration );
+    program.duration = duration;
   }
 
   click( type: String, id: number, state: boolean ) {

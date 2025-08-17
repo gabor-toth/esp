@@ -45,7 +45,7 @@ static Program *current_program;
 static TimerHandle_t timer;
 static struct queue_item_t *queue = NULL;
 
-static QueueHandle_t gpio_evt_queue = NULL;
+static QueueHandle_t event_queue = NULL;
 
 static void stop_and_move_to_next_program();
 
@@ -91,7 +91,7 @@ static void fire_command( int command, int program, bool pump_state ) {
             .program = program,
             .pump_state = pump_state
     };
-    xQueueSend( gpio_evt_queue, &program_command, 0 );
+    xQueueSend( event_queue, &program_command, 0 );
 }
 
 static void timer_callback( TimerHandle_t unused ) {
@@ -172,6 +172,7 @@ static void stop_all_programs() {
         free( queue );
         queue = next;
     }
+    is_running = false;
 }
 
 static void pump_state_changed( bool is_on ) {
@@ -181,7 +182,7 @@ static void pump_state_changed( bool is_on ) {
 _Noreturn static void task_main( void *unused ) {
     for ( ;; ) {
         program_command_t data;
-        if ( xQueueReceive( gpio_evt_queue, &data, portMAX_DELAY ) ) {
+        if ( xQueueReceive( event_queue, &data, portMAX_DELAY ) ) {
             int command = data.command;
             int program = data.program;
             ESP_LOGI( LOG_TAG, "Command %s for program %d received ", command_names[ command ], program );
@@ -240,12 +241,19 @@ void program_logic_get_state( RunningProgramState *state ) {
         state->is_program_running = true;
         state->program_index = current_program_index;
         state->zone_index = current_zone_index;
-        state->zones_count = current_program->zones_count;
         state->zone_left_seconds =
                 ( xTimerGetExpiryTime( timer ) - xTaskGetTickCount() ) * portTICK_PERIOD_MS / 1000 + 1;
     } else {
         state->is_program_running = false;
     }
+}
+
+int program_logic_get_queued_program( int queue_index ) {
+    struct queue_item_t *item = queue;
+    while ( item != NULL && queue_index-- > 0 ) {
+        item = item->next;
+    }
+    return item != NULL ? item->program_index : -1;
 }
 
 void program_logic_pump_state_change( bool is_on ) {
@@ -256,7 +264,7 @@ void program_logic_init() {
     is_running = false;
     current_program = NULL;
 
-    gpio_evt_queue = xQueueCreate( 16, sizeof( uint32_t ) );
+    event_queue = xQueueCreate( 16, sizeof( program_command_t ) );
     xTaskCreate( task_main, LOG_TAG, 3072, NULL, 10, NULL );
 
     timer = xTimerCreate(

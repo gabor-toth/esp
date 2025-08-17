@@ -44,26 +44,50 @@ static esp_err_t run_post_handler( httpd_req_t *req ) {
     return ESP_OK;
 }
 
+static void add_program_json( cJSON *jsonPrograms, int programIndex, bool isActive, RunningProgramState *state ) {
+    Program *program = program_get( programIndex );
+    cJSON *jsonProgram = cJSON_CreateObject();
+    cJSON_AddItemToArray( jsonPrograms, jsonProgram );
+    cJSON_AddNumberToObject( jsonProgram, "index", programIndex + 1 );
+    cJSON_AddStringToObject( jsonProgram, "name", program->name );
+    PinData pin_data;
+    cJSON *jsonZones = cJSON_AddArrayToObject( jsonProgram, "zones" );
+    for ( int zone_index = 0; zone_index < program->zones_count; zone_index++ ) {
+        cJSON *jsonZone = cJSON_CreateObject();
+        cJSON_AddItemToArray( jsonZones, jsonZone );
+        ProgramZone *zone = &program->zones[ zone_index ];
+        gpio_get_pin_data( OUTPUTS, ZONES_CLASS, zone->zone_id, &pin_data );
+        cJSON_AddNumberToObject( jsonZone, "duration", zone->duration_in_seconds );
+        cJSON_AddNumberToObject( jsonZone, "index", zone_index + 1 );
+        cJSON_AddStringToObject( jsonZone, "name", pin_data.name );
+        if ( isActive && zone_index == ( *state ).zone_index ) {
+            cJSON_AddBoolToObject( jsonZone, "running", true );
+            cJSON_AddNumberToObject( jsonZone, "leftSeconds", ( *state ).zone_left_seconds );
+        }
+    }
+}
+
 static esp_err_t run_get_handler( httpd_req_t *req ) {
-    cJSON *root = cJSON_CreateObject();
+    cJSON *jsonRoot = cJSON_CreateObject();
 
     RunningProgramState state;
     program_logic_get_state( &state );
-    cJSON_AddBoolToObject( root, "isProgramRunning", state.is_program_running );
+    cJSON_AddBoolToObject( jsonRoot, "isProgramRunning", state.is_program_running );
     if ( state.is_program_running ) {
-        cJSON_AddNumberToObject( root, "programIndex", state.program_index + 1 );
-        Program *program = program_get( state.program_index );
-        cJSON_AddStringToObject( root, "programName", program->name );
-        cJSON_AddNumberToObject( root, "zoneIndex", state.zone_index + 1 );
-        PinData pin_data;
-        gpio_get_pin_data( OUTPUTS, ZONES_CLASS, program->zones[ state.zone_index ].zone_id, &pin_data );
-        cJSON_AddStringToObject( root, "zoneName", pin_data.name );
-        cJSON_AddNumberToObject( root, "zonesCount", state.zones_count );
-        cJSON_AddNumberToObject( root, "zoneLeftSeconds", state.zone_left_seconds );
+        cJSON *jsonPrograms = cJSON_AddArrayToObject( jsonRoot, "programs" );
+
+        add_program_json( jsonPrograms, state.program_index, true, &state );
+        for ( int queue_index = 0;; queue_index++ ) {
+            int programIndex = program_logic_get_queued_program( queue_index );
+            if ( programIndex < 0 ) {
+                break;
+            }
+            add_program_json( jsonPrograms, programIndex, false, &state );
+        }
     }
     rest_allow_cors( req );
-    rest_add_time_json( root );
-    rest_send_json_back_and_delete( req, root );
+    rest_add_time_json( jsonRoot );
+    rest_send_json_back_and_delete( req, jsonRoot );
     return ESP_OK;
 }
 

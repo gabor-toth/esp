@@ -1,9 +1,21 @@
-export interface RunState {
-  isProgramRunning: boolean;
-  programIndex: number;
-  programName: string;
-  zoneIndex: number;
-  zoneName: string;
-  zonesCount: number;
-  zoneLeftSeconds: number;
+export interface RunZoneState {
+  duration: number;
+  index: number;
+  leftSeconds: number;
+  name: string;
+  running: boolean;
 }
+
+export interface RunProgramState {
+  duration: number;
+  index: number;
+  name: string;
+  running: boolean;
+  zones: RunZoneState[];
+}
+
+export interface RunState {
+  programs: RunProgramState[];
+  isProgramRunning: boolean;
+}
+
