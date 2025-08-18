@@ -13,6 +13,7 @@ import { MatButtonModule } from "@angular/material/button";
 import { MatIconModule } from "@angular/material/icon";
 import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
 import { MatTableModule } from "@angular/material/table";
+import { MatFormField, MatLabel, MatOption, MatSelect } from "@angular/material/select";
 
 @NgModule( {
   declarations: [
@@ -28,8 +29,12 @@ import { MatTableModule } from "@angular/material/table";
     // https://material.angular.io/cdk/layout/overview
     //LayoutModule,
     MatButtonModule,
+    MatFormField,
     MatIconModule,
+    MatLabel,
+    MatOption,
     MatProgressSpinnerModule,
+    MatSelect,
     MatTableModule,
   ],
   providers: [],

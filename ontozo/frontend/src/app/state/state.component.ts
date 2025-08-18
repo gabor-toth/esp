@@ -7,6 +7,8 @@ import { RunProgramState, RunState } from "../program/run";
 import { PinUpdater } from "../pin/pin.updater";
 import { Subscription } from "rxjs";
 import { RunUpdater } from "../program/run.updater";
+import { Program, ProgramShort } from "../program/program";
+import { ProgramService } from "../program/program.service";
 
 @Component( {
   selector: 'app-state',
@@ -22,27 +24,43 @@ import { RunUpdater } from "../program/run.updater";
 } )
 export class StateComponent implements OnInit {
   pinState: PinsState | undefined;
-  runState: RunProgramState | undefined;
-  queueState: RunProgramState[] | undefined;
-  remoteTime: String | undefined;
   pinStateAsString = "";
-  programStateAsString = "";
   pinUpdaterSubscription?: Subscription;
+  programStateAsString = "";
+  queueState: RunProgramState[] | undefined;
+  programs: ProgramShort[] | undefined;
+  remoteTime: String | undefined;
+  runState: RunProgramState | undefined;
   runUpdaterSubscription?: Subscription;
+  selectedProgramIndex: number = 0;
 
   constructor( private pinService: PinService,
                private pinUpdater: PinUpdater,
+               private programService: ProgramService,
                private runService: RunService,
                private runUpdater: RunUpdater ) {
   }
 
   ngOnInit(): void {
     this.subscribeForUpdates();
+    this.loadPrograms();
   }
 
   ngOnDestroy(): void {
     this.pinUpdaterSubscription?.unsubscribe();
     this.runUpdaterSubscription?.unsubscribe();
+  }
+
+  private loadPrograms() {
+    let component = this;
+    this.programService.getShortInfo().subscribe( {
+      next( state ) {
+        component.programs = state;
+      },
+      error( error ) {
+        // TODO toaster: add error
+      }
+    } );
   }
 
   private subscribeForUpdates() {
@@ -90,7 +108,7 @@ export class StateComponent implements OnInit {
         this.queueState.forEach( ( p ) => this.calculateDuration( p ) );
       } else {
         this.runState = <RunProgramState>{};
-        this.queueState = undefined;
+        this.queueState = [];
       }
       this.programStateAsString = newStateAsString;
     }
@@ -106,12 +124,77 @@ export class StateComponent implements OnInit {
     let component = this;
     this.pinService.setState( type, id, state ).subscribe( {
       complete() {
-        component.pinUpdater.updateState();
-        component.runUpdater.updateState();
+        component.updateView();
       },
       error( err ) {
+        // TODO toaster: add error
         console.error( 'Error writing state', err );
       }
+    } );
+  }
+
+  onSelectedProgram( programIndex: number ) {
+    this.selectedProgramIndex = programIndex;
+  }
+
+  updateView() {
+    this.pinUpdater.updateState();
+    this.runUpdater.updateState();
+  }
+
+  startProgram() {
+    console.log( "Starting program", this.selectedProgramIndex );
+    if ( this.selectedProgramIndex === 0 ) {
+      return;
+    }
+    let component = this;
+    this.runService.start( this.selectedProgramIndex ).subscribe( {
+      next( dummy ) {
+        component.updateView();
+      },
+      error( err ) {
+        // TODO toaster: add error
+        console.error( 'Error starting program', err );
+      },
+    } );
+  }
+
+  stopProgram() {
+    let component = this;
+    this.runService.stop().subscribe( {
+      next( dummy ) {
+        component.updateView();
+      },
+      error( err ) {
+        // TODO toaster: add error
+        console.error( 'Error stopping program', err );
+      },
+    } );
+  }
+
+  nextZone() {
+    let component = this;
+    this.runService.nextZone().subscribe( {
+      next( dummy ) {
+        component.updateView();
+      },
+      error( err ) {
+        // TODO toaster: add error
+        console.error( 'Error moving to next zone', err );
+      },
+    } );
+  }
+
+  nextProgram() {
+    let component = this;
+    this.runService.nextProgram().subscribe( {
+      next( dummy ) {
+        component.updateView();
+      },
+      error( err ) {
+        // TODO toaster: add error
+        console.error( 'Error moving to next zone', err );
+      },
     } );
   }
 }

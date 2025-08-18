@@ -166,13 +166,12 @@ static void stop_and_move_to_next_program() {
 }
 
 static void stop_all_programs() {
-    stop_current_program();
     while ( queue != NULL ) {
         struct queue_item_t *next = queue->next;
         free( queue );
         queue = next;
     }
-    is_running = false;
+    stop_and_move_to_next_program();
 }
 
 static void pump_state_changed( bool is_on ) {

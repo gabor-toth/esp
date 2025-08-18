@@ -59,7 +59,7 @@ export class ProgramsComponent implements OnInit {
         // toaster: add success
       },
       error( err ) {
-        // toaster: add error
+        // TODO toaster: add error
         console.error( 'Error starting program ' + element.index, err );
       },
     } );
@@ -70,6 +70,7 @@ export class ProgramsComponent implements OnInit {
       next( dummy ) {
       },
       error( err ) {
+        // TODO toaster: add error
         console.error( 'Error stopping program', err );
       },
     } );
@@ -80,6 +81,7 @@ export class ProgramsComponent implements OnInit {
       next( dummy ) {
       },
       error( err ) {
+        // TODO toaster: add error
         console.error( 'Error moving to next zone', err );
       },
     } );
