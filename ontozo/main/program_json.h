@@ -11,6 +11,6 @@ extern void program_read_from_json( cJSON *root, Program **program_out );
 
 extern void program_write_to_string( Program *program, char **json_out );
 
-extern void programs_write_to_json( char **json_out );
+extern void programs_write_to_json( char **json_out, bool full_info );
 
 #endif //ONTOZO_PROGRAM_JSON_H

@@ -168,7 +168,8 @@ void read_days( const cJSON *root, Program *program ) {
             program->days.type = onDays;
         } else if ( strcmp( VALUE_TYPE_INTERVAL, type_as_string ) == 0 ) {
             program->days.type = interval;
-        } else if ( strcmp( VALUE_TYPE_OFF, type_as_string ) == 0 || strcmp( VALUE_TYPE_UNUSED, type_as_string ) == 0 ) {
+        } else if ( strcmp( VALUE_TYPE_OFF, type_as_string ) == 0 ||
+                    strcmp( VALUE_TYPE_UNUSED, type_as_string ) == 0 ) {
             program->days.type = unused;
         } else {
             ESP_LOGW( LOG_TAG, "wrong %s %s", FIELD_TYPE, type_as_string );
@@ -243,10 +244,12 @@ void program_read_from_json( cJSON *root, Program **program_out ) {
     *program_out = program;
 }
 
-void write_head( cJSON *json, Program *program ) {
+void write_head( cJSON *json, Program *program, bool full_info ) {
     cJSON_AddNumberToObject( json, FIELD_INDEX, program->index );
     cJSON_AddStringToObject( json, FIELD_NAME, program->name );
-    cJSON_AddBoolToObject( json, FIELD_ENABLED, program->enabled && program->days.type != unused );
+    if ( full_info ) {
+        cJSON_AddBoolToObject( json, FIELD_ENABLED, program->enabled && program->days.type != unused );
+    }
 }
 
 void write_days( cJSON *json, Program *program ) {
@@ -319,23 +322,25 @@ void write_zones( cJSON *json, Program *program ) {
     }
 }
 
-static void add_program_to_json( Program *program, cJSON *root ) {
-    write_head( root, program );
-    write_days( root, program );
-    write_start_times( root, program );
-    write_zones( root, program );
+static void add_program_to_json( Program *program, cJSON *root, bool full_info ) {
+    write_head( root, program, full_info );
+    if ( full_info ) {
+        write_days( root, program );
+        write_start_times( root, program );
+        write_zones( root, program );
+    }
 }
 
 void program_write_to_string( Program *program, char **json_out ) {
     cJSON *root = cJSON_CreateObject();
 
-    add_program_to_json( program, root );
+    add_program_to_json( program, root, true );
 
     *json_out = cJSON_Print( root );
     cJSON_Delete( root );
 }
 
-void programs_write_to_json( char **json_out ) {
+void programs_write_to_json( char **json_out, bool full_info ) {
     cJSON *root = cJSON_CreateArray();
 
     int count = program_get_count();
@@ -346,7 +351,7 @@ void programs_write_to_json( char **json_out ) {
         }
         cJSON *item = cJSON_CreateObject();
         cJSON_AddItemToArray( root, item );
-        add_program_to_json( program, item );
+        add_program_to_json( program, item, full_info );
         // TODO FIELD_PERCENTAGE
         // TODO FIELD_NEXT_START_TIME
     }
