@@ -26,7 +26,7 @@ extern void wifi_scan_start( void );
 extern void wifi_handler_on_scan_done( void *sta_netif, esp_event_base_t event_base,
                                        int32_t event_id, void *event_data );
 
-extern esp_err_t wifi_main();
+extern esp_err_t wifi_main( const char *hostname );
 
 extern void wifi_shutdown( void );
 

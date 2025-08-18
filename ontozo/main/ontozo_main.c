@@ -26,7 +26,7 @@ void app_main( void ) {
     http_server_main( DEFAULT_HTTP_SERVER_CONTEXT_SIZE );
     http_static_files_register();
     rest_register();
-    ESP_ERROR_CHECK( wifi_main() );
+    ESP_ERROR_CHECK( wifi_main( "ontozo" ) );
 
 //    rest_init_after_wifi();
 

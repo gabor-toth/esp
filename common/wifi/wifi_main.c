@@ -2,6 +2,7 @@
 #include "esp_netif.h"
 #include "esp_wifi.h"
 #include "freertos/timers.h"
+#include "nvs_main.h"
 #include "string.h"
 #include "wifi_main.h"
 
@@ -41,6 +42,7 @@ static const known_wifi_network_t known_wifi_networks
 static int selected_network_index;
 static int selected_channel;
 static TimerHandle_t reconnect_timer;
+static char *hostname;
 
 void wifi_scan_get_ssid_and_password( wifi_sta_config_t *wifi_config_sta ) {
     strncpy( (char *) wifi_config_sta->ssid, known_wifi_networks[ selected_network_index ].ssid,
@@ -51,8 +53,7 @@ void wifi_scan_get_ssid_and_password( wifi_sta_config_t *wifi_config_sta ) {
 }
 
 void wifi_set_hostname( esp_netif_t *netif ) {
-    // TODO hostname should be read from flash
-    ESP_ERROR_CHECK( esp_netif_set_hostname( netif, "sol-n2kgw" ) );
+    ESP_ERROR_CHECK( esp_netif_set_hostname( netif, hostname ) );
 }
 
 void wifi_scan_start() {
@@ -146,7 +147,18 @@ void wifi_shutdown( void ) {
     example_wifi_shutdown();
 }
 
-esp_err_t wifi_main( void ) {
+void determine_hostname( const char *default_hostname ) {
+    nvs_handle_t nvs = nvs_open_storage();
+    hostname = nvs_read_string( nvs, "wifi.hostname" );
+    if ( hostname == NULL ) {
+        hostname = strdup( default_hostname );
+    }
+    nvs_close_storage( nvs );
+}
+
+esp_err_t wifi_main( const char *default_hostname ) {
+    determine_hostname( default_hostname );
+
     reconnect_timer = xTimerCreate(
             "wifiReconnect",
             pdMS_TO_TICKS( RECONNECT_TIMEOUT_SECS * 1000 ),
