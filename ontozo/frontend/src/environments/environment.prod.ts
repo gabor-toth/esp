@@ -1,4 +1,5 @@
 export const environment = {
   production: true,
-  baseUrl: ''
+  baseUrl: '',
+  defaultHttpTimeout: 3000,
 };

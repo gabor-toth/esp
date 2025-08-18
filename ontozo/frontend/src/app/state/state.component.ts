@@ -9,6 +9,8 @@ import { Subscription } from "rxjs";
 import { RunUpdater } from "../program/run.updater";
 import { Program, ProgramShort } from "../program/program";
 import { ProgramService } from "../program/program.service";
+import { MatSnackBar } from "@angular/material/snack-bar";
+import { SnackbarErrorComponent } from "../common/snackbar-error/snackbar-error.component";
 
 @Component( {
   selector: 'app-state',
@@ -34,7 +36,8 @@ export class StateComponent implements OnInit {
   runUpdaterSubscription?: Subscription;
   selectedProgramIndex: number = 0;
 
-  constructor( private pinService: PinService,
+  constructor( private snackBar: MatSnackBar,
+               private pinService: PinService,
                private pinUpdater: PinUpdater,
                private programService: ProgramService,
                private runService: RunService,
@@ -58,7 +61,7 @@ export class StateComponent implements OnInit {
         component.programs = state;
       },
       error( error ) {
-        // TODO toaster: add error
+        component.openSnackBar( 'Error loading programs', error );
       }
     } );
   }
@@ -126,9 +129,8 @@ export class StateComponent implements OnInit {
       complete() {
         component.updateView();
       },
-      error( err ) {
-        // TODO toaster: add error
-        console.error( 'Error writing state', err );
+      error( error ) {
+        component.openSnackBar( 'Error writing state', error );
       }
     } );
   }
@@ -152,10 +154,12 @@ export class StateComponent implements OnInit {
       next( dummy ) {
         component.updateView();
       },
-      error( err ) {
-        // TODO toaster: add error
-        console.error( 'Error starting program', err );
+      error( error ) {
+        component.openSnackBar( 'Error starting program', error );
       },
+      complete() {
+        console.log( 'completed' );
+      }
     } );
   }
 
@@ -165,9 +169,8 @@ export class StateComponent implements OnInit {
       next( dummy ) {
         component.updateView();
       },
-      error( err ) {
-        // TODO toaster: add error
-        console.error( 'Error stopping program', err );
+      error( error ) {
+        component.openSnackBar( 'Error stopping program', error );
       },
     } );
   }
@@ -178,9 +181,8 @@ export class StateComponent implements OnInit {
       next( dummy ) {
         component.updateView();
       },
-      error( err ) {
-        // TODO toaster: add error
-        console.error( 'Error moving to next zone', err );
+      error( error ) {
+        component.openSnackBar( 'Error moving to next zone', error );
       },
     } );
   }
@@ -191,10 +193,22 @@ export class StateComponent implements OnInit {
       next( dummy ) {
         component.updateView();
       },
-      error( err ) {
-        // TODO toaster: add error
-        console.error( 'Error moving to next zone', err );
+      error( error ) {
+        component.openSnackBar( 'Error moving to next zone', error );
       },
     } );
+  }
+
+  openSnackBar( log: string, error: any, message?: string ) {
+    console.error( log, error );
+    this.snackBar.openFromComponent(
+      SnackbarErrorComponent,
+      {
+        data: message != undefined ? message : 'Hiba a kapcsolatban.',
+        duration: 10000,
+        horizontalPosition: 'right',
+        panelClass: 'error-snackbar',
+        verticalPosition: 'bottom',
+      } );
   }
 }

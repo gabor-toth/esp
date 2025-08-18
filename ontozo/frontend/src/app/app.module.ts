@@ -8,18 +8,20 @@ import { StateComponent } from './state/state.component';
 
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FlexLayoutModule } from '@angular/flex-layout';
-// import {LayoutModule} from '@angular/cdk/layout';
 import { MatButtonModule } from "@angular/material/button";
 import { MatIconModule } from "@angular/material/icon";
 import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
 import { MatTableModule } from "@angular/material/table";
 import { MatFormField, MatLabel, MatOption, MatSelect } from "@angular/material/select";
+import { MatSnackBarModule } from "@angular/material/snack-bar";
+import { SnackbarErrorComponent } from "./common/snackbar-error/snackbar-error.component";
 
 @NgModule( {
   declarations: [
     AdminComponent,
     PinComponent,
     ProgramsComponent,
+    SnackbarErrorComponent,
     StateComponent,
   ],
   imports: [
@@ -35,6 +37,7 @@ import { MatFormField, MatLabel, MatOption, MatSelect } from "@angular/material/
     MatOption,
     MatProgressSpinnerModule,
     MatSelect,
+    MatSnackBarModule,
     MatTableModule,
   ],
   providers: [],
