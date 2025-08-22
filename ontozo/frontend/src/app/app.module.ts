@@ -7,7 +7,7 @@ import { ProgramsComponent } from './program/programs.component';
 import { StateComponent } from './state/state.component';
 
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { FlexLayoutModule } from '@angular/flex-layout';
+// import { FlexLayoutModule } from '@angular/flex-layout';
 import { MatButtonModule } from "@angular/material/button";
 import { MatIconModule } from "@angular/material/icon";
 import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
@@ -18,16 +18,11 @@ import { SnackbarErrorComponent } from "./common/snackbar-error/snackbar-error.c
 
 @NgModule( {
   declarations: [
-    AdminComponent,
-    PinComponent,
-    ProgramsComponent,
-    SnackbarErrorComponent,
-    StateComponent,
   ],
   imports: [
     BrowserAnimationsModule,
     BrowserModule,
-    FlexLayoutModule,
+    // FlexLayoutModule,
     // https://material.angular.io/cdk/layout/overview
     //LayoutModule,
     MatButtonModule,
@@ -39,6 +34,11 @@ import { SnackbarErrorComponent } from "./common/snackbar-error/snackbar-error.c
     MatSelect,
     MatSnackBarModule,
     MatTableModule,
+    AdminComponent,
+    PinComponent,
+    ProgramsComponent,
+    SnackbarErrorComponent,
+    StateComponent,
   ],
   providers: [],
 } )

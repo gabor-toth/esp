@@ -1,108 +1,114 @@
 <!-- https://fonts.google.com/icons -->
 
 <div class="page-container">
-    <div fxFlex fxLayout="row" fxLayout.sm="column" fxLayout.xs="column" fxLayoutGap="25px" fxLayoutAlign="center none"
-         class="state-pump">
-        <!--fxFlex fxLayoutAlign="center" class="card" -->
-        <h2>Pumpák</h2>
-        <div *ngIf="pinState && pinState.outputs" class="card-container">
-            <button *ngFor="let pump of pinState.outputs.pumps" mat-stroked-button color="foreground"
-                    class="card icon-switch"
-                    (click)="click('pumps',pump.id,!pump.on)">
-                <mat-icon *ngIf="pump.on" class="material-icons-outlined on">toggle_on</mat-icon>
-                <mat-icon *ngIf="!pump.on" class="material-icons-outlined off">toggle_off</mat-icon>
-                <span>{{ pump.name }}</span>
-            </button>
-        </div>
-        <div *ngIf="!pinState" class="load-spinner">
-            <mat-spinner diameter="30"></mat-spinner>
-        </div>
+  <div fxFlex fxLayout="row" fxLayout.sm="column" fxLayout.xs="column" fxLayoutGap="25px" fxLayoutAlign="center none"
+       class="state-pump">
+    <!--fxFlex fxLayoutAlign="center" class="card" -->
+    <h2>Pumpák</h2>
+    <div *ngIf="pinState && pinState.outputs" class="card-container">
+      <button *ngFor="let pump of pinState.outputs.pumps" mat-stroked-button color="foreground"
+              class="card icon-switch"
+              (click)="click('pumps',pump.id,!pump.on)">
+        <mat-icon *ngIf="pump.on" class="material-icons-outlined on">toggle_on</mat-icon>
+        <mat-icon *ngIf="!pump.on" class="material-icons-outlined off">toggle_off</mat-icon>
+        <span>{{ pump.name }}</span>
+      </button>
     </div>
+    <div *ngIf="!pinState" class="load-spinner">
+      <mat-spinner diameter="30"></mat-spinner>
+    </div>
+  </div>
 
-    <div fxFlex fxLayout="row" fxLayout.sm="column" fxLayout.xs="column" fxLayoutGap="25px" fxLayoutAlign="center none"
-         class="state-level">
-        <h2>Szintek</h2>
-        <div *ngIf="pinState && pinState.inputs" class="card-container">
-            <div *ngFor="let level of pinState.inputs.levels" class="card-level {{level.on?'filled':'empty'}}">
-            </div>
-        </div>
-        <div *ngIf="!pinState" class="load-spinner">
-            <mat-spinner diameter="30"></mat-spinner>
-        </div>
+  <div fxFlex fxLayout="row" fxLayout.sm="column" fxLayout.xs="column" fxLayoutGap="25px" fxLayoutAlign="center none"
+       class="state-level">
+    <h2>Szintek</h2>
+    <div *ngIf="pinState && pinState.inputs" class="card-container">
+      <div *ngFor="let level of pinState.inputs.levels" class="card-level {{level.on?'filled':'empty'}}">
+      </div>
     </div>
+    <div *ngIf="!pinState" class="load-spinner">
+      <mat-spinner diameter="30"></mat-spinner>
+    </div>
+  </div>
 
-    <div fxFlex fxLayout="row" fxLayout.sm="column" fxLayout.xs="column" fxLayoutGap="25px" fxLayoutAlign="center none"
-         class="state-program">
-        <h2>Indítás</h2>
-        <div *ngIf="programs" class="load-spinner">
-            <mat-form-field>
-                <mat-select #selectedProgram (selectionChange)="onSelectedProgram(selectedProgram.value)">
-                    <!--[(ngModel)]="selectedValue"-->
-                    <mat-option *ngFor="let program of programs" [value]="program.index">{{ program.name }}
-                    </mat-option>
-                </mat-select>
-            </mat-form-field>
-            <button mat-raised-button color="primary" (click)="startProgram(); $event.stopPropagation()"
-                    [disabled]="selectedProgramIndex == 0">
-                <mat-icon class="material-icons-outlined icon-big">play_arrow</mat-icon>
-            </button>
-        </div>
-        <div *ngIf="!programs" class="load-spinner">
-            <mat-spinner diameter="30"></mat-spinner>
-        </div>
+  <div fxFlex fxLayout="row" fxLayout.sm="column" fxLayout.xs="column" fxLayoutGap="25px" fxLayoutAlign="center none"
+       class="state-program">
+    <h2>Indítás</h2>
+    <div *ngIf="programs" class="load-spinner">
+      <mat-form-field>
+        <mat-select #selectedProgram (selectionchange)="onSelectedProgram(selectedProgram.value)">
+          <!--[(ngModel)]="selectedValue"-->
+          <mat-option *ngFor="let program of programs" [value]="program.index">{{ program.name }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+      <button mat-raised-button color="primary" (click)="startProgram(); $event.stopPropagation()"
+              [disabled]="selectedProgramIndex == 0">
+        <mat-icon class="material-icons-outlined icon-big">play_arrow</mat-icon>
+      </button>
     </div>
+    <div *ngIf="!programs" class="load-spinner">
+      <mat-spinner diameter="30"></mat-spinner>
+    </div>
+  </div>
 
-    <div fxFlex fxLayout="row" fxLayout.sm="column" fxLayout.xs="column" fxLayoutGap="25px" fxLayoutAlign="center none"
-         class="state-program">
-        <h2>Futó program</h2>
-        <div *ngIf="runState?.running && queueState" class="button-holder">
-            <button mat-raised-button color="primary" (click)="nextZone(); $event.stopPropagation()">
-                <!-- next zone-->
-                <mat-icon class="material-icons-outlined icon-big">keyboard_arrow_right</mat-icon>
-            </button>
-            <button mat-raised-button color="primary" (click)="nextProgram(); $event.stopPropagation()"
-                    [disabled]="queueState.length == 0">
-                <!-- next program -->
-                <mat-icon class="material-icons-outlined icon-big">keyboard_double_arrow_right</mat-icon>
-            </button>
-            <button mat-raised-button color="primary" (click)="stopProgram(); $event.stopPropagation()">
-                <!--Stop-->
-                <mat-icon class="material-icons-outlined icon-big">cancel</mat-icon>
-            </button>
-        </div>
-        <div *ngIf="runState" class="card-container">
-            <mat-icon *ngIf="!runState.running" class="material-icons-outlined icon-hotel">hotel
-            </mat-icon>
-            <div *ngIf="runState.running">
-                <div class="desc">
-                    {{ runState.name }} {{ ( runState.duration * 1000 ) | date:'m:ss' }}
-                </div>
-                <div class="desc">
-                    <div *ngFor="let zone of runState.zones">
-                        {{ zone.name }} {{ ( zone.duration * 1000 ) | date:'m:ss' }}
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div *ngIf="!runState" class="load-spinner">
-            <mat-spinner diameter="30"></mat-spinner>
-        </div>
+  <div fxFlex fxLayout="row" fxLayout.sm="column" fxLayout.xs="column" fxLayoutGap="25px" fxLayoutAlign="center none"
+       class="state-program">
+    <h2>Futó program</h2>
+    <div *ngIf="runState?.running && queueState" class="button-holder">
+      <button mat-raised-button color="primary" (click)="nextZone(); $event.stopPropagation()">
+        <!-- next zone-->
+        <mat-icon class="material-icons-outlined icon-big">keyboard_arrow_right</mat-icon>
+      </button>
+      <button mat-raised-button color="primary" (click)="nextProgram(); $event.stopPropagation()"
+              [disabled]="queueState.length == 0">
+        <!-- next program -->
+        <mat-icon class="material-icons-outlined icon-big">keyboard_double_arrow_right</mat-icon>
+      </button>
+      <button mat-raised-button color="primary" (click)="stopProgram(); $event.stopPropagation()">
+        <!--Stop-->
+        <mat-icon class="material-icons-outlined icon-big">cancel</mat-icon>
+      </button>
     </div>
-    <div *ngIf="queueState" fxFlex fxLayout="row" fxLayout.sm="column" fxLayout.xs="column" fxLayoutGap="25px"
-         fxLayoutAlign="center none"
-         class="state-program">
-        <h2>Sorbanálló programok</h2>
-        <div *ngFor="let queued of queueState">
-            <div class="desc">
-                {{ queued.name }} {{ ( queued.duration * 1000 ) | date:'m:ss' }}
-                <div *ngFor="let zone of queued.zones">
-                    {{ zone.name }} {{ ( zone.duration * 1000 ) | date:'m:ss' }}
-                </div>
-            </div>
+    <div *ngIf="runState" class="card-container">
+      <mat-icon *ngIf="!runState.running" class="material-icons-outlined icon-hotel">hotel
+      </mat-icon>
+      <div *ngIf="runState.running">
+        <div class="desc">
+          {{ runState.name }} {{ (runState.duration * 1000) | date:'m:ss' }}
         </div>
+        <div class="desc">
+          <div *ngFor="let zone of runState.zones">
+            {{ zone.name }} {{ (zone.duration * 1000) | date:'m:ss' }}
+          </div>
+        </div>
+      </div>
     </div>
+    @if (!runState) {
+      <div class="load-spinner">
+        <mat-spinner diameter="30"></mat-spinner>
+      </div>
+    }
+  </div>
+  <div *ngIf="queueState" fxFlex fxLayout="row" fxLayout.sm="column" fxLayout.xs="column" fxLayoutGap="25px"
+       fxLayoutAlign="center none"
+       class="state-program">
+    <h2>Sorbanálló programok</h2>
+    @for (queued of queueState; track queued.name) {
+    <div>
+      <div class="desc">
+        {{ queued.name }} {{ (queued.duration * 1000) | date:'m:ss' }}
+        @for (zone of queued.zones; track zone.name) {
+          <div>
+            {{ zone.name }} {{ (zone.duration * 1000) | date:'m:ss' }}
+          </div>
+        }
+      </div>
+    </div>
+    }
+  </div>
 
-    <div class="time-container">
-        {{ remoteTime! }}
-    </div>
+  <div class="time-container">
+    {{ remoteTime! }}
+  </div>
 </div>

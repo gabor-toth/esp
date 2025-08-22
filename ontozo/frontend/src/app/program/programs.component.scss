@@ -1,5 +1,6 @@
 @use 'sass:map';
 @use '@angular/material' as mat;
+
 @import "../../theme";
 
 $color-config: mat.m2-get-color-config($my-app-theme);

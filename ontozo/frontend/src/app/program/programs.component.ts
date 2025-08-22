@@ -1,22 +1,56 @@
 import { Component, OnInit } from '@angular/core';
 import { Program, ProgramDayType, ProgramDayValue } from "./program";
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import {
+  MatCell,
+  MatCellDef,
+  MatColumnDef,
+  MatHeaderCell,
+  MatHeaderCellDef,
+  MatHeaderRow, MatHeaderRowDef,
+  MatRow, MatRowDef,
+  MatTable,
+  MatTableDataSource,
+  MatTableModule
+} from '@angular/material/table';
 import { ProgramService } from "./program.service";
 import { animate, state, style, transition, trigger } from '@angular/animations';
 import { RunService } from "./run.service";
+import {MatIcon} from '@angular/material/icon';
+import {MatProgressSpinner} from '@angular/material/progress-spinner';
+import {MatButton, MatFabButton, MatIconButton} from '@angular/material/button';
+import {NgForOf, NgIf} from '@angular/common';
 
-@Component( {
+@Component({
   selector: 'app-program',
   templateUrl: './programs.component.html',
-  styleUrls: [ './programs.component.scss' ],
+  styleUrls: ['./programs.component.scss'],
   animations: [
-    trigger( 'detailExpand', [
-      state( 'collapsed', style( { height: '0px', minHeight: '0' } ) ),
-      state( 'expanded', style( { height: '*' } ) ),
-      transition( 'expanded <=> collapsed', animate( '225ms cubic-bezier(0.4, 0.0, 0.2, 1)' ) ),
-    ] ),
+    trigger('detailExpand', [
+      state('collapsed', style({height: '0px', minHeight: '0'})),
+      state('expanded', style({height: '*'})),
+      transition('expanded <=> collapsed', animate('225ms cubic-bezier(0.4, 0.0, 0.2, 1)')),
+    ]),
   ],
-} )
+  imports: [
+    MatIcon,
+    MatProgressSpinner,
+    MatCellDef,
+    MatColumnDef,
+    MatHeaderCell,
+    MatCell,
+    MatIconButton,
+    MatTable,
+    MatButton,
+    MatRow,
+    MatFabButton,
+    MatHeaderRow,
+    NgIf,
+    NgForOf,
+    MatHeaderCellDef,
+    MatHeaderRowDef,
+    MatRowDef
+  ]
+})
 export class ProgramsComponent implements OnInit {
   displayedColumns: string[] = [ 'name', 'enabled', 'start', 'expand' ];
   displayedColumnsMobile: string[] = [ 'name', 'enabled', 'expand' ];

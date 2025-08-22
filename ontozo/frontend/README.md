@@ -59,3 +59,10 @@ Commands
 - `ng generate component component-name`
 - `ng generate directive|pipe|service|class|guard|interface|enum|module`
 - `ng update @angular/cdk @angular/cli @angular/core @angular/material`
+
+Angular upgrade
+===============
+
+- https://angular-material.dev/courses/m2-ng-components/m2-ng-components/update-guide
+- https://sass-lang.com/documentation/breaking-changes/import/
+- 

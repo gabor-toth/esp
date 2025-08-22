@@ -10,7 +10,7 @@ if ( environment.production ) {
 // AppModule import is needed, it loads the Material stuff
 import { AppModule } from './app/app.module';
 import { appConfig } from './app/app.config';
-import { AppComponent } from './app/app.component';
+import { App } from './app/app';
 
-bootstrapApplication( AppComponent, appConfig )
+bootstrapApplication( App, appConfig )
   .catch( ( err ) => console.error( err ) );

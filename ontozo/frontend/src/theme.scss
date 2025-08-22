@@ -1,12 +1,13 @@
-// see https://angular-material.dev/courses/m2-ng-components/m2-ng-components/update-guide
-// see https://github.com/angular/components/releases/tag/18.0.0, "Breaking changes"
-
+@use 'sass:map';
 @use "@angular/material" as mat;
 
 @include mat.core();
 
+/* see https://angular-material.dev/courses/m2-ng-components/m2-ng-components/update-guide */
+/* see https://github.com/angular/components/releases/tag/18.0.0, "Breaking changes" */
+
 $my-app-primary: mat.m2-define-palette(mat.$m2-light-green-palette);
-$my-app-accent: mat.m2-define-palette(mat.$m2-lime-palette); // , A200, A100, A400
+$my-app-accent: mat.m2-define-palette(mat.$m2-lime-palette); /* , A200, A100, A400 */
 $my-app-warn: mat.m2-define-palette(mat.$m2-red-palette);
 
 $my-app-theme: mat.m2-define-light-theme(

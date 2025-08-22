@@ -11,19 +11,36 @@ import { Program, ProgramShort } from "../program/program";
 import { ProgramService } from "../program/program.service";
 import { MatSnackBar } from "@angular/material/snack-bar";
 import { SnackbarErrorComponent } from "../common/snackbar-error/snackbar-error.component";
+import {DatePipe, NgForOf, NgIf} from '@angular/common';
+import {MatIcon} from '@angular/material/icon';
+import {MatProgressSpinner} from '@angular/material/progress-spinner';
+import {MatFormField} from '@angular/material/form-field';
+import {MatOption,MatSelect} from '@angular/material/select';
+import {MatButton} from '@angular/material/button';
 
-@Component( {
+@Component({
   selector: 'app-state',
   templateUrl: './state.component.html',
-  styleUrls: [ './state.component.scss' ],
+  styleUrls: ['./state.component.scss'],
   animations: [
-    trigger( 'detailExpand', [
-      state( 'collapsed', style( { height: '0px', minHeight: '0' } ) ),
-      state( 'expanded', style( { height: '*' } ) ),
-      transition( 'expanded <=> collapsed', animate( '225ms cubic-bezier(0.4, 0.0, 0.2, 1)' ) ),
-    ] ),
+    trigger('detailExpand', [
+      state('collapsed', style({height: '0px', minHeight: '0'})),
+      state('expanded', style({height: '*'})),
+      transition('expanded <=> collapsed', animate('225ms cubic-bezier(0.4, 0.0, 0.2, 1)')),
+    ]),
   ],
-} )
+  imports: [
+    DatePipe,
+    MatIcon,
+    MatProgressSpinner,
+    MatFormField,
+    MatSelect,
+    MatOption,
+    MatButton,
+    NgForOf,
+    NgIf
+  ]
+})
 export class StateComponent implements OnInit {
   pinState: PinsState | undefined;
   pinStateAsString = "";
