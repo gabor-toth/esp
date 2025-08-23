@@ -1,7 +1,6 @@
 @use 'sass:map';
 @use '@angular/material' as mat;
-
-@import "../../theme";
+@use "../../theme" as *;
 
 $color-config: mat.m2-get-color-config($my-app-theme);
 $primary-palette: map.get($color-config, 'primary');

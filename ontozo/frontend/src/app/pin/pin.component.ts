@@ -7,7 +7,6 @@ import { Subscription } from "rxjs";
 import {MatIcon} from '@angular/material/icon';
 import {MatProgressSpinner} from '@angular/material/progress-spinner';
 import {MatButton} from '@angular/material/button';
-import {NgForOf, NgIf} from '@angular/common';
 
 @Component({
   selector: 'app-pin',
@@ -24,8 +23,6 @@ import {NgForOf, NgIf} from '@angular/common';
     MatIcon,
     MatProgressSpinner,
     MatButton,
-    NgIf,
-    NgForOf
   ]
 })
 export class PinComponent implements OnInit {

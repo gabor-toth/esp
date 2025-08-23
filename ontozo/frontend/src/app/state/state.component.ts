@@ -7,11 +7,11 @@ import { RunProgramState, RunState } from "../program/run";
 import { PinUpdater } from "../pin/pin.updater";
 import { Subscription } from "rxjs";
 import { RunUpdater } from "../program/run.updater";
-import { Program, ProgramShort } from "../program/program";
+import { ProgramShort } from "../program/program";
 import { ProgramService } from "../program/program.service";
 import { MatSnackBar } from "@angular/material/snack-bar";
 import { SnackbarErrorComponent } from "../common/snackbar-error/snackbar-error.component";
-import {DatePipe, NgForOf, NgIf} from '@angular/common';
+import {DatePipe} from '@angular/common';
 import {MatIcon} from '@angular/material/icon';
 import {MatProgressSpinner} from '@angular/material/progress-spinner';
 import {MatFormField} from '@angular/material/form-field';
@@ -37,8 +37,6 @@ import {MatButton} from '@angular/material/button';
     MatSelect,
     MatOption,
     MatButton,
-    NgForOf,
-    NgIf
   ]
 })
 export class StateComponent implements OnInit {

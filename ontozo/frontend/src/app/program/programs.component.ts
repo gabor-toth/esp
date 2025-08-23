@@ -10,7 +10,6 @@ import {
   MatRow, MatRowDef,
   MatTable,
   MatTableDataSource,
-  MatTableModule
 } from '@angular/material/table';
 import { ProgramService } from "./program.service";
 import { animate, state, style, transition, trigger } from '@angular/animations';
@@ -18,7 +17,6 @@ import { RunService } from "./run.service";
 import {MatIcon} from '@angular/material/icon';
 import {MatProgressSpinner} from '@angular/material/progress-spinner';
 import {MatButton, MatFabButton, MatIconButton} from '@angular/material/button';
-import {NgForOf, NgIf} from '@angular/common';
 
 @Component({
   selector: 'app-program',
@@ -44,8 +42,6 @@ import {NgForOf, NgIf} from '@angular/common';
     MatRow,
     MatFabButton,
     MatHeaderRow,
-    NgIf,
-    NgForOf,
     MatHeaderCellDef,
     MatHeaderRowDef,
     MatRowDef
