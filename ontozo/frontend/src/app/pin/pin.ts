@@ -6,7 +6,7 @@ export interface PinState {
 
 export interface PinInputsState {
   levels: PinState[];
-  buttons: PinState[];
+  buttons: PinState[] ;
 }
 
 export interface PinOutputsState {

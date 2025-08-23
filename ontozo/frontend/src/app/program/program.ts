@@ -33,11 +33,11 @@ export interface ProgramShort {
 }
 
 export interface Program extends ProgramShort {
-  valid: boolean;
-  enabled: boolean;
-  zones: ProgramZone[];
-  startTimes: string[];
   days: ProgramDay;
-  lastRunTime: number;
+  enabled: boolean;
   nextRunTime: number;
+  lastRunTime: number;
+  startTimes: string[];
+  valid: boolean;
+  zones: ProgramZone[];
 }

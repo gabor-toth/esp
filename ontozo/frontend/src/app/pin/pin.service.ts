@@ -1,8 +1,9 @@
-import { Injectable } from '@angular/core';
-import { PinsState } from './pin';
-import { Observable } from "rxjs";
-import { HttpClient } from '@angular/common/http';
-import { environment } from '../../environments/environment';
+import {Injectable} from '@angular/core';
+import {PinsState} from './pin';
+import {Observable} from "rxjs";
+import {HttpClient} from '@angular/common/http';
+import {environment} from '../../environments/environment';
+import {simulatedPinState} from '../simulator/simulator';
 
 @Injectable( {
   providedIn: 'root'
@@ -15,7 +16,13 @@ export class PinService {
   }
 
   getState(): Observable<PinsState> {
-    return this.http.get<PinsState>( environment.baseUrl + 'state' );
+    if (environment.simulateRestCall) {
+      return new Observable<PinsState>((subscriber) => {
+        subscriber.next(simulatedPinState);
+      });
+    } else {
+      return this.http.get<PinsState>(environment.baseUrl + 'state');
+    }
   }
 
   setState( type: String, id: number, state: boolean ): Observable<Object> {
