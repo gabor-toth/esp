@@ -1,4 +1,5 @@
 export interface RunZoneState {
+  disabled: boolean;
   duration: number;
   index: number;
   leftSeconds: number;

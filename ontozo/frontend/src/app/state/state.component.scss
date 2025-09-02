@@ -7,67 +7,60 @@ $primary-palette: map.get($color-config, 'primary');
 $foreground-palette: map.get($color-config, 'foreground');
 $foreground-icon: map.get($foreground-palette, "icon");
 
-.column-container {
-  align-items: center;
-  display: flex;
-  flex-direction: column;
-}
+.page-state {
+  .card-container {
 
-.card-container {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-
-  @media screen and (max-width: 767px) {
-    & > *:not(.circle-link) {
-      width: 100%;
-    }
-  }
-
-  .card {
-    border: 1px solid rgba(0, 0, 0, 0.12);
-    box-sizing: border-box;
-    height: 70px;
-    margin: 0 8px 16px;
-    padding: 16px;
-    text-align: center;
-    width: 160px;
-
-    span {
-      * {
-        vertical-align: middle;
-      }
+    mat-icon.icon-timer {
+      font-size: 24px;
+      vertical-align: middle;
+      color: $foreground-icon;
     }
 
-    &:not(:last-child) {
-      margin-right: 0;
-    }
-
-    &.card-small {
-      height: 16px;
-      width: 168px;
+    mat-icon.icon-hotel {
+      color: $foreground-icon;
     }
 
   }
 
-  .desc {
-    margin-bottom: 0.5em;
-  }
-
-  mat-icon.icon-timer {
-    font-size: 24px;
-    vertical-align: middle;
-    color: $foreground-icon;
-  }
-
-  mat-icon.icon-hotel {
-    color: $foreground-icon;
-  }
-
-}
-
-.state-program {
   .icon-hotel {
     margin: auto;
+  }
+
+  .state-start {
+    button {
+      margin: 1em;
+    }
+  }
+  
+  .state-program {
+    > mat-card-header {
+      justify-content: space-between;
+    }
+  }
+
+  .program-container {
+    &:not(:first-child) {
+      margin-top: .5em;
+    }
+
+    .program-total {
+      width: 50%;
+    }
+
+    .program-zones {
+      width: 50%;
+    }
+
+    .program-zone:not(:first-child),
+    .zone-card:not(:first-child) {
+      margin-top: .5em;
+    }
+
+    .duration {
+      color: #808080;
+      display: block;
+      padding-left: 1em;
+    }
+
   }
 }

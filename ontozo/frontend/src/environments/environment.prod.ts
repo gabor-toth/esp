@@ -1,5 +1,6 @@
 export const environment = {
-  production: true,
   baseUrl: '',
   defaultHttpTimeout: 3000,
+  production: true,
+  simulateRestCall: false,
 };

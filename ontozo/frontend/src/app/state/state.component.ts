@@ -3,7 +3,7 @@ import { PinsState } from "../pin/pin";
 import { PinService } from "../pin/pin.service";
 import { animate, state, style, transition, trigger } from "@angular/animations";
 import { RunService } from "../program/run.service";
-import { RunProgramState, RunState } from "../program/run";
+import { RunProgramState, RunState, RunZoneState } from "../program/run";
 import { PinUpdater } from "../pin/pin.updater";
 import { Subscription } from "rxjs";
 import { RunUpdater } from "../program/run.updater";
@@ -11,23 +11,24 @@ import { ProgramShort } from "../program/program";
 import { ProgramService } from "../program/program.service";
 import { MatSnackBar } from "@angular/material/snack-bar";
 import { SnackbarErrorComponent } from "../common/snackbar-error/snackbar-error.component";
-import {DatePipe} from '@angular/common';
-import {MatIcon} from '@angular/material/icon';
-import {MatProgressSpinner} from '@angular/material/progress-spinner';
-import {MatFormField} from '@angular/material/form-field';
-import {MatOption,MatSelect} from '@angular/material/select';
-import {MatButton} from '@angular/material/button';
+import { DatePipe } from '@angular/common';
+import { MatIcon } from '@angular/material/icon';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { MatFormField } from '@angular/material/form-field';
+import { MatOption, MatSelect } from '@angular/material/select';
+import { MatButton } from '@angular/material/button';
+import { MatCard, MatCardContent, MatCardHeader, MatCardTitle } from "@angular/material/card";
 
-@Component({
+@Component( {
   selector: 'app-state',
   templateUrl: './state.component.html',
-  styleUrls: ['./state.component.scss'],
+  styleUrls: [ './state.component.scss' ],
   animations: [
-    trigger('detailExpand', [
-      state('collapsed', style({height: '0px', minHeight: '0'})),
-      state('expanded', style({height: '*'})),
-      transition('expanded <=> collapsed', animate('225ms cubic-bezier(0.4, 0.0, 0.2, 1)')),
-    ]),
+    trigger( 'detailExpand', [
+      state( 'collapsed', style( { height: '0px', minHeight: '0' } ) ),
+      state( 'expanded', style( { height: '*' } ) ),
+      transition( 'expanded <=> collapsed', animate( '225ms cubic-bezier(0.4, 0.0, 0.2, 1)' ) ),
+    ] ),
   ],
   imports: [
     DatePipe,
@@ -37,8 +38,12 @@ import {MatButton} from '@angular/material/button';
     MatSelect,
     MatOption,
     MatButton,
+    MatCard,
+    MatCardHeader,
+    MatCardContent,
+    MatCardTitle,
   ]
-})
+} )
 export class StateComponent implements OnInit {
   pinState: PinsState | undefined;
   pinStateAsString = "";
@@ -225,5 +230,19 @@ export class StateComponent implements OnInit {
         panelClass: 'error-snackbar',
         verticalPosition: 'bottom',
       } );
+  }
+
+  toggleZoneState( program: RunProgramState, zone: RunZoneState ) {
+    console.info( "toggle program " + program.index + " zone " + zone.index );
+  }
+
+  featureToggleZone(): boolean {
+    return false;
+  }
+
+  skipIcon(): string {
+    // return "keyboard_arrow_right";
+    return "step_over";
+    // return "skip_next";
   }
 }

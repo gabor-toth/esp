@@ -2,6 +2,8 @@
 @use '@angular/material' as mat;
 @use "theme" as *;
 
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&icon_names=add,alarm_off,alarm_on,cancel,delete,edit,keyboard_arrow_down,keyboard_arrow_up,play_arrow,step_over,toggle_off,toggle_on');
+
 $color-config: mat.m2-get-color-config($my-app-theme);
 $primary-palette: map.get($color-config, 'primary');
 
@@ -168,5 +170,91 @@ mat-icon.mat-icon {
 
   &.empty {
     background-color: #e6ee9c; /* Colors.line.shade200*/
+  }
+}
+
+
+.card-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+
+  @media screen and (max-width: 767px) {
+    & > *:not(.circle-link) {
+      x-width: 100%;
+    }
+  }
+
+  .card {
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    box-sizing: border-box;
+    cursor: pointer;
+    flex-direction: column;
+    height: 70px;
+    margin: 0 8px;
+    padding: 16px;
+    text-align: center;
+    width: 100px;
+
+    @media screen and (max-width: 767px) {
+      x-margin: 8px 0;
+    }
+
+    &:hover {
+      //transform: translateY(-3px);
+      box-shadow: 0 4px 17px rgba(0, 0, 0, 0.35);
+    }
+
+    span {
+      * {
+        vertical-align: middle;
+      }
+    }
+
+    &:not(:last-child) {
+      margin-right: 0;
+    }
+
+    &.card-small {
+      height: 16px;
+      width: 168px;
+    }
+
+  }
+}
+
+.mat-mdc-card {
+  min-width: 360px;
+
+  .mat-mdc-form-field-bottom-align::before {
+    display: none;
+  }
+
+  @media screen and (max-width: 767px) {
+    min-width: 100%;
+    width: 100%;
+  }
+}
+
+.mat-mdc-card-header {
+  font-size: 1.4em;
+  margin: 0.5em;
+}
+
+.row {
+  display: flex;
+  flex-direction: row;
+  justify-content: left;
+
+  .lg-4 {
+    width: 33%;
+  }
+
+  .lg-6 {
+    width: 50%;
+  }
+
+  .lg-8 {
+    width: 66%;
   }
 }

@@ -1,83 +1,83 @@
 <div class="page-container">
-  <h2>Pumpák</h2>
-  @if (state && state.outputs) {
-    <div class="card-container">
-      @for(pump of state.outputs.pumps; track pump.id) {
-        <button mat-stroked-button color="foreground" class="card icon-switch"
-                (click)="click('pumps',pump.id,!pump.on)">
-          @if (pump.on) {
-            <mat-icon class="material-icons-outlined on">toggle_on</mat-icon>
-          } @else {
-           <mat-icon class="material-icons-outlined off">toggle_off</mat-icon>
-          }
-          <span>{{ pump.name }}</span>
-        </button>
-      }
-    </div>
-  } @else {
-    <div class="load-spinner">
-      <mat-spinner diameter="30"></mat-spinner>
-    </div>
-  }
-
-  <h2>Zónák</h2>
-  @if (state && state.outputs) {
-    <div class="card-container">
-      @for(zone of state.outputs.zones; track zone.id) {
-        <button mat-stroked-button color="foreground" class="card icon-switch"
-                (click)="click('zones',zone.id,!zone.on)">
-          @if (zone.on) {
-            <mat-icon class="material-icons-outlined on">toggle_on</mat-icon>
-          } @else {
-            <mat-icon class="material-icons-outlined off">toggle_off</mat-icon>
-          }
-          <span>{{ zone.name }}</span>
-        </button>
-      }
-    </div>
-  } @else {
-    <div class="load-spinner">
-      <mat-spinner diameter="30"></mat-spinner>
-    </div>
-  }
-
-  <h2>Szintek</h2>
-  @if (state && state.inputs) {
-    <div class="card-container">
-      @for(level of state.inputs.levels; track level.id) {
-        <div class="card-level {{level.on?'filled':'empty'}}">
+    <h2>Pumpák</h2>
+    @if (state && state.outputs) {
+        <div class="card-container">
+            @for (pump of state.outputs.pumps; track pump.id) {
+                <button mat-stroked-button color="foreground" class="card icon-switch"
+                        (click)="click('pumps',pump.id,!pump.on)">
+                    @if (pump.on) {
+                        <mat-icon class="material-symbols-outlined on">toggle_on</mat-icon>
+                    } @else {
+                        <mat-icon class="material-symbols-outlined off">toggle_off</mat-icon>
+                    }
+                    <span>{{ pump.name }}</span>
+                </button>
+            }
         </div>
-      }
-    </div>
-  } @else {
-    <div class="load-spinner">
-      <mat-spinner diameter="30"></mat-spinner>
-    </div>
-  }
+    } @else {
+        <div class="load-spinner">
+            <mat-spinner diameter="30"></mat-spinner>
+        </div>
+    }
 
-  <h2>Gombok</h2>
-  @if (state && state.inputs) {
-    <div class="card-container">
-      @for(button of state.inputs.buttons; track button.id) {
-        <button mat-stroked-button color="foreground"
-                class="card icon-switch"
-                (click)="click('buttons',button.id,!button.on)">
-          @if (button.on) {
-            <mat-icon class="material-icons-outlined on">toggle_on</mat-icon>
-          } @else {
-            <mat-icon class="material-icons-outlined off">toggle_off</mat-icon>
-          }
-          <span>{{ button.name }}</span>
-        </button>
-      }
-    </div>
-  } @else {
-    <div class="load-spinner">
-      <mat-spinner diameter="30"></mat-spinner>
-    </div>
-  }
+    <h2>Zónák</h2>
+    @if (state && state.outputs) {
+        <div class="card-container">
+            @for (zone of state.outputs.zones; track zone.id) {
+                <button mat-stroked-button color="foreground" class="card icon-switch"
+                        (click)="click('zones',zone.id,!zone.on)">
+                    @if (zone.on) {
+                        <mat-icon class="material-symbols-outlined on">toggle_on</mat-icon>
+                    } @else {
+                        <mat-icon class="material-symbols-outlined off">toggle_off</mat-icon>
+                    }
+                    <span>{{ zone.name }}</span>
+                </button>
+            }
+        </div>
+    } @else {
+        <div class="load-spinner">
+            <mat-spinner diameter="30"></mat-spinner>
+        </div>
+    }
 
-  <div class="time-container">
-    {{ remoteTime! }}
-  </div>
+    <h2>Szintek</h2>
+    @if (state && state.inputs) {
+        <div class="card-container">
+            @for (level of state.inputs.levels; track level.id) {
+                <div class="card-level {{level.on?'filled':'empty'}}">
+                </div>
+            }
+        </div>
+    } @else {
+        <div class="load-spinner">
+            <mat-spinner diameter="30"></mat-spinner>
+        </div>
+    }
+
+    <h2>Gombok</h2>
+    @if (state && state.inputs) {
+        <div class="card-container">
+            @for (button of state.inputs.buttons; track button.id) {
+                <button mat-stroked-button color="foreground"
+                        class="card icon-switch"
+                        (click)="click('buttons',button.id,!button.on)">
+                    @if (button.on) {
+                        <mat-icon class="material-symbols-outlined on">toggle_on</mat-icon>
+                    } @else {
+                        <mat-icon class="material-symbols-outlined off">toggle_off</mat-icon>
+                    }
+                    <span>{{ button.name }}</span>
+                </button>
+            }
+        </div>
+    } @else {
+        <div class="load-spinner">
+            <mat-spinner diameter="30"></mat-spinner>
+        </div>
+    }
+
+    <div class="time-container">
+        {{ remoteTime! }}
+    </div>
 </div>
