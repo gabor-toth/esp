@@ -1,79 +1,79 @@
-import {Program, ProgramDay, ProgramDayType, ProgramDayValue, ProgramZone} from '../program/program';
-import {PinsState} from '../pin/pin';
+import { Program, ProgramDay, ProgramDayType, ProgramDayValue, ProgramZone } from '../program/program';
+import { PinsState } from '../pin/pin';
 
 export const simulatedPinState = <PinsState>{
   inputs: {
     levels: [
       {
-        id:1,
-        name:"Level 1",
-        on:true
+        id: 1,
+        name: "Level 1",
+        on: true
       },
       {
-        id:2,
-        name:"Level 2",
-        on:true
+        id: 2,
+        name: "Level 2",
+        on: true
       },
       {
-        id:3,
-        name:"Level 3",
-        on:true
+        id: 3,
+        name: "Level 3",
+        on: true
       },
       {
-        id:4,
-        name:"Level 4",
-        on:false
+        id: 4,
+        name: "Level 4",
+        on: false
       }
     ]
   },
   outputs: {
     zones: [
       {
-        id:1,
-        name:"fű nagy",
-        on:true
+        id: 1,
+        name: "fű nagy",
+        on: true
       },
       {
-        id:2,
-        name:"fű elöl",
-        on:true
+        id: 2,
+        name: "fű elöl",
+        on: true
       },
       {
-        id:3,
-        name:"fű hátul",
-        on:true
+        id: 3,
+        name: "fű hátul",
+        on: true
       },
       {
-        id:4,
-        name:"kiskert elöl",
-        on:false
+        id: 4,
+        name: "kiskert elöl",
+        on: false
       },
       {
-        id:5,
-        name:"kis ókert hátul",
-        on:false
+        id: 5,
+        name: "kiskert hátul",
+        on: false
       },
       {
-        id:6,
-        name:"veteményes",
-        on:false
+        id: 6,
+        name: "veteményes",
+        on: false
       },
       {
-        id:7,
-        name:"ribizli",
-        on:false
+        id: 7,
+        name: "ribizli",
+        on: false
       }
     ],
     pumps: [
       {
-        id:1,
-        name:"öntöző",
-        on:false
+        id: 1,
+        name: "öntöző",
+        on: false
       },
       {
-        id:2,
-        name:"kút",
-        on:true
+        id: 2,
+        name: "kút",
+        on: true
       }
     ]
 
@@ -84,11 +84,11 @@ export const simulatedPrograms: Program[] = [
   {
     enabled: true,
     days: <ProgramDay>{
-      type: <ProgramDayType><unknown>ProgramDayType[ProgramDayType.onDays],
+      type: <ProgramDayType><unknown>ProgramDayType[ ProgramDayType.onDays ],
       onDays: <ProgramDayValue[]><unknown>[
-        ProgramDayValue[ProgramDayValue.Mon],
-        ProgramDayValue[ProgramDayValue.Wed],
-        ProgramDayValue[ProgramDayValue.Fri]
+        ProgramDayValue[ ProgramDayValue.Mon ],
+        ProgramDayValue[ ProgramDayValue.Wed ],
+        ProgramDayValue[ ProgramDayValue.Fri ]
       ]
     },
     index: 1,
@@ -118,11 +118,11 @@ export const simulatedPrograms: Program[] = [
   <Program>{
     enabled: false,
     days: <ProgramDay>{
-      type: <ProgramDayType><unknown>ProgramDayType[ProgramDayType.onDays],
+      type: <ProgramDayType><unknown>ProgramDayType[ ProgramDayType.onDays ],
       onDays: <ProgramDayValue[]><unknown>[
-        ProgramDayValue[ProgramDayValue.Mon],
-        ProgramDayValue[ProgramDayValue.Wed],
-        ProgramDayValue[ProgramDayValue.Fri]
+        ProgramDayValue[ ProgramDayValue.Mon ],
+        ProgramDayValue[ ProgramDayValue.Wed ],
+        ProgramDayValue[ ProgramDayValue.Fri ]
       ]
     },
     index: 2,

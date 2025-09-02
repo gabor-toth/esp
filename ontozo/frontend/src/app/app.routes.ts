@@ -22,8 +22,8 @@ export const routes: Routes = [
     path: 'program',
     component: ProgramsComponent
   },
-  {
-    path: 'admin',
-    component: AdminComponent
-  }
+  // {
+  //   path: 'admin',
+  //   component: AdminComponent
+  // }
 ];
