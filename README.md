@@ -7,7 +7,8 @@ Install
 =======
 
 ```
-sudo apt-get install bison ccache cmake dfu-util flex gperf libffi-dev libssl-dev libusb-1.0-0 ninja-build python3 python-is-python3 python3-pip python3-setuptools python3-venv
+sudo apt -y install bison ccache cmake curl dfu-util flex gperf libffi-dev libssl-dev libusb-1.0-0 
+sudo apt -y install ninja-build python3 python-is-python3 python3-pip python3-setuptools python3-venv
 #sudo apt-get install git wget 
 #sudo apt-mark auto libusb-1.0-0 python3 python3-setuptools wget 
 ```
@@ -44,6 +45,26 @@ In menuconfig check "Enable C++ extension" before adding the component
 mkdir -p components
 cd components
 git submodule add https://github.com/ttlappalainen/NMEA2000
+```
+
+NPM
+---
+
+- https://github.com/nvm-sh/nvm
+
+```
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+# run it on a new terminal
+nvm install 22 --save
+```
+
+NG
+--
+
+```
+cd ~/projects/ecp/ontozo/frontend
+npm install
+npm link @angular/cli
 ```
 
 Upgrade
