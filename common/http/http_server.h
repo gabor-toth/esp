@@ -19,7 +19,7 @@ extern "C" {
 
 typedef struct {
     char fs_base_path[ESP_VFS_PATH_MAX + 1];
-    char scratch[HTTP_SCRATCH_BUFFER_SIZE];
+    char scratch[HTTP_SCRATCH_BUFFER_SIZE + 1];
 } http_server_context_t;
 
 extern esp_err_t http_server_main( size_t http_server_context_size );

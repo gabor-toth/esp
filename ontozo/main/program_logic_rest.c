@@ -98,7 +98,7 @@ void rest_register_program_logic_handlers( httpd_handle_t server, http_server_co
             .handler = run_post_handler,
             .user_ctx = server_context
     };
-    httpd_register_uri_handler( server, &run_post_uri );
+    ESP_ERROR_CHECK( httpd_register_uri_handler( server, &run_post_uri ) );
 
     httpd_uri_t run_get_uri = {
             .uri = "/run",
@@ -106,5 +106,5 @@ void rest_register_program_logic_handlers( httpd_handle_t server, http_server_co
             .handler = run_get_handler,
             .user_ctx = server_context
     };
-    httpd_register_uri_handler( server, &run_get_uri );
+    ESP_ERROR_CHECK( httpd_register_uri_handler( server, &run_get_uri ) );
 }

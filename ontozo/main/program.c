@@ -1,20 +1,24 @@
+#include "config_version.h"
 #include "esp_log.h"
 #include "nvs.h"
 #include "nvs_main.h"
 #include "program.h"
 #include "program_json.h"
 #include <string.h>
+#include <sntp_main.h>
 
 static const char *LOG_TAG = "program";
 
 #define PROGRAM_INITIAL_COUNT   8
 #define NVS_NAME_PREFIX  "irr.prg."
 #define NVS_NAME_PROGRAM_COUNT  NVS_NAME_PREFIX "cnt"
+#define NVS_NAME_PROGRAM_VERSION  NVS_NAME_PREFIX "version"
 #define NVS_NAME_PROGRAM_MASK  NVS_NAME_PREFIX "%d"
 
 static int program_count = 0;
 static int program_max_count = PROGRAM_INITIAL_COUNT;
 static Program **programs;
+static ConfigVersion version;
 
 static void get_nvs_key( uint index, char *name_buffer, int name_buffer_size ) {
     snprintf( name_buffer, name_buffer_size, NVS_NAME_PROGRAM_MASK, index );
@@ -29,9 +33,15 @@ void program_destructor( Program *program ) {
     if ( program == NULL ) {
         return;
     }
-    free( program->name );
-    free( program->start_times );
-    free( program->zones );
+    if ( program->name ) {
+        free( program->name );
+    }
+    if ( program->start_times ) {
+        free( program->start_times );
+    }
+    if ( program->zones ) {
+        free( program->zones );
+    }
     free( program );
 }
 
@@ -49,6 +59,7 @@ static void write_program_to_nvs( Program *program ) {
     nvs_write_string( nvs_handle, nvs_key, json_out );
     free( json_out );
     nvs_set_u32( nvs_handle, NVS_NAME_PROGRAM_COUNT, program_count );
+    config_version_set_and_write( nvs_handle, &version );
     nvs_close_storage( nvs_handle );
 }
 
@@ -109,6 +120,7 @@ esp_err_t program_delete( int index ) {
         }
         get_nvs_key( program_count - 1, nvs_key, sizeof nvs_key );
         nvs_delete( nvs_handle, nvs_key );
+        config_version_set_and_write( nvs_handle, &version );
         nvs_close_storage( nvs_handle );
     }
     program_count--;
@@ -127,17 +139,24 @@ Program *program_get( int index ) {
     return programs[ index ];
 }
 
+const char *program_get_version() {
+    return version.string;
+}
+
 void program_init() {
-    programs = malloc( sizeof( Program * ) * program_max_count );
 
     uint32_t nvs_handle = nvs_open_storage();
     if ( nvs_handle == 0 ) {
         ESP_LOGW( LOG_TAG, "Unable to open NVS" );
+        return;
     }
     uint32_t count;
     char nvs_key[256];
 
     if ( nvs_get_u32( nvs_handle, NVS_NAME_PROGRAM_COUNT, &count ) == ESP_OK ) {
+        config_version_read( nvs_handle, NVS_NAME_PROGRAM_VERSION, &version );
+        program_max_count = (int) ( ( ( count - 1 ) / PROGRAM_INITIAL_COUNT + 1 ) * PROGRAM_INITIAL_COUNT );
+        programs = malloc( sizeof( Program * ) * program_max_count );
         ESP_LOGI( LOG_TAG, "Reading %ld programs", count );
         for ( uint i = 0; i < count; i++ ) {
             Program *program = NULL;
@@ -159,4 +178,3 @@ void program_init() {
     }
     nvs_close_storage( nvs_handle );
 }
-

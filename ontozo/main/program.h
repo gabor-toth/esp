@@ -26,7 +26,7 @@ typedef struct {
     bool interval_start_reset;
 } ProgramDay;
 
-typedef struct {
+typedef struct Program_ {
     int index;
     bool valid;
     bool enabled;
@@ -49,6 +49,8 @@ extern void program_change( Program *program );
 extern esp_err_t program_delete( int index );
 
 extern int program_get_count();
+
+extern const char *program_get_version();
 
 extern Program *program_get( int index );
 

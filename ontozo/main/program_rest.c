@@ -5,28 +5,21 @@
 
 static const char *LOG_TAG = "program_rest";
 
-#define PROGRAMS_PREFIX    "/programs/"
-#define PROGRAMS_URI    PROGRAMS_PREFIX "*"
+#define PROGRAMS_PREFIX    "/programs"
 
-static esp_err_t programs_get_handler( httpd_req_t *req, bool full_info ) {
+static esp_err_t programs_get_handler( httpd_req_t *req ) {
     char *json_out;
 
     debug_print_free_mem( LOG_TAG );
     rest_allow_cors( req );
-    programs_write_to_json( &json_out, full_info );
+    ESP_ERROR_CHECK( httpd_resp_set_hdr( req, "ETag", program_get_version() ) );
+
+    programs_write_to_json( &json_out );
     rest_set_json_content_type( req );
-    httpd_resp_sendstr( req, json_out );
+    ESP_ERROR_CHECK( httpd_resp_sendstr( req, json_out ) );
     free( (void *) json_out );
     debug_print_free_mem( LOG_TAG );
     return ESP_OK;
-}
-
-static esp_err_t programs_get_short_handler( httpd_req_t *req ) {
-    return programs_get_handler( req, false );
-}
-
-static esp_err_t programs_get_full_handler( httpd_req_t *req ) {
-    return programs_get_handler( req, true );
 }
 
 static esp_err_t program_get_handler( httpd_req_t *req ) {
@@ -36,7 +29,7 @@ static esp_err_t program_get_handler( httpd_req_t *req ) {
 
     debug_print_free_mem( LOG_TAG );
     rest_allow_cors( req );
-    if ( ( result = rest_parse_index( req->uri + strlen( PROGRAMS_PREFIX ), &index, true ) ) != ESP_OK ) {
+    if ( ( result = rest_parse_index( req->uri + strlen( PROGRAMS_PREFIX ) + 1, &index, true ) ) != ESP_OK ) {
         return rest_set_error_code( req, result, "Program index expected in URL" );
     }
     Program *program = program_get( index - 1 );
@@ -45,7 +38,7 @@ static esp_err_t program_get_handler( httpd_req_t *req ) {
     }
     program_write_to_string( program, &json_out );
     rest_set_json_content_type( req );
-    httpd_resp_sendstr( req, json_out );
+    ESP_ERROR_CHECK( httpd_resp_sendstr( req, json_out ) );
     free( (void *) json_out );
     debug_print_free_mem( LOG_TAG );
     return ESP_OK;
@@ -56,7 +49,7 @@ static void send_index_back( httpd_req_t *req, int index ) {
     snprintf( response, sizeof response,
               "{ \"%s\": %d }", FIELD_INDEX, index );
     rest_set_json_content_type( req );
-    httpd_resp_sendstr( req, response );
+    ESP_ERROR_CHECK( httpd_resp_sendstr( req, response ) );
 }
 
 static esp_err_t program_put_post_handler( httpd_req_t *req, bool is_put ) {
@@ -72,10 +65,12 @@ static esp_err_t program_put_post_handler( httpd_req_t *req, bool is_put ) {
     Program *program;
     program_read_from_json( root, &program );
     if ( !program->valid ) {
+        program_destructor( program );
         return httpd_resp_send_err( req, HTTPD_400_BAD_REQUEST, "Bad request, see log for more information" );
     }
     if ( !is_put ) {
         if ( program->index == 0 ) {
+            program_destructor( program );
             return httpd_resp_send_err( req, HTTPD_400_BAD_REQUEST, "Needs an index for POST" );
         }
         program_change( program );
@@ -85,6 +80,7 @@ static esp_err_t program_put_post_handler( httpd_req_t *req, bool is_put ) {
 
     send_index_back( req, program->index );
     debug_print_free_mem( LOG_TAG );
+//    heap_caps_check_integrity_all( true );
 
     return ESP_OK;
 }
@@ -101,7 +97,7 @@ static esp_err_t program_delete_handler( httpd_req_t *req ) {
     esp_err_t result;
     int index;
 
-    if ( ( result = rest_parse_index( req->uri + strlen( PROGRAMS_PREFIX ), &index, true ) ) != ESP_OK ) {
+    if ( ( result = rest_parse_index( req->uri + strlen( PROGRAMS_PREFIX ) + 1, &index, true ) ) != ESP_OK ) {
         return rest_set_error_code( req, result, "Program index expected in URL" );
     }
     if ( ( result = program_delete( index - 1 ) ) != ESP_OK ) {
@@ -114,50 +110,42 @@ static esp_err_t program_delete_handler( httpd_req_t *req ) {
 
 void rest_register_programs_handlers( httpd_handle_t server, http_server_context_t *server_context ) {
     httpd_uri_t program_put_uri = {
-            .uri = "/programs",
+            .uri = PROGRAMS_PREFIX "",
             .method = HTTP_PUT,
             .handler = program_put_handler,
             .user_ctx = server_context
     };
-    httpd_register_uri_handler( server, &program_put_uri );
+    ESP_ERROR_CHECK( httpd_register_uri_handler( server, &program_put_uri ) );
 
     httpd_uri_t program_post_uri = {
-            .uri = "/programs",
+            .uri = PROGRAMS_PREFIX "",
             .method = HTTP_POST,
             .handler = program_post_handler,
             .user_ctx = server_context
     };
-    httpd_register_uri_handler( server, &program_post_uri );
+    ESP_ERROR_CHECK( httpd_register_uri_handler( server, &program_post_uri ) );
 
     httpd_uri_t program_delete_uri = {
-            .uri = PROGRAMS_URI,
+            .uri = PROGRAMS_PREFIX "/*",
             .method = HTTP_DELETE,
             .handler = program_delete_handler,
             .user_ctx = server_context
     };
-    httpd_register_uri_handler( server, &program_delete_uri );
-
-    httpd_uri_t programs_get_short_uri = {
-            .uri = "/programs/short",
-            .method = HTTP_GET,
-            .handler = programs_get_short_handler,
-            .user_ctx = server_context
-    };
-    httpd_register_uri_handler( server, &programs_get_short_uri );
+    ESP_ERROR_CHECK( httpd_register_uri_handler( server, &program_delete_uri ) );
 
     httpd_uri_t program_get_uri = {
-            .uri = "/programs/*",
+            .uri = PROGRAMS_PREFIX "/*",
             .method = HTTP_GET,
             .handler = program_get_handler,
             .user_ctx = server_context
     };
-    httpd_register_uri_handler( server, &program_get_uri );
+    ESP_ERROR_CHECK( httpd_register_uri_handler( server, &program_get_uri ) );
 
     httpd_uri_t programs_get_uri = {
-            .uri = "/programs",
+            .uri = PROGRAMS_PREFIX "",
             .method = HTTP_GET,
-            .handler = programs_get_full_handler,
+            .handler = programs_get_handler,
             .user_ctx = server_context
     };
-    httpd_register_uri_handler( server, &programs_get_uri );
+    ESP_ERROR_CHECK( httpd_register_uri_handler( server, &programs_get_uri ) );
 }

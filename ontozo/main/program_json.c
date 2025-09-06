@@ -34,15 +34,15 @@ const char *const FIELD_INTERVAL_START_RESET = "intervalStartReset";
 const char *const VALUE_DAY_NAMES[] = { "", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
 #define VALUE_DAY_NAMES_COUNT (sizeof VALUE_DAY_NAMES / sizeof VALUE_DAY_NAMES[ 0 ])
 
-/*
-    {
-        "index": 3,
-        "enabled": true,
-        "name": "name",
-    }
- */
-
 static void read_head( const cJSON *root, Program *program ) {
+    /*
+        {
+            "index": 3,
+            "enabled": true,
+            "name": "name",
+        }
+     */
+
     {
         cJSON *name_element = cJSON_GetObjectItem( root, FIELD_NAME );
         if ( name_element == NULL ) {
@@ -244,12 +244,10 @@ void program_read_from_json( cJSON *root, Program **program_out ) {
     *program_out = program;
 }
 
-void write_head( cJSON *json, Program *program, bool full_info ) {
+void write_head( cJSON *json, Program *program ) {
     cJSON_AddNumberToObject( json, FIELD_INDEX, program->index );
     cJSON_AddStringToObject( json, FIELD_NAME, program->name );
-    if ( full_info ) {
-        cJSON_AddBoolToObject( json, FIELD_ENABLED, program->enabled && program->days.type != unused );
-    }
+    cJSON_AddBoolToObject( json, FIELD_ENABLED, program->enabled && program->days.type != unused );
 }
 
 void write_days( cJSON *json, Program *program ) {
@@ -262,26 +260,26 @@ void write_days( cJSON *json, Program *program ) {
             "intervalStartReset": false,
         },
      */
-    cJSON *days = cJSON_AddObjectToObject( json, FIELD_DAYS );
+    cJSON *jsonDays = cJSON_AddObjectToObject( json, FIELD_DAYS );
     const char *type_as_string = program->days.type == onDays ? VALUE_TYPE_ON_DAYS :
                                  program->days.type == interval ? VALUE_TYPE_INTERVAL :
                                  VALUE_TYPE_UNUSED;
-    cJSON_AddStringToObject( days, FIELD_TYPE, type_as_string );
+    cJSON_AddStringToObject( jsonDays, FIELD_TYPE, type_as_string );
 
     if ( program->days.type == onDays || program->days.on_days != 0 ) {
-        cJSON *days_array = cJSON_AddArrayToObject( days, FIELD_ON_DAYS );
+        cJSON *jsonDaysArray = cJSON_AddArrayToObject( jsonDays, FIELD_ON_DAYS );
         for ( int day_index = 1; day_index <= VALUE_DAY_NAMES_COUNT; day_index++ ) {
             if ( program->days.on_days & ( 1 << day_index ) ) {
-                cJSON_AddItemToArray( days_array, cJSON_CreateString( VALUE_DAY_NAMES[ day_index ] ) );
+                cJSON_AddItemToArray( jsonDaysArray, cJSON_CreateString( VALUE_DAY_NAMES[ day_index ] ) );
             }
         }
     }
 
     if ( program->days.type == interval || program->days.interval_days != 0 ) {
-        cJSON_AddNumberToObject( days, FIELD_INTERVAL_DAYS, program->days.interval_days );
+        cJSON_AddNumberToObject( jsonDays, FIELD_INTERVAL_DAYS, program->days.interval_days );
     }
     if ( program->days.type == interval || program->days.interval_start_day != 0 ) {
-        cJSON_AddStringToObject( days, FIELD_INTERVAL_STARTS_ON,
+        cJSON_AddStringToObject( jsonDays, FIELD_INTERVAL_STARTS_ON,
                                  VALUE_DAY_NAMES[ program->days.interval_start_day ] );
     }
 }
@@ -296,11 +294,11 @@ void write_start_times( cJSON *json, Program *program ) {
 
     char format_buf[32];
 
-    cJSON *array = cJSON_AddArrayToObject( json, FIELD_START_TIMES );
+    cJSON *jsonArray = cJSON_AddArrayToObject( json, FIELD_START_TIMES );
     for ( int i = 0; i < program->start_times_count; i++ ) {
         int start_time = program->start_times[ i ];
         snprintf( format_buf, sizeof format_buf, "%02d:%02d", start_time / 100, start_time % 100 );
-        cJSON_AddItemToArray( array, cJSON_CreateString( format_buf ) );
+        cJSON_AddItemToArray( jsonArray, cJSON_CreateString( format_buf ) );
     }
 }
 
@@ -312,36 +310,36 @@ void write_zones( cJSON *json, Program *program ) {
             {"zoneId": 1, "duration": 60},
         ],
      */
-    cJSON *array = cJSON_AddArrayToObject( json, FIELD_ZONES );
+    cJSON *jsonArray = cJSON_AddArrayToObject( json, FIELD_ZONES );
     for ( int i = 0; i < program->zones_count; i++ ) {
         ProgramZone *zone = program->zones + i;
-        cJSON *item = cJSON_CreateObject();
-        cJSON_AddItemToArray( array, item );
-        cJSON_AddNumberToObject( item, FIELD_ZONE_ID, zone->zone_id + 1 );
-        cJSON_AddNumberToObject( item, FIELD_DURATION, zone->duration_in_seconds );
+        cJSON *jsonItem = cJSON_CreateObject();
+        cJSON_AddItemToArray( jsonArray, jsonItem );
+        cJSON_AddNumberToObject( jsonItem, FIELD_ZONE_ID, zone->zone_id + 1 );
+        cJSON_AddNumberToObject( jsonItem, FIELD_DURATION, zone->duration_in_seconds );
     }
 }
 
-static void add_program_to_json( Program *program, cJSON *root, bool full_info ) {
-    write_head( root, program, full_info );
-    if ( full_info ) {
-        write_days( root, program );
-        write_start_times( root, program );
-        write_zones( root, program );
-    }
+static void add_program_to_json( Program *program, cJSON *root ) {
+    write_head( root, program );
+    write_days( root, program );
+    write_start_times( root, program );
+    write_zones( root, program );
 }
 
 void program_write_to_string( Program *program, char **json_out ) {
     cJSON *root = cJSON_CreateObject();
 
-    add_program_to_json( program, root, true );
+    add_program_to_json( program, root );
 
     *json_out = cJSON_Print( root );
     cJSON_Delete( root );
 }
 
-void programs_write_to_json( char **json_out, bool full_info ) {
-    cJSON *root = cJSON_CreateArray();
+void programs_write_to_json( char **json_out ) {
+    cJSON *jsonRoot = cJSON_CreateObject();
+    cJSON_AddStringToObject( jsonRoot, "version", program_get_version() );
+    cJSON *jsonPrograms = cJSON_AddArrayToObject( jsonRoot, "programs" );
 
     int count = program_get_count();
     for ( int i = 0; i < count; i++ ) {
@@ -349,14 +347,13 @@ void programs_write_to_json( char **json_out, bool full_info ) {
         if ( program == NULL ) {
             continue;
         }
-        cJSON *item = cJSON_CreateObject();
-        cJSON_AddItemToArray( root, item );
-        add_program_to_json( program, item, full_info );
+        cJSON *jsonProgram = cJSON_CreateObject();
+        cJSON_AddItemToArray( jsonPrograms, jsonProgram );
+        add_program_to_json( program, jsonProgram );
         // TODO FIELD_PERCENTAGE
         // TODO FIELD_NEXT_START_TIME
     }
 
-    *json_out = cJSON_Print( root );
-    cJSON_Delete( root );
+    *json_out = cJSON_Print( jsonRoot );
+    cJSON_Delete( jsonRoot );
 }
-

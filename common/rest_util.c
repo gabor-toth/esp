@@ -7,7 +7,7 @@
 #include "sntp_main.h"
 
 void rest_set_json_content_type( httpd_req_t *req ) {
-    httpd_resp_set_type( req, HTTPD_TYPE_JSON );
+    ESP_ERROR_CHECK( httpd_resp_set_type( req, HTTPD_TYPE_JSON ) );
 }
 
 esp_err_t rest_set_error_code( httpd_req_t *req, esp_err_t esp_err, const char *message ) {
@@ -29,7 +29,7 @@ esp_err_t rest_set_error_code( httpd_req_t *req, esp_err_t esp_err, const char *
 
 esp_err_t rest_parse_index( const char *uri, int *index, bool needed ) {
     char *end;
-    *index = strtol( uri, &end, 10 );
+    *index = (int) strtol( uri, &end, 10 );
     if ( *end != 0 || ( needed && end == uri ) ) {
         printf( "Numeric index expected\n" );
         return ESP_ERR_INVALID_ARG;

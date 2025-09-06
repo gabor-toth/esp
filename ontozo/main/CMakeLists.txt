@@ -16,6 +16,7 @@ idf_component_register(
         "../../common/wifi/scan.c"
         "../../common/wifi/wifi_connect.c"
         "../../common/wifi/wifi_main.c"
+        "config_version.c"
         "gpio_logic.c"
         "gpio_rest.c"
         "program.c"

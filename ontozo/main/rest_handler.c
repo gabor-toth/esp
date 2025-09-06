@@ -23,14 +23,14 @@ static void rest_register_options_handlers( httpd_handle_t server, http_server_c
             .handler = options_handler,
             .user_ctx = server_context
     };
-    httpd_register_uri_handler( server, &options_uri );
+    ESP_ERROR_CHECK( httpd_register_uri_handler( server, &options_uri ) );
 }
 
 static void
 handler_on_http_server_start( void *dummy, esp_event_base_t event_base, int32_t event_id, void *event_data ) {
     http_server_server_event_data *data = event_data;
-    http_server_context_t *server_context = http_get_server_context(data->hd, GLOBAL_USER_CONTEXT_SERVER_CONTEXT);
-    
+    http_server_context_t *server_context = http_get_server_context( data->hd, GLOBAL_USER_CONTEXT_SERVER_CONTEXT );
+
     rest_register_options_handlers( data->hd, server_context );
     rest_register_gpio_handlers( data->hd, server_context );
     rest_register_programs_handlers( data->hd, server_context );
