@@ -22,7 +22,7 @@ typedef struct {
     char scratch[HTTP_SCRATCH_BUFFER_SIZE + 1];
 } http_server_context_t;
 
-extern esp_err_t http_server_main( size_t http_server_context_size );
+extern esp_err_t http_server_main( size_t http_server_context_size, int max_uri_handlers );
 
 extern void *http_get_server_context( httpd_handle_t handle, int context_id );
 

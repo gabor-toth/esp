@@ -61,6 +61,8 @@ extern void gpio_set_pin_state_forced( bool is_input, int class_id, int index, b
 
 extern bool gpio_set_pin_data( bool is_input, int class_id, int index, PinData *pin_data );
 
+extern const char *gpio_get_version();
+
 #ifdef __cplusplus
 }
 #endif

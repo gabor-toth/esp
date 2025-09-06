@@ -23,7 +23,7 @@ void app_main( void ) {
     sntp_main();
     discovery_register();
 
-    http_server_main( DEFAULT_HTTP_SERVER_CONTEXT_SIZE );
+    http_server_main( DEFAULT_HTTP_SERVER_CONTEXT_SIZE, 24 );
     http_static_files_register();
     rest_register();
     ESP_ERROR_CHECK( wifi_main( "ontozo" ) );

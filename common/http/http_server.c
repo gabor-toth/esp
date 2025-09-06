@@ -23,6 +23,7 @@ static bool stopping = false;
 ESP_EVENT_DEFINE_BASE( HTTP_SERVER_EVENT );
 
 static char *wifi_ssid = NULL;
+static int max_uri_handlers;
 
 static esp_err_t open_fn_callback( httpd_handle_t hd, int sockfd ) {
     http_server_file_descriptor_event_data data = {
@@ -62,7 +63,7 @@ static esp_err_t http_server_start( const char *wifi_ssid, size_t http_server_co
     config.close_fn = close_fn_callback;
     config.global_user_ctx = calloc( GLOBAL_USER_CONTEXT_COUNT, sizeof( void * ) );
     config.global_user_ctx_free_fn = free_global_user_ctx;
-    config.max_uri_handlers = 16;
+    config.max_uri_handlers = max_uri_handlers ? max_uri_handlers : 16;
     config.open_fn = open_fn_callback;
     config.uri_match_fn = httpd_uri_match_wildcard;
 
@@ -162,7 +163,8 @@ void *http_get_server_context( httpd_handle_t handle, int context_id ) {
     return guc[ context_id ];
 }
 
-esp_err_t http_server_main( size_t http_server_context_size ) {
+esp_err_t http_server_main( size_t http_server_context_size, int _max_uri_handlers ) {
+    max_uri_handlers = _max_uri_handlers;
     if ( http_server_context_size == DEFAULT_HTTP_SERVER_CONTEXT_SIZE ) {
         http_server_context_size = sizeof( http_server_context_t );
     }

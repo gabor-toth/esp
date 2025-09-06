@@ -1,9 +1,10 @@
-#include <string.h>
+#include "config_version.h"
 #include <esp_log.h>
-#include "gpio_task.h"
-#include "nvs_main.h"
 #include "gpio_define.h"
 #include "gpio_json.h"
+#include "gpio_task.h"
+#include "nvs_main.h"
+#include <string.h>
 
 static const char *LOG_TAG = "gpio";
 
@@ -16,7 +17,11 @@ static const char *LOG_TAG = "gpio";
 
 #define MAX_PIN_CLASSES 4
 
+#define NVS_KEY_PREFIX  "gpio."
+#define NVS_KEY_VERSION  NVS_KEY_PREFIX "version"
+
 static nvs_handle_t nvs_storage_handle;
+static ConfigVersion version;
 
 typedef struct {
     gpio_num_t pin;
@@ -211,6 +216,7 @@ static void add_output_pins( void *user_context ) {
 
 void gpio_init( void *user_context, gpio_changed_callback_t gpio_changed_callback ) {
     nvs_storage_handle = nvs_open_storage();
+    config_version_read( nvs_storage_handle, NVS_KEY_VERSION, &version );
     add_input_pins( user_context, gpio_changed_callback );
     add_output_pins( user_context );
     nvs_close_storage( nvs_storage_handle );
@@ -297,7 +303,12 @@ bool gpio_set_pin_data( bool is_input, int class_id, int index, PinData *pin_dat
         char *json_string = gpio_data_to_json_string( pin_data );
         char nvs_key[256];
         get_nvs_key( is_input, class_id, index, nvs_key, sizeof nvs_key );
-        nvs_open_and_write_string( nvs_key, json_string );
+
+        nvs_handle_t nvs_handle = nvs_open_storage();
+        nvs_write_string( nvs_handle, nvs_key, json_string );
+        config_version_set_and_write( nvs_handle, &version );
+        nvs_close_storage( nvs_handle );
+
         free( json_string );
     }
     return true;
@@ -310,4 +321,8 @@ void gpio_set_delays( bool is_input, int class_id, int index, int delay_ms_going
     Pin *pin = &pin_definitions[ is_input ].classes[ class_id ].pins[ index ];
     pin->delay_ms_going_high = delay_ms_going_high;
     pin->delay_ms_going_low = delay_ms_going_low;
+}
+
+const char *gpio_get_version() {
+    return version.string;
 }

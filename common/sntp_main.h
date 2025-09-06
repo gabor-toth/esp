@@ -1,10 +1,7 @@
-//
-// Created by tothg on 2022.06.03..
-//
-
 #ifndef ONTOZO_SNTP_MAIN_H
 #define ONTOZO_SNTP_MAIN_H
 
+#include <stdbool.h>
 #include <stddef.h>
 
 #ifdef __cplusplus
