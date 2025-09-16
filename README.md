@@ -115,7 +115,7 @@ Find out device
 ```
 $ l /dev/ttyUSB*
 crw-rw---- 1 root dialout 188, 0 ápr    5 20:01 /dev/ttyUSB0
-sudo usermod -a -G dialout tothg
+sudo usermod -a -G dialout gabor
 ```
 
 If there's no ttyUSB0
@@ -133,7 +133,7 @@ Copy init.sh, run it
 
 idf.py set-target esp32s2
 idf.py menuconfig
-idf.py -p /dev/ttyUSB0 flash monitor
+idf.py -p /dev/ttyUSB0 flash -b 3000000 monitor
 ```
 
 In CLion
@@ -175,7 +175,7 @@ CLion
 CMake environment (Settings / Build, Execution, Deployment / CMake / Environment)
 
 ```
-IDF_PATH=/home/tothg/own/projects/esp-idf;PATH=/home/tothg/own/projects/esp-idf/components/esptool_py/esptool:/home/tothg/own/projects/esp-idf/components/espcoredump:/home/tothg/own/projects/esp-idf/components/partition_table:/home/tothg/own/projects/esp-idf/components/app_update:/home/tothg/.espressif/tools/xtensa-esp-elf-gdb/12.1_20221002/xtensa-esp-elf-gdb/bin:/home/tothg/.espressif/tools/xtensa-esp32-elf/esp-2022r1-11.2.0/xtensa-esp32-elf/bin:/home/tothg/.espressif/tools/xtensa-esp32s2-elf/esp-2022r1-11.2.0/xtensa-esp32s2-elf/bin:/home/tothg/.espressif/tools/riscv32-esp-elf/esp-2022r1-11.2.0/riscv32-esp-elf/bin:/home/tothg/.espressif/tools/esp32ulp-elf/2.35_20220830/esp32ulp-elf/bin:/home/tothg/.espressif/tools/cmake/3.24.0/bin:/home/tothg/.espressif/tools/openocd-esp32/v0.11.0-esp32-20221026/openocd-esp32/bin:/home/tothg/.espressif/tools/xtensa-esp-elf-gdb/12.1_20221002/xtensa-esp-elf-gdb/bin:/home/tothg/.espressif/tools/xtensa-esp32-elf/esp-2022r1-11.2.0/xtensa-esp32-elf/bin:/home/tothg/.espressif/tools/xtensa-esp32s2-elf/esp-2022r1-11.2.0/xtensa-esp32s2-elf/bin:/home/tothg/.espressif/tools/riscv32-esp-elf/esp-2022r1-11.2.0/riscv32-esp-elf/bin:/home/tothg/.espressif/tools/esp32ulp-elf/2.35_20220830/esp32ulp-elf/bin:/home/tothg/.espressif/tools/cmake/3.24.0/bin:/home/tothg/.espressif/tools/openocd-esp32/v0.11.0-esp32-20221026/openocd-esp32/bin:/home/tothg/.espressif/python_env/idf5.1_py3.10_env/bin:/home/tothg/own/projects/esp-idf/tools:/home/tothg/.local/bin:/home/tothg/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin:/home/tothg/jpm/bin:/opt/mssql-tools/bin
+IDF_PATH=/home/gabor/projects/esp/esp-idf;PATH=home/gabor/projects/esp/esp-idf/components/espcoredump:/home/gabor/projects/esp/esp-idf/components/partition_table:/home/gabor/projects/esp/esp-idf/components/app_update:/home/gabor/.espressif/tools/xtensa-esp-elf-gdb/14.2_20240403/xtensa-esp-elf-gdb/bin:/home/gabor/.espressif/tools/xtensa-esp-elf/esp-14.2.0_20241119/xtensa-esp-elf/bin:/home/gabor/.espressif/tools/riscv32-esp-elf/esp-14.2.0_20241119/riscv32-esp-elf/bin:/home/gabor/.espressif/tools/esp32ulp-elf/2.38_20240113/esp32ulp-elf/bin:/home/gabor/.espressif/tools/cmake/3.30.2/bin:/home/gabor/.espressif/tools/openocd-esp32/v0.12.0-esp32-20250226/openocd-esp32/bin:/home/gabor/.espressif/python_env/idf5.4_py3.12_env/bin:/home/gabor/projects/esp/esp-idf/tools:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin
 ```
 
 Windows
@@ -190,8 +190,8 @@ python C:\Espressif\frameworks\esp-idf-v5.2.1-2\tools\idf_tools.py install-pytho
 Something else
 
 ```
-PATH += /home/tothg/.espressif/tools/xtensa-esp32-elf/esp-2021r2-patch3-8.4.0/xtensa-esp32-elf/bin:/home/tothg/.espressif/tools/xtensa-clang/12.0.1-d9341b81fc/xtensa-esp32-elf-clang/bin:/home/tothg/.espressif/tools/esp32ulp-elf/2.28.51-esp-20191205/esp32ulp-elf-binutils/bin:/home/tothg/.espressif/tools/cmake/3.20.3/bin:/home/tothg/.espressif/tools/openocd-esp32/v0.11.0-esp32-20211220/openocd-esp32/bin:/home/tothg/.espressif/tools/ninja/1.10.2/:/home/tothg/.espressif/python_env/idf5.0_py3.8_env/bin:/home/tothg/own/projects/esp-idf/tools:
-IDF_PATH = /home/tothg/own/projects/esp-idf
+PATH += /home/tothg/.espressif/tools/xtensa-esp32-elf/esp-2021r2-patch3-8.4.0/xtensa-esp32-elf/bin:/home/tothg/.espressif/tools/xtensa-clang/12.0.1-d9341b81fc/xtensa-esp32-elf-clang/bin:/home/tothg/.espressif/tools/esp32ulp-elf/2.28.51-esp-20191205/esp32ulp-elf-binutils/bin:/home/tothg/.espressif/tools/cmake/3.20.3/bin:/home/tothg/.espressif/tools/openocd-esp32/v0.11.0-esp32-20211220/openocd-esp32/bin:/home/tothg/.espressif/tools/ninja/1.10.2/:/home/tothg/.espressif/python_env/idf5.0_py3.8_env/bin:/home/gabor/projects/esp-idf/tools:
+IDF_PATH = /home/gabor/projects/esp-idf
 ```
 
 USB on Windows
