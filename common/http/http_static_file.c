@@ -120,6 +120,7 @@ static esp_err_t http_file_get_handler( httpd_req_t *req ) {
     strlcpy( filepath, http_context->fs_base_path, sizeof( filepath ) );
     if ( req->uri[ strlen( req->uri ) - 1 ] == '/' || !strchr( req->uri, '.' ) ) {
         // serve index.html for Angular routes
+        ESP_LOGW( TAG, "index.html for %s", req->uri );
         strlcat( filepath, "/index.html", sizeof( filepath ) );
     } else {
         strlcat( filepath, req->uri, sizeof( filepath ) );

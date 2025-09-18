@@ -1,4 +1,5 @@
 #include "debug_helper.h"
+#include "esp_log.h"
 #include "program_json.h"
 #include "program_rest.h"
 #include "rest_util.h"
@@ -9,6 +10,8 @@ static const char *LOG_TAG = "program_rest";
 
 static esp_err_t programs_get_handler( httpd_req_t *req ) {
     char *json_out;
+
+    ESP_LOGI( LOG_TAG, "%s %s", http_method_str( req->method ), req->uri );
 
     debug_print_free_mem( LOG_TAG );
     rest_allow_cors( req );
@@ -26,6 +29,8 @@ static esp_err_t program_get_handler( httpd_req_t *req ) {
     char *json_out;
     int index;
     esp_err_t result;
+
+    ESP_LOGI( LOG_TAG, "%s %s", http_method_str( req->method ), req->uri );
 
     debug_print_free_mem( LOG_TAG );
     rest_allow_cors( req );
@@ -54,6 +59,8 @@ static void send_index_back( httpd_req_t *req, int index ) {
 
 static esp_err_t program_put_post_handler( httpd_req_t *req, bool is_put ) {
     esp_err_t result;
+
+    ESP_LOGI( LOG_TAG, "%s %s", http_method_str( req->method ), req->uri );
 
     debug_print_free_mem( LOG_TAG );
     cJSON *root;
@@ -96,6 +103,8 @@ static esp_err_t program_post_handler( httpd_req_t *req ) {
 static esp_err_t program_delete_handler( httpd_req_t *req ) {
     esp_err_t result;
     int index;
+
+    ESP_LOGI( LOG_TAG, "%s %s", http_method_str( req->method ), req->uri );
 
     if ( ( result = rest_parse_index( req->uri + strlen( PROGRAMS_PREFIX ) + 1, &index, true ) ) != ESP_OK ) {
         return rest_set_error_code( req, result, "Program index expected in URL" );

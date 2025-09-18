@@ -2,9 +2,13 @@
 
 #if defined(CONFIG_EXAMPLE_CONNECT_WIFI)
 
+#include "esp_http_server.h"
+#include "esp_log.h"
 #include "cJSON.h"
 #include "rest_util.h"
 #include "sntp_main.h"
+
+static const char *TAG = "rest_util";
 
 void rest_set_json_content_type( httpd_req_t *req ) {
     ESP_ERROR_CHECK( httpd_resp_set_type( req, HTTPD_TYPE_JSON ) );
@@ -24,6 +28,7 @@ esp_err_t rest_set_error_code( httpd_req_t *req, esp_err_t esp_err, const char *
             http_error = HTTPD_500_INTERNAL_SERVER_ERROR;
             break;
     }
+    ESP_LOGW( TAG, "%s %s: %s", http_method_str( req->method ), req->uri, message );
     return httpd_resp_send_err( req, http_error, message );
 }
 
@@ -31,7 +36,6 @@ esp_err_t rest_parse_index( const char *uri, int *index, bool needed ) {
     char *end;
     *index = (int) strtol( uri, &end, 10 );
     if ( *end != 0 || ( needed && end == uri ) ) {
-        printf( "Numeric index expected\n" );
         return ESP_ERR_INVALID_ARG;
     }
     return ESP_OK;

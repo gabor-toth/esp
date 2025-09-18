@@ -16,6 +16,8 @@ typedef struct {
 } PinHandlerContext;
 
 static esp_err_t state_get_handler( httpd_req_t *req ) {
+    ESP_LOGI( LOG_TAG, "%s %s", http_method_str( req->method ), req->uri );
+
     rest_allow_cors( req );
     cJSON *root = cJSON_CreateObject();
     cJSON_AddStringToObject( root, "version", gpio_get_version() );
@@ -42,6 +44,8 @@ static esp_err_t state_get_handler( httpd_req_t *req ) {
 }
 
 static esp_err_t pins_get_handler( httpd_req_t *req ) {
+    ESP_LOGI( LOG_TAG, "%s %s", http_method_str( req->method ), req->uri );
+
     rest_allow_cors( req );
     cJSON *root = cJSON_CreateObject();
     cJSON_AddStringToObject( root, "version", gpio_get_version() );
@@ -99,7 +103,9 @@ static esp_err_t pins_put_handler_inner( httpd_req_t *req, cJSON *root, bool is_
         ESP_LOGI( LOG_TAG, "%s %d manual changed to %d", class_name, pin_index + 1, pin_data.is_manual );
     }
     if ( !changed ) {
-        return httpd_resp_send_err( req, HTTPD_400_BAD_REQUEST, "Nothing changed" );
+        char *msg = "Nothing changed";
+        ESP_LOGW( LOG_TAG, "%s %s: %s", http_method_str( req->method ), req->uri, msg );
+        return httpd_resp_send_err( req, HTTPD_400_BAD_REQUEST, msg );
     }
     gpio_set_pin_data( is_input, class, pin_index, &pin_data );
 
@@ -109,6 +115,8 @@ static esp_err_t pins_put_handler_inner( httpd_req_t *req, cJSON *root, bool is_
 }
 
 static esp_err_t pins_put_config_handler( httpd_req_t *req ) {
+    ESP_LOGI( LOG_TAG, "%s %s", http_method_str( req->method ), req->uri );
+
     cJSON *root;
     esp_err_t result;
 
@@ -123,6 +131,8 @@ static esp_err_t pins_put_config_handler( httpd_req_t *req ) {
 }
 
 static esp_err_t pins_put_state_handler( httpd_req_t *req ) {
+    ESP_LOGI( LOG_TAG, "%s %s", http_method_str( req->method ), req->uri );
+
     PinHandlerContext *context = (PinHandlerContext *) req->user_ctx;
 
     const char *ptr = req->uri + strlen( PINS_PREFIX ) + 1;
@@ -185,7 +195,9 @@ static void rest_register_put_handlers( httpd_handle_t server, http_server_conte
         int class_count = gpio_get_number_of_classes( type );
         for ( int class = 0; class < class_count; class++ ) {
             snprintf( uri, sizeof uri, PINS_PREFIX "/%s", gpio_get_class_name( type, class ) );
-            PinHandlerContext *context = malloc( sizeof( PinHandlerContext ) );
+            PinHandlerContext *context;
+
+            context = malloc( sizeof( PinHandlerContext ) );
             context->server_context = server_context;
             context->type = type;
             context->class = class;
@@ -196,6 +208,7 @@ static void rest_register_put_handlers( httpd_handle_t server, http_server_conte
                     .user_ctx = context
             };
             ESP_ERROR_CHECK( httpd_register_uri_handler( server, &uri_definition ) );
+
             snprintf( uri, sizeof uri, PINS_PREFIX "/%s/*", gpio_get_class_name( type, class ) );
             uri_definition.handler = pins_put_state_handler;
             uri_definition.uri = uri;

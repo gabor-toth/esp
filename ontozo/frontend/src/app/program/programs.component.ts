@@ -14,20 +14,20 @@ import {
 import { ProgramService } from "./program.service";
 import { animate, state, style, transition, trigger } from '@angular/animations';
 import { RunService } from "./run.service";
-import {MatIcon} from '@angular/material/icon';
-import {MatProgressSpinner} from '@angular/material/progress-spinner';
-import {MatButton, MatFabButton, MatIconButton} from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { MatButton, MatFabButton, MatIconButton } from '@angular/material/button';
 
-@Component({
+@Component( {
   selector: 'app-program',
   templateUrl: './programs.component.html',
-  styleUrls: ['./programs.component.scss'],
+  styleUrls: [ './programs.component.scss' ],
   animations: [
-    trigger('detailExpand', [
-      state('collapsed', style({height: '0px', minHeight: '0'})),
-      state('expanded', style({height: '*'})),
-      transition('expanded <=> collapsed', animate('225ms cubic-bezier(0.4, 0.0, 0.2, 1)')),
-    ]),
+    trigger( 'detailExpand', [
+      state( 'collapsed', style( { height: '0px', minHeight: '0' } ) ),
+      state( 'expanded', style( { height: '*' } ) ),
+      transition( 'expanded <=> collapsed', animate( '225ms cubic-bezier(0.4, 0.0, 0.2, 1)' ) ),
+    ] ),
   ],
   imports: [
     MatIcon,
@@ -46,7 +46,7 @@ import {MatButton, MatFabButton, MatIconButton} from '@angular/material/button';
     MatHeaderRowDef,
     MatRowDef
   ]
-})
+} )
 export class ProgramsComponent implements OnInit {
   displayedColumns: string[] = [ 'name', 'enabled', 'start', 'expand' ];
   displayedColumnsMobile: string[] = [ 'name', 'enabled', 'expand' ];
@@ -79,13 +79,12 @@ export class ProgramsComponent implements OnInit {
   }
 
   clickExpand( element: Program ) {
-    let component = this;
     this.expandedElement = this.expandedElement === element ? null : element;
   }
 
   startProgram( element: Program ) {
     this.runService.start( element.index ).subscribe( {
-      next( dummy ) {
+      next() {
         // toaster: add success
       },
       error( err ) {
@@ -97,7 +96,7 @@ export class ProgramsComponent implements OnInit {
 
   stopProgram() {
     this.runService.stop().subscribe( {
-      next( dummy ) {
+      next() {
       },
       error( err ) {
         // TODO toaster: add error
@@ -108,7 +107,7 @@ export class ProgramsComponent implements OnInit {
 
   nextZone() {
     this.runService.nextZone().subscribe( {
-      next( dummy ) {
+      next() {
       },
       error( err ) {
         // TODO toaster: add error
@@ -119,7 +118,7 @@ export class ProgramsComponent implements OnInit {
 
   nextProgram() {
     this.runService.nextProgram().subscribe( {
-      next( dummy ) {
+      next() {
       },
       error( err ) {
         console.error( 'Error moving to next zone', err );
@@ -128,6 +127,6 @@ export class ProgramsComponent implements OnInit {
   }
 
   hasDay( program: Program, dayIndex: number ): boolean {
-    return program.days.onDays.find( e => String( e.valueOf() ) == ProgramDayValue[ dayIndex ] ) != null;
+    return program.days.onDays.find( e => e.valueOf().toString() == ProgramDayValue[ dayIndex ] ) != null;
   }
 }

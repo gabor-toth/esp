@@ -14,5 +14,4 @@ export class PinUpdater extends TimedUpdater<PinsState> {
   protected override getState() {
     return this.pinService.getState();
   }
-
 }

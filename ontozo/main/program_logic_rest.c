@@ -16,6 +16,8 @@ static esp_err_t run_post_handler( httpd_req_t *req ) {
     int index;
     const char *uri = req->uri + strlen( RUN_PREFIX );
 
+    ESP_LOGI( LOG_TAG, "%s %s", http_method_str( req->method ), req->uri );
+
     rest_allow_cors( req );
     if ( strcmp( uri, "stop" ) == 0 ) {
         program_logic_stop();
@@ -68,7 +70,10 @@ static void add_program_json( cJSON *jsonPrograms, int programIndex, bool isActi
 }
 
 static esp_err_t run_get_handler( httpd_req_t *req ) {
+    ESP_LOGI( LOG_TAG, "%s %s", http_method_str( req->method ), req->uri );
+
     cJSON *jsonRoot = cJSON_CreateObject();
+    cJSON_AddStringToObject( jsonRoot, "version", program_get_version() );
 
     RunningProgramState state;
     program_logic_get_state( &state );

@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { PinsState } from "../pin/pin";
+import { PinsConfiguration, PinsState } from "../pin/pin";
 import { PinService } from "../pin/pin.service";
 import { animate, state, style, transition, trigger } from "@angular/animations";
 import { RunService } from "../program/run.service";
@@ -7,7 +7,6 @@ import { RunProgramState, RunState, RunZoneState } from "../program/run";
 import { PinUpdater } from "../pin/pin.updater";
 import { Subscription } from "rxjs";
 import { RunUpdater } from "../program/run.updater";
-import { ProgramShort } from "../program/program";
 import { ProgramService } from "../program/program.service";
 import { MatSnackBar } from "@angular/material/snack-bar";
 import { SnackbarErrorComponent } from "../common/snackbar-error/snackbar-error.component";
@@ -18,6 +17,7 @@ import { MatFormField } from '@angular/material/form-field';
 import { MatOption, MatSelect } from '@angular/material/select';
 import { MatButton } from '@angular/material/button';
 import { MatCard, MatCardContent, MatCardHeader, MatCardTitle } from "@angular/material/card";
+import { Program } from "../program/program";
 
 @Component( {
   selector: 'app-state',
@@ -45,13 +45,14 @@ import { MatCard, MatCardContent, MatCardHeader, MatCardTitle } from "@angular/m
   ]
 } )
 export class StateComponent implements OnInit {
+  pins: PinsConfiguration | undefined;
   pinState: PinsState | undefined;
   pinStateAsString = "";
   pinUpdaterSubscription?: Subscription;
   programStateAsString = "";
   queueState: RunProgramState[] | undefined;
-  programs: ProgramShort[] | undefined;
-  remoteTime: String | undefined;
+  programs: Program[] | undefined;
+  remoteTime: string | undefined;
   runState: RunProgramState | undefined;
   runUpdaterSubscription?: Subscription;
   selectedProgramIndex: number = 0;
@@ -76,7 +77,7 @@ export class StateComponent implements OnInit {
 
   private loadPrograms() {
     let component = this;
-    this.programService.getShortInfo().subscribe( {
+    this.programService.getAll().subscribe( {
       next( state ) {
         component.programs = state;
       },
@@ -102,7 +103,7 @@ export class StateComponent implements OnInit {
 
   private onUpdatePinState( newState: PinsState ) {
     this.remoteTime = newState.time?.time;
-    newState.time = null;
+    newState.time = undefined;
     let newStateAsString = JSON.stringify( newState );
     if ( newStateAsString != this.pinStateAsString ) {
       this.pinState = newState;
@@ -143,7 +144,7 @@ export class StateComponent implements OnInit {
     program.duration = duration;
   }
 
-  click( type: String, id: number, state: boolean ) {
+  click( type: string, id: number, state: boolean ) {
     let component = this;
     this.pinService.setState( type, id, state ).subscribe( {
       complete() {
@@ -171,14 +172,11 @@ export class StateComponent implements OnInit {
     }
     let component = this;
     this.runService.start( this.selectedProgramIndex ).subscribe( {
-      next( dummy ) {
+      next() {
         component.updateView();
       },
       error( error ) {
         component.openSnackBar( 'Error starting program', error );
-      },
-      complete() {
-        console.log( 'completed' );
       }
     } );
   }
@@ -186,7 +184,7 @@ export class StateComponent implements OnInit {
   stopProgram() {
     let component = this;
     this.runService.stop().subscribe( {
-      next( dummy ) {
+      next() {
         component.updateView();
       },
       error( error ) {
@@ -198,7 +196,7 @@ export class StateComponent implements OnInit {
   nextZone() {
     let component = this;
     this.runService.nextZone().subscribe( {
-      next( dummy ) {
+      next() {
         component.updateView();
       },
       error( error ) {
@@ -210,7 +208,7 @@ export class StateComponent implements OnInit {
   nextProgram() {
     let component = this;
     this.runService.nextProgram().subscribe( {
-      next( dummy ) {
+      next() {
         component.updateView();
       },
       error( error ) {
@@ -232,17 +230,15 @@ export class StateComponent implements OnInit {
       } );
   }
 
-  toggleZoneState( program: RunProgramState, zone: RunZoneState ) {
+  toggleScheduledZoneState( program: RunProgramState, zone: RunZoneState ) {
     console.info( "toggle program " + program.index + " zone " + zone.index );
+  }
+
+  cancelSchedule( program: RunProgramState ) {
+    console.info( "cancel schedule " + program.index );
   }
 
   featureToggleZone(): boolean {
     return false;
-  }
-
-  skipIcon(): string {
-    // return "keyboard_arrow_right";
-    return "step_over";
-    // return "skip_next";
   }
 }

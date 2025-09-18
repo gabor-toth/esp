@@ -27,17 +27,19 @@ export interface ProgramDay {
   intervalStartReset: boolean;
 }
 
-export interface ProgramShort {
-  index: number;
-  name: string;
-}
-
-export interface Program extends ProgramShort {
+export interface Program {
   days: ProgramDay;
   enabled: boolean;
   nextRunTime: number;
+  index: number;
   lastRunTime: number;
+  name: string;
   startTimes: string[];
   valid: boolean;
   zones: ProgramZone[];
+}
+
+export interface Programs {
+  programs: Program[];
+  version: string;
 }
