@@ -8,6 +8,10 @@ $foreground-palette: map.get($color-config, 'foreground');
 $foreground-icon: map.get($foreground-palette, "icon");
 
 .page-state {
+  .mat-mdc-card-header {
+    margin-left: 0;
+  }
+
   .card-container {
 
     mat-icon.icon-timer {
@@ -31,11 +35,16 @@ $foreground-icon: map.get($foreground-palette, "icon");
       margin: 1em;
     }
   }
-  
+
   .state-program {
     > mat-card-header {
       justify-content: space-between;
     }
+  }
+
+  .mat-mdc-card-header {
+    padding-right: 0;
+    margin-right: 0.4em;
   }
 
   .program-container {
@@ -63,4 +72,5 @@ $foreground-icon: map.get($foreground-palette, "icon");
     }
 
   }
+
 }

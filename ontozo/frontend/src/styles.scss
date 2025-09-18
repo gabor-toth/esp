@@ -2,10 +2,12 @@
 @use '@angular/material' as mat;
 @use "theme" as *;
 
-@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&icon_names=add,alarm_off,alarm_on,cancel,delete,edit,keyboard_arrow_down,keyboard_arrow_up,play_arrow,step_over,toggle_off,toggle_on');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&icon_names=add,alarm_off,alarm_on,cancel,delete,edit,hotel,keyboard_arrow_down,keyboard_arrow_up,play_arrow,step_over,toggle_off,toggle_on');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
 
 $color-config: mat.m2-get-color-config($my-app-theme);
 $primary-palette: map.get($color-config, 'primary');
+
 
 :host {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
@@ -18,12 +20,15 @@ $primary-palette: map.get($color-config, 'primary');
 html {
   height: 100%;
 
+  --mat-button-outlined-label-text-weight: 400;
+  --mat-card-title-text-weight: 400;
   --mat-table-header-headline-color: rgba(0, 0, 0, 0.54);
   --mdc-outlined-button-label-text-tracking: 0;
 }
 
 body {
   font-family: Roboto, "Helvetica Neue", sans-serif;
+  font-weight: 400;
   height: 100%;
   margin: 0;
 }
