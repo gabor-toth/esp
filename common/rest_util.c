@@ -32,12 +32,13 @@ esp_err_t rest_set_error_code( httpd_req_t *req, esp_err_t esp_err, const char *
     return httpd_resp_send_err( req, http_error, message );
 }
 
-esp_err_t rest_parse_index( const char *uri, int *index, bool needed ) {
+esp_err_t rest_parse_index( const char **uri, int *index, bool needed ) {
     char *end;
-    *index = (int) strtol( uri, &end, 10 );
-    if ( *end != 0 || ( needed && end == uri ) ) {
+    *index = (int) strtol( *uri, &end, 10 );
+    if ( ( *end != 0 && *end != '/' ) || ( needed && end == *uri ) ) {
         return ESP_ERR_INVALID_ARG;
     }
+    *uri = end;
     return ESP_OK;
 }
 

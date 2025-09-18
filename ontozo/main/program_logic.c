@@ -8,50 +8,41 @@
 #include "program_logic.h"
 #include "program.h"
 
-#define COMMAND_START           1
-#define COMMAND_STOP            2
-#define COMMAND_NEXT_ZONE       3
-#define COMMAND_NEXT_PROGRAM    4
-#define COMMAND_QUEUE_START     5
-#define COMMAND_PUMP_STATE      6
-
 static const char *LOG_TAG = "program_logic";
 
-static const char *command_names[] = {
-        "unknown",
-        "start",
-        "stop",
-        "next_zone",
-        "next_program",
-        "queue",
-        "pump_state",
-};
-
-typedef struct {
-    int command;
-    int program;
-    bool pump_state;
-} program_command_t;
-
 struct queue_item_t {
+    int64_t program_id;
     int program_index;
+    int zones_count;
+    bool *zones_disabled;
     struct queue_item_t *next;
 };
 
 static bool is_running = false;
 static int current_program_index;
+static int current_zone_id = -1;
 static int current_zone_index;
 static Program *current_program;
+static int64_t current_program_id;
 static TimerHandle_t timer;
 static struct queue_item_t *queue = NULL;
 
-static QueueHandle_t event_queue = NULL;
+static SemaphoreHandle_t semaphore;
+static StaticSemaphore_t xMutexBuffer;
 
 static void stop_and_move_to_next_program();
 
+static void destruct_queue_item( struct queue_item_t *item ) {
+    if ( item->zones_disabled ) {
+        free( item->zones_disabled );
+    }
+    free( item );
+}
+
 static void end_current_zone() {
-    if ( current_zone_index >= 0 && current_program != NULL && current_zone_index < current_program->zones_count ) {
-        gpio_set_pin_state( OUTPUTS, ZONES_CLASS, current_program->zones[ current_zone_index ].zone_id, false );
+    if ( current_zone_id >= 0 ) {
+        gpio_set_pin_state( OUTPUTS, ZONES_CLASS, current_zone_id, false );
+        current_zone_id = -1;
     }
 }
 
@@ -68,37 +59,25 @@ static void start_next_zone() {
         return;
     }
     ProgramZone *zone = &current_program->zones[ current_zone_index ];
+    current_zone_id = zone->zone_id;
     ESP_LOGI( LOG_TAG, "moving to zone %d/%d: id %d, duration %d secs",
-              current_zone_index + 1, current_program->zones_count, zone->zone_id, zone->duration_in_seconds );
-    gpio_set_pin_state( OUTPUTS, ZONES_CLASS, zone->zone_id, true );
+              current_zone_index + 1, current_program->zones_count, current_zone_id, zone->duration_in_seconds );
+    gpio_set_pin_state( OUTPUTS, ZONES_CLASS, current_zone_id, true );
     TickType_t timer_ticks = pdMS_TO_TICKS( zone->duration_in_seconds * 1000 );
     ESP_LOGI( LOG_TAG, "set timer to %ld ticks", timer_ticks );
     if ( !xTimerChangePeriod( timer, timer_ticks, portMAX_DELAY ) ) {
         ESP_LOGE( LOG_TAG, "xTimerChangePeriod failed, aborting program" );
-        program_logic_stop();
-        return;
     }
-    if ( !xTimerReset( timer, portMAX_DELAY ) ) {
-        ESP_LOGE( LOG_TAG, "xTimerReset failed, aborting program" );
-        program_logic_stop();
-        return;
-    }
-}
-
-static void fire_command( int command, int program, bool pump_state ) {
-    program_command_t program_command = {
-            .command = command,
-            .program = program,
-            .pump_state = pump_state
-    };
-    xQueueSend( event_queue, &program_command, 0 );
 }
 
 static void timer_callback( TimerHandle_t unused ) {
-    fire_command( COMMAND_NEXT_ZONE, current_program_index, false );
+    xSemaphoreTake( semaphore, 1 );
+    start_next_zone();
+    xSemaphoreGive( semaphore );
 }
 
-static void start_program( int index ) {
+static void start_program() {
+    int index = queue->program_index;
     current_program = program_get( index );
     if ( current_program == NULL ) {
         ESP_LOGW( LOG_TAG, "Program does %d not exists, skipping", index );
@@ -118,15 +97,23 @@ static void start_program( int index ) {
     start_next_zone();
 }
 
-static void start_or_queue_program( int index ) {
-    if ( !is_running ) {
-        start_program( index );
-        return;
-    }
+static int64_t generate_program_id() {
+    time_t id;
+    time( &id );
+    // TODO ensure unique id within 1 second
+    return id;
+}
+
+static void start_or_queue_program( int program_index ) {
     struct queue_item_t *item = calloc( 1, sizeof( struct queue_item_t ) );
-    item->program_index = index;
+    Program *program = program_get( program_index );
+    item->program_id = generate_program_id();
+    item->program_index = program_index;
+    item->zones_count = program->zones_count;
+    item->zones_disabled = calloc( item->zones_count, sizeof( bool ) );
     if ( queue == NULL ) {
         queue = item;
+        start_program();
     } else {
         struct queue_item_t *next = queue;
         while ( next->next != NULL ) {
@@ -134,7 +121,7 @@ static void start_or_queue_program( int index ) {
         }
         next->next = item;
     }
-    ESP_LOGI( LOG_TAG, "Queued program %d", index );
+    ESP_LOGI( LOG_TAG, "Queued program %d", program_index );
 }
 
 static void stop_current_program() {
@@ -158,17 +145,18 @@ static void stop_and_move_to_next_program() {
         ESP_LOGI( LOG_TAG, "No queued program to start" );
         return;
     }
-    int index = queue->program_index;
-    struct queue_item_t *next = queue->next;
-    free( queue );
-    queue = next;
-    start_program( index );
+    struct queue_item_t *prev = queue;
+    queue = queue->next;
+    destruct_queue_item( prev );
+    if ( queue != NULL ) {
+        start_program();
+    }
 }
 
 static void stop_all_programs() {
     while ( queue != NULL ) {
         struct queue_item_t *next = queue->next;
-        free( queue );
+        destruct_queue_item( queue );
         queue = next;
     }
     stop_and_move_to_next_program();
@@ -178,94 +166,100 @@ static void pump_state_changed( bool is_on ) {
     // TODO add logic
 }
 
-_Noreturn static void task_main( void *unused ) {
-    for ( ;; ) {
-        program_command_t data;
-        if ( xQueueReceive( event_queue, &data, portMAX_DELAY ) ) {
-            int command = data.command;
-            int program = data.program;
-            ESP_LOGI( LOG_TAG, "Command %s for program %d received ", command_names[ command ], program );
-            if ( ( command == COMMAND_NEXT_ZONE || command == COMMAND_NEXT_PROGRAM || command == COMMAND_STOP ) &&
-                 current_program_index != program ) {
-                ESP_LOGW( LOG_TAG, "Current program %d != sent program %d, ignoring command %d",
-                          current_program_index, program, command );
-                continue;
-            }
-            switch ( command ) {
-                case COMMAND_START:
-                    start_program( program );
-                    break;
-                case COMMAND_QUEUE_START:
-                    start_or_queue_program( program );
-                    break;
-                case COMMAND_NEXT_ZONE:
-                    start_next_zone();
-                    break;
-                case COMMAND_NEXT_PROGRAM:
-                    stop_and_move_to_next_program();
-                    break;
-                case COMMAND_STOP:
-                    stop_all_programs();
-                    break;
-                case COMMAND_PUMP_STATE:
-                    pump_state_changed( data.pump_state );
-                    break;
-                default:
-                    ESP_LOGE( LOG_TAG, "Unhandled command %d", command );
-                    break;
-            }
-        }
+void program_logic_start( int program_index ) {
+    xSemaphoreTake( semaphore, 10 );
+    start_or_queue_program( program_index );
+    xSemaphoreGive( semaphore );
+}
+
+void program_logic_move_to_next_zone( program_id_t program_id, int zone_index ) {
+    xSemaphoreTake( semaphore, 10 );
+    if ( program_id == 0 || ( current_program_id == program_id && zone_index == current_zone_index ) ) {
+        start_next_zone();
     }
+    xSemaphoreGive( semaphore );
 }
 
-void program_logic_start( int index ) {
-    fire_command( COMMAND_QUEUE_START, index, false );
+void program_logic_move_to_next_program( program_id_t program_id ) {
+    xSemaphoreTake( semaphore, 10 );
+    if ( program_id == 0 || current_program_id == program_id ) {
+        stop_and_move_to_next_program();
+    }
+    xSemaphoreGive( semaphore );
 }
 
-void program_logic_move_to_next_zone() {
-    fire_command( COMMAND_NEXT_ZONE, current_program_index, false );
+void program_logic_stop_all() {
+    xSemaphoreTake( semaphore, 10 );
+    stop_all_programs();
+    xSemaphoreGive( semaphore );
 }
 
-void program_logic_move_to_next_program() {
-    fire_command( COMMAND_NEXT_PROGRAM, current_program_index, false );
+void program_logic_cancel_scheduled_program( program_id_t program_id ) {
+    ESP_LOGW( LOG_TAG, "not implemented yet: program_logic_cancel_scheduled_program %lld", program_id );
+    xSemaphoreTake( semaphore, 10 );
+    xSemaphoreGive( semaphore );
 }
 
-void program_logic_stop() {
-    fire_command( COMMAND_STOP, current_program_index, false );
+void program_logic_toggle_scheduled_zone( program_id_t program_id, int zone_index ) {
+    ESP_LOGW( LOG_TAG, "not implemented yet: program_logic_toggle_scheduled_zone %lld %d", program_id, zone_index );
+    xSemaphoreTake( semaphore, 10 );
+    xSemaphoreGive( semaphore );
 }
 
-void program_logic_get_state( RunningProgramState *state ) {
-    memset( state, 0, sizeof( RunningProgramState ) );
+int program_logic_get_queued_programs( RunningProgramState *running_state, QueuedProgramState **queue_state ) {
+    *queue_state = NULL;
+    memset( running_state, 0, sizeof( RunningProgramState ) );
+    xSemaphoreTake( semaphore, 10 );
     if ( is_running ) {
-        state->is_program_running = true;
-        state->program_index = current_program_index;
-        state->zone_index = current_zone_index;
-        state->zone_left_seconds =
+        running_state->is_program_running = true;
+        running_state->program_index = current_program_index;
+        running_state->zone_index = current_zone_index;
+        running_state->zone_left_seconds =
                 ( xTimerGetExpiryTime( timer ) - xTaskGetTickCount() ) * portTICK_PERIOD_MS / 1000 + 1;
     } else {
-        state->is_program_running = false;
+        running_state->is_program_running = false;
     }
-}
 
-int program_logic_get_queued_program( int queue_index ) {
-    struct queue_item_t *item = queue;
-    while ( item != NULL && queue_index-- > 0 ) {
-        item = item->next;
+    int count = 0;
+    for ( struct queue_item_t *item = queue; item != NULL; item = item->next ) {
+        count++;
     }
-    return item != NULL ? item->program_index : -1;
+    *queue_state = calloc( count, sizeof( QueuedProgramState ) );
+    int i = 0;
+    for ( struct queue_item_t *item = queue; item != NULL; item = item->next, i++ ) {
+        QueuedProgramState *result_item = *queue_state + i;
+        result_item->program_id = item->program_id;
+        result_item->program_index = item->program_index;
+        result_item->zones_count = item->zones_count;
+        result_item->zones_disabled = item->zones_disabled;
+    }
+    xSemaphoreGive( semaphore );
+    return count;
 }
 
 void program_logic_pump_state_change( bool is_on ) {
-    fire_command( COMMAND_PUMP_STATE, -1, is_on );
+    xSemaphoreTake( semaphore, 10 );
+    pump_state_changed( is_on );
+    xSemaphoreGive( semaphore );
+}
+
+bool program_logic_is_program_in_use( int program_index ) {
+    xSemaphoreTake( semaphore, 10 );
+    bool is_in_use = false;
+    struct queue_item_t *item = queue;
+    while ( item != NULL && !is_in_use ) {
+        is_in_use = item->program_index == program_index;
+        item = item->next;
+    }
+    xSemaphoreGive( semaphore );
+    return is_in_use;
 }
 
 void program_logic_init() {
     is_running = false;
     current_program = NULL;
 
-    event_queue = xQueueCreate( 16, sizeof( program_command_t ) );
-    xTaskCreate( task_main, LOG_TAG, 3072, NULL, 10, NULL );
-
+    semaphore = xSemaphoreCreateMutexStatic( &xMutexBuffer );
     timer = xTimerCreate(
             LOG_TAG,
             1,

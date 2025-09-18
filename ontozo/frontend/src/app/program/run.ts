@@ -9,6 +9,7 @@ export interface RunZoneState {
 
 export interface RunProgramState {
   duration: number;
+  id: number;
   index: number;
   name: string;
   running: boolean;

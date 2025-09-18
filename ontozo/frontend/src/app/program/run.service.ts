@@ -88,4 +88,15 @@ export class RunService {
     let url = environment.baseUrl + 'run/next/program';
     return this.http.post( url, null );
   }
+
+  cancelSchedule( programId: number ): Observable<Object> {
+    let url = environment.baseUrl + 'run/queued/' + programId;
+    return this.http.delete( url );
+  }
+
+  toggleScheduledZoneState( programId: number, zoneIndex: number ): Observable<Object> {
+    let url = environment.baseUrl + 'run/queued/' + programId + '/' + zoneIndex;
+    return this.http.post( url, null );
+
+  }
 }

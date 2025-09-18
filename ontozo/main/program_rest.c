@@ -1,6 +1,7 @@
 #include "debug_helper.h"
 #include "esp_log.h"
 #include "program_json.h"
+#include "program_logic.h"
 #include "program_rest.h"
 #include "rest_util.h"
 
@@ -34,7 +35,8 @@ static esp_err_t program_get_handler( httpd_req_t *req ) {
 
     debug_print_free_mem( LOG_TAG );
     rest_allow_cors( req );
-    if ( ( result = rest_parse_index( req->uri + strlen( PROGRAMS_PREFIX ) + 1, &index, true ) ) != ESP_OK ) {
+    const char *uri = req->uri + strlen( PROGRAMS_PREFIX ) + 1;
+    if ( ( result = rest_parse_index( &uri, &index, true ) ) != ESP_OK ) {
         return rest_set_error_code( req, result, "Program index expected in URL" );
     }
     Program *program = program_get( index - 1 );
@@ -80,6 +82,9 @@ static esp_err_t program_put_post_handler( httpd_req_t *req, bool is_put ) {
             program_destructor( program );
             return httpd_resp_send_err( req, HTTPD_400_BAD_REQUEST, "Needs an index for POST" );
         }
+        if ( program_logic_is_program_in_use( program->index - 1 ) ) {
+            return httpd_resp_send_err( req, HTTPD_403_FORBIDDEN, "Program is in use" );
+        }
         program_change( program );
     } else {
         program_add( program );
@@ -106,10 +111,15 @@ static esp_err_t program_delete_handler( httpd_req_t *req ) {
 
     ESP_LOGI( LOG_TAG, "%s %s", http_method_str( req->method ), req->uri );
 
-    if ( ( result = rest_parse_index( req->uri + strlen( PROGRAMS_PREFIX ) + 1, &index, true ) ) != ESP_OK ) {
+    const char *uri = req->uri + strlen( PROGRAMS_PREFIX ) + 1;
+    if ( ( result = rest_parse_index( &uri, &index, true ) ) != ESP_OK ) {
         return rest_set_error_code( req, result, "Program index expected in URL" );
     }
-    if ( ( result = program_delete( index - 1 ) ) != ESP_OK ) {
+    int program_index = index - 1;
+    if ( program_logic_is_program_in_use( program_index ) ) {
+        return httpd_resp_send_err( req, HTTPD_403_FORBIDDEN, "Program is in use" );
+    }
+    if ( ( result = program_delete( program_index ) ) != ESP_OK ) {
         return rest_set_error_code( req, result, "Program not found" );
     }
 

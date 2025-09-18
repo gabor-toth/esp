@@ -176,7 +176,7 @@ export class StateComponent implements OnInit {
         component.updateView();
       },
       error( error ) {
-        component.openSnackBar( 'Error starting program', error );
+        component.openSnackBar( 'Error in startProgram', error );
       }
     } );
   }
@@ -188,7 +188,7 @@ export class StateComponent implements OnInit {
         component.updateView();
       },
       error( error ) {
-        component.openSnackBar( 'Error stopping program', error );
+        component.openSnackBar( 'Error in stopProgram', error );
       },
     } );
   }
@@ -200,7 +200,7 @@ export class StateComponent implements OnInit {
         component.updateView();
       },
       error( error ) {
-        component.openSnackBar( 'Error moving to next zone', error );
+        component.openSnackBar( 'Error in nextZone', error );
       },
     } );
   }
@@ -212,7 +212,7 @@ export class StateComponent implements OnInit {
         component.updateView();
       },
       error( error ) {
-        component.openSnackBar( 'Error moving to next zone', error );
+        component.openSnackBar( 'Error in nextProgram', error );
       },
     } );
   }
@@ -231,14 +231,32 @@ export class StateComponent implements OnInit {
   }
 
   toggleScheduledZoneState( program: RunProgramState, zone: RunZoneState ) {
-    console.info( "toggle program " + program.index + " zone " + zone.index );
+    console.info( "toggle program " + program.id + " zone " + zone.index );
+    let component = this;
+    this.runService.toggleScheduledZoneState( program.id, zone.index ).subscribe( {
+      next() {
+        component.updateView();
+      },
+      error( error ) {
+        component.openSnackBar( 'Error in toggleScheduledZoneState', error );
+      },
+    } );
   }
 
   cancelSchedule( program: RunProgramState ) {
-    console.info( "cancel schedule " + program.index );
+    console.info( "cancel schedule " + program.id );
+    let component = this;
+    this.runService.cancelSchedule( program.id ).subscribe( {
+      next() {
+        component.updateView();
+      },
+      error( error ) {
+        component.openSnackBar( 'Error in cancelSchedule', error );
+      },
+    } );
   }
 
   featureToggleZone(): boolean {
-    return false;
+    return true;
   }
 }
