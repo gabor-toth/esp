@@ -1,58 +1,46 @@
-import {Injectable} from '@angular/core';
-import {Program, ProgramDay, ProgramDayType, ProgramDayValue, ProgramShort, ProgramZone} from './program';
-import {Observable} from "rxjs";
-import {HttpClient} from '@angular/common/http';
-import {environment} from '../../environments/environment';
-import {simulatedPrograms} from '../simulator/simulator';
+import { Injectable } from '@angular/core';
+import { Program, Programs } from './program';
+import { Observable, of } from "rxjs";
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../environments/environment';
+import { simulatedPrograms } from '../simulator/simulator';
 
-@Injectable({
+@Injectable( {
   providedIn: 'root'
-})
+} )
 export class ProgramService {
-  constructor(private http: HttpClient) {
+  constructor( private http: HttpClient ) {
   }
 
   getAll(): Observable<Program[]> {
-    if (environment.simulateRestCall) {
-      return new Observable<Program[]>((subscriber) => {
-        subscriber.next(simulatedPrograms);
-      });
+    if ( environment.simulateRestCall ) {
+      return of( simulatedPrograms.programs );
     } else {
-      return this.http.get<Program[]>(environment.baseUrl + 'programs');
-    }
-  }
-
-  getShortInfo(): Observable<ProgramShort[]> {
-    if (environment.simulateRestCall) {
-      return new Observable<ProgramShort[]>((subscriber) => {
-        subscriber.next(<ProgramShort[]>[
-          {
-            index: simulatedPrograms[0].index,
-            name: simulatedPrograms[0].name
+      return new Observable<Program[]>( ( subscriber ) => {
+        this.http.get<Programs>( environment.baseUrl + 'programs' ).subscribe( {
+          next( programs ) {
+            subscriber.next( programs.programs );
+            subscriber.complete();
           },
-          {
-            index: simulatedPrograms[1].index,
-            name: simulatedPrograms[1].name
+          error( err ) {
+            console.error( 'Error reading programs', err );
+            subscriber.error( err );
           }
-        ]);
-      });
-    } else {
-      return this.http.get<ProgramShort[]>(environment.baseUrl + 'programs/short');
+        } );
+      } );
     }
   }
 
-  get(index: number): Observable<Program> {
-    if (environment.simulateRestCall) {
-      return new Observable<Program>((subscriber) => {
-        subscriber.next(simulatedPrograms[index]);
-      });
+  get( index: number ): Observable<Program> {
+    if ( environment.simulateRestCall ) {
+      return of( simulatedPrograms.programs[ index ] );
     } else {
-      return this.http.get<Program>(environment.baseUrl + 'programs/' + index);
+      return this.http.get<Program>( environment.baseUrl + 'programs/' + index );
     }
   }
 
-  set(program: Program): Observable<Object> {
+  set( program: Program ): Observable<Object> {
     let url = environment.baseUrl + 'programs';
-    return this.http.put(url, program);
+    return this.http.put( url, program );
   }
 }

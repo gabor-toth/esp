@@ -46,6 +46,9 @@ export abstract class TimedUpdater<T> {
         component.scheduleUpdate();
         console.error( 'Error reading state', err );
       },
+      complete() {
+        component.subscribers.forEach( ( e ) => e.complete?.() );
+      }
     } );
   }
 
