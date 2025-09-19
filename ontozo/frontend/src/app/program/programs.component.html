@@ -1,98 +1,46 @@
-<div class="page-container">
+<div class="page-container programs">
     <h2>Programok</h2>
 
     @if (programs) {
-        <div class="programs">
-            <table mat-table [dataSource]="dataSource" multiTemplateDataRows class="mat-elevation-z8">
-
-                <!--- Note that these columns can be defined in any order.
-                      The actual rendered columns are set as a property on the row definition" -->
-
-                <!-- Name Column -->
-                <ng-container matColumnDef="name">
-                    <th mat-header-cell *matHeaderCellDef> Név</th>
-                    <td mat-cell *matCellDef="let element"> {{ element.name }}</td>
-                </ng-container>
-
-                <ng-container matColumnDef="enabled">
-                    <th mat-header-cell *matHeaderCellDef> Engedélyezve</th>
-                    <td mat-cell *matCellDef="let element">
-                        @if (element.enabled) {
-                            <mat-icon class="material-symbols-outlined on">alarm_on</mat-icon>
-                        } @else {
-                            <mat-icon class="material-symbols-outlined off">alarm_off</mat-icon>
-                        }
-                    </td>
-                </ng-container>
-
-                <!-- mobile: details -->
-                <ng-container matColumnDef="start">
-                    <th mat-header-cell *matHeaderCellDef> Indítás</th>
-                    <td mat-cell *matCellDef="let element">
-                        <div class="program-start-times"> {{ element.startTimes }}</div>
-                        <div class="program-days">
-                            @if (element.days.type == 'onDays') {
-                                <div>
-                                    @for (day of programDaysDisplay; track day) {
-                                        <div class="program-day {{this.hasDay(element, $index)?'on':'off'}}">
-                                            {{ day }}
-                                        </div>
-                                    }
-                                </div>
-                            } @else if (element.days.type == 'interval') {
-                                <div>
-                                    {{ element.days.intervalDays }} naponta
-                                </div>
-                            }
-                        </div>
-                    </td>
-                </ng-container>
-
-                <ng-container matColumnDef="expand">
-                    <th mat-header-cell *matHeaderCellDef aria-label="row actions">&nbsp;</th>
-                    <td mat-cell *matCellDef="let element">
-                        <button mat-icon-button aria-label="expand row"
-                                (click)="clickExpand(element)">
-                            @if (expandedElement !== element) {
-                                <mat-icon class="material-symbols-outlined">keyboard_arrow_down</mat-icon>
-                            } @else {
-                                <mat-icon class="material-symbols-outlined">keyboard_arrow_up</mat-icon>
-                            }
-                        </button>
-                    </td>
-                </ng-container>
-
-                <ng-container matColumnDef="expandedDetail">
-                    <td mat-cell *matCellDef="let element" [attr.colspan]="displayedColumns.length">
-                        <div class="program-detail"
-                             [@detailExpand]="element == expandedElement ? 'expanded' : 'collapsed'">
-                            <div class="button-holder">
-                                <button mat-raised-button color="secondary">
-                                    <mat-icon class="material-symbols-outlined ">edit</mat-icon>
-                                </button>
-                                <button mat-raised-button color="secondary">
-                                    <mat-icon class="material-symbols-outlined ">delete</mat-icon>
-                                </button>
+        @for (program of programs; track program.index) {
+            <mat-card class="program-config">
+                <mat-card-header>
+                    <div mat-card-avatar class="example-header-image">
+                        <mat-icon
+                                class="material-symbols-outlined {{program.enabled?'on':'off'}}">{{ program.enabled ? 'alarm_on' : 'alarm_off' }}
+                        </mat-icon>
+                    </div>
+                    <mat-card-title>{{ program.name }}</mat-card-title>
+                </mat-card-header>
+                <mat-card-content>
+                    <div class="program-start-times"> {{ program.startTimes }}</div>
+                    <div class="program-days">
+                        @if (program.days.type == ProgramDayType.onDays) {
+                            <div>
+                                @for (day of programDaysDisplay; track $index) {
+                                    <div class="program-day {{this.hasDay(program, $index)?'on':'off'}}">
+                                        {{ day }}
+                                    </div>
+                                }
                             </div>
-                        </div>
-                    </td>
-                </ng-container>
-
-                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-                <tr mat-row *matRowDef="let element; columns: displayedColumns;"
-                    class="program-row"
-                    [class.program-expanded-row]="expandedElement === element"
-                    (click)="clickExpand(element)">
-                </tr>
-
-                <tr mat-row *matRowDef="let row; columns: ['expandedDetail']" class="program-detail-row"></tr>
-            </table>
-            <div class="button-row">
-                <button mat-fab color="primary">
-                    <mat-icon class="material-symbols-outlined ">add</mat-icon>
-                </button>
-            </div>
-        </div>
+                        } @else if (program.days.type == ProgramDayType.interval) {
+                            <div>
+                                {{ program.days.intervalDays }} naponta
+                            </div>
+                        }
+                    </div>
+                </mat-card-content>
+                <mat-card-actions align="end">
+                    @if (program.enabled) {
+                        <button matButton (click)="setEnabled(program,false)">Letilt</button>
+                    } @else {
+                        <button matButton (click)="setEnabled(program,true)">Engedélyez</button>
+                    }
+                    <button matButton disabled>Szerkeszt</button>
+                    <button matButton disabled>Töröl</button>
+                </mat-card-actions>
+            </mat-card>
+        }
     } @else {
         <div class="load-spinner">
             <mat-spinner diameter="30"></mat-spinner>

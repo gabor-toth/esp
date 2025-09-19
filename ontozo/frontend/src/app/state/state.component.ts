@@ -18,6 +18,7 @@ import { MatOption, MatSelect } from '@angular/material/select';
 import { MatButton } from '@angular/material/button';
 import { MatCard, MatCardContent, MatCardHeader, MatCardTitle } from "@angular/material/card";
 import { Program } from "../program/program";
+import { SnackBar } from "../common/snackbar-error/snackbar";
 
 @Component( {
   selector: 'app-state',
@@ -57,7 +58,7 @@ export class StateComponent implements OnInit {
   runUpdaterSubscription?: Subscription;
   selectedProgramIndex: number = 0;
 
-  constructor( private snackBar: MatSnackBar,
+  constructor( private snackBar: SnackBar,
                private pinService: PinService,
                private pinUpdater: PinUpdater,
                private programService: ProgramService,
@@ -82,7 +83,7 @@ export class StateComponent implements OnInit {
         component.programs = state;
       },
       error( error ) {
-        component.openSnackBar( 'Error loading programs', error );
+        component.snackBar.open( 'Error loading programs', error );
       }
     } );
   }
@@ -151,7 +152,7 @@ export class StateComponent implements OnInit {
         component.updateView();
       },
       error( error ) {
-        component.openSnackBar( 'Error writing state', error );
+        component.snackBar.open( 'Error writing state', error );
       }
     } );
   }
@@ -176,7 +177,7 @@ export class StateComponent implements OnInit {
         component.updateView();
       },
       error( error ) {
-        component.openSnackBar( 'Error in startProgram', error );
+        component.snackBar.open( 'Error in startProgram', error );
       }
     } );
   }
@@ -188,7 +189,7 @@ export class StateComponent implements OnInit {
         component.updateView();
       },
       error( error ) {
-        component.openSnackBar( 'Error in stopProgram', error );
+        component.snackBar.open( 'Error in stopProgram', error );
       },
     } );
   }
@@ -200,7 +201,7 @@ export class StateComponent implements OnInit {
         component.updateView();
       },
       error( error ) {
-        component.openSnackBar( 'Error in nextZone', error );
+        component.snackBar.open( 'Error in nextZone', error );
       },
     } );
   }
@@ -212,22 +213,9 @@ export class StateComponent implements OnInit {
         component.updateView();
       },
       error( error ) {
-        component.openSnackBar( 'Error in nextProgram', error );
+        component.snackBar.open( 'Error in nextProgram', error );
       },
     } );
-  }
-
-  openSnackBar( log: string, error: any, message?: string ) {
-    console.error( log, error );
-    this.snackBar.openFromComponent(
-      SnackbarErrorComponent,
-      {
-        data: message != undefined ? message : 'Hiba a kapcsolatban.',
-        duration: 10000,
-        horizontalPosition: 'right',
-        panelClass: 'error-snackbar',
-        verticalPosition: 'bottom',
-      } );
   }
 
   toggleScheduledZoneState( program: RunProgramState, zone: RunZoneState ) {
@@ -237,7 +225,7 @@ export class StateComponent implements OnInit {
         component.updateView();
       },
       error( error ) {
-        component.openSnackBar( 'Error in toggleScheduledZoneState', error );
+        component.snackBar.open( 'Error in toggleScheduledZoneState', error );
       },
     } );
   }
@@ -249,7 +237,7 @@ export class StateComponent implements OnInit {
         component.updateView();
       },
       error( error ) {
-        component.openSnackBar( 'Error in cancelSchedule', error );
+        component.snackBar.open( 'Error in cancelSchedule', error );
       },
     } );
   }

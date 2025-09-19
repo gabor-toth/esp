@@ -105,7 +105,12 @@ esp_err_t rest_receive_json_body( httpd_req_t *req, http_server_context_t *conte
     }
     buf[ total_len ] = '\0';
 
-    *root = cJSON_Parse( buf );
+    *root = cJSON_ParseWithOpts( buf, NULL, true );
+    if ( *root == NULL ) {
+        httpd_resp_send_err( req, HTTPD_400_BAD_REQUEST, "JSON syntax error" );
+        ESP_LOGW( TAG, "JSON syntax error at position %d", (int) ( cJSON_GetErrorPtr() - buf ) );
+        return ESP_FAIL;
+    }
     return ESP_OK;
 }
 

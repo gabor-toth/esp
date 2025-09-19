@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { Program, Programs } from './program';
-import { Observable, of } from "rxjs";
+import { Program, ProgramDayType, ProgramDayValue, Programs } from './program';
+import { map, Observable, of, switchMap } from "rxjs";
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { simulatedPrograms } from '../simulator/simulator';
@@ -19,6 +19,12 @@ export class ProgramService {
       return new Observable<Program[]>( ( subscriber ) => {
         this.http.get<Programs>( environment.baseUrl + 'programs' ).subscribe( {
           next( programs ) {
+            programs.programs.forEach( ( program ) => {
+              program.days.type = <ProgramDayType><unknown>ProgramDayType[ program.days.type ];
+              program.days.onDays.map( value => {
+                return <ProgramDayValue><unknown>ProgramDayValue[ value ];
+              } );
+            } )
             subscriber.next( programs.programs );
             subscriber.complete();
           },
@@ -42,5 +48,12 @@ export class ProgramService {
   set( program: Program ): Observable<Object> {
     let url = environment.baseUrl + 'programs';
     return this.http.put( url, program );
+  }
+
+  setEnabled( index: number, enabled: boolean ): Observable<Object> {
+    return this.get( index ).pipe( switchMap( program => {
+      program.enabled = enabled;
+      return this.set( program );
+    } ) );
   }
 }
