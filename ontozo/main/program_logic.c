@@ -166,6 +166,19 @@ static void pump_state_changed( bool is_on ) {
     // TODO add logic
 }
 
+static struct queue_item_t *find_program_by_id( program_id_t program_id, struct queue_item_t **prev_item ) {
+    struct queue_item_t *prev = NULL;
+    struct queue_item_t *item = queue;
+    while ( item != NULL && item->program_id != program_id ) {
+        prev = item;
+        item = item->next;
+    }
+    if ( prev_item != NULL ) {
+        *prev_item = prev;
+    }
+    return item;
+}
+
 void program_logic_start( int program_index ) {
     xSemaphoreTake( semaphore, 10 );
     start_or_queue_program( program_index );
@@ -195,14 +208,42 @@ void program_logic_stop_all() {
 }
 
 void program_logic_cancel_scheduled_program( program_id_t program_id ) {
-    ESP_LOGW( LOG_TAG, "not implemented yet: program_logic_cancel_scheduled_program %lld", program_id );
     xSemaphoreTake( semaphore, 10 );
+    struct queue_item_t *prev;
+    struct queue_item_t *item = find_program_by_id( program_id, &prev );
+    if ( item != NULL ) {
+        if ( prev != NULL ) {
+            prev->next = item->next;
+        } else {
+            queue = item->next;
+        }
+        destruct_queue_item( item );
+        ESP_LOGI( LOG_TAG, "Program %lld cancelled", program_id );
+    } else {
+        ESP_LOGW( LOG_TAG, "No program with id %lld", program_id );
+    }
     xSemaphoreGive( semaphore );
 }
 
 void program_logic_toggle_scheduled_zone( program_id_t program_id, int zone_index ) {
-    ESP_LOGW( LOG_TAG, "not implemented yet: program_logic_toggle_scheduled_zone %lld %d", program_id, zone_index );
     xSemaphoreTake( semaphore, 10 );
+    struct queue_item_t *item = find_program_by_id( program_id, NULL );
+    if ( item != NULL ) {
+        if ( zone_index < item->zones_count ) {
+            if ( queue == item && zone_index <= current_zone_index ) {
+                ESP_LOGW( LOG_TAG, "Program %lld zone %d is active or past, not changing", program_id, zone_index );
+            } else {
+                item->zones_disabled[ zone_index ] = !item->zones_disabled[ zone_index ];
+            }
+            ESP_LOGI( LOG_TAG, "Program %lld zone %d set to %s", program_id, zone_index,
+                      item->zones_disabled[ zone_index ] ? "disabled" : "enabled" );
+        } else {
+            ESP_LOGW( LOG_TAG, "Program %lld zone %d is out of range (>= %d)", program_id, zone_index,
+                      item->zones_count );
+        }
+    } else {
+        ESP_LOGW( LOG_TAG, "No program with id %lld", program_id );
+    }
     xSemaphoreGive( semaphore );
 }
 

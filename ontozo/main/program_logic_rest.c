@@ -55,6 +55,7 @@ static esp_err_t run_post_handler( httpd_req_t *req ) {
         }
         if ( req->method == HTTP_DELETE ) {
             program_logic_cancel_scheduled_program( program_id );
+            rest_send_message_back( req, "cancelled" );
             found = true;
         } else if ( req->method == HTTP_POST ) {
             uri += 1;
@@ -64,7 +65,8 @@ static esp_err_t run_post_handler( httpd_req_t *req ) {
                           uri );
                 return rest_set_error_code( req, result, "Zone index expected in URL" );
             }
-            program_logic_toggle_scheduled_zone( program_id, zone_index );
+            program_logic_toggle_scheduled_zone( program_id, zone_index - 1 );
+            rest_send_message_back( req, "toggled" );
             found = true;
         }
     }

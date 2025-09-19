@@ -71,6 +71,22 @@ $foreground-icon: map.get($foreground-palette, "icon");
       padding-left: 1em;
     }
 
+    + .program-container {
+      border-top: 1px solid rgb(0, 0, 0, 0.2);
+      padding-top: 0.5em;
+    }
+
+    button {
+      mat-icon.mat-icon {
+        &.on {
+          color: var(--mat-icon-color, inherit);
+        }
+
+        &.off {
+          color: var(--mat-checkbox-disabled-label-color, inherit);
+        }
+      }
+    }
   }
 
 }
