@@ -51,6 +51,9 @@ static gpio_num_t zone_pins[] = {
         GPIO_OUTPUT_ZONE_8,
 };
 
+int classLevels;
+int classButtons;
+
 void gpio_define_output_pins_callback( gpio_config_t *io_conf, void *user_context ) {
     gpio_add_class( OUTPUTS, PUMPS_NAME, 2, high_is_on );
     gpio_add_class( OUTPUTS, ZONES_NAME, 8, low_is_on );
@@ -70,8 +73,8 @@ void gpio_define_output_pins_callback( gpio_config_t *io_conf, void *user_contex
 }
 
 void gpio_define_input_pins_callback( gpio_config_t *io_conf, void *user_context ) {
-    gpio_add_class( INPUTS, "levels", 4, low_is_on );
-    gpio_add_class( INPUTS, "buttons", 2, low_is_on );
+    classLevels = gpio_add_class( INPUTS, "levels", 4, low_is_on );
+    classButtons = gpio_add_class( INPUTS, "buttons", 2, low_is_on );
 
     int index;
     gpio_add_pin( INPUTS, LEVELS_CLASS, GPIO_INPUT_LEVEL_1,

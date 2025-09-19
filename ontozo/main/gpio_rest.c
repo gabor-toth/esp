@@ -1,5 +1,6 @@
 #include <esp_log.h>
 #include "gpio_define.h"
+#include "gpio_logic.h"
 #include "gpio_rest.h"
 #include "nvs_main.h"
 #include "sntp_main.h"
@@ -9,11 +10,47 @@
 
 static const char *LOG_TAG = "gpio_rest";
 
+#define LEVEL_STATE_FAILURE "failure"
+#define LEVEL_STATE_EMPTY   "empty"
+#define LEVEL_STATE_FILLING "filling"
+#define LEVEL_STATE_FULL    "full"
+
 typedef struct {
     http_server_context_t *server_context;
     bool type;
     int class;
 } PinHandlerContext;
+
+static bool hasSetLevelAbove( int pin_count, const bool *levels, int i ) {
+    for ( int j = i + 1; j < pin_count; j++ ) {
+        if ( levels[ j ] ) {
+            return true;
+        }
+    }
+    return false;
+}
+
+static void state_add_levels( cJSON *root ) {
+    cJSON *levelsJson = cJSON_AddArrayToObject( root, "levels" );
+    int pin_count = gpio_get_number_of_pins( INPUTS, classLevels );
+    bool *levels = calloc( pin_count, sizeof( bool ) );
+    for ( int i = 0; i < pin_count; i++ ) {
+        PinData pin_data;
+        gpio_get_pin_data( INPUTS, classLevels, i, &pin_data );
+        levels[ i ] = pin_data.state;
+    }
+    for ( int i = 0; i < pin_count - 1; i++ ) {
+        const char *state = NULL;
+        bool isSetLevelAbove = hasSetLevelAbove( pin_count, levels, i );
+        if ( levels[ i ] ) {
+            state = isSetLevelAbove ? LEVEL_STATE_FULL : LEVEL_STATE_FILLING;
+        } else {
+            state = isSetLevelAbove ? LEVEL_STATE_FAILURE : LEVEL_STATE_EMPTY;
+        }
+        cJSON_AddItemToArray( levelsJson, cJSON_CreateString( state ) );
+    }
+    free( levels );
+}
 
 static esp_err_t state_get_handler( httpd_req_t *req ) {
     ESP_LOGI( LOG_TAG, "%s %s", http_method_str( req->method ), req->uri );
@@ -38,6 +75,7 @@ static esp_err_t state_get_handler( httpd_req_t *req ) {
             }
         }
     }
+    state_add_levels( root );
 
     rest_send_json_back_and_delete( req, root );
     return ESP_OK;
@@ -55,7 +93,8 @@ static esp_err_t pins_get_handler( httpd_req_t *req ) {
 
         int class_count = gpio_get_number_of_classes( type );
         for ( int class = 0; class < class_count; class++ ) {
-            cJSON *itemArray = cJSON_AddArrayToObject( typeJson, gpio_get_class_name( type, class ) );
+            const char *className = gpio_get_class_name( type, class );
+            cJSON *itemArray = cJSON_AddArrayToObject( typeJson, className );
             int pin_count = gpio_get_number_of_pins( type, class );
             for ( int i = 0; i < pin_count; i++ ) {
                 PinData pin_data;

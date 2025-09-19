@@ -32,7 +32,7 @@ typedef void (*gpio_changed_callback_t)( gpio_num_t io_num, int state );
 
 extern void gpio_init( void *user_context, gpio_changed_callback_t gpio_changed_callback );
 
-extern void gpio_add_class( bool is_input, const char *name, int max_pin_count, PinLevelType level_type );
+extern int gpio_add_class( bool is_input, const char *name, int max_pin_count, PinLevelType level_type );
 
 extern int
 gpio_add_pin( bool is_input, int class_id, gpio_num_t gpio_pin, PinLevelType level_type, uint64_t *pin_bit_mask );

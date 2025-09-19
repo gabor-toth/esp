@@ -2,7 +2,6 @@
 
 <div class="page-container page-state">
     <mat-card class="state-pump">
-        <!--fxFlex fxLayoutAlign="center" class="card" -->
         <mat-card-header>
             <mat-card-title>Pumpák</mat-card-title>
         </mat-card-header>
@@ -32,10 +31,10 @@
             <mat-card-title>Szintek</mat-card-title>
         </mat-card-header>
         <mat-card-content>
-            @if (pinState && pinState.inputs) {
+            @if (pinState && pinState.levels) {
                 <div class="card-container">
-                    @for (level of pinState.inputs.levels; track level.id) {
-                        <div class="card-level {{level.on?'filled':'empty'}}"></div>
+                    @for (level of pinState.levels; track level) {
+                        <div class="card-level {{level}}"></div>
                     }
                 </div>
             } @else {

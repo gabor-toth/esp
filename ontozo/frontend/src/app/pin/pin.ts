@@ -49,9 +49,17 @@ export interface TimeState {
   isTimeSet: boolean;
 }
 
+export enum LevelState {
+  failure = -1,
+  empty,
+  filling,
+  full
+}
+
 export interface PinsState {
   inputs: PinInputsState;
   outputs: PinOutputsState;
+  levels: LevelState[];
   version: string;
   time?: TimeState | undefined;
 }

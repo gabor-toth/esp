@@ -78,19 +78,21 @@ bool gpio_is_valid_index( bool is_input, int class_id, int index ) {
     return false;
 }
 
-void gpio_add_class( bool is_input, const char *name, int max_pin_count, PinLevelType level_type ) {
+int gpio_add_class( bool is_input, const char *name, int max_pin_count, PinLevelType level_type ) {
     PinClasses *pin_classes = &pin_definitions[ is_input ];
     ESP_LOGI( LOG_TAG, "Adding pin class_id %d/%d \"%s\"", is_input, pin_classes->used_classes, name );
     if ( pin_classes->used_classes == MAX_PIN_CLASSES ) {
         ESP_LOGE( LOG_TAG, "Too many pin classes on definition %d \"%s\"", is_input, name );
-        return;
+        return -1;
     }
-    PinClass *pin_class = &pin_classes->classes[ pin_classes->used_classes++ ];
+    int class_id = pin_classes->used_classes++;
+    PinClass *pin_class = &pin_classes->classes[ class_id ];
     pin_class->name = name;
     pin_class->max_pin_count = max_pin_count;
     pin_class->used_pin_count = 0;
     pin_class->level_type = level_type;
     pin_class->pins = malloc( sizeof( Pin ) * max_pin_count );
+    return class_id;
 }
 
 static void set_pin_state( Pin *output_pin, bool enabled ) {

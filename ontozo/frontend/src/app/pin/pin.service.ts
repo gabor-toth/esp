@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { PinConfiguration, PinsConfiguration, PinsState, PinState } from './pin';
-import { forkJoin, from, map, mergeMap, Observable, of, Subscriber, switchMap, tap } from "rxjs";
+import { PinsConfiguration, PinsState } from './pin';
+import { map, Observable, of, switchMap, tap } from "rxjs";
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { simulatedPinConfiguration, simulatedPinState } from '../simulator/simulator';

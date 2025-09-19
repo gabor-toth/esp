@@ -163,17 +163,27 @@ mat-icon.mat-icon {
 
 .card-level {
   background-color: #fafafa;
-  border: 1px solid #eee;
   box-sizing: border-box;
   height: 70px;
   width: 50px;
 
-  &.filled {
+  &.full {
     background-color: mat.m2-get-color-from-palette($primary-palette, 700);
   }
 
-  &.empty {
+  &.filling {
     background-color: #e6ee9c; /* Colors.line.shade200*/
+  }
+
+  &.empty {
+    background-color: white;
+    border-color: #e6ee9c; /* Colors.line.shade200*/
+    border-style: solid;
+    border-width: 1px;
+  }
+
+  &.failure {
+    background-color: var(--mat-form-field-error-text-color);
   }
 }
 

@@ -231,7 +231,6 @@ export class StateComponent implements OnInit {
   }
 
   toggleScheduledZoneState( program: RunProgramState, zone: RunZoneState ) {
-    console.info( "toggle program " + program.id + " zone " + zone.index );
     let component = this;
     this.runService.toggleScheduledZoneState( program.id, zone.index ).subscribe( {
       next() {
@@ -244,7 +243,6 @@ export class StateComponent implements OnInit {
   }
 
   cancelSchedule( program: RunProgramState ) {
-    console.info( "cancel schedule " + program.id );
     let component = this;
     this.runService.cancelSchedule( program.id ).subscribe( {
       next() {

@@ -17,4 +17,7 @@ extern void gpio_logic_init();
 
 extern void gpio_pump_main( bool on );
 
+extern int classLevels;
+extern int classButtons;
+
 #endif //ONTOZO_GPIO_LOGIC_H
