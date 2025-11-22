@@ -26,3 +26,9 @@
 [submodule "esp-idf"]
 	path = esp-idf
 	url = git@github.com:espressif/esp-idf.git
+[submodule "hajo/components/u8g2"]
+	path = hajo/components/u8g2
+	url = https://github.com/olikraus/u8g2.git
+[submodule "hajo/components/u8g2-hal-esp-idf"]
+	path = hajo/components/u8g2-hal-esp-idf
+	url = https://github.com/mkfrey/u8g2-hal-esp-idf.git
