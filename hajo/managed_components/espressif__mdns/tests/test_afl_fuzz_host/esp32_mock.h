@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2015-2022 Espressif Systems (Shanghai) CO LTD
+ * SPDX-FileCopyrightText: 2015-2025 Espressif Systems (Shanghai) CO LTD
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -38,6 +38,10 @@
 #define ESP_ERR_INVALID_RESPONSE    0x108
 #define ESP_ERR_INVALID_CRC         0x109
 
+#define MDNS_TASK_MEMORY_LOG        "internal RAM"
+#define MALLOC_CAP_8BIT             (1<<2)
+#define MALLOC_CAP_INTERNAL         (1<<11)
+
 #define pdTRUE                      true
 #define pdFALSE                     false
 #define pdPASS          ( pdTRUE )
@@ -45,19 +49,13 @@
 
 #define portMAX_DELAY               0xFFFFFFFF
 #define portTICK_PERIOD_MS          1
-#define ESP_LOGW(a,b)
-#define ESP_LOGD(a,b)
-#define ESP_LOGE(a,b,c)
-#define ESP_LOGV(a,b,c,d)
-
 #define LWIP_HDR_PBUF_H
 #define __ESP_RANDOM_H__
 #define INC_TASK_H
 
 #define pdMS_TO_TICKS(a) a
 #define xSemaphoreTake(s,d)        true
-#define xTaskDelete(a)
-#define vTaskDelete(a)             free(a)
+#define vTaskDelete(a)             free(NULL)
 #define xSemaphoreGive(s)
 #define xQueueCreateMutex(s)
 #define _mdns_pcb_init(a,b)         true
@@ -67,6 +65,7 @@
 #define vSemaphoreDelete(s)         free(s)
 #define queueQUEUE_TYPE_MUTEX       ( ( uint8_t ) 1U
 #define xTaskCreatePinnedToCore(a,b,c,d,e,f,g)     *(f) = malloc(1)
+#define xTaskCreateStaticPinnedToCore(a,b,c,d,e,f,g,h)     ((void*)1)
 #define vTaskDelay(m)               usleep((m)*0)
 #define esp_random()                (rand()%UINT32_MAX)
 
@@ -84,7 +83,8 @@ typedef void *QueueHandle_t;
 typedef void *TaskHandle_t;
 typedef int    BaseType_t;
 typedef uint32_t TickType_t;
-
+typedef void *StackType_t;
+typedef void *StaticTask_t;
 
 struct udp_pcb {
     uint8_t dummy;
@@ -116,10 +116,10 @@ uint32_t xTaskGetTickCount(void);
 typedef void (*esp_timer_cb_t)(void *arg);
 
 // Queue mock
-QueueHandle_t xQueueCreate( uint32_t uxQueueLength,
-                            uint32_t uxItemSize );
+QueueHandle_t xQueueCreate(uint32_t uxQueueLength,
+                           uint32_t uxItemSize);
 
-void vQueueDelete( QueueHandle_t xQueue );
+void vQueueDelete(QueueHandle_t xQueue);
 
 uint32_t xQueueSend(QueueHandle_t xQueue, const void *pvItemToQueue, TickType_t xTicksToWait);
 
@@ -136,6 +136,10 @@ esp_err_t esp_event_handler_unregister(const char *event_base, int32_t event_id,
 
 TaskHandle_t xTaskGetCurrentTaskHandle(void);
 void xTaskNotifyGive(TaskHandle_t task);
-BaseType_t xTaskNotifyWait(uint32_t bits_entry_clear, uint32_t bits_exit_clear, uint32_t *value, TickType_t wait_time );
+BaseType_t xTaskNotifyWait(uint32_t bits_entry_clear, uint32_t bits_exit_clear, uint32_t *value, TickType_t wait_time);
+
+static inline void xTaskGetStaticBuffers(void *pvTaskBuffer, void *pvStackBuffer, void *pvTaskTCB)
+{
+}
 
 #endif //_ESP32_COMPAT_H_
