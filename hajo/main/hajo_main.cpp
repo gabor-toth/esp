@@ -5,8 +5,10 @@
 #include "esp_pm.h"
 #include "devices/battery/hajo_battery.h"
 #include "devices/display/hajo_display.h"
-#include "devices/fridge/fridge.h"
+#include "devices/engine/display/engine_display.h"
+#include "devices/engine/sender/engine_sender.h"
 #include "devices/fluid/hajo_fluid.h"
+#include "devices/fridge/fridge.h"
 #include "devices/rudder/hajo_rudder.h"
 #include "devices/signalk/hajo_signalk.h"
 #include "devices/signalk/EspSigK.h"
@@ -34,11 +36,11 @@ static const char *device_type_names[] = {
         "unused 0",         //  000
         "fridge",           //  001
         "rudder",           //  010
-        "unused 3",         //  011
+        "engine sender",    //  011
         "n2k gateway",      //  100
         "fluid & display",  //  101
         "battery monitor",  //  110
-        "unused 7",         //  111
+        "engine display",   //  111
         "DEVICE_TYPE_ALL",  // 1000
 };
 
@@ -163,7 +165,10 @@ void hajo_main() {
     hajo_rudder_main( iDev++ );
 #endif
 
-#if DEVICE_TYPE == DEVICE_TYPE_UNKNOWN_3 || DEVICE_TYPE == DEVICE_TYPE_ALL
+#if DEVICE_TYPE == DEVICE_TYPE_ENGINE_SENDER || DEVICE_TYPE == DEVICE_TYPE_ALL
+    clock_configure( 80 );
+    NMEA2000.SetDeviceCount( 1 );
+    engine_sender_main( iDev++ );
 #endif
 
 #if DEVICE_TYPE == DEVICE_TYPE_GATEWAY || DEVICE_TYPE == DEVICE_TYPE_ALL
@@ -189,7 +194,10 @@ void hajo_main() {
     hajo_battery_main( iDev++ );
 #endif
 
-#if DEVICE_TYPE == DEVICE_TYPE_UNKNOWN_7 || DEVICE_TYPE == DEVICE_TYPE_ALL
+#if DEVICE_TYPE == DEVICE_TYPE_ENGINE_DISPLAY || DEVICE_TYPE == DEVICE_TYPE_ALL
+    clock_configure( 80 );
+    NMEA2000.SetDeviceCount( 1 );
+    engine_display_main( iDev++ );
 #endif
 
 #if !HAS_DEVICE

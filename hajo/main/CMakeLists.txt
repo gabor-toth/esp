@@ -2,6 +2,7 @@
 
 set(SOURCES
         "../../common/adc.c"
+        "../../common/config_version.c"
         "../../common/debug_helper.c"
         "../../common/gpio_define.c"
         "../../common/gpio_json.c"
@@ -30,6 +31,8 @@ set(SOURCES
         "devices/display/display_main.c"
         "devices/display/display_meter.c"
         "devices/display/hajo_display.cpp"
+        "devices/engine/display/engine_display.cpp"
+        "devices/engine/sender/engine_sender.cpp"
         "devices/fridge/fridge.cpp"
         "devices/fridge/fridge_fan.cpp"
         "devices/fridge/fridge_temp.cpp"
@@ -89,11 +92,17 @@ endif ()
 if (CONFIG_DEVICE_TYPE)
     string(COMPARE EQUAL ${CONFIG_DEVICE_TYPE} "BATTERY" is_device_type_battery)
     string(COMPARE EQUAL ${CONFIG_DEVICE_TYPE} "DISPLAY" is_device_type_display)
+    string(COMPARE EQUAL ${CONFIG_DEVICE_TYPE} "ENGINE_DISPLAY" is_device_type_engine_display)
+    string(COMPARE EQUAL ${CONFIG_DEVICE_TYPE} "ENGINE_SENDER" is_device_type_engine_sender)
     string(COMPARE EQUAL ${CONFIG_DEVICE_TYPE} "FRIDGE" is_device_type_fridge)
     string(COMPARE EQUAL ${CONFIG_DEVICE_TYPE} "GATEWAY" is_device_type_gateway)
     string(COMPARE EQUAL ${CONFIG_DEVICE_TYPE} "RUDDER" is_device_type_rudder)
     if (is_device_type_battery)
         add_compile_definitions(CONFIG_DEVICE_TYPE_BATTERY=1)
+    elseif (is_device_type_engine_display)
+        add_compile_definitions(CONFIG_DEVICE_TYPE_ENGINE_DISPLAY=1)
+    elseif (is_device_type_engine_sender)
+        add_compile_definitions(CONFIG_DEVICE_TYPE_ENGINE_SENDER=1)
     elseif (is_device_type_fridge)
         add_compile_definitions(CONFIG_DEVICE_TYPE_FRIDGE=1)
     elseif (is_device_type_display)
@@ -103,13 +112,15 @@ if (CONFIG_DEVICE_TYPE)
     elseif (is_device_type_rudder)
         add_compile_definitions(CONFIG_DEVICE_TYPE_RUDDER=1)
     else ()
-        message(FATAL_ERROR "Unknown CONFIG_DEVICE_TYPE ${CONFIG_DEVICE_TYPE}, should be BATTERY/DISPLAY/FRIDGE/GATEWAY/RUDDER")
+        message(FATAL_ERROR "Unknown CONFIG_DEVICE_TYPE ${CONFIG_DEVICE_TYPE}, should be BATTERY/DISPLAY/ENGINE_DISPLAY/ENGINE_SENDER/FRIDGE/GATEWAY/RUDDER")
     endif ()
     #else ()
     #message(FATAL_ERROR "Set CONFIG_DEVICE_TYPE like 'idf.py build -DCONFIG_DEVICE_TYPE=GATEWAY'")
 endif ()
 UNSET(is_device_type_battery CACHE)
 UNSET(is_device_type_display CACHE)
+UNSET(is_device_type_engine_display CACHE)
+UNSET(is_device_type_engine_sender CACHE)
 UNSET(is_device_type_fridge CACHE)
 UNSET(is_device_type_gateway CACHE)
 UNSET(is_device_type_rudder CACHE)
