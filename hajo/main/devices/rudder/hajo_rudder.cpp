@@ -65,7 +65,7 @@ static void setup_n2k_device( int iDev ) {
 
     static const tNMEA2000::tProductInformation ProductInformation = {
             2100,                        // N2kVersion
-            101,                        // Manufacturer's product code
+            102,                        // Manufacturer's product code
             "Rudder sensor",           // Manufacturer's Model ID
             "1.0.0 (2024-09-24)",        // Manufacturer's Software version code
             "1.0.0 (2024-09-24)",    // Manufacturer's Model version

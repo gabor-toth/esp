@@ -124,7 +124,7 @@ static void setup_n2k_device( int iDev ) {
 
     static const tNMEA2000::tProductInformation ProductInformation = {
             2100,                       // N2kVersion
-            101,                       // Manufacturer's product code
+            105,                       // Manufacturer's product code
             "Fluid level",              // Manufacturer's Model ID
             "0.1.0 (2023-03-23)",       // Manufacturer's Software version code
             "1.0.0 (2023-03-23)",   // Manufacturer's Model version
