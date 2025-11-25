@@ -4,6 +4,7 @@
 #include "nvs_main.h"
 #include "n2k_receiver.h"
 #include "n2k_sender.h"
+#include "NMEA2000_esp32.h"
 
 static const char *TAG = "n2k_recv";
 
@@ -96,7 +97,7 @@ uint8_t n2k_load_address() {
     return address;
 }
 
-void n2k_save_address( uint8_t address ) {
+static void n2k_save_address( uint8_t address ) {
     ESP_LOGI( TAG, "Save new address %02x", address );
     uint32_t nvs_handle = nvs_open_storage();
     char s[8];
@@ -124,6 +125,7 @@ void n2k_init() {
     //n2k_wake_receiver();
 
     uint8_t sourceAddress = n2k_load_address();
+    ((tNMEA2000_esp32&)NMEA2000).setAddressChangedCallback(n2k_save_address);
     NMEA2000.SetMode( tNMEA2000::N2km_ListenAndNode, sourceAddress );
     NMEA2000.SetOnOpen( n2k_on_open );
     NMEA2000.Open();
