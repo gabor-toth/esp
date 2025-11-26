@@ -3,4 +3,6 @@
 
 extern void engine_display_main( int iDev );
 
+extern void engine_display_test();
+
 #endif //HAJO_ENGINE_DISPLAY_H
