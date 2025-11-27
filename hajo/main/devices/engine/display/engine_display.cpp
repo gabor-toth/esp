@@ -64,8 +64,6 @@ static void setup_display() {
     u8g2_esp32_hal.bus.spi.clk = PIN_CLK;
     u8g2_esp32_hal.bus.spi.cs = PIN_CS;
     u8g2_esp32_hal.bus.spi.mosi = PIN_MOSI;
-    u8g2_esp32_hal.clock_speed_hz = 1000000;
-    u8g2_esp32_hal.device_flags = SPI_DEVICE_POSITIVE_CS;
     u8g2_esp32_hal.reset = PIN_RESET;
     u8g2_esp32_hal_init( u8g2_esp32_hal );
 }
@@ -82,6 +80,11 @@ static void drawNumber( u8g2_t &u8g2, int x, int y, int fontSize, int value ) {
 
 static void demo_screen() {
     u8g2_t u8g2;  // a structure which will contain all the data for one display
+    u8g2_Setup_st7565_ea_dogm128_f(
+            &u8g2, U8G2_R2, u8g2_esp32_spi_byte_cb,
+            u8g2_esp32_gpio_and_delay_cb );  // init u8g2 structure
+
+            // u8g2_m_16_8_f
     u8g2_Setup_st7920_s_128x64_f(
             &u8g2, U8G2_R2, u8g2_esp32_spi_byte_cb,
             u8g2_esp32_gpio_and_delay_cb );  // init u8g2 structure
