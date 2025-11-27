@@ -166,6 +166,7 @@ void hajo_main() {
 #endif
 
 #if DEVICE_TYPE == DEVICE_TYPE_ENGINE_SENDER || DEVICE_TYPE == DEVICE_TYPE_ALL
+#define HAS_DEVICE 1
     clock_configure( 80 );
     NMEA2000.SetDeviceCount( 1 );
     engine_sender_main( iDev++ );
@@ -195,6 +196,7 @@ void hajo_main() {
 #endif
 
 #if DEVICE_TYPE == DEVICE_TYPE_ENGINE_DISPLAY || DEVICE_TYPE == DEVICE_TYPE_ALL
+#define HAS_DEVICE 1
     clock_configure( 80 );
     NMEA2000.SetDeviceCount( 1 );
     engine_display_main( iDev++ );
@@ -209,6 +211,7 @@ void hajo_main() {
 
 extern "C" {
 void app_main() {
-    hajo_main();
+//    hajo_main();
+    engine_display_test();
 }
 }
