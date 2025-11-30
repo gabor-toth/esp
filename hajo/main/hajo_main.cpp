@@ -211,7 +211,6 @@ void hajo_main() {
 
 extern "C" {
 void app_main() {
-//    hajo_main();
-    engine_display_test();
+    hajo_main();
 }
 }

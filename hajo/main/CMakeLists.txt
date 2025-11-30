@@ -32,6 +32,7 @@ set(SOURCES
         "devices/display/display_meter.c"
         "devices/display/hajo_display.cpp"
         "devices/engine/display/engine_display.cpp"
+        "devices/engine/display/engine_display_draw.cpp"
         "devices/engine/sender/engine_sender.cpp"
         "devices/fridge/fridge.cpp"
         "devices/fridge/fridge_fan.cpp"
