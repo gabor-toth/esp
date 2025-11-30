@@ -30,6 +30,7 @@
 
 static const char *LOG = "hajo_main";
 
+#if CHECK_DEVICE_TYPE
 static int hardware_device_type = 0xff;
 
 static const char *device_type_names[] = {
@@ -84,6 +85,7 @@ static bool determine_device_type( int firmware_device_type ) {
     gpio_config( &io_conf );
     return true;
 }
+#endif
 
 static void led_on() {
     gpio_set_direction( GPIO_NUM_LED_POWER, GPIO_MODE_OUTPUT );
@@ -140,9 +142,11 @@ void hajo_main() {
     xTaskCreate( task_power_led, "power_led", 1024, nullptr, 10, nullptr );
 
     nvs_init();
+#if CHECK_DEVICE_TYPE
     if ( !determine_device_type( DEVICE_TYPE ) ) {
         return;
     }
+#endif
 
     ESP_ERROR_CHECK( esp_event_loop_create_default() );
 
