@@ -34,30 +34,7 @@ static unsigned char thermometer_bits[] = {
         0xd0, 0x0b, 0xb0, 0x0d, 0x60, 0x06, 0xc0, 0x03 };
 
 static u8g2_t u8g2;  // a structure which will contain all the data for one display
-
-void engine_display_setup_display() {
-    u8g2_esp32_hal_t u8g2_esp32_hal = U8G2_ESP32_HAL_DEFAULT;
-    u8g2_esp32_hal.bus.spi.clk = PIN_CLK;
-    u8g2_esp32_hal.bus.spi.cs = PIN_CS;
-    u8g2_esp32_hal.bus.spi.mosi = PIN_MOSI;
-    u8g2_esp32_hal.reset = PIN_RESET;
-    u8g2_esp32_hal_init( u8g2_esp32_hal );
-
-    u8g2_Setup_st7565_ea_dogm128_f(
-            &u8g2, U8G2_R2, u8g2_esp32_spi_byte_cb,
-            u8g2_esp32_gpio_and_delay_cb );  // init u8g2 structure
-
-    // u8g2_m_16_8_f
-    u8g2_Setup_st7920_s_128x64_f(
-            &u8g2, U8G2_R2, u8g2_esp32_spi_byte_cb,
-            u8g2_esp32_gpio_and_delay_cb );  // init u8g2 structure
-
-    u8g2_InitDisplay( &u8g2 );  // send init sequence to the display, display is in sleep mode after this
-
-    int width = u8g2_GetDisplayWidth(&u8g2 );
-    int height = u8g2_GetDisplayHeight(&u8g2 );
-    ESP_LOGI(TAG,"display is %dx%d", width, height );
-}
+static QueueHandle_t display_event_queue;
 
 static void draw_number( int x, int y, int fontSize, int value ) {
     // draw each digit individually to minimize space between them
@@ -93,7 +70,7 @@ static void draw_icon_xbm( int x, int y, const uint8_t *bitmap, bool alert_state
     u8g2_DrawXBM( &u8g2, x, y-ICON_SIZE, ICON_SIZE, ICON_SIZE, bitmap );
 }
 
-void engine_display_draw_screen() {
+static void draw_screen() {
     int width = u8g2_GetDisplayWidth(&u8g2 );
     int height = u8g2_GetDisplayHeight(&u8g2 );
 
@@ -123,4 +100,49 @@ void engine_display_draw_screen() {
 //    draw_icon( 41, height-3, "\x4e" , data.alert_flags.oil_pressure);
 
     u8g2_SendBuffer( &u8g2 );
+}
+
+_Noreturn static void task_display( void *arg ) {
+    (void) arg;
+
+    for ( ;; ) {
+        int dummy;
+
+        if ( !xQueueReceive( display_event_queue, &dummy, portMAX_DELAY )) {
+            continue;
+        }
+        draw_screen();
+    }
+}
+
+void engine_display_setup_display() {
+    u8g2_esp32_hal_t u8g2_esp32_hal = U8G2_ESP32_HAL_DEFAULT;
+    u8g2_esp32_hal.bus.spi.clk = PIN_CLK;
+    u8g2_esp32_hal.bus.spi.cs = PIN_CS;
+    u8g2_esp32_hal.bus.spi.mosi = PIN_MOSI;
+    u8g2_esp32_hal.reset = PIN_RESET;
+    u8g2_esp32_hal_init( u8g2_esp32_hal );
+
+    u8g2_Setup_st7565_ea_dogm128_f(
+            &u8g2, U8G2_R2, u8g2_esp32_spi_byte_cb,
+            u8g2_esp32_gpio_and_delay_cb );  // init u8g2 structure
+
+    // u8g2_m_16_8_f
+    u8g2_Setup_st7920_s_128x64_f(
+            &u8g2, U8G2_R2, u8g2_esp32_spi_byte_cb,
+            u8g2_esp32_gpio_and_delay_cb );  // init u8g2 structure
+
+    u8g2_InitDisplay( &u8g2 );  // send init sequence to the display, display is in sleep mode after this
+
+    int width = u8g2_GetDisplayWidth(&u8g2 );
+    int height = u8g2_GetDisplayHeight(&u8g2 );
+    ESP_LOGI(TAG,"display is %dx%d", width, height );
+
+    display_event_queue = xQueueCreate( 10, sizeof( int ));
+    xTaskCreate( task_display, TAG, 2048, nullptr, 10, nullptr );
+}
+
+void engine_display_draw_screen() {
+    int dummy = 0;
+    xQueueSendToBack( display_event_queue, &dummy, 0 );
 }
