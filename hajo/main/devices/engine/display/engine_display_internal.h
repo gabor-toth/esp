@@ -7,6 +7,7 @@
 #define PIN_MOSI    GPIO_NUM_5      // RW
 #define PIN_CS      GPIO_NUM_3      // RS
 #define PIN_RESET   GPIO_NUM_9      // RST
+#define PIN_BACKLIGHT   GPIO_NUM_11
 
 // GND
 // VCC = 5V

@@ -8,6 +8,7 @@ extern "C" {
 }
 
 static const char *TAG = "display";
+static bool show_leading_zeroes = false;
 
 #define ICON_SIZE 16
 
@@ -58,16 +59,21 @@ void engine_display_setup_display() {
     ESP_LOGI(TAG,"display is %dx%d", width, height );
 }
 
-static void draw_number( u8g2_t &u8g2, int x, int y, int fontSize, int value ) {
+static void draw_number( int x, int y, int fontSize, int value ) {
+    // draw each digit individually to minimize space between them
     int d = fontSize/3*2;
     char s [2];
     s[1] = 0;
     for( int i = 3; i >= 0; i--, value /=10 ) {
+        if ( value == 0 && !show_leading_zeroes && i != 3 ) {
+            break;
+        }
         s[0] = ( value % 10) + '0';
         u8g2_DrawStr( &u8g2, x+i*d, y, s );
     }
 }
 
+#if 0
 static void draw_icon( int x, int y, const char* character, bool alert_state ) {
     u8g2_SetDrawColor( &u8g2, 1 );
     if ( alert_state ) {
@@ -76,6 +82,7 @@ static void draw_icon( int x, int y, const char* character, bool alert_state ) {
     }
     u8g2_DrawStr( &u8g2, x, y, character );
 }
+#endif
 
 static void draw_icon_xbm( int x, int y, const uint8_t *bitmap, bool alert_state ) {
     u8g2_SetDrawColor( &u8g2, 1 );
@@ -91,14 +98,15 @@ void engine_display_draw_screen() {
     int height = u8g2_GetDisplayHeight(&u8g2 );
 
     u8g2_SetPowerSave( &u8g2, 0 );  // wake up display
+    gpio_set_level(PIN_BACKLIGHT, 1 );
     u8g2_ClearBuffer( &u8g2 );
 
     u8g2_SetFont( &u8g2, u8g2_font_logisoso32_tr );
-    draw_number( u8g2, 0, height / 2 + 1, 32, data.rpm );
+    draw_number( 0, height / 2 + 1, 32, data.rpm );
     u8g2_SetFont( &u8g2, u8g2_font_logisoso16_tr );
     u8g2_DrawStr( &u8g2, width/2+20, height/2-8, "rpm" );
 
-    draw_number( u8g2, width / 2 + 11, height - 4, 16, data.hours );
+    draw_number( width / 2 + 11, height - 4, 16, data.hours );
     u8g2_DrawStr( &u8g2, width/2+16/3*2*5+4, height-4, "h" );
 
     u8g2_SetDrawColor( &u8g2, 1 );

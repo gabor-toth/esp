@@ -1,7 +1,7 @@
+#include "driver/gpio.h"
 #include "engine_display.h"
 #include "engine_display_internal.h"
 #include "engine_display_draw.h"
-#include "esp_log.h"
 #include "n2k/n2k_sender.h"
 
 static const char *TAG = "display";
@@ -56,11 +56,19 @@ static void setup_n2k_device( int iDev ) {
 }
 
 void engine_display_main( int iDev ) {
+    gpio_config_t gpioConfig;
+    gpioConfig.pin_bit_mask = 1 << PIN_BACKLIGHT;
+    gpioConfig.mode = GPIO_MODE_OUTPUT;
+    gpioConfig.pull_up_en = GPIO_PULLUP_DISABLE;
+    gpioConfig.pull_down_en = GPIO_PULLDOWN_ENABLE;
+    gpioConfig.intr_type = GPIO_INTR_DISABLE;
+    gpio_config( &gpioConfig );
+
     myDeviceIndex = iDev;
     setup_n2k_device( iDev );
 
-    data.alert_flags.water_temperature = 0;
     data.rpm = data.hours = 0;
+    data.alerts = 0;
 
     engine_display_setup_display();
     engine_display_draw_screen();
@@ -68,5 +76,7 @@ void engine_display_main( int iDev ) {
 
 void engine_display_test() {
     engine_display_setup_display();
+    data.alert_flags.water_temperature = 1;
+    data.rpm = data.hours = 0;
     engine_display_draw_screen();
 }
