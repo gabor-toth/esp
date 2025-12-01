@@ -29,6 +29,7 @@ void config_version_read( uint32_t nvs_handle, const char *nvs_key, ConfigVersio
     version->nvs_key = nvs_key;
     esp_err_t result = nvs_get_i64( nvs_handle, version->nvs_key, &version->version );
     if ( result != ESP_OK ) {
+        // TODO really log ESP_ERR_NVS_NOT_FOUND?
         ESP_LOGW( TAG, "Unable to read version from key %s: %04x", version->nvs_key, result );
         version->version = 1;
     } else {

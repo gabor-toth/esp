@@ -30,7 +30,10 @@ typedef enum {
 
 typedef void (*gpio_changed_callback_t)( gpio_num_t io_num, int state );
 
-extern void gpio_init( void *user_context, gpio_changed_callback_t gpio_changed_callback );
+typedef void (*gpio_define_pins_callback_t)( gpio_config_t *io_conf, void *user_context );
+
+extern void gpio_init( void *user_context, gpio_define_pins_callback_t define_input_pins,
+                       gpio_define_pins_callback_t define_output_pins, gpio_changed_callback_t gpio_changed_callback );
 
 extern int gpio_add_class( bool is_input, const char *name, int max_pin_count, PinLevelType level_type );
 
@@ -38,10 +41,6 @@ extern int
 gpio_add_pin( bool is_input, int class_id, gpio_num_t gpio_pin, PinLevelType level_type, uint64_t *pin_bit_mask );
 
 extern void gpio_set_delays( bool is_input, int class_id, int index, int delay_ms_going_low, int delay_ms_going_high );
-
-extern void gpio_define_output_pins_callback( gpio_config_t *io_conf, void *user_context );
-
-extern void gpio_define_input_pins_callback( gpio_config_t *io_conf, void *user_context );
 
 extern int gpio_get_number_of_classes( bool is_input );
 

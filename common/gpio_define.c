@@ -151,14 +151,18 @@ int gpio_add_pin( bool is_input, int class_id, gpio_num_t gpio_pin, PinLevelType
     return index;
 }
 
-static void add_input_pins( void *user_context, gpio_changed_callback_t gpio_changed_callback ) {
+static void add_input_pins( void *user_context, gpio_define_pins_callback_t define_input_pins,
+                            gpio_changed_callback_t gpio_changed_callback ) {
+    if ( define_input_pins == NULL ) {
+        return;
+    }
     //zero-initialize the config structure.
     gpio_config_t io_conf = {};
 
-    gpio_define_input_pins_callback( &io_conf, user_context );
+    define_input_pins( &io_conf, user_context );
 
     if ( io_conf.pin_bit_mask == 0 ) {
-        ESP_LOGI( LOG_TAG, "No input pins defined" );
+        ESP_LOGW( LOG_TAG, "No input pins added" );
         return;
     }
 
@@ -190,7 +194,11 @@ static void add_input_pins( void *user_context, gpio_changed_callback_t gpio_cha
     }
 }
 
-static void add_output_pins( void *user_context ) {
+static void add_output_pins( void *user_context, gpio_define_pins_callback_t define_output_pins ) {
+    if ( define_output_pins == NULL ) {
+        return;
+    }
+
     gpio_config_t io_conf = {};
 
     io_conf.intr_type = GPIO_INTR_DISABLE;
@@ -207,20 +215,23 @@ static void add_output_pins( void *user_context ) {
     REG_SET_BIT( RTC_IO_PAD_DAC2_REG, RTC_IO_PDAC2_DAC_XPD_FORCE );
      */
 
-    gpio_define_output_pins_callback( &io_conf, user_context );
+    define_output_pins( &io_conf, user_context );
 
     if ( io_conf.pin_bit_mask == 0 ) {
-        ESP_LOGI( LOG_TAG, "No output pins defined" );
+        ESP_LOGI( LOG_TAG, "No output pins added" );
         return;
     }
     gpio_config( &io_conf );
 }
 
-void gpio_init( void *user_context, gpio_changed_callback_t gpio_changed_callback ) {
+void gpio_init( void *user_context,
+                gpio_define_pins_callback_t define_input_pins,
+                gpio_define_pins_callback_t define_output_pins,
+                gpio_changed_callback_t gpio_changed_callback ) {
     nvs_storage_handle = nvs_open_storage();
     config_version_read( nvs_storage_handle, NVS_KEY_VERSION, &version );
-    add_input_pins( user_context, gpio_changed_callback );
-    add_output_pins( user_context );
+    add_input_pins( user_context, define_input_pins, gpio_changed_callback );
+    add_output_pins( user_context, define_output_pins );
     nvs_close_storage( nvs_storage_handle );
     nvs_storage_handle = 0;
 }
