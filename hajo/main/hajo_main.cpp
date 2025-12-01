@@ -28,9 +28,9 @@
 
 #define TO_3_BITS(X)    ((X)&4?'1':'0'),((X)&2?'1':'0'),((X)&1?'1':'0')
 
+#if CHECK_DEVICE_TYPE
 static const char *LOG = "hajo_main";
 
-#if CHECK_DEVICE_TYPE
 static int hardware_device_type = 0xff;
 
 static const char *device_type_names[] = {

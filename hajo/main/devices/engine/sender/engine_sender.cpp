@@ -3,8 +3,7 @@
 #include "engine_sender.h"
 #include "n2k/n2k_sender.h"
 
-static const char *TAG = "sender";
-
+//static const char *TAG = "sender";
 
 static int myDeviceIndex;
 

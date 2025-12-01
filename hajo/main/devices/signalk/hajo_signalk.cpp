@@ -1,11 +1,8 @@
-#include "esp_log.h"
 #include "hajo_signalk.h"
 #include "n2k/n2k_receiver.h"
 #include "n2k/n2k_sender.h"
 #include "n2k/n2k_util.h"
 #include "n2k_gateway.h"
-
-static const char *TAG = "hajo_signalk";
 
 static void setup_n2k_device( int iDev ) {
     static const unsigned long TransmitMessages[] = {

@@ -107,6 +107,7 @@ static bool send_rudder( int index, tN2kMsg &message, int& deviceIndex ) {
     return true;
 }
 
+#if USE_CONTINUOUS
 static void adc_callback(  int average_raw_value, int average_voltage_value ) {
     tN2kMsg message;
     int display_value = 0;
@@ -121,6 +122,7 @@ static void adc_callback(  int average_raw_value, int average_voltage_value ) {
     );
     NMEA2000.SendMsg( message, myDeviceIndex );
 }
+#endif
 
 static void setup_adc() {
     ESP_LOGI(LOG,"Calculating with Rbottom=%d Rsensor=%d Rtop=%d "

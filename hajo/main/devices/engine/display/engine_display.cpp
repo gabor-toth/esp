@@ -2,6 +2,7 @@
 #include "engine_display.h"
 #include "engine_display_internal.h"
 #include "engine_display_draw.h"
+#include "n2k/n2k_receiver.h"
 #include "n2k/n2k_sender.h"
 
 static const char *TAG = "display";
@@ -18,6 +19,7 @@ display_data_t data = { 0, 0, { 0 } };
  * - Copy file content here
  */
 
+static void process_incoming_pgn( const tN2kMsg &message );
 
 static void setup_n2k_device( int iDev ) {
     static const unsigned long TransmitMessages[] = {
@@ -53,6 +55,11 @@ static void setup_n2k_device( int iDev ) {
     );
     NMEA2000.ExtendTransmitMessages( TransmitMessages, iDev );
     NMEA2000.ExtendReceiveMessages( ReceiveMessages, iDev );
+    NMEA2000.AttachMsgHandler( new N2kIncomingMessageHandler( &NMEA2000, process_incoming_pgn ) );
+}
+
+static void process_incoming_pgn( const tN2kMsg &message ) {
+
 }
 
 void engine_display_main( int iDev ) {

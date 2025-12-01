@@ -31,8 +31,6 @@
 #define DEVICE_TYPE_ENGINE_DISPLAY   0b0111
 #define DEVICE_TYPE_ALL         0b1000  // this is just to enable compilation of the whole project in CLion
 
-#define CHECK_DEVICE_TYPE   1
-
 #if CONFIG_DEVICE_TYPE_BATTERY
 #define DEVICE_TYPE DEVICE_TYPE_BATTERY
 #elif CONFIG_DEVICE_TYPE_DISPLAY
@@ -50,6 +48,10 @@
 #define DEVICE_TYPE DEVICE_TYPE_RUDDER
 #else
 #define DEVICE_TYPE DEVICE_TYPE_ALL
+#endif
+
+#ifndef CHECK_DEVICE_TYPE
+#define CHECK_DEVICE_TYPE   1
 #endif
 
 #endif //HAJO_CONFIG_H
