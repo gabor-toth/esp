@@ -5,24 +5,18 @@
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/timers.h"
+#include "gpio_define.h"
 #include "n2k/n2k_receiver.h"
 #include "n2k/n2k_sender.h"
 
 static const char *TAG = "display";
 
+#define BUTTONS_CLASS 0
+
 static int myDeviceIndex;
 static TimerHandle_t flashTimer;
 static TimerHandle_t idleTimer;
 display_data_t displayData;
-
-/*
- * PNG to XBM:
- * - open PNG in Gimp
- * - Image/Mode/Indexed: choose black&white
- * - Image/Resize image: lock aspect ratio, set size to 16
- * - File/Export: change extension to .xbm
- * - Copy file content here
- */
 
 static void process_incoming_pgn( const tN2kMsg &message );
 
@@ -152,14 +146,16 @@ static void flash_timer_callback( TimerHandle_t xTimer ) {
 }
 
 static void idle_timer_callback( TimerHandle_t xTimer ) {
+    ESP_LOGW( TAG, "no engine pngs received in %d secs", CONFIG_ENGINE_DISPLAY_IDLE_TIMEOUT_SECS );
     set_initial_display_data();
     set_flash();
     engine_display_draw_screen();
+    xTimerStop( idleTimer, portMAX_DELAY );
 }
 
-void engine_display_main( int iDev ) {
+static void setup_display( int iDev ) {
     gpio_config_t gpioConfig;
-    gpioConfig.pin_bit_mask = 1 << PIN_BACKLIGHT;
+    gpioConfig.pin_bit_mask = 1L << PIN_LCD_BACKLIGHT;
     gpioConfig.mode = GPIO_MODE_OUTPUT;
     gpioConfig.pull_up_en = GPIO_PULLUP_DISABLE;
     gpioConfig.pull_down_en = GPIO_PULLDOWN_ENABLE;
@@ -174,7 +170,9 @@ void engine_display_main( int iDev ) {
 
     engine_display_setup_display();
     engine_display_draw_screen();
+}
 
+static void setup_timers() {
     flashTimer = xTimerCreate(
             TAG,
             pdMS_TO_TICKS( 500 ),
@@ -183,11 +181,34 @@ void engine_display_main( int iDev ) {
             flash_timer_callback );
     idleTimer = xTimerCreate(
             TAG,
-            pdMS_TO_TICKS( 5000 ),
+            pdMS_TO_TICKS( CONFIG_ENGINE_DISPLAY_IDLE_TIMEOUT_SECS * 1000 ),
             1,
             nullptr,
             idle_timer_callback );
     xTimerStart( idleTimer, portMAX_DELAY );
+}
+
+static void define_input_pins( gpio_config_t *io_conf, void *user_context ) {
+    gpio_add_class( INPUTS, "buttons", 4, low_is_on );
+
+    gpio_add_pin( INPUTS, BUTTONS_CLASS, PIN_INPUT_ONOFF,
+                  low_is_on, &io_conf->pin_bit_mask );
+    gpio_add_pin( INPUTS, BUTTONS_CLASS, PIN_INPUT_START,
+                  low_is_on, &io_conf->pin_bit_mask );
+    gpio_add_pin( INPUTS, BUTTONS_CLASS, PIN_INPUT_STOP,
+                  low_is_on, &io_conf->pin_bit_mask );
+    gpio_add_pin( INPUTS, BUTTONS_CLASS, PIN_INPUT_LIGHT,
+                  low_is_on, &io_conf->pin_bit_mask );
+}
+
+static void gpio_changed( gpio_num_t io_num, int state ) {
+    ESP_LOGI(TAG,"gpio %d state %d", io_num, state );
+}
+
+void engine_display_main( int iDev ) {
+    setup_display( iDev );
+    setup_timers();
+    gpio_init(nullptr, define_input_pins, nullptr, gpio_changed );
 
     send_test_pngs();
 }

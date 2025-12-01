@@ -1,3 +1,4 @@
+#include "engine_display.h"
 #include "engine_display_internal.h"
 #include "engine_display_draw.h"
 #include "esp_log.h"
@@ -8,7 +9,16 @@ extern "C" {
 }
 
 static const char *TAG = "display";
-static bool show_leading_zeroes = false;
+static bool show_leading_zeroes = CONFIG_ENGINE_DISPLAY_SHOW_LEADING_ZEROES;
+
+/*
+ * PNG to XBM:
+ * - open PNG in Gimp
+ * - Image/Mode/Indexed: choose black&white
+ * - Image/Resize image: lock aspect ratio, set size to 16
+ * - File/Export: change extension to .xbm
+ * - Copy file content here
+ */
 
 #define ICON_SIZE 16
 
@@ -80,7 +90,7 @@ static void draw_screen() {
     int height = u8g2_GetDisplayHeight(&u8g2 );
 
     u8g2_SetPowerSave( &u8g2, 0 );  // wake up display
-    gpio_set_level(PIN_BACKLIGHT, 1 );
+    gpio_set_level( PIN_LCD_BACKLIGHT, 1 );
     u8g2_ClearBuffer( &u8g2 );
 
     u8g2_SetDrawColor( &u8g2, 1 );
@@ -126,10 +136,10 @@ _Noreturn static void task_display( void *arg ) {
 
 void engine_display_setup_display() {
     u8g2_esp32_hal_t u8g2_esp32_hal = U8G2_ESP32_HAL_DEFAULT;
-    u8g2_esp32_hal.bus.spi.clk = PIN_CLK;
-    u8g2_esp32_hal.bus.spi.cs = PIN_CS;
-    u8g2_esp32_hal.bus.spi.mosi = PIN_MOSI;
-    u8g2_esp32_hal.reset = PIN_RESET;
+    u8g2_esp32_hal.bus.spi.clk = PIN_LCD_CLK;
+    u8g2_esp32_hal.bus.spi.cs = PIN_LCD_CS;
+    u8g2_esp32_hal.bus.spi.mosi = PIN_LCD_MOSI;
+    u8g2_esp32_hal.reset = PIN_LCD_RESET;
     u8g2_esp32_hal_init( u8g2_esp32_hal );
 
     u8g2_Setup_st7565_ea_dogm128_f(

@@ -3,11 +3,17 @@
 
 #include <cstdint>
 
-#define PIN_CLK     GPIO_NUM_7      // E
-#define PIN_MOSI    GPIO_NUM_5      // RW
-#define PIN_CS      GPIO_NUM_3      // RS
-#define PIN_RESET   GPIO_NUM_9      // RST
-#define PIN_BACKLIGHT   GPIO_NUM_11
+#define PIN_LCD_CLK     GPIO_NUM_7      // E
+#define PIN_LCD_MOSI    GPIO_NUM_5      // RW
+#define PIN_LCD_CS      GPIO_NUM_3      // RS
+#define PIN_LCD_RESET   GPIO_NUM_9      // RST
+#define PIN_LCD_BACKLIGHT   GPIO_NUM_11
+
+#define PIN_INPUT_ONOFF     GPIO_NUM_39
+#define PIN_INPUT_START     GPIO_NUM_37
+#define PIN_INPUT_STOP      GPIO_NUM_35
+#define PIN_INPUT_LIGHT     GPIO_NUM_33
+
 
 // GND
 // VCC = 5V
