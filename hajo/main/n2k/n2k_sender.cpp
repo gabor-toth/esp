@@ -52,10 +52,10 @@ static vector<tN2kSendMessage> sendMessages;
 
 static QueueHandle_t timer_event_queue = nullptr;
 
-static void callLoopbackListeners( const tN2kMsg &N2kMsg , int deviceIndex) {
+static void callLoopbackListeners( const tN2kMsg &N2kMsg) {
     loopback_callback_node_t * node = loopback_callbacks;
     while ( node != nullptr ) {
-        node->callback( N2kMsg, deviceIndex );
+        node->callback( N2kMsg );
         node=node->next;
     }
 }
@@ -96,7 +96,7 @@ _Noreturn static void task_main( void *arg ) {
                     continue;
                 }
                 NMEA2000.SendMsg( N2kMsg, deviceIndex );
-                callLoopbackListeners( N2kMsg, deviceIndex );
+                callLoopbackListeners( N2kMsg );
             }
             //if ( index == 0 ) {
             //    ESP_LOGD( TAG, "nothing to send for %s", iterator->Description );
@@ -106,8 +106,7 @@ _Noreturn static void task_main( void *arg ) {
 }
 
 static void heartbeatCallback(const tN2kMsg& N2kMsg, int deviceIndex) {
-    //ESP_LOGI(TAG,"send heartbeat for %d", deviceIndex);
-    callLoopbackListeners( N2kMsg, deviceIndex );
+    callLoopbackListeners( N2kMsg );
 }
 
 static void timer_callback( TimerHandle_t ) {
@@ -149,9 +148,6 @@ void nk2_register_sender( tN2kSendFunction sendFunction,
         xTimerStart( timer, portMAX_DELAY );
         ESP_LOGD( TAG, "timer started for %s with %dms interval", TAG, interval_ms );
     }
-}
-
-void n2k_sender_send(const tN2kMsg &message ) {
 }
 
 void n2k_sender_register_loopback( n2k_loopback_callback callback ) {

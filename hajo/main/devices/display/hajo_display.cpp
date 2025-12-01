@@ -1,6 +1,7 @@
 #include "display_main.h"
 #include "esp_log.h"
 #include "hajo_display.h"
+#include "n2k/n2k_receiver.h"
 #include "n2k/n2k_sender.h"
 #include "n2k/n2k_struct_parser.h"
 #include "n2k/n2k_util.h"
@@ -44,15 +45,8 @@ static void process_incoming_pgn_fluid_level( const tN2kMsg &N2kMsg ) {
     }
 }
 
-class DisplayIncomingMessageHandler : public tNMEA2000::tMsgHandler {
-public:
-    explicit DisplayIncomingMessageHandler( tNMEA2000 *_pNMEA2000 ) : tNMEA2000::tMsgHandler( 0, _pNMEA2000 ) {
-    }
-
-    void HandleMsg( const tN2kMsg &N2kMsg ) override;
-};
-
-void DisplayIncomingMessageHandler::HandleMsg( const tN2kMsg &N2kMsg ) {
+//static void process_incoming_pgn( const tN2kMsg &message, int deviceIndex ) {
+static void process_incoming_pgn( const tN2kMsg &N2kMsg ) {
 //    if ( device_type != DEVICE_TYPE_DISPLAY ) {
 //        return;
 //    }
@@ -80,8 +74,6 @@ void DisplayIncomingMessageHandler::HandleMsg( const tN2kMsg &N2kMsg ) {
     }
 }
 
-DisplayIncomingMessageHandler *incomingMessageHandler;
-
 void setup_n2k_device( int iDev ) {
     static const unsigned long TransmitMessages[] = {
             0
@@ -106,12 +98,7 @@ void setup_n2k_device( int iDev ) {
 
     NMEA2000.ExtendTransmitMessages( TransmitMessages, iDev );
     NMEA2000.ExtendReceiveMessages( ReceiveMessages, iDev );
-    incomingMessageHandler = new DisplayIncomingMessageHandler( &NMEA2000 );
-    NMEA2000.AttachMsgHandler( incomingMessageHandler );
-}
-
-static void process_incoming_pgn( const tN2kMsg &message, int deviceIndex ) {
-    incomingMessageHandler->HandleMsg( message );
+    NMEA2000.AttachMsgHandler( new N2kIncomingMessageHandler( &NMEA2000, process_incoming_pgn ) );
 }
 
 void hajo_display_main( int iDev ) {

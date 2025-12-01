@@ -1,18 +1,11 @@
 #include "esp_log.h"
 #include "hajo_signalk.h"
+#include "n2k/n2k_receiver.h"
 #include "n2k/n2k_sender.h"
 #include "n2k/n2k_util.h"
 #include "n2k_gateway.h"
 
 static const char *TAG = "hajo_signalk";
-
-class SignalkIncomingMessageHandler : public tNMEA2000::tMsgHandler {
-public:
-    explicit SignalkIncomingMessageHandler( tNMEA2000 *_pNMEA2000 ) : tNMEA2000::tMsgHandler( 0, _pNMEA2000 ) {
-    }
-
-    void HandleMsg( const tN2kMsg &N2kMsg ) override;
-};
 
 static void setup_n2k_device( int iDev ) {
     static const unsigned long TransmitMessages[] = {
@@ -50,22 +43,12 @@ static void setup_n2k_device( int iDev ) {
 
     NMEA2000.ExtendTransmitMessages( TransmitMessages, iDev );
     NMEA2000.ExtendReceiveMessages( ReceiveMessages, iDev );
-    ESP_LOGI( TAG, "Registering SignalkIncomingMessageHandler" );
-    SignalkIncomingMessageHandler *incomingMessageHandler = new SignalkIncomingMessageHandler( &NMEA2000 );
-    NMEA2000.AttachMsgHandler( incomingMessageHandler );
-}
-
-static void process_incoming_pgn( const tN2kMsg &N2kMsg, int deviceIndex ) {
-    sendN2KMessageToSignalK( N2kMsg );
-}
-
-void SignalkIncomingMessageHandler::HandleMsg( const tN2kMsg &N2kMsg ) {
-    sendN2KMessageToSignalK( N2kMsg );
+    NMEA2000.AttachMsgHandler( new N2kIncomingMessageHandler( &NMEA2000, sendN2KMessageToSignalK ) );
 }
 
 void hajo_signalk_main( int iDev ) {
     setup_n2k_device( iDev );
-    n2k_sender_register_loopback( process_incoming_pgn );
+    n2k_sender_register_loopback( sendN2KMessageToSignalK );
 
     setupSignalkChannels();
 }

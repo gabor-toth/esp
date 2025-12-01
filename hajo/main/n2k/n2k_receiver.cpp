@@ -72,6 +72,10 @@ void n2k_wake_receiver() {
 }
 #endif
 
+void N2kIncomingMessageHandler::HandleMsg( const tN2kMsg &N2kMsg ) {
+    callback(N2kMsg);
+}
+
 _Noreturn static void task_main_poll( void *arg ) {
     (void) arg;
 
