@@ -41,11 +41,16 @@ static void draw_number( int x, int y, int fontSize, int value ) {
     int d = fontSize/3*2;
     char s [2];
     s[1] = 0;
-    for( int i = 3; i >= 0; i--, value /=10 ) {
+    for( int i = 3; i >= 0; i--  ) {
         if ( value == 0 && !show_leading_zeroes && i != 3 ) {
             break;
         }
-        s[0] = ( value % 10) + '0';
+        if ( value >= 0 ) {
+            s[ 0 ] = ( value % 10 ) + '0';
+            value /=10;
+        } else {
+            s[0] = '-';
+        }
         u8g2_DrawStr( &u8g2, x+i*d, y, s );
     }
 }
@@ -63,7 +68,7 @@ static void draw_icon( int x, int y, const char* character, bool alert_state ) {
 
 static void draw_icon_xbm( int x, int y, const uint8_t *bitmap, bool alert_state ) {
     u8g2_SetDrawColor( &u8g2, 1 );
-    if ( alert_state ) {
+    if ( alert_state && displayData.flashState ) {
         u8g2_DrawBox( &u8g2, x - 1, y - ICON_SIZE - 1, ICON_SIZE + 2, ICON_SIZE + 2 );
         u8g2_SetDrawColor( &u8g2, 0 );
     }
@@ -78,26 +83,30 @@ static void draw_screen() {
     gpio_set_level(PIN_BACKLIGHT, 1 );
     u8g2_ClearBuffer( &u8g2 );
 
+    u8g2_SetDrawColor( &u8g2, 1 );
     u8g2_SetFont( &u8g2, u8g2_font_logisoso32_tr );
-    draw_number( 0, height / 2 + 1, 32, data.rpm );
+    draw_number( 0, height / 2 + 1, 32, displayData.rpm );
     u8g2_SetFont( &u8g2, u8g2_font_logisoso16_tr );
-    u8g2_DrawStr( &u8g2, width/2+20, height/2-8, "rpm" );
+    u8g2_DrawStr( &u8g2, width/2+20, height/2-6, "rpm" );
 
-    draw_number( width / 2 + 11, height - 4, 16, data.hours );
+    draw_number( width / 2 + 11, height - 4, 16, displayData.hours );
     u8g2_DrawStr( &u8g2, width/2+16/3*2*5+4, height-4, "h" );
 
-    u8g2_SetDrawColor( &u8g2, 1 );
-    draw_icon_xbm( 1, height-3, car_oil_bits, data.alert_flags.charger );
+    int x = 1;
+    draw_icon_xbm( x, height-3, car_oil_bits, displayData. oilPressureFailure );
 //    u8g2_SetFont( &u8g2, u8g2_font_open_iconic_thing_2x_t );
-//    draw_icon( 1, height-3, "\x40" , data.alert_flags.charger);
+//    draw_icon( x, height-3, "\x40" , data.alert_flags.charger);
+    x += 20;
 
-    draw_icon_xbm( 21, height-3, car_battery_bits, data.alert_flags.oil_pressure );
+    draw_icon_xbm( x, height-3, thermometer_bits, displayData.coolingWaterTemperatureFailure );
+//    u8g2_SetFont( &u8g2, u8g2_font_open_iconic_thing_2x_t );
+//    draw_icon( x, height-3, "\x4e" , data.alert_flags.oil_pressure);
+    x += 20;
+
+    draw_icon_xbm( x, height-3, car_battery_bits, displayData.chargerFailure );
 //    u8g2_SetFont( &u8g2, u8g2_font_open_iconic_embedded_2x_t );
-//    draw_icon( 21, height-3, "\x4f" , data.alert_flags.water_temperature);
+//    draw_icon( x, height-3, "\x4f" , data.alert_flags.water_temperature);
 
-    draw_icon_xbm( 41, height-3, thermometer_bits, data.alert_flags.water_temperature );
-//    u8g2_SetFont( &u8g2, u8g2_font_open_iconic_thing_2x_t );
-//    draw_icon( 41, height-3, "\x4e" , data.alert_flags.oil_pressure);
 
     u8g2_SendBuffer( &u8g2 );
 }

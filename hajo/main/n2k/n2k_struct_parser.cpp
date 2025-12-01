@@ -87,3 +87,26 @@ bool ParseN2kAttitude( const tN2kMsg &N2kMsg, N2kAttitudeData &data ) {
                              data.pitch,
                              data.roll );
 }
+
+bool ParseN2kEngineParamRapid( const tN2kMsg &N2kMsg, N2kEngineParamRapid &data ) {
+    return ParseN2kEngineParamRapid( N2kMsg,
+                                     data.engineInstance,
+                                     data.engineSpeedRpm,
+                                     data.engineBoostPressurePa,
+                                     data.engineTiltTrimPercent );
+}
+
+bool ParseN2kEngineDynamicParam( const tN2kMsg &N2kMsg, N2kEngineDynamicParam &data ) {
+    return ParseN2kEngineDynamicParam( N2kMsg,
+                                       data.engineInstance,
+                                       data.engineOilPress,
+                                       data.engineOilTemp,
+                                       data.engineCoolantTemp,
+                                       data.alternatorVoltage,
+                                       data.fuelRate,
+                                       data.engineHours,
+                                       data.engineCoolantPress,
+                                       data.engineFuelPress,
+                                       data.engineLoad,
+                                       data.engineTorque );
+}

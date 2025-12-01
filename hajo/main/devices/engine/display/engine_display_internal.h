@@ -19,16 +19,13 @@
 typedef struct {
     int16_t rpm;
     int16_t hours;
-    union {
-        uint8_t alerts;
-        struct {
-            unsigned charger: 1;
-            unsigned oil_pressure: 1;
-            unsigned water_temperature: 1;
-        } alert_flags;
-    };
+    bool chargerFailure;
+    bool oilPressureFailure;
+    bool coolingWaterTemperatureFailure;
+    bool hasFailure;
+    bool flashState;
 } display_data_t;
 
-extern display_data_t data;
+extern display_data_t displayData;
 
 #endif //HAJO_ENGINE_DISPLAY_INTERNAL_H

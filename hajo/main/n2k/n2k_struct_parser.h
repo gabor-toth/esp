@@ -193,77 +193,33 @@ extern bool ParseN2kAttitude( const tN2kMsg &N2kMsg, N2kAttitudeData &data );
 
 #define N2K_PGN_ENGINE_PARAMETERS_RAPID_UPDATE 0x1F200 // 127488
 #define N2K_PGN_ENGINE_PARAMETERS_RAPID_UPDATE_INTERVAL_MS 100
-/*
-1	Instance
-0 .. 252
-8 bits lookup ENGINE_INSTANCE	true
-2	Speed		0.25 rpm
-0 .. 16383
-16 bits unsigned NUMBER
-3	Boost Pressure		100 Pa
-0 .. 6553200
-16 bits unsigned NUMBER
-4	Tilt/Trim		%
--127 .. 124
-8 bits signed NUMBER
-5	Reserved			16 bits RESERVED
- */
+
+typedef struct {
+    unsigned char engineInstance;
+    double engineSpeedRpm;
+    double engineBoostPressurePa;
+    int8_t engineTiltTrimPercent;
+} N2kEngineParamRapid;
+
+extern bool ParseN2kEngineParamRapid( const tN2kMsg &N2kMsg, N2kEngineParamRapid &data );
 
 #define N2K_PGN_ENGINE_PARAMETERS_DYNAMIC 0x1F201 // 127489
 #define N2K_PGN_ENGINE_PARAMETERS_DYNAMIC_INTERVAL_MS 500
-/*
-1	Instance
-0 .. 252
-8 bits lookup ENGINE_INSTANCE	true
-2	Oil pressure		100 Pa
-0 .. 6553200
-16 bits unsigned NUMBER
-3	Oil temperature		0.1 K
-0 .. 6553.2
-16 bits unsigned NUMBER
-4	Temperature		0.01 K
-0 .. 655.32
-16 bits unsigned NUMBER
-5	Alternator Potential		0.01 V
--327.67 .. 327.64
-16 bits signed NUMBER
-6	Fuel Rate		0.1 L/h
--3276.7 .. 3276.4
-16 bits signed NUMBER
-7	Total Engine hours		s
-0 .. 4294967292
-32 bits unsigned DURATION
-8	Coolant Pressure		100 Pa
-0 .. 6553200
-16 bits unsigned NUMBER
-9	Fuel Pressure		1000 Pa
-0 .. 65532000
-16 bits unsigned NUMBER
-10	Reserved			8 bits RESERVED
-11	Discrete Status 1
-0 .. 65535
-16 bits bitfield ENGINE_STATUS_1
-12	Discrete Status 2
-0 .. 65535
-16 bits bitfield ENGINE_STATUS_2
-13	Engine Load		%
--127 .. 124
-8 bits signed NUMBER
-14	Engine Torque		%
--127 .. 124
-8 bits signed NUMBER
- */
 
-/*
-0x1F20A: PGN 127498 - Engine Parameters, Static
-1	Instance
-0 .. 252
-8 bits lookup ENGINE_INSTANCE	true
-2	Rated Engine Speed		0.25 rpm
-0 .. 16383
-16 bits unsigned NUMBER
-3	VIN			Variable length STRING_LAU
-4	Software ID			Variable length STRING_LAU
- */
+typedef struct {
+    unsigned char engineInstance;
+    double engineOilPress;
+    double engineOilTemp;
+    double engineCoolantTemp;
+    double alternatorVoltage;
+    double fuelRate;
+    double engineHours;
+    double engineCoolantPress;
+    double engineFuelPress;
+    int8_t engineLoad;
+    int8_t engineTorque;
+} N2kEngineDynamicParam;
+
+extern bool ParseN2kEngineDynamicParam( const tN2kMsg &N2kMsg, N2kEngineDynamicParam &data );
 
 #endif //HAJO_N2K_STRUCT_PARSER_H
