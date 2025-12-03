@@ -5,4 +5,10 @@ extern void engine_display_setup_display();
 
 extern void engine_display_draw_screen();
 
+extern void engine_display_draw_logo();
+
+extern void engine_display_onoff( bool on );
+
+extern bool engine_display_is_on;
+
 #endif //HAJO_ENGINE_DISPLAY_DRAW_H

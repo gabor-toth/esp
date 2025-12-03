@@ -3,6 +3,11 @@
 
 #include <cstdint>
 
+#define CONFIG_ENGINE_DISPLAY_IDLE_TIMEOUT_SECS     5
+#define CONFIG_ENGINE_DISPLAY_LOGO_SECS             3
+#define CONFIG_ENGINE_DISPLAY_OFF_TIMEOUT_SECS      15
+#define CONFIG_ENGINE_DISPLAY_SHOW_LEADING_ZEROES   false
+
 #define PIN_LCD_CLK     GPIO_NUM_7      // E
 #define PIN_LCD_MOSI    GPIO_NUM_5      // RW
 #define PIN_LCD_CS      GPIO_NUM_3      // RS
@@ -13,7 +18,6 @@
 #define PIN_INPUT_START     GPIO_NUM_37
 #define PIN_INPUT_STOP      GPIO_NUM_35
 #define PIN_INPUT_LIGHT     GPIO_NUM_33
-
 
 // GND
 // VCC = 5V
