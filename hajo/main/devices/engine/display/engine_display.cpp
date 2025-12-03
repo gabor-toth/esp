@@ -19,6 +19,7 @@ static TimerHandle_t connectionFailureTimer;
 static TimerHandle_t displayLogoTimer;
 static TimerHandle_t displayOffTimer;
 static bool displayLogo;
+static bool engineRunning;
 display_data_t displayData;
 
 static void process_incoming_pgn( const tN2kMsg &message );
@@ -60,6 +61,12 @@ static void setup_n2k_device( int iDev ) {
     NMEA2000.AttachMsgHandler( new N2kIncomingMessageHandler( &NMEA2000, process_incoming_pgn ) );
 }
 
+static void draw_screen_on_change() {
+    if ( !displayLogo && engine_display_is_on ) {
+        engine_display_draw_screen();
+    }
+}
+
 static void process_engine_rapid_pgn( const tN2kMsg &N2kMsg ) {
     N2kEngineParamRapid data;
     if ( !ParseN2kEngineParamRapid( N2kMsg, data ) ) {
@@ -67,8 +74,8 @@ static void process_engine_rapid_pgn( const tN2kMsg &N2kMsg ) {
     }
     bool changed = false;
     n2k_incoming_value( (int16_t) data.engineSpeedRpm, displayData.rpm, changed );
-    if ( changed && !displayLogo ) {
-        engine_display_draw_screen();
+    if ( changed ) {
+        draw_screen_on_change();
     }
 }
 
@@ -107,7 +114,7 @@ static void process_engine_dynamic_pgn( const tN2kMsg &N2kMsg ) {
     n2k_incoming_value( data.alternatorVoltage < 0.0, displayData.chargerFailure, changed );
     if ( changed ) {
         set_flash();
-        engine_display_draw_screen();
+        draw_screen_on_change();
     }
 }
 
@@ -160,16 +167,21 @@ static void logo_timer_callback( TimerHandle_t xTimer ) {
     displayLogo = false;
     engine_display_draw_screen();
     xTimerStart( displayOffTimer, portMAX_DELAY );
+    if ( displayData.hasFailure ) {
+        xTimerStart( flashTimer, portMAX_DELAY );
+    }
 }
 
 static void off_timer_callback( TimerHandle_t xTimer ) {
     engine_display_onoff( false );
+    xTimerStop( displayOffTimer, portMAX_DELAY );
+    xTimerStop( flashTimer, portMAX_DELAY );
     // TODO beep
 }
 
 static void setup_display( int iDev ) {
     gpio_config_t gpioConfig;
-    gpioConfig.pin_bit_mask = 1L << PIN_LCD_BACKLIGHT;
+    gpioConfig.pin_bit_mask = ( 1L << PIN_LCD_BACKLIGHT ) | ( 1L << PIN_BUTTON_BACKLIGHT );
     gpioConfig.mode = GPIO_MODE_OUTPUT;
     gpioConfig.pull_up_en = GPIO_PULLUP_DISABLE;
     gpioConfig.pull_down_en = GPIO_PULLDOWN_ENABLE;
@@ -247,6 +259,7 @@ void engine_display_main( int iDev ) {
     setup_timers();
     gpio_init(nullptr, define_input_pins, nullptr, gpio_changed );
 
+    engineRunning = false;
     turn_display_on();
 }
 

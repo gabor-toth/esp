@@ -12,7 +12,8 @@
 #define PIN_LCD_MOSI    GPIO_NUM_5      // RW
 #define PIN_LCD_CS      GPIO_NUM_3      // RS
 #define PIN_LCD_RESET   GPIO_NUM_9      // RST
-#define PIN_LCD_BACKLIGHT   GPIO_NUM_11
+#define PIN_LCD_BACKLIGHT       GPIO_NUM_11
+#define PIN_BUTTON_BACKLIGHT    GPIO_NUM_12
 
 #define PIN_INPUT_ONOFF     GPIO_NUM_39
 #define PIN_INPUT_START     GPIO_NUM_37

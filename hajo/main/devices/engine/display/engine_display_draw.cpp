@@ -259,5 +259,6 @@ void engine_display_draw_logo() {
 void engine_display_onoff( bool on ) {
     u8g2_SetPowerSave( &u8g2, !on );  // wake up display
     gpio_set_level( PIN_LCD_BACKLIGHT, on );
+    gpio_set_level( PIN_BUTTON_BACKLIGHT, on );
     engine_display_is_on = on;
 }
