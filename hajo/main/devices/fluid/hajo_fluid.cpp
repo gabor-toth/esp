@@ -5,6 +5,7 @@
 #include "n2k/n2k_struct_parser.h"
 #include "n2k/n2k_sender.h"
 #include "n2k/n2k_util.h"
+#include "n2k/N2kVarilog.h"
 
 //static double fluid_u = 3.20;
 //static double fluid_rtop = 806;
@@ -138,7 +139,7 @@ static void setup_n2k_device( int iDev ) {
     NMEA2000.SetDeviceInformation( n2k_get_device_id(),      // Unique number. Use e.g. Serial number.
                                    150,    // Device function=Fluid level
                                    75,        // Device class=Sensor Communication Interface
-                                   2046, // Just chosen free from code list on http://www.nmea.org/Assets/20121020%20nmea%202000%20registration%20list.pdf
+                                   N2K_MANUFACTURER_CODE_VARILOG,
                                    4,       // Marine
                                    iDev
     );

@@ -12,5 +12,5 @@ https://openplotter.readthedocs.io/en/3.x.x/getting_started/downloading.html
 CAN/NMEA
 ========
 
-https://canboat.github.io/canboat/canboat.xml
-https://deadpacketsociety.net/Rebuilding-CANbus-traffic-from-NMEA2000-logs/
+- PNGs: https://canboat.github.io/canboat/canboat.xml
+- https://deadpacketsociety.net/Rebuilding-CANbus-traffic-from-NMEA2000-logs/

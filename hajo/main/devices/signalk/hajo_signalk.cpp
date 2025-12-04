@@ -2,6 +2,7 @@
 #include "n2k/n2k_receiver.h"
 #include "n2k/n2k_sender.h"
 #include "n2k/n2k_util.h"
+#include "n2k/N2kVarilog.h"
 #include "n2k_gateway.h"
 
 static void setup_n2k_device( int iDev ) {
@@ -26,11 +27,10 @@ static void setup_n2k_device( int iDev ) {
 
     NMEA2000.SetProductInformation( &ProductInformation, iDev );
 
-    // device class & function: https://manualzz.com/doc/12647142/nmea2000-class-and-function-codes
     NMEA2000.SetDeviceInformation( n2k_get_device_id(),      // Unique number. Use e.g. Serial number.
                                    131,    // Device function=NMEA 2000 to Analog Gateway
                                    25,        // Inter/Intranetwork Device
-                                   2047,  // Just chosen free from code list on http://www.nmea.org/Assets/20121020%20nmea%202000%20registration%20list.pdf
+                                   N2K_MANUFACTURER_CODE_VARILOG,
                                    4,       // Marine
                                    iDev
     );

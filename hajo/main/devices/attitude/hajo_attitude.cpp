@@ -1,12 +1,13 @@
-#include "hajo_attitude.h"
+#include <cmath>
 #include "config.h"
 #include "driver/i2c.h"
 #include "esp_log.h"
+#include "hajo_attitude.h"
 #include "mpu6050.h"
 #include "n2k/n2k_sender.h"
 #include "n2k/n2k_struct_parser.h"
 #include "n2k/n2k_util.h"
-#include <cmath>
+#include "n2k/N2kVarilog.h"
 
 #define RAD_TO_DEG                  57.27272727f /*!< Radians to degrees */
 
@@ -131,11 +132,10 @@ static void setup_n2k_device( int iDev ) {
 
     NMEA2000.SetProductInformation( &ProductInformation, iDev );
 
-    // device class & function: https://manualzz.com/doc/12647142/nmea2000-class-and-function-codes
     NMEA2000.SetDeviceInformation( n2k_get_device_id(),      // Unique number. Use e.g. Serial number.
                                    140,    // Device function=Attitude
                                    60,        // Device class=Navigation
-                                   2046,  // Just chosen free from code list on http://www.nmea.org/Assets/20121020%20nmea%202000%20registration%20list.pdf
+                                   N2K_MANUFACTURER_CODE_VARILOG,
                                    4,       // Marine
                                    iDev
     );

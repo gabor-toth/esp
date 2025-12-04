@@ -2,6 +2,7 @@
 #include "esp_timer.h"
 #include "engine_sender.h"
 #include "n2k/n2k_sender.h"
+#include "n2k/N2kVarilog.h"
 #include "nvs_main.h"
 
 static const char *TAG = "sender";
@@ -38,11 +39,10 @@ static void setup_n2k_device( int iDev ) {
 
     NMEA2000.SetProductInformation( &ProductInformation, iDev );
 
-    // device class & function: https://manualzz.com/doc/12647142/nmea2000-class-and-function-codes
     NMEA2000.SetDeviceInformation( n2k_get_device_id(),      // Unique number. Use e.g. Serial number.
                                    160,    // Engine Gateway
                                    50,        // Device class=Propulsion
-                                   2046,  // Just chosen free from code list on https://github.com/ieb/EngineMonitor/blob/master/20120726%20nmea%202000%20class%20%26%20function%20codes%20v%202.00.pdf
+                                   N2K_MANUFACTURER_CODE_VARILOG,
                                    4,       // Marine
                                    iDev
     );
@@ -78,7 +78,7 @@ static bool send_dynamic( int index, tN2kMsg &message, int &deviceIndex ) {
                      get_failure_value( coolingWaterTemperatureFailure ),
                      get_failure_value( chargerFailure ),
                      N2kDoubleNA,
-                     engineMinutes / 60.0 );
+                     (double)engineMinutes / 60.0 );
     return true;
 }
 

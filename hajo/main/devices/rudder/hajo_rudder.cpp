@@ -6,6 +6,7 @@
 #include "n2k/n2k_sender.h"
 #include "n2k/n2k_struct_parser.h"
 #include "n2k/n2k_util.h"
+#include "n2k/N2kVarilog.h"
 
 #define PIN_RUDDER_ADC_DRIVE    GPIO_NUM_3
 #define ADC_CHANNEL_IN          4            // GPIO_NUM_5
@@ -76,11 +77,10 @@ static void setup_n2k_device( int iDev ) {
 
     NMEA2000.SetProductInformation( &ProductInformation, iDev );
 
-    // device class & function: https://manualzz.com/doc/12647142/nmea2000-class-and-function-codes
     NMEA2000.SetDeviceInformation( n2k_get_device_id(),      // Unique number. Use e.g. Serial number.
                                    155,    // Device function=Rudder
                                    40,        // Device class=Steering and Control Surfaces
-                                   2046,  // Just chosen free from code list on http://www.nmea.org/Assets/20121020%20nmea%202000%20registration%20list.pdf
+                                   N2K_MANUFACTURER_CODE_VARILOG,
                                    4,       // Marine
                                    iDev
     );
