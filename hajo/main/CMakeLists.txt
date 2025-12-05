@@ -60,6 +60,7 @@ set(SOURCES
         "n2k/n2k_struct_parser.cpp"
         "n2k/n2k_util.cpp"
         "n2k/N2kRaymarine.cpp"
+        "n2k/N2kVarilog.cpp"
         "nodeinfo/nodeinfo.cpp"
         "hajo_main.cpp"
 )
