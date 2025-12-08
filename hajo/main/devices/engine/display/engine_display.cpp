@@ -22,21 +22,27 @@ static TimerHandle_t displayOffTimer;
 static bool displayLogo;
 static bool engineRunning;
 display_data_t displayData;
+static uint8_t sid;
+static uint8_t sid_last_acked;
+static N2kVarilogEngineKeys keysState;
+static N2kVarilogEngineKeys keysStateAcked;
 
 static void process_incoming_pgn( const tN2kMsg &message );
 
 static void setup_n2k_device( int iDev ) {
-    static const unsigned long TransmitMessages[] = {
+    static constexpr unsigned long TransmitMessages[] = {
+            N2K_PGN_VARILOG_ENGINE_KEY_PRESS,
             0
     };
 
-    static const unsigned long ReceiveMessages[] = {
+    static constexpr unsigned long ReceiveMessages[] = {
             N2K_PGN_ENGINE_PARAMETERS_RAPID_UPDATE,
             N2K_PGN_ENGINE_PARAMETERS_DYNAMIC,
+            N2K_PGN_VARILOG_ENGINE_KEY_PRESS_ACK,
             0
     };
 
-    static const tNMEA2000::tProductInformation ProductInformation = {
+    static constexpr tNMEA2000::tProductInformation ProductInformation = {
             2100,                    // N2kVersion
             107,                     // Manufacturer's product code
             "Engine display",      // Manufacturer's Model ID
@@ -122,6 +128,12 @@ static void reset_idle_timer() {
     xTimerReset( connectionFailureTimer, portMAX_DELAY );
 }
 
+static void process_keypress_ack_pgn(const tN2kMsg& N2kMsg) {
+    ParseN2kPGNVarilogEngineKeyPressAck();
+    sid_last_acked = message,sid;
+    xTimerStop(keyAckTimer);
+}
+
 static void process_incoming_pgn( const tN2kMsg &message ) {
     switch ( message.PGN ) {
         case N2K_PGN_ENGINE_PARAMETERS_RAPID_UPDATE:
@@ -131,6 +143,9 @@ static void process_incoming_pgn( const tN2kMsg &message ) {
         case N2K_PGN_ENGINE_PARAMETERS_DYNAMIC:
             process_engine_dynamic_pgn( message );
             reset_idle_timer();
+            break;
+        case N2K_PGN_VARILOG_ENGINE_KEY_PRESS:
+            process_keypress_ack_pgn( message );
             break;
     }
 }
@@ -249,14 +264,40 @@ static void turn_display_on() {
 static void gpio_changed( gpio_num_t io_num, int state ) {
     ESP_LOGI(TAG,"gpio %d state %d", io_num, state );
     xTimerReset( displayOffTimer, portMAX_DELAY );
-    if ( !engine_display_is_on ) {
-        turn_display_on();
+    switch (io_num)
+    {
+        case PIN_INPUT_LIGHT:
+            keysState.Keys.light = state;
+            break;
+        case PIN_INPUT_START:
+            keysState.Keys.start = state;
+            break;
+        case PIN_INPUT_STOP:
+            keysState.Keys.stop = state;
+            break;
+        case PIN_INPUT_ONOFF:
+            keysState.Keys.main = state;
+            if ( !engine_display_is_on ) {
+                turn_display_on();
+            }
+            break;
+        default:
+            break;
     }
+    tN2kMsg msg;
+    N2kVarilogEngineKeys keysChangedSinceLastAck;
+    keysChangedSinceLastAck.ByteValue = keysState.ByteValue ^ keysStateAcked.ByteValue;
+    SetN2kPGNVarilogEngineKeyPress( msg, 1, ++sid, keysState, keysChangedSinceLastAck );
+    NMEA2000.SendMsg( msg );
+    // TODO start timer for ack
 }
 
 void engine_display_main( int iDev ) {
     setup_display( iDev );
     setup_timers();
+    keysState.ByteValue = 0;
+    keysStateAcked.ByteValue = 0;
+    sid = sid_last_acked = 0;
     gpio_init(nullptr, define_input_pins, nullptr, gpio_changed );
 
     engineRunning = false;

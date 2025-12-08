@@ -15,8 +15,7 @@
  0xFF00-0xFFFF: Manufacturer Proprietary single-frame non-addressed
 */
 
-bool
-ParseN2kPGNVarilogEngineKeyPress( const tN2kMsg &N2kMsg, uint8_t &instanceId, N2kVarilogEngineKeyPress &keyPress ) {
+bool ParseN2kPGNVarilogEngineKeyPress( const tN2kMsg &N2kMsg, uint8_t &instanceId, uint8_t& sid, N2kVarilogEngineKeys &keysPressed, N2kVarilogEngineKeys& keysChanged ) {
     if ( N2kMsg.PGN != N2K_PGN_VARILOG_ENGINE_KEY_PRESS ) {
         return false;
     }
@@ -27,14 +26,49 @@ ParseN2kPGNVarilogEngineKeyPress( const tN2kMsg &N2kMsg, uint8_t &instanceId, N2
         return false;
     }
     instanceId = N2kMsg.GetByte( Index );
-    keyPress = static_cast<N2kVarilogEngineKeyPress>(N2kMsg.GetByte( Index ));
+    sid = N2kMsg.GetByte( Index );
+    keysPressed.ByteValue = N2kMsg.GetByte( Index );
+    keysChanged.ByteValue = N2kMsg.GetByte( Index );
 
     return true;
 }
 
-void SetN2kPGNVarilogEngineKeyPress( tN2kMsg &N2kMsg, uint8_t instanceId, N2kVarilogEngineKeyPress keyPress ) {
+void SetN2kPGNVarilogEngineKeyPress( tN2kMsg &N2kMsg, uint8_t instanceId, uint8_t sid, N2kVarilogEngineKeys keysPressed, N2kVarilogEngineKeys keysChanged ) {
     N2kMsg.SetPGN( N2K_PGN_VARILOG_ENGINE_KEY_PRESS );
     N2kMsg.Add2ByteUInt( VARILOG_MANUFACTURER_INDUSTRY );
     N2kMsg.AddByte( instanceId );
-    N2kMsg.AddByte( keyPress );
+    N2kMsg.AddByte( sid );
+    N2kMsg.AddByte( keysPressed.ByteValue );
+    N2kMsg.AddByte( keysChanged.ByteValue );
+    // fill to 8 bytes
+    N2kMsg.AddByte( 0 );
+    N2kMsg.AddByte( 0 );
+}
+
+bool ParseN2kPGNVarilogEngineKeyPressAck( const tN2kMsg &N2kMsg, uint8_t &instanceId, uint8_t& sid ) {
+    if ( N2kMsg.PGN != N2K_PGN_VARILOG_ENGINE_KEY_PRESS_ACK ) {
+        return false;
+    }
+
+    int Index = 0;
+    int manufacturerIndustryCode = N2kMsg.Get2ByteUInt( Index );
+    if ( manufacturerIndustryCode != VARILOG_MANUFACTURER_INDUSTRY ) {
+        return false;
+    }
+    instanceId = N2kMsg.GetByte( Index );
+    sid = N2kMsg.GetByte( Index );
+
+    return true;
+}
+
+void SetN2kPGNVarilogEngineKeyPressAck( tN2kMsg &N2kMsg, uint8_t instanceId, uint8_t sid ) {
+    N2kMsg.SetPGN( N2K_PGN_VARILOG_ENGINE_KEY_PRESS_ACK );
+    N2kMsg.Add2ByteUInt( VARILOG_MANUFACTURER_INDUSTRY );
+    N2kMsg.AddByte( instanceId );
+    N2kMsg.AddByte( sid );
+    // fill to 8 bytes
+    N2kMsg.AddByte( 0 );
+    N2kMsg.AddByte( 0 );
+    N2kMsg.AddByte( 0 );
+    N2kMsg.AddByte( 0 );
 }

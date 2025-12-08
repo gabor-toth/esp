@@ -2,6 +2,7 @@
 #include "esp_timer.h"
 #include "engine_sender.h"
 #include "n2k/n2k_sender.h"
+#include "n2k/n2k_receiver.h"
 #include "n2k/N2kVarilog.h"
 #include "nvs_main.h"
 
@@ -15,18 +16,22 @@ static bool oilPressureFailure;
 static bool coolingWaterTemperatureFailure;
 static bool hasFailure;
 
+static void process_incoming_pgn( const tN2kMsg &message );
+
 static void setup_n2k_device( int iDev ) {
-    static const unsigned long TransmitMessages[] = {
+    static constexpr unsigned long TransmitMessages[] = {
             N2K_PGN_ENGINE_PARAMETERS_RAPID_UPDATE,
             N2K_PGN_ENGINE_PARAMETERS_DYNAMIC,
+            N2K_PGN_VARILOG_ENGINE_KEY_PRESS_ACK,
             0
     };
 
-    static const unsigned long ReceiveMessages[] = {
-            0
+    static constexpr unsigned long ReceiveMessages[] = {
+        N2K_PGN_VARILOG_ENGINE_KEY_PRESS,
+        0
     };
 
-    static const tNMEA2000::tProductInformation ProductInformation = {
+    static constexpr tNMEA2000::tProductInformation ProductInformation = {
             2100,                    // N2kVersion
             103,                     // Manufacturer's product code
             "Engine sender",      // Manufacturer's Model ID
@@ -49,6 +54,7 @@ static void setup_n2k_device( int iDev ) {
 
     NMEA2000.ExtendTransmitMessages( TransmitMessages, iDev );
     NMEA2000.ExtendReceiveMessages( ReceiveMessages, iDev );
+    NMEA2000.AttachMsgHandler( new N2kIncomingMessageHandler( &NMEA2000, process_incoming_pgn ) );
 }
 
 static bool send_rapid_update( int index, tN2kMsg &message, int &deviceIndex ) {
@@ -113,6 +119,13 @@ static void init_test_data() {
     chargerFailure = false;
     coolingWaterTemperatureFailure = false;
     oilPressureFailure = true;
+}
+
+static void process_incoming_pgn( const tN2kMsg &message ) {
+    switch ( message.PGN ) {
+    case N2K_PGN_VARILOG_ENGINE_KEY_PRESS:
+        break;
+    }
 }
 
 void engine_sender_main( int iDev ) {
