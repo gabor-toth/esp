@@ -15,60 +15,86 @@
  0xFF00-0xFFFF: Manufacturer Proprietary single-frame non-addressed
 */
 
-bool ParseN2kPGNVarilogEngineKeyPress( const tN2kMsg &N2kMsg, uint8_t &instanceId, uint8_t& sid, N2kVarilogEngineKeys &keysPressed, N2kVarilogEngineKeys& keysChanged ) {
-    if ( N2kMsg.PGN != N2K_PGN_VARILOG_ENGINE_KEY_PRESS ) {
+bool ParseN2kPGNVarilogEngineKeyPress(const tN2kMsg &N2kMsg, uint8_t &instanceId, uint8_t &sid,
+                                      N2kVarilogEngineKeys &keysPressed, N2kVarilogEngineKeys &keysChanged) {
+    if (N2kMsg.PGN != N2K_PGN_VARILOG_ENGINE_KEY_PRESS) {
         return false;
     }
 
     int Index = 0;
-    int manufacturerIndustryCode = N2kMsg.Get2ByteUInt( Index );
-    if ( manufacturerIndustryCode != VARILOG_MANUFACTURER_INDUSTRY ) {
+    int manufacturerIndustryCode = N2kMsg.Get2ByteUInt(Index);
+    if (manufacturerIndustryCode != VARILOG_MANUFACTURER_INDUSTRY) {
         return false;
     }
-    instanceId = N2kMsg.GetByte( Index );
-    sid = N2kMsg.GetByte( Index );
-    keysPressed.ByteValue = N2kMsg.GetByte( Index );
-    keysChanged.ByteValue = N2kMsg.GetByte( Index );
+    instanceId = N2kMsg.GetByte(Index);
+    sid = N2kMsg.GetByte(Index);
+    keysPressed.ByteValue = N2kMsg.GetByte(Index);
+    keysChanged.ByteValue = N2kMsg.GetByte(Index);
 
     return true;
 }
 
-void SetN2kPGNVarilogEngineKeyPress( tN2kMsg &N2kMsg, uint8_t instanceId, uint8_t sid, N2kVarilogEngineKeys keysPressed, N2kVarilogEngineKeys keysChanged ) {
-    N2kMsg.SetPGN( N2K_PGN_VARILOG_ENGINE_KEY_PRESS );
-    N2kMsg.Add2ByteUInt( VARILOG_MANUFACTURER_INDUSTRY );
-    N2kMsg.AddByte( instanceId );
-    N2kMsg.AddByte( sid );
-    N2kMsg.AddByte( keysPressed.ByteValue );
-    N2kMsg.AddByte( keysChanged.ByteValue );
-    // fill to 8 bytes
-    N2kMsg.AddByte( 0 );
-    N2kMsg.AddByte( 0 );
+bool ParseN2kPGNVarilogEngineKeyPress(const tN2kMsg &N2kMsg, N2kPGNVarilogEngineKeyPress &data) {
+    return ParseN2kPGNVarilogEngineKeyPress(
+        N2kMsg,
+        data.instanceId,
+        data.sid,
+        data.keysPressed,
+        data.keysChanged);
 }
 
-bool ParseN2kPGNVarilogEngineKeyPressAck( const tN2kMsg &N2kMsg, uint8_t &instanceId, uint8_t& sid ) {
-    if ( N2kMsg.PGN != N2K_PGN_VARILOG_ENGINE_KEY_PRESS_ACK ) {
+void SetN2kPGNVarilogEngineKeyPress(tN2kMsg &N2kMsg, uint8_t instanceId, uint8_t sid, N2kVarilogEngineKeys keysPressed,
+                                    N2kVarilogEngineKeys keysChanged) {
+    N2kMsg.SetPGN(N2K_PGN_VARILOG_ENGINE_KEY_PRESS);
+    N2kMsg.Add2ByteUInt(VARILOG_MANUFACTURER_INDUSTRY);
+    N2kMsg.AddByte(instanceId);
+    N2kMsg.AddByte(sid);
+    N2kMsg.AddByte(keysPressed.ByteValue);
+    N2kMsg.AddByte(keysChanged.ByteValue);
+    // fill to 8 bytes
+    N2kMsg.AddByte(0);
+    N2kMsg.AddByte(0);
+}
+
+void SetN2kPGNVarilogEngineKeyPress(tN2kMsg &N2kMsg, const N2kPGNVarilogEngineKeyPress &data) {
+    SetN2kPGNVarilogEngineKeyPress(N2kMsg, data.instanceId, data.sid, data.keysPressed, data.keysChanged);
+}
+
+bool ParseN2kPGNVarilogEngineKeyPressAck(const tN2kMsg &N2kMsg, uint8_t &instanceId, uint8_t &sid) {
+    if (N2kMsg.PGN != N2K_PGN_VARILOG_ENGINE_KEY_PRESS_ACK) {
         return false;
     }
 
     int Index = 0;
-    int manufacturerIndustryCode = N2kMsg.Get2ByteUInt( Index );
-    if ( manufacturerIndustryCode != VARILOG_MANUFACTURER_INDUSTRY ) {
+    int manufacturerIndustryCode = N2kMsg.Get2ByteUInt(Index);
+    if (manufacturerIndustryCode != VARILOG_MANUFACTURER_INDUSTRY) {
         return false;
     }
-    instanceId = N2kMsg.GetByte( Index );
-    sid = N2kMsg.GetByte( Index );
+    instanceId = N2kMsg.GetByte(Index);
+    sid = N2kMsg.GetByte(Index);
 
     return true;
 }
 
-void SetN2kPGNVarilogEngineKeyPressAck( tN2kMsg &N2kMsg, uint8_t instanceId, uint8_t sid ) {
-    N2kMsg.SetPGN( N2K_PGN_VARILOG_ENGINE_KEY_PRESS_ACK );
-    N2kMsg.Add2ByteUInt( VARILOG_MANUFACTURER_INDUSTRY );
-    N2kMsg.AddByte( instanceId );
-    N2kMsg.AddByte( sid );
+bool ParseN2kPGNVarilogEngineKeyPressAck(const tN2kMsg &N2kMsg, N2kPGNVarilogEngineKeyPressAck &data) {
+    return ParseN2kPGNVarilogEngineKeyPressAck(
+        N2kMsg,
+        data.instanceId,
+        data.sid);
+}
+
+void SetN2kPGNVarilogEngineKeyPressAck(tN2kMsg &N2kMsg, uint8_t instanceId, uint8_t sid) {
+    N2kMsg.SetPGN(N2K_PGN_VARILOG_ENGINE_KEY_PRESS_ACK);
+    N2kMsg.Add2ByteUInt(VARILOG_MANUFACTURER_INDUSTRY);
+    N2kMsg.AddByte(instanceId);
+    N2kMsg.AddByte(sid);
     // fill to 8 bytes
-    N2kMsg.AddByte( 0 );
-    N2kMsg.AddByte( 0 );
-    N2kMsg.AddByte( 0 );
-    N2kMsg.AddByte( 0 );
+    N2kMsg.AddByte(0);
+    N2kMsg.AddByte(0);
+    N2kMsg.AddByte(0);
+    N2kMsg.AddByte(0);
+}
+
+void SetN2kPGNVarilogEngineKeyPressAck(tN2kMsg &N2kMsg, const N2kPGNVarilogEngineKeyPressAck &data) {
+    SetN2kPGNVarilogEngineKeyPressAck(N2kMsg, data.instanceId, data.sid);
 }
