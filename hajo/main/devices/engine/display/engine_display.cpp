@@ -24,6 +24,7 @@ static TimerHandle_t displayOffTimer;
 static TimerHandle_t keyAckTimer;
 static bool displayLogo;
 static bool engineRunning;
+static bool turningOff;
 static uint8_t sid;
 static uint8_t sid_last_acked;
 static N2kVarilogEngineKeys keysState;
@@ -36,9 +37,12 @@ static void process_incoming_pgn(const tN2kMsg &message);
 
 static void send_key_png(bool initial);
 
+static void turn_display_onoff(bool on);
+
 static void setup_n2k_device(int iDev) {
     static constexpr unsigned long TransmitMessages[ ] = {
         N2K_PGN_VARILOG_ENGINE_KEY_PRESS,
+        N2K_PGN_VARILOG_ENGINE_SET_STATE,
         0
     };
 
@@ -46,6 +50,7 @@ static void setup_n2k_device(int iDev) {
         N2K_PGN_ENGINE_PARAMETERS_RAPID_UPDATE,
         N2K_PGN_ENGINE_PARAMETERS_DYNAMIC,
         N2K_PGN_VARILOG_ENGINE_KEY_PRESS_ACK,
+        N2K_PGN_VARILOG_ENGINE_STATE,
         0
     };
 
@@ -143,6 +148,15 @@ static void process_keypress_ack_pgn(const tN2kMsg &N2kMsg) {
     xTimerStop(keyAckTimer, portMAX_DELAY);
 }
 
+static void process_engine_state_pgn(const tN2kMsg &N2kMsg) {
+    N2kPGNVarilogEngineState data;
+    ParseN2kPGNVarilogEngineState(N2kMsg, data);
+    ESP_LOGI(TAG, "got engine state from instance %02x state %s", data.instanceId, data.engineOn ? "on" : "off");
+    if (!data.engineOn) {
+        turn_display_onoff(false);
+    }
+}
+
 static void process_incoming_pgn(const tN2kMsg &message) {
     switch (message.PGN) {
         case N2K_PGN_ENGINE_PARAMETERS_RAPID_UPDATE:
@@ -155,6 +169,9 @@ static void process_incoming_pgn(const tN2kMsg &message) {
             break;
         case N2K_PGN_VARILOG_ENGINE_KEY_PRESS_ACK:
             process_keypress_ack_pgn(message);
+            break;
+        case N2K_PGN_VARILOG_ENGINE_STATE:
+            process_engine_state_pgn(message);
             break;
         default:
             break;
@@ -189,20 +206,24 @@ static void idle_timer_callback(TimerHandle_t xTimer) {
     xTimerStop(connectionFailureTimer, portMAX_DELAY);
 }
 
-static void logo_timer_callback(TimerHandle_t xTimer) {
-    displayLogo = false;
-    engine_display_draw_screen();
-    xTimerStart(displayOffTimer, portMAX_DELAY);
-    if (displayData.hasFailure) {
-        xTimerStart(flashTimer, portMAX_DELAY);
-    }
-}
-
 static void off_timer_callback(TimerHandle_t xTimer) {
     engine_display_onoff(false);
     xTimerStop(displayOffTimer, portMAX_DELAY);
     xTimerStop(flashTimer, portMAX_DELAY);
     // TODO beep
+}
+
+static void logo_timer_callback(TimerHandle_t xTimer) {
+    displayLogo = false;
+    engine_display_draw_screen();
+    xTimerStart(displayOffTimer, portMAX_DELAY);
+    if (turningOff) {
+        off_timer_callback(xTimer);
+    } else {
+        if (displayData.hasFailure) {
+            xTimerStart(flashTimer, portMAX_DELAY);
+        }
+    }
 }
 
 static void key_ack_timer_callback(TimerHandle_t xTimer) {
@@ -280,8 +301,11 @@ static void define_input_pins(gpio_config_t *io_conf, void *user_context) {
                  low_is_on, &io_conf->pin_bit_mask);
 }
 
-static void turn_display_on() {
-    engine_display_onoff(true);
+static void turn_display_onoff(bool on) {
+    if (on) {
+        engine_display_onoff(true);
+    }
+    turningOff = !on;
     engine_display_draw_logo();
     displayLogo = true;
     xTimerStart(displayLogoTimer, portMAX_DELAY);
@@ -311,7 +335,7 @@ static void gpio_changed(gpio_num_t io_num, int state) {
         case PIN_INPUT_ONOFF:
             keysState.Keys.main = state;
             if (!engine_display_is_on) {
-                turn_display_on();
+                turn_display_onoff(true);
             }
             break;
         default:
@@ -337,7 +361,7 @@ void engine_display_main(int iDev) {
     gpio_init(nullptr, define_input_pins, nullptr, gpio_changed);
 
     engineRunning = false;
-    turn_display_on();
+    turn_display_onoff(true);
 }
 
 void engine_display_test() {

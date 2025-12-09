@@ -23,6 +23,7 @@ static const char *TAG = "sender";
 
 static TimerHandle_t beepTimer;
 static int myDeviceIndex;
+static uint8_t engineInstanceId;
 static uint32_t engineMinutes;
 static double engineSpeed;
 static bool chargerFailure;
@@ -43,11 +44,13 @@ static void setup_n2k_device(int iDev) {
         N2K_PGN_ENGINE_PARAMETERS_RAPID_UPDATE,
         N2K_PGN_ENGINE_PARAMETERS_DYNAMIC,
         N2K_PGN_VARILOG_ENGINE_KEY_PRESS_ACK,
+        N2K_PGN_VARILOG_ENGINE_STATE,
         0
     };
 
     static constexpr unsigned long ReceiveMessages[ ] = {
         N2K_PGN_VARILOG_ENGINE_KEY_PRESS,
+        N2K_PGN_VARILOG_ENGINE_SET_STATE,
         0
     };
 
@@ -83,7 +86,7 @@ static bool send_rapid_update(int index, tN2kMsg &message, int &deviceIndex) {
         return false;
     }
     SetN2kPGN127488(message,
-                    index + 1,
+                    engineInstanceId,
                     engineSpeed);
     return true;
 }
@@ -98,7 +101,7 @@ static bool send_dynamic(int index, tN2kMsg &message, int &deviceIndex) {
         return false;
     }
     SetN2kPGN127489(message,
-                    index + 1,
+                    engineInstanceId,
                     get_failure_value(oilPressureFailure),
                     N2kDoubleNA,
                     get_failure_value(coolingWaterTemperatureFailure),
@@ -122,6 +125,15 @@ static void init_data() {
     } else if (result == ESP_ERR_NVS_NOT_FOUND) {
         ESP_LOGI(TAG, "No %s stored yet, defaulting to 0", NV_KEY_ENGINE_MINUTES);
         engineMinutes = 0;
+    } else {
+        ESP_ERROR_CHECK(result);
+    }
+
+    result = nvs_get_u8(nvs_handle, NV_KEY_ENGINE_MINUTES, &engineInstanceId);
+    if (result == ESP_OK) {
+        ESP_LOGI(TAG, "Loaded %s %02x", NV_KEY_ENGINE_INSTANCE_ID, engineInstanceId);
+    } else if (result == ESP_ERR_NVS_NOT_FOUND) {
+        engineInstanceId = 1;
     } else {
         ESP_ERROR_CHECK(result);
     }
@@ -164,6 +176,12 @@ static void init_test_data() {
     oilPressureFailure = true;
 }
 
+static void send_engine_state() {
+    tN2kMsg message;
+    SetN2kPGNVarilogEngineState(message, engineInstanceId, mainOn);
+    NMEA2000.SendMsg(message);
+}
+
 static void process_engine_key_press(const tN2kMsg &N2kMsg) {
     N2kPGNVarilogEngineKeyPress data;
     if (!ParseN2kPGNVarilogEngineKeyPress(N2kMsg, data)) {
@@ -185,11 +203,13 @@ static void process_engine_key_press(const tN2kMsg &N2kMsg) {
                 set_output(PIN_INDEX_LIGHT, false);
                 set_output(PIN_INDEX_START, false);
                 set_output(PIN_INDEX_STOP, false);
+                send_engine_state();
             }
         } else {
             ESP_LOGI(TAG, "turning main on");
             mainOn = true;
             set_output(PIN_INDEX_MAIN, true);
+            send_engine_state();
         }
     }
     if (mainOn) {
@@ -240,10 +260,19 @@ static void process_engine_key_press(const tN2kMsg &N2kMsg) {
     }
 }
 
+static void process_engine_set_state(const tN2kMsg &N2kMsg) {
+    N2kPGNVarilogEngineState data;
+    ParseN2kPGNVarilogEngineSetState(N2kMsg, data);
+    ESP_LOGI(TAG, "got engine state from instance %02x state %s", data.instanceId, data.engineOn ? "on" : "off");
+}
+
 static void process_incoming_pgn(const tN2kMsg &message) {
     switch (message.PGN) {
         case N2K_PGN_VARILOG_ENGINE_KEY_PRESS:
             process_engine_key_press(message);
+            break;
+        case N2K_PGN_VARILOG_ENGINE_SET_STATE:
+            process_engine_set_state(message);
             break;
         default:
             break;
