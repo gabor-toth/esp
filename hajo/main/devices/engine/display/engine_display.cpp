@@ -138,7 +138,8 @@ static void reset_idle_timer() {
 static void process_keypress_ack_pgn(const tN2kMsg &N2kMsg) {
     N2kPGNVarilogEngineKeyPressAck data;
     ParseN2kPGNVarilogEngineKeyPressAck(N2kMsg, data);
-    ESP_LOGI(TAG, "got key ack");
+    ESP_LOGI(TAG, "got key ack for instance %02x sid %02x", data.instanceId, data.sid);
+    keysStateAcked.ByteValue = keysState.ByteValue;
     xTimerStop(keyAckTimer, portMAX_DELAY);
 }
 
@@ -171,7 +172,7 @@ static void send_test_pngs() {
 }
 
 void set_initial_display_data() {
-    displayData.rpm = displayData.hours = (int16_t) N2kDoubleNA;
+    displayData.rpm = displayData.hours = static_cast<int16_t>(N2kDoubleNA);
     displayData.chargerFailure = displayData.oilPressureFailure = displayData.coolingWaterTemperatureFailure = false;
 }
 
@@ -296,6 +297,7 @@ static void send_key_png(bool initial) {
 static void gpio_changed(gpio_num_t io_num, int state) {
     ESP_LOGI(TAG, "gpio %d state %d", io_num, state);
     xTimerReset(displayOffTimer, portMAX_DELAY);
+    state = !state;
     switch (io_num) {
         case PIN_INPUT_LIGHT:
             keysState.Keys.light = state;
