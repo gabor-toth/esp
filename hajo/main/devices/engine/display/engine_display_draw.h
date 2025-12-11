@@ -3,11 +3,11 @@
 
 extern void engine_display_setup_display();
 
-extern void engine_display_draw_screen();
+extern void engine_display_draw_screen(const char *cause);
 
 extern void engine_display_draw_logo();
 
-extern void engine_display_onoff( bool on );
+extern void engine_display_onoff(bool on);
 
 extern bool engine_display_is_on;
 

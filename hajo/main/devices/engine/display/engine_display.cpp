@@ -18,12 +18,11 @@ static const char *TAG = "display";
 
 static int myDeviceIndex;
 static TimerHandle_t flashTimer;
-static TimerHandle_t connectionFailureTimer;
+static TimerHandle_t engineIdleTimer;
 static TimerHandle_t displayLogoTimer;
 static TimerHandle_t displayOffTimer;
 static TimerHandle_t keyAckTimer;
 static bool displayLogo;
-static bool engineRunning;
 static bool turningOff;
 static uint8_t sid;
 static uint8_t sid_last_acked;
@@ -37,7 +36,7 @@ static void process_incoming_pgn(const tN2kMsg &message);
 
 static void send_key_png(bool initial);
 
-static void turn_display_onoff(bool on);
+static void turn_display_onoff_with_logo(bool on);
 
 static void setup_n2k_device(int iDev) {
     static constexpr unsigned long TransmitMessages[ ] = {
@@ -81,7 +80,7 @@ static void setup_n2k_device(int iDev) {
 
 static void draw_screen_on_change() {
     if (!displayLogo && engine_display_is_on) {
-        engine_display_draw_screen();
+        engine_display_draw_screen("draw_screen_on_change");
     }
 }
 
@@ -92,6 +91,11 @@ static void process_engine_rapid_pgn(const tN2kMsg &N2kMsg) {
     }
     bool changed = false;
     n2k_incoming_value(static_cast<int16_t>(data.engineSpeedRpm), displayData.rpm, changed);
+    if (!engine_display_is_on) {
+        ESP_LOGW(TAG, "turning on display on engine_rapid_pgn");
+        xTimerStop(displayLogoTimer, portMAX_DELAY);
+        engine_display_onoff(true);
+    }
     if (changed) {
         draw_screen_on_change();
     }
@@ -137,7 +141,8 @@ static void process_engine_key_press(const tN2kMsg &N2kMsg) {
 }
 
 static void reset_idle_timer() {
-    xTimerReset(connectionFailureTimer, portMAX_DELAY);
+    xTimerStop(displayOffTimer, portMAX_DELAY);
+    xTimerReset(engineIdleTimer, portMAX_DELAY);
 }
 
 static void process_keypress_ack_pgn(const tN2kMsg &N2kMsg) {
@@ -153,7 +158,7 @@ static void process_engine_state_pgn(const tN2kMsg &N2kMsg) {
     ParseN2kPGNVarilogEngineState(N2kMsg, data);
     ESP_LOGI(TAG, "got engine state from instance %02x state %s", data.instanceId, data.engineOn ? "on" : "off");
     if (!data.engineOn) {
-        turn_display_onoff(false);
+        turn_display_onoff_with_logo(false);
     }
 }
 
@@ -195,28 +200,34 @@ void set_initial_display_data() {
 
 static void flash_timer_callback(TimerHandle_t xTimer) {
     displayData.flashState = !displayData.flashState;
-    engine_display_draw_screen();
+    engine_display_draw_screen("flash_timer_callback");
 }
 
-static void idle_timer_callback(TimerHandle_t xTimer) {
+static void engine_idle_timer_callback(TimerHandle_t xTimer) {
     ESP_LOGW(TAG, "no engine pngs received in %d secs", CONFIG_ENGINE_DISPLAY_IDLE_TIMEOUT_SECS);
     set_initial_display_data();
     set_flash();
-    engine_display_draw_screen();
-    xTimerStop(connectionFailureTimer, portMAX_DELAY);
+    engine_display_draw_screen("idle_timer_callback");
+    xTimerStop(engineIdleTimer, portMAX_DELAY);
+    xTimerStart(displayOffTimer, portMAX_DELAY);
+}
+
+static void stop_all_timers() {
+    xTimerStop(engineIdleTimer, portMAX_DELAY);
+    xTimerStop(displayLogoTimer, portMAX_DELAY);
+    xTimerStop(displayOffTimer, portMAX_DELAY);
+    xTimerStop(flashTimer, portMAX_DELAY);
 }
 
 static void off_timer_callback(TimerHandle_t xTimer) {
+    stop_all_timers();
     engine_display_onoff(false);
-    xTimerStop(displayOffTimer, portMAX_DELAY);
-    xTimerStop(flashTimer, portMAX_DELAY);
     // TODO beep
 }
 
 static void logo_timer_callback(TimerHandle_t xTimer) {
     displayLogo = false;
-    engine_display_draw_screen();
-    xTimerStart(displayOffTimer, portMAX_DELAY);
+    engine_display_draw_screen("logo_timer_callback");
     if (turningOff) {
         off_timer_callback(xTimer);
     } else {
@@ -235,75 +246,11 @@ static void key_ack_timer_callback(TimerHandle_t xTimer) {
     }
 }
 
-static void setup_display(int iDev) {
-    gpio_config_t gpioConfig;
-    gpioConfig.pin_bit_mask = (1L << PIN_LCD_BACKLIGHT) | (1L << PIN_BUTTON_BACKLIGHT);
-    gpioConfig.mode = GPIO_MODE_OUTPUT;
-    gpioConfig.pull_up_en = GPIO_PULLUP_DISABLE;
-    gpioConfig.pull_down_en = GPIO_PULLDOWN_ENABLE;
-    gpioConfig.intr_type = GPIO_INTR_DISABLE;
-    gpio_config(&gpioConfig);
-
-    myDeviceIndex = iDev;
-    setup_n2k_device(iDev);
-
-    set_initial_display_data();
-    displayData.hasFailure = false;
-
-    engine_display_setup_display();
-    engine_display_draw_screen();
-}
-
-static void setup_timers() {
-    flashTimer = xTimerCreate(
-        TAG,
-        pdMS_TO_TICKS(500),
-        true,
-        nullptr,
-        flash_timer_callback);
-    connectionFailureTimer = xTimerCreate(
-        TAG,
-        pdMS_TO_TICKS(CONFIG_ENGINE_DISPLAY_IDLE_TIMEOUT_SECS * 1000),
-        true,
-        nullptr,
-        idle_timer_callback);
-    displayLogoTimer = xTimerCreate(
-        TAG,
-        pdMS_TO_TICKS(CONFIG_ENGINE_DISPLAY_LOGO_SECS * 1000),
-        false,
-        nullptr,
-        logo_timer_callback);
-    displayOffTimer = xTimerCreate(
-        TAG,
-        pdMS_TO_TICKS(CONFIG_ENGINE_DISPLAY_OFF_TIMEOUT_SECS * 1000),
-        true,
-        nullptr,
-        off_timer_callback);
-    keyAckTimer = xTimerCreate(
-        TAG,
-        pdMS_TO_TICKS(KEY_ACK_TIMEOUT),
-        true,
-        nullptr,
-        key_ack_timer_callback);
-    xTimerStart(connectionFailureTimer, portMAX_DELAY);
-}
-
-static void define_input_pins(gpio_config_t *io_conf, void *user_context) {
-    gpio_add_class(INPUTS, "buttons", 4, low_is_on);
-
-    gpio_add_pin(INPUTS, BUTTONS_CLASS, PIN_INPUT_ONOFF,
-                 low_is_on, &io_conf->pin_bit_mask);
-    gpio_add_pin(INPUTS, BUTTONS_CLASS, PIN_INPUT_START,
-                 low_is_on, &io_conf->pin_bit_mask);
-    gpio_add_pin(INPUTS, BUTTONS_CLASS, PIN_INPUT_STOP,
-                 low_is_on, &io_conf->pin_bit_mask);
-    gpio_add_pin(INPUTS, BUTTONS_CLASS, PIN_INPUT_LIGHT,
-                 low_is_on, &io_conf->pin_bit_mask);
-}
-
-static void turn_display_onoff(bool on) {
+static void turn_display_onoff_with_logo(bool on) {
     if (on) {
         engine_display_onoff(true);
+    } else {
+        stop_all_timers();
     }
     turningOff = !on;
     engine_display_draw_logo();
@@ -335,7 +282,7 @@ static void gpio_changed(gpio_num_t io_num, int state) {
         case PIN_INPUT_ONOFF:
             keysState.Keys.main = state;
             if (!engine_display_is_on) {
-                turn_display_onoff(true);
+                turn_display_onoff_with_logo(true);
             }
             break;
         default:
@@ -352,6 +299,73 @@ static void gpio_changed(gpio_num_t io_num, int state) {
     xTimerReset(keyAckTimer, portMAX_DELAY);
 }
 
+static void setup_display(int iDev) {
+    gpio_set_level(PIN_LCD_BACKLIGHT, false);
+    gpio_set_level(PIN_BUTTON_BACKLIGHT, false);
+
+    gpio_config_t gpioConfig;
+    gpioConfig.pin_bit_mask = (1L << PIN_LCD_BACKLIGHT) | (1L << PIN_BUTTON_BACKLIGHT);
+    gpioConfig.mode = GPIO_MODE_OUTPUT;
+    gpioConfig.pull_up_en = GPIO_PULLUP_DISABLE;
+    gpioConfig.pull_down_en = GPIO_PULLDOWN_ENABLE;
+    gpioConfig.intr_type = GPIO_INTR_DISABLE;
+    gpio_config(&gpioConfig);
+
+    myDeviceIndex = iDev;
+    setup_n2k_device(iDev);
+
+    set_initial_display_data();
+    displayData.hasFailure = false;
+
+    engine_display_setup_display();
+}
+
+static void setup_timers() {
+    flashTimer = xTimerCreate(
+        TAG,
+        pdMS_TO_TICKS(500),
+        true,
+        nullptr,
+        flash_timer_callback);
+    engineIdleTimer = xTimerCreate(
+        TAG,
+        pdMS_TO_TICKS(CONFIG_ENGINE_DISPLAY_IDLE_TIMEOUT_SECS * 1000),
+        true,
+        nullptr,
+        engine_idle_timer_callback);
+    displayLogoTimer = xTimerCreate(
+        TAG,
+        pdMS_TO_TICKS(CONFIG_ENGINE_DISPLAY_LOGO_SECS * 1000),
+        false,
+        nullptr,
+        logo_timer_callback);
+    displayOffTimer = xTimerCreate(
+        TAG,
+        pdMS_TO_TICKS(CONFIG_ENGINE_DISPLAY_OFF_TIMEOUT_SECS * 1000),
+        true,
+        nullptr,
+        off_timer_callback);
+    keyAckTimer = xTimerCreate(
+        TAG,
+        pdMS_TO_TICKS(KEY_ACK_TIMEOUT),
+        true,
+        nullptr,
+        key_ack_timer_callback);
+}
+
+static void define_input_pins(gpio_config_t *io_conf, void *user_context) {
+    gpio_add_class(INPUTS, "buttons", 4, low_is_on);
+
+    gpio_add_pin(INPUTS, BUTTONS_CLASS, PIN_INPUT_ONOFF,
+                 low_is_on, &io_conf->pin_bit_mask);
+    gpio_add_pin(INPUTS, BUTTONS_CLASS, PIN_INPUT_START,
+                 low_is_on, &io_conf->pin_bit_mask);
+    gpio_add_pin(INPUTS, BUTTONS_CLASS, PIN_INPUT_STOP,
+                 low_is_on, &io_conf->pin_bit_mask);
+    gpio_add_pin(INPUTS, BUTTONS_CLASS, PIN_INPUT_LIGHT,
+                 low_is_on, &io_conf->pin_bit_mask);
+}
+
 void engine_display_main(int iDev) {
     setup_display(iDev);
     setup_timers();
@@ -359,9 +373,6 @@ void engine_display_main(int iDev) {
     keysStateAcked.ByteValue = 0;
     sid = sid_last_acked = 0;
     gpio_init(nullptr, define_input_pins, nullptr, gpio_changed);
-
-    engineRunning = false;
-    turn_display_onoff(true);
 }
 
 void engine_display_test() {
@@ -371,5 +382,5 @@ void engine_display_test() {
     displayData.chargerFailure = false;
     displayData.oilPressureFailure = true;
     displayData.coolingWaterTemperatureFailure = false;
-    engine_display_draw_screen();
+    engine_display_draw_screen("engine_display_test");
 }

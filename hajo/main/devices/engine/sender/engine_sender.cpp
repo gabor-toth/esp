@@ -29,7 +29,6 @@ static double engineSpeed;
 static bool chargerFailure;
 static bool oilPressureFailure;
 static bool coolingWaterTemperatureFailure;
-static bool hasFailure;
 static bool mainOn;
 static bool engineRunning;
 static bool lightOn;
@@ -145,6 +144,10 @@ static void init_data() {
     oilPressureFailure = false;
 
     engineRunning = lightOn = mainOn = starting = stopping = false;
+
+    if (simulate) {
+        engineMinutes = 6789 * 60;
+    }
 }
 
 static void send_ack(const N2kPGNVarilogEngineKeyPress &data) {
@@ -168,12 +171,18 @@ static void warning_beep() {
     xTimerStart(beepTimer, portMAX_DELAY);
 }
 
-static void init_test_data() {
-    engineMinutes = 6789 * 60;
-    engineSpeed = 6789.0;
-    chargerFailure = false;
-    coolingWaterTemperatureFailure = false;
-    oilPressureFailure = true;
+static void init_test_data(bool on) {
+    if (on) {
+        engineSpeed = 1725.0;
+        chargerFailure = false;
+        coolingWaterTemperatureFailure = false;
+        oilPressureFailure = true;
+    } else {
+        engineSpeed = 0;
+        chargerFailure = false;
+        coolingWaterTemperatureFailure = false;
+        oilPressureFailure = false;
+    }
 }
 
 static void send_engine_state() {
@@ -232,7 +241,7 @@ static void process_engine_key_press(const tN2kMsg &N2kMsg) {
             } else {
                 ESP_LOGI(TAG, "start ended");
                 if (simulate) {
-                    init_test_data();
+                    init_test_data(true);
                 }
                 starting = false;
                 set_output(PIN_INDEX_START, false);
@@ -253,6 +262,9 @@ static void process_engine_key_press(const tN2kMsg &N2kMsg) {
                 ESP_LOGI(TAG, "stop ended");
                 stopping = false;
                 set_output(PIN_INDEX_STOP, false);
+                if (simulate) {
+                    init_test_data(false);
+                }
             }
         }
     } else {
@@ -304,6 +316,8 @@ static void setup_timers() {
 }
 
 void engine_sender_main(int iDev) {
+    simulate = true;
+
     myDeviceIndex = iDev;
     setup_timers();
     setup_n2k_device(iDev);
@@ -314,6 +328,4 @@ void engine_sender_main(int iDev) {
 
     gpio_init(nullptr, nullptr, define_output_pins, nullptr);
     init_data();
-    simulate = true;
-    // init_test_data();
 }
