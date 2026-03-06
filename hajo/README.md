@@ -23,7 +23,7 @@
 - login with those credentials
 - set up ssh server
 
-```
+```shell
 sudo raspi-config
 ```
 
@@ -31,13 +31,13 @@ sudo raspi-config
 - and enable it
 - connect from your pc
 
-```
+```shell
 ssh signalk@192.168.72.191
 ```
 
 - and continue in ssh
 
-```
+```shell
 mkdir -p .ssh
 chmod 700 .ssh/
 echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKcyI/bADRtxOoJ1hDOtbntHil+7zQbVbTIEuEyCPMNb gabor.toth@p92.hu' > .ssh/authorized_keys
@@ -62,14 +62,14 @@ exit
 
 Determine current version
 
-```
+```shell
 lsb_release -a
 cat /etc/debian_version 
 ```
 
 Upgrade system
 
-```
+```shell
 systemctl stop signalk
 systemctl stop signalk.socket
 systemctl stop shewllinabox
@@ -80,7 +80,7 @@ apt full-upgrade
 
 Upgrade firmware
 
-```
+```shell
 rpi-update
 chmod -x /etc/cron.d/hotspot 
 reboot
@@ -99,7 +99,7 @@ TODO: add commands
 
 - https://linuxhint.com/tips-tricks-optimize-power-consumption-raspberry-pi/
 
-```
+```shell
 sudo su
 vi /boot/firmware/config.txt
 
@@ -122,19 +122,18 @@ arm_freq_min=600
 core_freq_min=100
 sdram_freq_min=50
 over_voltage_min=0
-
 ```
 
 Bluetooth
 
-```
+```shell
 systemctl stop bluetooth
 systemctl disable bluetooth
 ```
 
 Startup speed
 
-```
+```shell
 systemd-analyze blame
 ```
 
@@ -142,7 +141,7 @@ systemd-analyze blame
 
 Source link?
 
-```
+```shell
 sudo su
 # install v18 on bookworm (needed for Zero)
 apt -y install nodejs npm
@@ -196,6 +195,8 @@ https://github.com/canboat/canboat/wiki/Building
 ```shell
 sudo apt -y install git
 git clone https://github.com/canboat/canboat
+# or
+git pull
 cd canboat
 make
 sudo make install
@@ -291,7 +292,7 @@ See
 - development: https://demo.signalk.org/documentation/develop/plugins/server_plugin.html
 - npm link: https://docs.npmjs.com/cli/v9/commands/npm-link
 
-```
+```shell
 cd projects/signalk-generic-pgn-parser
 sudo npm link
 cd ~/.signalk/
@@ -302,7 +303,7 @@ npm link signalk-generic-pgn-parser
 
 On Debian 12 (Bookworm), see https://raspberrytips.com/access-point-setup-raspberry-pi/
 
-```
+```shell
 raspi-config
   Localization, Wifi country, HU, Finish
 nmcli con add con-name hotspot ifname wlan0 type wifi ssid "sol"
@@ -317,9 +318,9 @@ nmcli connection down hotspot
 nmcli connection up hotspot
 ```
 
-USer interface
+User interface
 
-```
+```shell
 nmtui
 ```
 
@@ -327,7 +328,7 @@ nmtui
 
 On Debian 12 (Bookworm):
 
-```
+```shell
 nmcli dev show wlan0
 nmcli dev wifi list
 nmcli connection show
@@ -338,14 +339,13 @@ nmcli dev wifi connect TGA password ******** ifname wlan0
 #nmcli connection modify TothKiss connection.autoconnect yes
 
 systemctl restart NetworkManager
-
 ```
 
 Turn off Wifi dongle's LED:
 
 - https://github.com/lwfinger/rtl8188eu/issues/82
 
-```
+```shell
 echo 0 > /sys/class/leds/rtl8xxxu-usb1-1.4/brightness
 ```
 
@@ -360,14 +360,14 @@ See
 
 #### Connect to box
 
-```
+```shell
 ssh signalk@192.168.72.156
 ssh signalk@192.168.77.1
 ```
 
 #### Wifi Commands
 
-```
+```shell
 sudo su
 ip link set dev wlan0 down
 ip link set dev wlan0 up
@@ -387,28 +387,27 @@ idf.py -p /dev/ttyUSB0 flash -b 3000000 -DCONFIG_DEVICE_TYPE=GATEWAY -DCONFIG_ST
 
 ## In Docker
 
-```
+```shell
 docker run -d --init  --name signalk-server -p 3000:3000 -v $(pwd):/home/node/.signalk cr.signalk.io/signalk/signalk-server
 ```
 
 ## Local
 
-```
+```shell
 sudo apt isntall libavahi-compat-libdnssd-dev
 sudo npm install -g mdns
 sudo npm install -g signalk-server
-
 ```
 
 ## Requests
 
-```
+```shell
 curl -X GET http://10.128.65.180:3000/signalk
 {"endpoints":{"v1":{"version":"2.4.1","
 signalk-http":"http://10.128.65.180:3000/signalk/v1/api/","signalk-ws":"ws://10.128.65.180:3000/signalk/v1/stream","signalk-tcp":"tcp://10.128.65.180:8375"}},"server":{"id":"signalk-server-node","version":"2.4.1"}}
 ```
 
-```
+```shell
 wscat -c "ws://10.128.65.180:3000/signalk/v1/stream?subscribe=all"
 Connected (press CTRL+C to quit)
 < {"name":"signalk-server","version":"2.4.1","self":"vessels.urn:mrn:signalk:uuid:
@@ -425,7 +424,7 @@ values":[{"path":"","value":{"uuid":"urn:mrn:signalk:uuid:59e1f1c9-9e32-4340-a1d
 
 ## Service Sniffer
 
-```
+```shell
 sudo apt install gssdp-tools
 
 # MDNS
@@ -448,7 +447,7 @@ ws://182.72.168.192:81/
 
 ## MDNS
 
-```
+```shell
 + docker0 IPv4 6d65d96b9f13                                  _signalk-ws._tcp     local
 = docker0 IPv4 6d65d96b9f13                                  _signalk-ws._tcp     local
   hostname = [6d65d96b9f13.local]
