@@ -58,6 +58,35 @@ exit
 exit
 ```
 
+### Upgrade
+
+Determine current version
+
+```
+lsb_release -a
+cat /etc/debian_version 
+```
+
+Upgrade system
+
+```
+systemctl stop signalk
+systemctl stop signalk.socket
+systemctl stop shewllinabox
+
+apt update
+apt full-upgrade
+```
+
+Upgrade firmware
+
+```
+rpi-update
+chmod -x /etc/cron.d/hotspot 
+reboot
+chmod +x /etc/cron.d/hotspot
+```
+
 ### Power
 
 - LED & HDMI: https://www.jeffgeerling.com/blogs/jeff-geerling/controlling-pwr-act-leds-raspberry-pi
