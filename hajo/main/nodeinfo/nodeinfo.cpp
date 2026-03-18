@@ -8,7 +8,7 @@
 
 #define MANUFACTURER_INDUSTRY_OWN ((uint16_t)((INDUSTRY_CODE_MARINE<<13)|(0<11)|(MANUFACTURER_CODE_OWN)))
 
-void SetN2kPGN130881( tN2kMsg &N2kMsg ) {
+void SetN2kPGN65410( tN2kMsg &N2kMsg ) {
     N2kMsg.SetPGN( 65410L );
     N2kMsg.Add2ByteUInt( MANUFACTURER_INDUSTRY_OWN );
     N2kMsg.AddByte( 1 ); //
@@ -21,7 +21,7 @@ static bool send_node_info( int index, tN2kMsg &message, int &deviceIndex ) {
     if ( index != 0 ) {
         return false;
     }
-    SetN2kPGN130881( message );
+    SetN2kPGN65410( message );
     return true;
 }
 

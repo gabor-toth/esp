@@ -35,6 +35,8 @@ static bool lightOn;
 static bool starting;
 static bool stopping;
 static bool simulate;
+static bool lastSidIsValid;
+static uint8_t lastSid;
 
 static void process_incoming_pgn(const tN2kMsg &message);
 
@@ -154,6 +156,7 @@ static void send_ack(const N2kPGNVarilogEngineKeyPress &data) {
     tN2kMsg ackMsg;
     SetN2kPGNVarilogEngineKeyPressAck(ackMsg, data.instanceId, data.sid);
     NMEA2000.SendMsg(ackMsg);
+    ESP_LOGI(TAG, "key ack sid %02x sent", data.sid);
 }
 
 static void set_output(int index, bool state) {
@@ -191,6 +194,105 @@ static void send_engine_state() {
     NMEA2000.SendMsg(message);
 }
 
+static void turn_main_off() {
+    ESP_LOGI(TAG, "turning main off");
+    lightOn = mainOn = false;
+    set_output(PIN_INDEX_MAIN, false);
+    set_output(PIN_INDEX_LIGHT, false);
+    set_output(PIN_INDEX_START, false);
+    set_output(PIN_INDEX_STOP, false);
+    send_engine_state();
+}
+
+static void turn_main_on() {
+    ESP_LOGI(TAG, "turning main on");
+    mainOn = true;
+    set_output(PIN_INDEX_MAIN, true);
+    send_engine_state();
+}
+
+static void main_pressed() {
+    ESP_LOGI(TAG, "main pressed");
+    if (mainOn) {
+        if (engineRunning) {
+            ESP_LOGW(TAG, "engine running, won't turn off");
+            warning_beep();
+        } else {
+            turn_main_off();
+        }
+    } else {
+        turn_main_on();
+    }
+}
+
+static void light_switched() {
+    lightOn = !lightOn;
+    ESP_LOGI(TAG, "light pressed, turning %s", lightOn ? "on" : "off");
+    set_output(PIN_INDEX_LIGHT, lightOn);
+}
+
+static void start_pressed(const N2kPGNVarilogEngineKeyPress &data) {
+    ESP_LOGI(TAG, "start %s", data.keysPressed.Keys.start ? "pressed" : "released");
+    if (data.keysPressed.Keys.start) {
+        if (engineRunning) {
+            ESP_LOGW(TAG, "already running, won't start");
+            warning_beep();
+        } else if (stopping || starting) {
+            ESP_LOGW(TAG, "already starting/stopping");
+            warning_beep();
+        } else {
+            starting = true;
+            ESP_LOGI(TAG, "starting");
+            set_output(PIN_INDEX_START, true);
+        }
+    } else {
+        ESP_LOGI(TAG, "start ended");
+        if (simulate) {
+            init_test_data(true);
+        }
+        starting = false;
+        set_output(PIN_INDEX_START, false);
+        // TODO maybe should be driven by the charging or oil pressure signal
+        engineRunning = true;
+    }
+}
+
+static void stop_pressed(const N2kPGNVarilogEngineKeyPress &data) {
+    ESP_LOGI(TAG, "stop %s", data.keysPressed.Keys.stop ? "pressed" : "released");
+    if (data.keysPressed.Keys.stop) {
+        if (!engineRunning) {
+            ESP_LOGW(TAG, "not running, won't stop");
+            warning_beep();
+        } else if (stopping || starting) {
+            ESP_LOGW(TAG, "already starting/stopping");
+            warning_beep();
+        } else {
+            stopping = true;
+            ESP_LOGI(TAG, "stopping");
+            set_output(PIN_INDEX_STOP, true);
+        }
+    } else {
+        ESP_LOGI(TAG, "stop ended");
+        stopping = false;
+        set_output(PIN_INDEX_STOP, false);
+        if (simulate) {
+            init_test_data(false);
+        }
+        // TODO maybe should be driven by the charging or oil pressure signal
+        engineRunning = false;
+    }
+}
+
+static bool is_valid_sid(uint8_t sid) {
+    if (lastSidIsValid && sid == lastSid) {
+        ESP_LOGW(TAG, "repeated key press with sid %02x, skipping", sid);
+        return false;
+    }
+    lastSid = sid;
+    lastSidIsValid = true;
+    return true;
+}
+
 static void process_engine_key_press(const tN2kMsg &N2kMsg) {
     N2kPGNVarilogEngineKeyPress data;
     if (!ParseN2kPGNVarilogEngineKeyPress(N2kMsg, data)) {
@@ -199,76 +301,25 @@ static void process_engine_key_press(const tN2kMsg &N2kMsg) {
     ESP_LOGI(TAG, "key press png sid=%02x pressed=%02x changed=%02x",
              data.sid, data.keysPressed.ByteValue, data.keysChanged.ByteValue);
     send_ack(data);
-    if (data.keysChanged.Keys.main && data.keysPressed.Keys.main) {
-        ESP_LOGI(TAG, "main pressed");
-        if (mainOn) {
-            if (engineRunning) {
-                ESP_LOGW(TAG, "engine running, won't turn off");
-                warning_beep();
-            } else {
-                ESP_LOGI(TAG, "turning main on");
-                lightOn = mainOn = false;
-                set_output(PIN_INDEX_MAIN, false);
-                set_output(PIN_INDEX_LIGHT, false);
-                set_output(PIN_INDEX_START, false);
-                set_output(PIN_INDEX_STOP, false);
-                send_engine_state();
-            }
-        } else {
-            ESP_LOGI(TAG, "turning main on");
-            mainOn = true;
-            set_output(PIN_INDEX_MAIN, true);
-            send_engine_state();
-        }
+    if (!is_valid_sid(data.sid)) {
+        return;
     }
-    if (mainOn) {
-        if (data.keysChanged.Keys.light && data.keysPressed.Keys.light) {
-            lightOn = !lightOn;
-            ESP_LOGI(TAG, "light pressed, turning %s", lightOn ? "on" : "off");
-            set_output(PIN_INDEX_LIGHT, lightOn);
-        }
-        if (data.keysChanged.Keys.start) {
-            ESP_LOGI(TAG, "start %s", data.keysPressed.Keys.start ? "pressed" : "released");
-            if (data.keysPressed.Keys.start) {
-                if (stopping || starting) {
-                    ESP_LOGW(TAG, "already starting/stopping");
-                    warning_beep();
-                } else {
-                    starting = true;
-                    ESP_LOGI(TAG, "starting");
-                    set_output(PIN_INDEX_START, true);
-                }
-            } else {
-                ESP_LOGI(TAG, "start ended");
-                if (simulate) {
-                    init_test_data(true);
-                }
-                starting = false;
-                set_output(PIN_INDEX_START, false);
-            }
-        }
-        if (data.keysChanged.Keys.stop) {
-            ESP_LOGI(TAG, "stop %s", data.keysPressed.Keys.stop ? "pressed" : "released");
-            if (data.keysPressed.Keys.stop) {
-                if (stopping || starting) {
-                    ESP_LOGW(TAG, "already starting/stopping");
-                    warning_beep();
-                } else {
-                    stopping = true;
-                    ESP_LOGI(TAG, "stopping");
-                    set_output(PIN_INDEX_STOP, true);
-                }
-            } else {
-                ESP_LOGI(TAG, "stop ended");
-                stopping = false;
-                set_output(PIN_INDEX_STOP, false);
-                if (simulate) {
-                    init_test_data(false);
-                }
-            }
-        }
-    } else {
+    if (data.keysChanged.Keys.main && data.keysPressed.Keys.main) {
+        main_pressed();
+        return;
+    }
+    if (!mainOn) {
         ESP_LOGW(TAG, "not on, skipping key");
+        return;
+    }
+    if (data.keysChanged.Keys.light && data.keysPressed.Keys.light) {
+        light_switched();
+    }
+    if (data.keysChanged.Keys.start) {
+        start_pressed(data);
+    }
+    if (data.keysChanged.Keys.stop) {
+        stop_pressed(data);
     }
 }
 
@@ -317,6 +368,7 @@ static void setup_timers() {
 
 void engine_sender_main(int iDev) {
     simulate = true;
+    lastSidIsValid = false;
 
     myDeviceIndex = iDev;
     setup_timers();

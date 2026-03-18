@@ -262,7 +262,7 @@ static void send_key_png(bool initial) {
     tN2kMsg msg;
     SetN2kPGNVarilogEngineKeyPress(msg, lastDataSent);
     NMEA2000.SendMsg(msg);
-    ESP_LOGI(TAG, "key png %ssent", initial ? "" : "re");
+    ESP_LOGI(TAG, "key png %ssent sid %02x", initial ? "" : "re", lastDataSent.sid);
 }
 
 static void gpio_changed(gpio_num_t io_num, int state) {
