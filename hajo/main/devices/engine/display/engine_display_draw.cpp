@@ -205,6 +205,7 @@ static void draw_logo() {
 
 static void screen_onoff(bool on) {
     u8g2_SetPowerSave(&u8g2, !on); // wake up display
+    // u8g2_SetContrast(&u8g2, 128);
     gpio_set_level(PIN_LCD_BACKLIGHT, on);
     gpio_set_level(PIN_BUTTON_BACKLIGHT, on);
     engine_display_is_on = on;
@@ -240,22 +241,19 @@ _Noreturn static void task_display(void *arg) {
 
 void engine_display_setup_display() {
     u8g2_esp32_hal_t u8g2_esp32_hal = U8G2_ESP32_HAL_DEFAULT;
-    u8g2_esp32_hal.bus.spi.clk = PIN_LCD_CLK;
-    u8g2_esp32_hal.bus.spi.cs = PIN_LCD_CS;
-    u8g2_esp32_hal.bus.spi.mosi = PIN_LCD_MOSI;
-    u8g2_esp32_hal.reset = PIN_LCD_RESET;
+    u8g2_esp32_hal.bus.spi.clk = PIN_LCD2_SCL;
+    u8g2_esp32_hal.bus.spi.cs = PIN_LCD2_CS1B;
+    u8g2_esp32_hal.bus.spi.mosi = PIN_LCD2_SI;
+    u8g2_esp32_hal.reset = PIN_LCD2_RST;
+    u8g2_esp32_hal.dc = PIN_LCD2_A0;
     u8g2_esp32_hal_init(u8g2_esp32_hal);
 
     u8g2_Setup_st7565_ea_dogm128_f(
         &u8g2, U8G2_R2, u8g2_esp32_spi_byte_cb,
         u8g2_esp32_gpio_and_delay_cb); // init u8g2 structure
 
-    // u8g2_m_16_8_f
-    u8g2_Setup_st7920_s_128x64_f(
-        &u8g2, U8G2_R2, u8g2_esp32_spi_byte_cb,
-        u8g2_esp32_gpio_and_delay_cb); // init u8g2 structure
-
     u8g2_InitDisplay(&u8g2); // send init sequence to the display, display is in sleep mode after this
+    u8g2_SetFlipMode(&u8g2, 1);
 
     int width = u8g2_GetDisplayWidth(&u8g2);
     int height = u8g2_GetDisplayHeight(&u8g2);
