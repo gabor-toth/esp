@@ -1,4 +1,5 @@
 #include "assert_check.h"
+#include "driver/pulse_cnt.h"
 #include "esp_log.h"
 #include "esp_timer.h"
 #include "engine_sender.h"
@@ -14,6 +15,8 @@
 static const char *TAG = "sender";
 
 #define RELAY_CLASS       0
+#define SENSOR_CLASS      0
+#define RPM_CLASS         1
 
 #define PIN_INDEX_MAIN      0
 #define PIN_INDEX_START     1
@@ -21,10 +24,17 @@ static const char *TAG = "sender";
 #define PIN_INDEX_LIGHT     3
 #define PIN_INDEX_BUZZER    4
 
+#define PIN_INDEX_OIL_SENSOR      0
+#define PIN_INDEX_TEMP_SENSOR     1
+#define PIN_INDEX_CHARGE_SENSOR   2
+
+#define MINIMAL_ENGINE_RPM 300
+
 static TimerHandle_t beepTimer;
 static int myDeviceIndex;
 static uint8_t engineInstanceId;
 static uint32_t engineMinutes;
+static uint8_t ticksPerRevolution;
 static double engineSpeed;
 static bool chargerFailure;
 static bool oilPressureFailure;
@@ -37,6 +47,8 @@ static bool stopping;
 static bool simulate;
 static bool lastSidIsValid;
 static uint8_t lastSid;
+
+static void turn_main_on();
 
 static void process_incoming_pgn(const tN2kMsg &message);
 
@@ -83,6 +95,12 @@ static void setup_n2k_device(int iDev) {
 
 static bool send_rapid_update(int index, tN2kMsg &message, int &deviceIndex) {
     deviceIndex = myDeviceIndex;
+    if (engineSpeed >= MINIMAL_ENGINE_RPM) {
+        if (!mainOn) {
+            turn_main_on();
+        }
+        engineRunning = true;
+    }
     if (index > 0 || !mainOn) {
         return false;
     }
@@ -124,8 +142,8 @@ static void init_data() {
     if (result == ESP_OK) {
         ESP_LOGI(TAG, "Loaded %s %ld", NV_KEY_ENGINE_MINUTES, engineMinutes);
     } else if (result == ESP_ERR_NVS_NOT_FOUND) {
-        ESP_LOGI(TAG, "No %s stored yet, defaulting to 0", NV_KEY_ENGINE_MINUTES);
         engineMinutes = 0;
+        ESP_LOGI(TAG, "Initialized %s %ld", NV_KEY_ENGINE_MINUTES, engineMinutes);
     } else {
         ESP_ERROR_CHECK(result);
     }
@@ -135,9 +153,21 @@ static void init_data() {
         ESP_LOGI(TAG, "Loaded %s %02x", NV_KEY_ENGINE_INSTANCE_ID, engineInstanceId);
     } else if (result == ESP_ERR_NVS_NOT_FOUND) {
         engineInstanceId = 1;
+        ESP_LOGI(TAG, "Initialized %s %02x", NV_KEY_ENGINE_INSTANCE_ID, engineInstanceId);
     } else {
         ESP_ERROR_CHECK(result);
     }
+
+    result = nvs_get_u8(nvs_handle, NV_KEY_ENGINE_TICKS_PER_REVOLUTION, &ticksPerRevolution);
+    if (result == ESP_OK) {
+        ESP_LOGI(TAG, "Loaded %s %02x", NV_KEY_ENGINE_TICKS_PER_REVOLUTION, ticksPerRevolution);
+    } else if (result == ESP_ERR_NVS_NOT_FOUND) {
+        ticksPerRevolution = 97;
+        ESP_LOGI(TAG, "Initialized %s %d", NV_KEY_ENGINE_TICKS_PER_REVOLUTION, ticksPerRevolution);
+    } else {
+        ESP_ERROR_CHECK(result);
+    }
+
     nvs_close_storage(nvs_handle);
 
     engineSpeed = 0.0;
@@ -342,8 +372,19 @@ static void process_incoming_pgn(const tN2kMsg &message) {
     }
 }
 
+static void define_input_pins(gpio_config_t *io_conf, void *user_context) {
+    gpio_add_class(INPUTS, "sensor", 4, low_is_on);
+
+    ASSERT_CHECK(PIN_INDEX_OIL_SENSOR == gpio_add_pin(INPUTS, SENSOR_CLASS, PIN_INPUT_OIL_SENSOR,
+        inherit, &io_conf->pin_bit_mask));
+    ASSERT_CHECK(PIN_INDEX_TEMP_SENSOR == gpio_add_pin(INPUTS, SENSOR_CLASS, PIN_INPUT_TEMP_SENSOR,
+        inherit, &io_conf->pin_bit_mask));
+    ASSERT_CHECK(PIN_INDEX_CHARGE_SENSOR == gpio_add_pin(INPUTS, SENSOR_CLASS, PIN_INPUT_CHARGE_SENSOR,
+        inherit, &io_conf->pin_bit_mask));
+}
+
 static void define_output_pins(gpio_config_t *io_conf, void *user_context) {
-    gpio_add_class(OUTPUTS, "relays", 6, low_is_on);
+    gpio_add_class(OUTPUTS, "relay", 6, low_is_on);
 
     ASSERT_CHECK(PIN_INDEX_MAIN == gpio_add_pin(OUTPUTS, RELAY_CLASS, PIN_OUTPUT_MAIN,
         low_is_on, &io_conf->pin_bit_mask));
@@ -366,18 +407,49 @@ static void setup_timers() {
         beep_timer_callback);
 }
 
+static void gpio_changed_callback(gpio_num_t io_num, int state) {
+    state = !state;
+    switch (io_num) {
+        case PIN_INPUT_OIL_SENSOR:
+            ESP_LOGI(TAG, "Failure oil %d", state);
+            oilPressureFailure = state;
+            break;
+        case PIN_INPUT_TEMP_SENSOR:
+            ESP_LOGI(TAG, "Failure temp %d", state);
+            coolingWaterTemperatureFailure = state;
+            break;
+        case PIN_INPUT_CHARGE_SENSOR:
+            ESP_LOGI(TAG, "Failure charge %d", state);
+            chargerFailure = state;
+            break;
+        default:
+            ESP_LOGW(TAG, "Unknown input gpio %d", io_num);
+            break;
+    }
+}
+
+static void setup_failure_state() {
+    oilPressureFailure = gpio_get_pin_state(true, SENSOR_CLASS, PIN_INDEX_OIL_SENSOR);
+    coolingWaterTemperatureFailure = gpio_get_pin_state(true, SENSOR_CLASS, PIN_INDEX_TEMP_SENSOR);
+    chargerFailure = gpio_get_pin_state(true, SENSOR_CLASS, PIN_INDEX_CHARGE_SENSOR);
+}
+
 void engine_sender_main(int iDev) {
-    simulate = true;
+    // simulate = true;
     lastSidIsValid = false;
+
+    init_data();
 
     myDeviceIndex = iDev;
     setup_timers();
+    setup_rpm(ticksPerRevolution, &engineSpeed);
     setup_n2k_device(iDev);
 
     nk2_register_sender(send_rapid_update, "engine_rapid_update", N2K_PGN_ENGINE_PARAMETERS_RAPID_UPDATE_INTERVAL_MS,
                         75, true);
-    nk2_register_sender(send_dynamic, "engine_dynamic", N2K_PGN_ENGINE_PARAMETERS_DYNAMIC_INTERVAL_MS, 80, true);
+    nk2_register_sender(send_dynamic, "engine_dynamic", N2K_PGN_ENGINE_PARAMETERS_DYNAMIC_INTERVAL_MS,
+                        80, true);
 
-    gpio_init(nullptr, nullptr, define_output_pins, nullptr);
-    init_data();
+    gpio_init(nullptr, define_input_pins, define_output_pins, gpio_changed_callback);
+    setup_failure_state();
 }

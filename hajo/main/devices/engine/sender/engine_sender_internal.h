@@ -7,4 +7,12 @@
 #define PIN_OUTPUT_LIGHT     GPIO_NUM_9
 #define PIN_OUTPUT_BUZZER    GPIO_NUM_11
 
+#define PIN_INPUT_OIL_SENSOR    GPIO_NUM_6
+#define PIN_INPUT_TEMP_SENSOR   GPIO_NUM_8
+#define PIN_INPUT_CHARGE_SENSOR GPIO_NUM_10
+//#define PIN_INPUT_X_SENSOR    GPIO_NUM_13
+#define PIN_INPUT_RPM_SENSOR    GPIO_NUM_14
+
+extern void setup_rpm(int ticks_per_revolution, double *engineSpeed);
+
 #endif //HAJO_ENGINE_SENDER_INTERNAL_H
