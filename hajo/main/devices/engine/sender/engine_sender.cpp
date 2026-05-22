@@ -196,7 +196,9 @@ static void define_output_pins(gpio_config_t *io_conf, void *user_context) {
         inherit, &io_conf->pin_bit_mask));
     ASSERT_CHECK(PIN_INDEX_LIGHT == gpio_add_pin(OUTPUTS, RELAY_CLASS, PIN_OUTPUT_LIGHT,
         inherit, &io_conf->pin_bit_mask));
-    ASSERT_CHECK(PIN_INDEX_BUZZER == gpio_add_pin(OUTPUTS, RELAY_CLASS, PIN_OUTPUT_BUZZER,
+    ASSERT_CHECK(PIN_INDEX_BUZZER_ENABLE == gpio_add_pin(OUTPUTS, RELAY_CLASS, PIN_OUTPUT_BUZZER_ENABLE,
+        inherit, &io_conf->pin_bit_mask));
+    ASSERT_CHECK(PIN_INDEX_BUZZER_SOUND == gpio_add_pin(OUTPUTS, RELAY_CLASS, PIN_OUTPUT_BUZZER_SOUND,
         inherit, &io_conf->pin_bit_mask));
 }
 

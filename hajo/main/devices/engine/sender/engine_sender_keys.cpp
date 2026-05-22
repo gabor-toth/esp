@@ -24,13 +24,18 @@ static void send_ack(const N2kPGNVarilogEngineKeyPress &data) {
     ESP_LOGI(TAG, "key ack sid %02x sent", data.sid);
 }
 
-static void set_output(int index, bool state) {
+static void set_relay_output(int index, bool state) {
     gpio_set_pin_state(OUTPUTS, RELAY_CLASS, index, state);
+}
+
+static void beep_timer_callback(TimerHandle_t xTimer) {
+    ESP_LOGI(TAG, "beep ended");
+    set_relay_output(PIN_INDEX_BUZZER_SOUND, false);
 }
 
 static void warning_beep() {
     ESP_LOGW(TAG, "beep-beep");
-    set_output(PIN_INDEX_BUZZER, true);
+    set_relay_output(PIN_INDEX_BUZZER_SOUND, true);
     xTimerStart(beepTimer, portMAX_DELAY);
 }
 
@@ -51,17 +56,17 @@ static void init_test_data(bool on) {
 static void turn_main_off() {
     ESP_LOGI(TAG, "turning main off");
     engineSenderData.lightOn = engineSenderData.mainOn = false;
-    set_output(PIN_INDEX_MAIN, false);
-    set_output(PIN_INDEX_LIGHT, false);
-    set_output(PIN_INDEX_START, false);
-    set_output(PIN_INDEX_STOP, false);
+    set_relay_output(PIN_INDEX_MAIN, false);
+    set_relay_output(PIN_INDEX_LIGHT, false);
+    set_relay_output(PIN_INDEX_START, false);
+    set_relay_output(PIN_INDEX_STOP, false);
     send_engine_state();
 }
 
 void turn_main_on() {
     ESP_LOGI(TAG, "turning main on");
     engineSenderData.mainOn = true;
-    set_output(PIN_INDEX_MAIN, true);
+    set_relay_output(PIN_INDEX_MAIN, true);
     send_engine_state();
 }
 
@@ -82,7 +87,7 @@ static void main_pressed() {
 static void light_switched() {
     engineSenderData.lightOn = !engineSenderData.lightOn;
     ESP_LOGI(TAG, "light pressed, turning %s", engineSenderData.lightOn ? "on" : "off");
-    set_output(PIN_INDEX_LIGHT, engineSenderData.lightOn);
+    set_relay_output(PIN_INDEX_LIGHT, engineSenderData.lightOn);
 }
 
 static void start_pressed(const N2kPGNVarilogEngineKeyPress &data) {
@@ -97,7 +102,7 @@ static void start_pressed(const N2kPGNVarilogEngineKeyPress &data) {
         } else {
             engineSenderData.starting = true;
             ESP_LOGI(TAG, "starting");
-            set_output(PIN_INDEX_START, true);
+            set_relay_output(PIN_INDEX_START, true);
         }
     } else {
         ESP_LOGI(TAG, "start ended");
@@ -105,7 +110,7 @@ static void start_pressed(const N2kPGNVarilogEngineKeyPress &data) {
             init_test_data(true);
         }
         engineSenderData.starting = false;
-        set_output(PIN_INDEX_START, false);
+        set_relay_output(PIN_INDEX_START, false);
         // TODO maybe should be driven by the charging or oil pressure signal
         engineSenderData.engineRunning = true;
     }
@@ -123,12 +128,12 @@ static void stop_pressed(const N2kPGNVarilogEngineKeyPress &data) {
         } else {
             engineSenderData.stopping = true;
             ESP_LOGI(TAG, "stopping");
-            set_output(PIN_INDEX_STOP, true);
+            set_relay_output(PIN_INDEX_STOP, true);
         }
     } else {
         ESP_LOGI(TAG, "stop ended");
         engineSenderData.stopping = false;
-        set_output(PIN_INDEX_STOP, false);
+        set_relay_output(PIN_INDEX_STOP, false);
         if (engineSenderData.simulate) {
             init_test_data(false);
         }
@@ -175,11 +180,6 @@ void process_engine_key_press(const tN2kMsg &N2kMsg) {
     if (data.keysChanged.Keys.stop) {
         stop_pressed(data);
     }
-}
-
-static void beep_timer_callback(TimerHandle_t xTimer) {
-    ESP_LOGI(TAG, "beep ended");
-    set_output(PIN_INDEX_BUZZER, false);
 }
 
 void setup_keys() {
