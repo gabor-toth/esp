@@ -8,6 +8,7 @@
 #include <string.h>
 
 #include "portmacro.h"
+#include "esp_private/gpio.h"
 
 static const char *LOG_TAG = "gpio";
 
@@ -100,10 +101,16 @@ int gpio_add_class(bool is_input, const char *name, int max_pin_count, PinLevelT
 
 static void set_pin_state(Pin *output_pin, bool enabled) {
     output_pin->state = enabled;
-    bool level =
-            (enabled && output_pin->level_type == high_is_on) || (!enabled && output_pin->level_type == low_is_on);
-    ESP_LOGI(LOG_TAG, "set pin %d to %d", output_pin->pin, level);
-    gpio_set_level(output_pin->pin, level);
+    if (!enabled && (output_pin->level_type == high_is_on_float_off || output_pin->level_type == low_is_on_float_off)) {
+        gpio_output_disable(output_pin->pin);
+    } else {
+        bool level =
+                (enabled == (output_pin->level_type == high_is_on || output_pin->level_type == high_is_on_float_off)) ||
+                (!enabled == (output_pin->level_type == low_is_on || output_pin->level_type == low_is_on_float_off));
+        ESP_LOGI(LOG_TAG, "set pin %d to %d", output_pin->pin, level);
+        gpio_set_level(output_pin->pin, level);
+        gpio_output_enable(output_pin->pin);
+    }
 }
 
 static void read_nvs_or_default(bool is_input, int class_id, int index, PinData *pin_data) {

@@ -9,6 +9,8 @@
 #ifdef __cplusplus
 extern "C" {
 
+
+
 #endif
 
 #define PIN_ENABLED     1
@@ -28,7 +30,11 @@ typedef struct {
 } PinData;
 
 typedef enum {
-    high_is_on, low_is_on, inherit = -1
+    inherit = -1,
+    high_is_on,
+    high_is_on_float_off,
+    low_is_on,
+    low_is_on_float_off,
 } PinLevelType;
 
 typedef void ( *gpio_changed_callback_t )(gpio_num_t io_num, int state);
