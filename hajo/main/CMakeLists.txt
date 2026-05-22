@@ -34,6 +34,7 @@ set(SOURCES
         "devices/engine/display/engine_display.cpp"
         "devices/engine/display/engine_display_draw.cpp"
         "devices/engine/sender/engine_sender.cpp"
+        "devices/engine/sender/engine_sender_keys.cpp"
         "devices/engine/sender/engine_sender_rpm.cpp"
         "devices/fridge/fridge.cpp"
         "devices/fridge/fridge_fan.cpp"
