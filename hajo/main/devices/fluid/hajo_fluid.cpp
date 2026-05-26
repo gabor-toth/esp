@@ -47,21 +47,27 @@ fluid_user_data fluid_data[ MAX_FLUID_COUNT ];
 
 //static void convert_fluid_level( int voltageBottom, int *display_value, int *correction ) {
 static void convert_fluid_level( int voltageBottom, int voltageTop, int *display_value, double *rmes_back ) {
-    // Rmes=Rtop/(U/Umes-1)-Rbottom
-    // 0% = 0 Ohm, 100% = 190 Ohm
-    double i = ( voltageBottom / 1000.0 ) / fluid_rbottom;
-    double rmes = ( voltageTop - voltageBottom ) / 1000.0 / i;
     int value;
-    if ( rmes <= fluid_rmes_min ) {
-        value = 0;
-    } else if ( rmes >= fluid_rmes_max ) {
-        value = 100;
+    double i, rmes;
+    if ( voltageBottom >= 100 ) {
+        // Rmes=Rtop/(U/Umes-1)-Rbottom
+        // 0% = 0 Ohm, 100% = 190 Ohm
+        i = ( voltageBottom / 1000.0 ) / fluid_rbottom;
+        rmes = ( voltageTop - voltageBottom ) / 1000.0 / i;
+        if ( rmes <= fluid_rmes_min ) {
+            value = 0;
+        } else if ( rmes >= fluid_rmes_max ) {
+            value = 100;
+        } else {
+            value = lround( ( rmes - fluid_rmes_min ) / ( fluid_rmes_max - fluid_rmes_min ) * 100 );
+        }
     } else {
-        value = lround( ( rmes - fluid_rmes_min ) / ( fluid_rmes_max - fluid_rmes_min ) * 100 );
+        i = 0.0;
+        rmes = 0.0;
+        value = -1;
+        ESP_LOGW( TAG, "Fuel level sensor not connected" );
     }
     *display_value = value;
-    //    if ( correction != nullptr ) {
-    //        *correction = 0;
     if ( rmes_back != nullptr ) {
         *rmes_back = rmes;
     }
@@ -170,7 +176,7 @@ static bool send_adc_fluid_level( int index, tN2kMsg &message, int &deviceIndex 
     double r_mes;
     convert_fluid_level( channel_data_l.display_value, channel_data_h.display_value, &valueInPercent, &r_mes );
 
-    ESP_LOGD( TAG, "Channel %d %-10s Raw: %4d Rmes: %lf Display: %5d",
+    ESP_LOGI( TAG, "Channel %d %-10s Raw: %4d Rmes: %lf Display: %5d",
         channel_data_h.channel,
         channel_data_h.name,
         channel_data_h.raw_value,
@@ -181,7 +187,7 @@ static bool send_adc_fluid_level( int index, tN2kMsg &message, int &deviceIndex 
     SetN2kFluidLevel( message,
         data->instance,
         (tN2kFluidType) data->type,
-        valueInPercent,
+        valueInPercent >= 0 ? valueInPercent : N2kDoubleNA, // level
         data->capacity != 0 ? data->capacity : N2kDoubleNA // capacity
     );
     return true;
