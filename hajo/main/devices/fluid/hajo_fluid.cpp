@@ -10,8 +10,13 @@
 //static double fluid_u = 3.20;
 //static double fluid_rtop = 806;
 static double fluid_rbottom = 51.1;
-static double fluid_rmes_min = 2;
-static double fluid_rmes_max = 180;
+static double fluid_rmes_min = 0;
+/*
+* In Europe, boat fuel level sensors (sending units) typically operate on an electrical resistance range of
+* 0 (Empty) to 180 (Full). Some European senders and gauges (particularly legacy VDO equipment) may scale slightly differently,
+* from 0 to 190.
+ */
+static double fluid_rmes_max = 190;
 static int myDeviceIndex;
 
 static const char *TAG = "hajo_fluid";
@@ -38,12 +43,12 @@ typedef struct {
 } fluid_user_data;
 
 int fluid_count = 0;
-fluid_user_data fluid_data[MAX_FLUID_COUNT];
+fluid_user_data fluid_data[ MAX_FLUID_COUNT ];
 
 //static void convert_fluid_level( int voltageBottom, int *display_value, int *correction ) {
 static void convert_fluid_level( int voltageBottom, int voltageTop, int *display_value, double *rmes_back ) {
     // Rmes=Rtop/(U/Umes-1)-Rbottom
-    // 0% = 2 Ohm, 100% = 180 Ohm
+    // 0% = 0 Ohm, 100% = 190 Ohm
     double i = ( voltageBottom / 1000.0 ) / fluid_rbottom;
     double rmes = ( voltageTop - voltageBottom ) / 1000.0 / i;
     int value;
@@ -55,13 +60,13 @@ static void convert_fluid_level( int voltageBottom, int voltageTop, int *display
         value = lround( ( rmes - fluid_rmes_min ) / ( fluid_rmes_max - fluid_rmes_min ) * 100 );
     }
     *display_value = value;
-//    if ( correction != nullptr ) {
-//        *correction = 0;
+    //    if ( correction != nullptr ) {
+    //        *correction = 0;
     if ( rmes_back != nullptr ) {
         *rmes_back = rmes;
     }
     ESP_LOGD( TAG, "convert b=%d t=%d i=%lf rmes=%lf value=%d",
-                     voltageBottom, voltageTop, i, rmes, *display_value );
+        voltageBottom, voltageTop, i, rmes, *display_value );
 }
 
 static void setup_adc_drive_pins() {
@@ -80,12 +85,12 @@ static void setup_adc() {
     uint8_t adc_index = 0;
 
     data = {
-            .instance = 0,
-            .type = N2kft_Fuel,
-            .drive_gpio_pin = PIN_ADC_1_DRIVE,
-            .capacity = 60,
-            .adc_channel_low =static_cast<uint8_t>(adc_index + 0),
-            .adc_channel_high =static_cast<uint8_t>(adc_index + 1),
+        .instance = 0,
+        .type = N2kft_Fuel,
+        .drive_gpio_pin = PIN_ADC_1_DRIVE,
+        .capacity = 60,
+        .adc_channel_low = static_cast<uint8_t>(adc_index + 0),
+        .adc_channel_high = static_cast<uint8_t>(adc_index + 1),
     };
     fluid_data[ fluid_count++ ] = data;
     adc_index += 2;
@@ -114,34 +119,34 @@ static void setup_water_drive_pins() {
 }
 
 static void setup_n2k_device( int iDev ) {
-    static const unsigned long TransmitMessages[] = {
-            N2K_PGN_FLUID_LEVEL,
-            0
+    static const unsigned long TransmitMessages[ ] = {
+        N2K_PGN_FLUID_LEVEL,
+        0
     };
 
-    static const unsigned long ReceiveMessages[] = {
-            0
+    static const unsigned long ReceiveMessages[ ] = {
+        0
     };
 
     static const tNMEA2000::tProductInformation ProductInformation = {
-            2100,                       // N2kVersion
-            105,                       // Manufacturer's product code
-            "Fluid level",              // Manufacturer's Model ID
-            "0.1.0 (2023-03-23)",       // Manufacturer's Software version code
-            "1.0.0 (2023-03-23)",   // Manufacturer's Model version
-            "00000001",           // Manufacturer's Model serial code
-            0,                      // CertificationLevel
-            1                        // LoadEquivalency
+        2100, // N2kVersion
+        105, // Manufacturer's product code
+        "Fluid level", // Manufacturer's Model ID
+        "0.1.0 (2023-03-23)", // Manufacturer's Software version code
+        "1.0.0 (2023-03-23)", // Manufacturer's Model version
+        "00000001", // Manufacturer's Model serial code
+        0, // CertificationLevel
+        1 // LoadEquivalency
     };
 
     NMEA2000.SetProductInformation( &ProductInformation, iDev );
 
-    NMEA2000.SetDeviceInformation( n2k_get_device_id(),      // Unique number. Use e.g. Serial number.
-                                   150,    // Device function=Fluid level
-                                   75,        // Device class=Sensor Communication Interface
-                                   N2K_MANUFACTURER_CODE_VARILOG,
-                                   4,       // Marine
-                                   iDev
+    NMEA2000.SetDeviceInformation( n2k_get_device_id(), // Unique number. Use e.g. Serial number.
+        150, // Device function=Fluid level
+        75, // Device class=Sensor Communication Interface
+        N2K_MANUFACTURER_CODE_VARILOG,
+        4, // Marine
+        iDev
     );
 
     NMEA2000.ExtendTransmitMessages( TransmitMessages, iDev );
@@ -154,7 +159,7 @@ static bool send_adc_fluid_level( int index, tN2kMsg &message, int &deviceIndex 
 
     fluid_user_data *data = fluid_data + index;
     ESP_LOGD( TAG, "adc[%d] driver %d low %d high %d", index, data->drive_gpio_pin, data->adc_channel_low,
-              data->adc_channel_high );
+        data->adc_channel_high );
     gpio_set_level( data->drive_gpio_pin, 1 );
     // TODO add a bit delay to stabilize voltage
     adc_get_channel_value( data->adc_channel_low, &channel_data_l );
@@ -166,23 +171,23 @@ static bool send_adc_fluid_level( int index, tN2kMsg &message, int &deviceIndex 
     convert_fluid_level( channel_data_l.display_value, channel_data_h.display_value, &valueInPercent, &r_mes );
 
     ESP_LOGD( TAG, "Channel %d %-10s Raw: %4d Rmes: %lf Display: %5d",
-              channel_data_h.channel,
-              channel_data_h.name,
-              channel_data_h.raw_value,
-              r_mes,
-              valueInPercent );
+        channel_data_h.channel,
+        channel_data_h.name,
+        channel_data_h.raw_value,
+        r_mes,
+        valueInPercent );
 
     deviceIndex = myDeviceIndex;
     SetN2kFluidLevel( message,
-                      data->instance,
-                      (tN2kFluidType) data->type,
-                      valueInPercent,
-                      data->capacity != 0 ? data->capacity : N2kDoubleNA // capacity
+        data->instance,
+        (tN2kFluidType) data->type,
+        valueInPercent,
+        data->capacity != 0 ? data->capacity : N2kDoubleNA // capacity
     );
     return true;
 }
 
-static bool send_water_fluid_level( int index, tN2kMsg &message , int &deviceIndex) {
+static bool send_water_fluid_level( int index, tN2kMsg &message, int &deviceIndex ) {
     double valueInPercent;
 
     ESP_LOGD( TAG, "water[%d]", index );
@@ -210,19 +215,19 @@ static bool send_water_fluid_level( int index, tN2kMsg &message , int &deviceInd
     int capacity = 85;
     deviceIndex = myDeviceIndex;
     SetN2kFluidLevel( message,
-                      index - 1,
-                      N2kft_Water,
-                      valueInPercent,
-                      capacity != 0 ? capacity : N2kDoubleNA // capacity
+        index - 1,
+        N2kft_Water,
+        valueInPercent,
+        capacity != 0 ? capacity : N2kDoubleNA // capacity
     );
 
     return true;
 }
 
-static bool n2k_send_fluid_level( int index, tN2kMsg &message , int &deviceIndex) {
+static bool n2k_send_fluid_level( int index, tN2kMsg &message, int &deviceIndex ) {
     switch ( index ) {
         case 0:
-            return send_adc_fluid_level( index, message , deviceIndex);
+            return send_adc_fluid_level( index, message, deviceIndex );
         case 1:
             return send_water_fluid_level( index, message, deviceIndex );
         default:

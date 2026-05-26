@@ -33,16 +33,16 @@ static const char *LOG = "hajo_main";
 
 static int hardware_device_type = 0xff;
 
-static const char *device_type_names[] = {
-        "unused 0",         //  000
-        "fridge",           //  001
-        "rudder",           //  010
-        "engine sender",    //  011
-        "n2k gateway",      //  100
-        "fluid & display",  //  101
-        "battery monitor",  //  110
-        "engine display",   //  111
-        "DEVICE_TYPE_ALL",  // 1000
+static const char *device_type_names[ ] = {
+    "unused 0", //  000
+    "fridge", //  001
+    "rudder", //  010
+    "engine sender", //  011
+    "n2k gateway", //  100
+    "fluid & display", //  101
+    "battery monitor", //  110
+    "engine display", //  111
+    "DEVICE_TYPE_ALL", // 1000
 };
 
 static bool determine_device_type( int firmware_device_type ) {
@@ -51,9 +51,9 @@ static bool determine_device_type( int firmware_device_type ) {
     io_conf.intr_type = GPIO_INTR_DISABLE;
     io_conf.mode = GPIO_MODE_INPUT;
     io_conf.pin_bit_mask =
-            BIT( GPIO_NUM_DEVICE_TYPE_0 ) |
-            BIT( GPIO_NUM_DEVICE_TYPE_1 ) |
-            BIT( GPIO_NUM_DEVICE_TYPE_2 );
+        BIT( GPIO_NUM_DEVICE_TYPE_0 ) |
+        BIT( GPIO_NUM_DEVICE_TYPE_1 ) |
+        BIT( GPIO_NUM_DEVICE_TYPE_2 );
     io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
     io_conf.pull_up_en = GPIO_PULLUP_ENABLE;
     gpio_config( &io_conf );
@@ -64,16 +64,17 @@ static bool determine_device_type( int firmware_device_type ) {
                            gpio_get_level( GPIO_NUM_DEVICE_TYPE_0 );
     hardware_device_type &= 0b111;
     if ( DEVICE_TYPE_ALL == firmware_device_type ) {
-        ESP_LOGE( LOG, "No firmware device type specified (DEVICE_TYPE_ALL), hardware is \"%s\" (%c%c%c), check the end of config.h",
-                  device_type_names[ hardware_device_type ],
-                  TO_3_BITS(hardware_device_type) );
+        ESP_LOGE( LOG,
+            "No firmware device type specified (DEVICE_TYPE_ALL), hardware is \"%s\" (%c%c%c), check the end of config.h",
+            device_type_names[ hardware_device_type ],
+            TO_3_BITS(hardware_device_type) );
     }
     if ( hardware_device_type != firmware_device_type ) {
         ESP_LOGE( LOG, "Firmware \"%s\" (%c%c%c) does not match hardware \"%s\" (%c%c%c)",
-                  device_type_names[ firmware_device_type ],
-                  TO_3_BITS(firmware_device_type),
-                  device_type_names[ hardware_device_type ],
-                  TO_3_BITS(hardware_device_type) );
+            device_type_names[ firmware_device_type ],
+            TO_3_BITS(firmware_device_type),
+            device_type_names[ hardware_device_type ],
+            TO_3_BITS(hardware_device_type) );
         //ESP_ERROR_CHECK( ESP_ERR_NOT_SUPPORTED );
         return false;
     }
@@ -112,11 +113,10 @@ esp_pm_lock_handle_t pm_lock_handle_display;
 esp_pm_lock_handle_t pm_lock_handle_listen;
 
 static void clock_configure( int max_freq_mhz ) {
-
     static esp_pm_config_t pm_config = {
-            .max_freq_mhz = max_freq_mhz,
-            .min_freq_mhz = 80,
-            .light_sleep_enable = false
+        .max_freq_mhz = max_freq_mhz,
+        .min_freq_mhz = 80,
+        .light_sleep_enable = false
     };
 
     ESP_ERROR_CHECK( esp_pm_configure( &pm_config ) );
