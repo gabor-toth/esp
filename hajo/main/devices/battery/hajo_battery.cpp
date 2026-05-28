@@ -8,7 +8,7 @@
 
 static int battery_rmes = 16900;
 static int battery_rtop = 316000;
-static int battery_offset = -50;
+static int battery_offset[ ] = { 20, 20, 30 };
 static double battery_multiplier;
 static int myDeviceIndex;
 
@@ -18,15 +18,16 @@ typedef struct {
     int ripple_voltage_mv;
 } battery_user_data;
 
-static void convert_battery_voltage( int millivolts, int *display_value, int *correction ) {
+static void convert_battery_voltage( int channel, void *user_data, int millivolts, int *display_value, int *correction ) {
+    battery_user_data *data = static_cast<battery_user_data *>(user_data);
     double value;
     if ( millivolts <= 100 ) {
         value = 0.0;
         *correction = 0;
     } else {
         // U=(Rtop+Rmes)/Rmes*Umes
-        value = millivolts * battery_multiplier + battery_offset;
-        *correction = battery_offset;
+        *correction = battery_offset[ data->instance ];
+        value = millivolts * battery_multiplier + *correction;
     }
     if ( value < 0.0 ) {
         value = 0.0;
@@ -39,23 +40,23 @@ static void setup_adc() {
 
     battery_user_data data;
     data = {
-            .instance = 0,
-            .capacity_ah = 900,
-            .ripple_voltage_mv = 10000
+        .instance = 0,
+        .capacity_ah = 900,
+        .ripple_voltage_mv = 10000
     };
     adc_add_channel( 2, "motor", &data, sizeof( data ), convert_battery_voltage );
 
     data = {
-            .instance = 1,
-            .capacity_ah = 900,
-            .ripple_voltage_mv = 10000
+        .instance = 1,
+        .capacity_ah = 900,
+        .ripple_voltage_mv = 10000
     };
     adc_add_channel( 4, "munka1", &data, sizeof( data ), convert_battery_voltage );
 
     data = {
-            .instance = 2,
-            .capacity_ah = 1100,
-            .ripple_voltage_mv = 10000
+        .instance = 2,
+        .capacity_ah = 1100,
+        .ripple_voltage_mv = 10000
     };
     adc_add_channel( 6, "munka2", &data, sizeof( data ), convert_battery_voltage );
 
@@ -63,36 +64,36 @@ static void setup_adc() {
 }
 
 static void setup_n2k_device( int iDev ) {
-    static const unsigned long TransmitMessages[] = {
-            N2K_PGN_BATTERY_STATUS,
-            N2K_PGN_DC_DETAILED_STATUS,
-            N2K_PGN_BATTERY_CONFIGURATION,
-            0
+    static const unsigned long TransmitMessages[ ] = {
+        N2K_PGN_BATTERY_STATUS,
+        N2K_PGN_DC_DETAILED_STATUS,
+        N2K_PGN_BATTERY_CONFIGURATION,
+        0
     };
 
-    static const unsigned long ReceiveMessages[] = {
-            0
+    static const unsigned long ReceiveMessages[ ] = {
+        0
     };
 
     static const tNMEA2000::tProductInformation ProductInformation = {
-            2100,                        // N2kVersion
-            106,                        // Manufacturer's product code
-            "Battery monitor",           // Manufacturer's Model ID
-            "0.1.0 (2023-03-23)",        // Manufacturer's Software version code
-            "1.0.0 (2023-03-23)",    // Manufacturer's Model version
-            "00000001",            // Manufacturer's Model serial code
-            0,                       // CertificationLevel
-            1                         // LoadEquivalency
+        2100, // N2kVersion
+        106, // Manufacturer's product code
+        "Battery monitor", // Manufacturer's Model ID
+        "0.1.0 (2023-03-23)", // Manufacturer's Software version code
+        "1.0.0 (2023-03-23)", // Manufacturer's Model version
+        "00000001", // Manufacturer's Model serial code
+        0, // CertificationLevel
+        1 // LoadEquivalency
     };
 
     NMEA2000.SetProductInformation( &ProductInformation, iDev );
 
-    NMEA2000.SetDeviceInformation( n2k_get_device_id(),      // Unique number. Use e.g. Serial number.
-                                   170,    // Device function=Battery.
-                                   35,        // Device class=Electrical Generation.
-                                   N2K_MANUFACTURER_CODE_VARILOG,
-                                   4,       // Marine
-                                   iDev
+    NMEA2000.SetDeviceInformation( n2k_get_device_id(), // Unique number. Use e.g. Serial number.
+        170, // Device function=Battery.
+        35, // Device class=Electrical Generation.
+        N2K_MANUFACTURER_CODE_VARILOG,
+        4, // Marine
+        iDev
     );
 
     NMEA2000.ExtendTransmitMessages( TransmitMessages, iDev );
@@ -115,11 +116,11 @@ static bool send_battery_status( int index, tN2kMsg &message, int &deviceIndex )
     adc_get_channel_value( index, &channel_data );
     battery_user_data *user_data = static_cast<battery_user_data *>(channel_data.user_data);
     SetN2kDCBatStatus( message,
-                       user_data->instance,
-                       channel_data.display_value / 1000.0, // mV -> V
-                       N2kDoubleNA, // current
-                       N2kDoubleNA, // temperature
-                       sid
+        user_data->instance,
+        channel_data.display_value / 1000.0, // mV -> V
+        N2kDoubleNA, // current
+        N2kDoubleNA, // temperature
+        sid
     );
     return true;
 }
@@ -139,16 +140,16 @@ static bool send_dc_status( int index, tN2kMsg &message, int &deviceIndex ) {
     adc_channel_data_t channel_data;
     adc_get_channel_data( index, &channel_data );
     battery_user_data *user_data = static_cast<battery_user_data *>(channel_data.user_data);
-//    SetN2kDCStatus( N2kMsg, 1, 1, N2kDCt_Battery, 56, 92, 38500, 0.012 );
+    //    SetN2kDCStatus( N2kMsg, 1, 1, N2kDCt_Battery, 56, 92, 38500, 0.012 );
     SetN2kDCStatus( message,
-                    sid,
-                    user_data->instance,
-                    N2kDCt_Battery,
-                    N2kUInt8NA, //StateOfCharge
-                    N2kUInt8NA, // StateOfHealth,
-                    N2kDoubleNA, // TimeRemaining,
-                    N2kDoubleNA, // RippleVoltage
-                    N2kDoubleNA // Remaining Capacity
+        sid,
+        user_data->instance,
+        N2kDCt_Battery,
+        N2kUInt8NA, //StateOfCharge
+        N2kUInt8NA, // StateOfHealth,
+        N2kDoubleNA, // TimeRemaining,
+        N2kDoubleNA, // RippleVoltage
+        N2kDoubleNA // Remaining Capacity
     );
     return true;
 }
@@ -163,17 +164,17 @@ static bool send_battery_config( int index, tN2kMsg &message, int &deviceIndex )
     adc_channel_data_t channel_data;
     adc_get_channel_data( index, &channel_data );
     battery_user_data *user_data = static_cast<battery_user_data *>(channel_data.user_data);
-//    SetN2kBatConf( N2kMsg, 1, N2kDCbt_Gel, N2kDCES_Yes, N2kDCbnv_12v, N2kDCbc_LeadAcid, AhToCoulomb( 420 ), 53, 1.251, 75 );
+    //    SetN2kBatConf( N2kMsg, 1, N2kDCbt_Gel, N2kDCES_Yes, N2kDCbnv_12v, N2kDCbc_LeadAcid, AhToCoulomb( 420 ), 53, 1.251, 75 );
     SetN2kBatConf( message,
-                   user_data->instance,
-                   N2kDCbt_Gel,
-                   N2kDCES_No,
-                   N2kDCbnv_12v,
-                   N2kDCbc_LeadAcid,
-                   user_data->capacity_ah != 0 ? AhToCoulomb( user_data->capacity_ah ) : N2kDoubleNA,
-                   N2kInt8NA,
-                   N2kDoubleNA,
-                   N2kInt8NA
+        user_data->instance,
+        N2kDCbt_Gel,
+        N2kDCES_No,
+        N2kDCbnv_12v,
+        N2kDCbc_LeadAcid,
+        user_data->capacity_ah != 0 ? AhToCoulomb( user_data->capacity_ah ) : N2kDoubleNA,
+        N2kInt8NA,
+        N2kDoubleNA,
+        N2kInt8NA
     );
     return true;
 }

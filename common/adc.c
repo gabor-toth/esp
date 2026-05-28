@@ -23,9 +23,9 @@ typedef struct {
     void *user_data;
 } adc_channel_internal_t;
 
-static adc_channel_internal_t channels[MAX_CHANNELS];
+static adc_channel_internal_t channels[ MAX_CHANNELS ];
 static int channel_count = 0;
-static int number_of_samples = 64;  // Multisampling, was originally 64
+static int number_of_samples = 64; // Multisampling, was originally 64
 static int sampling_interval_seconds = 1;
 static bool is_timer_started = false;
 static adc_cali_handle_t scheme_handle = NULL;
@@ -65,18 +65,18 @@ static void read_one( adc_channel_internal_t *channel ) {
     channel->raw_value = voltage;
     int correction = 0;
     if ( channel->converter ) {
-        channel->converter( voltage, &channel->converted_value, &correction );
+        channel->converter( channel->channel, channel->user_data, voltage, &channel->converted_value, &correction );
     } else {
         channel->converted_value = voltage;
     }
     ESP_LOGI( LOG, "Channel %d %-10s Raw: %4d Voltage: %4dmV Display: %5d (corr %d, samples %d)",
-              channel->channel,
-              channel->name,
-              average_raw,
-              channel->raw_value,
-              channel->converted_value,
-              correction,
-              count_reading );
+        channel->channel,
+        channel->name,
+        average_raw,
+        channel->raw_value,
+        channel->converted_value,
+        correction,
+        count_reading );
 }
 
 void adc_read_all() {
@@ -110,11 +110,11 @@ static void timer_start() {
     xTaskCreate( timer_task_main, LOG, 2048, NULL, 5, NULL );
 
     TimerHandle_t timer = xTimerCreate(
-            LOG,
-            pdMS_TO_TICKS( sampling_interval_seconds * 1000 ),
-            1,
-            NULL,
-            timer_callback );
+        LOG,
+        pdMS_TO_TICKS( sampling_interval_seconds * 1000 ),
+        1,
+        NULL,
+        timer_callback );
     xTimerStart( timer, portMAX_DELAY );
 
     uint32_t dummy = 0;
@@ -138,8 +138,8 @@ esp_err_t adc_get_channel_value( int index, adc_channel_value_t *channel_value )
     channel_value->user_data = channel->user_data;
     channel_value->raw_value = channel->raw_value;
     channel_value->display_value = channel->converter != NULL
-                                   ? channel->converted_value
-                                   : channel->raw_value;
+                                       ? channel->converted_value
+                                       : channel->raw_value;
     return ESP_OK;
 }
 
@@ -163,9 +163,9 @@ void *adc_get_channel_user_data( int index ) {
 }
 
 esp_err_t adc_add_channel( uint8_t adc_channel, const char *name, void *user_data, size_t user_data_bytes,
-                           adc_value_converter converter ) {
+    adc_value_converter converter ) {
     if ( channel_count == MAX_CHANNELS ) {
-//        ESP_RETURN_ON_FALSE(handle && config, ESP_ERR_INVALID_ARG, TAG, "invalid argument: null pointer");
+        //        ESP_RETURN_ON_FALSE(handle && config, ESP_ERR_INVALID_ARG, TAG, "invalid argument: null pointer");
         ESP_ERROR_CHECK( ESP_ERR_INVALID_SIZE );
         return ESP_ERR_INVALID_SIZE;
     }
@@ -193,21 +193,21 @@ void adc_main_oneshot( bool start_timer ) {
     ESP_LOGI( LOG, "adc start oneshot" );
 
     adc_cali_line_fitting_config_t cali_config = {
-            .atten = ADC_ATTEN_DB_0,
-            .bitwidth = ADC_BITWIDTH_13,
-            .unit_id = ADC_UNIT_1,
+        .atten = ADC_ATTEN_DB_0,
+        .bitwidth = ADC_BITWIDTH_13,
+        .unit_id = ADC_UNIT_1,
     };
     ESP_ERROR_CHECK( adc_cali_create_scheme_line_fitting( &cali_config, &scheme_handle ) );
 
     adc_oneshot_unit_init_cfg_t unit_config = {
-            .clk_src = ADC_RTC_CLK_SRC_DEFAULT,
-            .ulp_mode = ADC_ULP_MODE_DISABLE,
-            .unit_id = ADC_UNIT_1,
+        .clk_src = ADC_RTC_CLK_SRC_DEFAULT,
+        .ulp_mode = ADC_ULP_MODE_DISABLE,
+        .unit_id = ADC_UNIT_1,
     };
     ESP_ERROR_CHECK( adc_oneshot_new_unit( &unit_config, &oneshot_unit_handle ) );
     const adc_oneshot_chan_cfg_t channel_config = {
-            .atten = cali_config.atten,
-            .bitwidth = cali_config.bitwidth,
+        .atten = cali_config.atten,
+        .bitwidth = cali_config.bitwidth,
     };
 
     for ( int i = 0; i < channel_count; i++ ) {
@@ -270,7 +270,6 @@ _Noreturn static void continuous_task_main( void *arg ) {
                 ESP_ERROR_CHECK( adc_cali_raw_to_voltage( scheme_handle, average, &voltage ) );
                 continuous_data_callback( average, voltage );
                 vTaskDelay( 0 );
-
             } else {
                 average >>= CONTINUOUS_ROTATE_BY;
                 ESP_LOGI( LOG, "average %d (bits %d)", average, CONTINUOUS_BITWIDTH - CONTINUOUS_ROTATE_BY );
@@ -287,45 +286,45 @@ void adc_main_continuous( adc_continuous_data_callback_t callback ) {
     xTaskCreate( continuous_task_main, LOG, 3072, NULL, 5, &continuous_task );
 
     adc_cali_line_fitting_config_t cali_config = {
-            .atten = ADC_ATTEN_DB_0,
-            .bitwidth = CONTINUOUS_BITWIDTH,
-            .unit_id = ADC_UNIT_1,
+        .atten = ADC_ATTEN_DB_0,
+        .bitwidth = CONTINUOUS_BITWIDTH,
+        .unit_id = ADC_UNIT_1,
     };
     ESP_ERROR_CHECK( adc_cali_create_scheme_line_fitting( &cali_config, &scheme_handle ) );
 
     adc_continuous_handle_cfg_t handler_config = {
-            .max_store_buf_size = CONTINUOUS_SAMPLES_PER_FRAME * SOC_ADC_DIGI_DATA_BYTES_PER_CONV * 4,
-            .conv_frame_size = CONTINUOUS_SAMPLES_PER_FRAME * SOC_ADC_DIGI_DATA_BYTES_PER_CONV,
-            .flags.flush_pool = true
+        .max_store_buf_size = CONTINUOUS_SAMPLES_PER_FRAME * SOC_ADC_DIGI_DATA_BYTES_PER_CONV * 4,
+        .conv_frame_size = CONTINUOUS_SAMPLES_PER_FRAME * SOC_ADC_DIGI_DATA_BYTES_PER_CONV,
+        .flags.flush_pool = true
     };
     ESP_ERROR_CHECK( adc_continuous_new_handle( &handler_config, &continuous_handle ) );
 
     adc_continuous_config_t config = {
-            .pattern_num = channel_count,
-            .adc_pattern = calloc( channel_count, sizeof( adc_digi_pattern_config_t ) ),
-            .sample_freq_hz = CONTINUOUS_SAMPLE_FREQUENCY,
-            .conv_mode = ADC_CONV_SINGLE_UNIT_1,
-            .format = ADC_DIGI_OUTPUT_FORMAT_TYPE1
+        .pattern_num = channel_count,
+        .adc_pattern = calloc( channel_count, sizeof( adc_digi_pattern_config_t ) ),
+        .sample_freq_hz = CONTINUOUS_SAMPLE_FREQUENCY,
+        .conv_mode = ADC_CONV_SINGLE_UNIT_1,
+        .format = ADC_DIGI_OUTPUT_FORMAT_TYPE1
     };
     ESP_LOGI( LOG, "adc continuous config: unit=%d, bits=%d, attenuation=%d, frame_size=%ld bytes, sample_freq=%ld Hz",
-              cali_config.unit_id,
-              cali_config.bitwidth,
-              cali_config.atten,
-              handler_config.conv_frame_size,
-              config.sample_freq_hz );
+        cali_config.unit_id,
+        cali_config.bitwidth,
+        cali_config.atten,
+        handler_config.conv_frame_size,
+        config.sample_freq_hz );
     for ( int i = 0; i < channel_count; i++ ) {
         ESP_LOGI( LOG, "add adc channel %d", channels[ i ].channel );
-        config.adc_pattern[ i ] = (adc_digi_pattern_config_t) {
-                .atten = cali_config.atten,
-                .channel = channels[ i ].channel,
-                .unit = cali_config.unit_id,
-                .bit_width = cali_config.bitwidth
+        config.adc_pattern[ i ] = (adc_digi_pattern_config_t){
+            .atten = cali_config.atten,
+            .channel = channels[ i ].channel,
+            .unit = cali_config.unit_id,
+            .bit_width = cali_config.bitwidth
         };
     }
     ESP_ERROR_CHECK( adc_continuous_config( continuous_handle, &config ) );
     adc_continuous_evt_cbs_t callbacks = {
-            .on_conv_done = continuous_callback,
-            .on_pool_ovf = NULL
+        .on_conv_done = continuous_callback,
+        .on_pool_ovf = NULL
     };
     ESP_ERROR_CHECK( adc_continuous_register_event_callbacks( continuous_handle, &callbacks, NULL ) );
 

@@ -7,15 +7,14 @@
 #include "n2k/n2k_util.h"
 #include "n2k/N2kVarilog.h"
 
-//static double fluid_u = 3.20;
 //static double fluid_rtop = 806;
 static double fluid_rbottom = 51.1;
-static double fluid_rmes_min = 0;
 /*
 * In Europe, boat fuel level sensors (sending units) typically operate on an electrical resistance range of
 * 0 (Empty) to 180 (Full). Some European senders and gauges (particularly legacy VDO equipment) may scale slightly differently,
 * from 0 to 190.
  */
+static double fluid_rmes_min = 2;
 static double fluid_rmes_max = 190;
 static int myDeviceIndex;
 
@@ -52,14 +51,13 @@ static void convert_fluid_level( int voltageBottom, int voltageTop, int *display
     if ( voltageBottom >= 100 ) {
         // Rmes=Rtop/(U/Umes-1)-Rbottom
         // 0% = 0 Ohm, 100% = 190 Ohm
-        i = ( voltageBottom / 1000.0 ) / fluid_rbottom;
+        i = ( voltageBottom / 1000.0 ) / ( fluid_rbottom + fluid_rmes_min );
         rmes = ( voltageTop - voltageBottom ) / 1000.0 / i;
-        if ( rmes <= fluid_rmes_min ) {
+        value = lround( ( rmes - fluid_rmes_min ) / ( fluid_rmes_max - fluid_rmes_min ) * 100 );
+        if ( value < 0 ) {
             value = 0;
-        } else if ( rmes >= fluid_rmes_max ) {
+        } else if ( value > 100 ) {
             value = 100;
-        } else {
-            value = lround( ( rmes - fluid_rmes_min ) / ( fluid_rmes_max - fluid_rmes_min ) * 100 );
         }
     } else {
         i = 0.0;

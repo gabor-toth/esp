@@ -29,16 +29,16 @@ static int myDeviceIndex;
 
 // yn = w × xn + (1 – w) × yn – 1
 
-static void convert_value( int millivolts, int *display_value, int *correction ) {
+static void convert_value( int channel, void *user_data, int millivolts, int *display_value, int *correction ) {
     double u = millivolts / 1000.0;
     double value = ( u - u_center ) / u_diff * max_degree * direction + correction_offset * display_multiplier;
-    if ( correction != nullptr) {
-        *correction = (int)(correction_offset * display_multiplier);
+    if ( correction != nullptr ) {
+        *correction = (int) ( correction_offset * display_multiplier );
     }
-    *display_value = (int) lround( value  );
-//    if ( *display_value  > max_degree|| *display_value  < -max_degree ) {
-//        *display_value  = INT_MIN;
-//    }
+    *display_value = (int) lround( value );
+    //    if ( *display_value  > max_degree|| *display_value  < -max_degree ) {
+    //        *display_value  = INT_MIN;
+    //    }
 }
 
 static void setup_adc_drive_pins() {
@@ -55,41 +55,41 @@ static void setup_adc_drive_pins() {
 }
 
 static void setup_n2k_device( int iDev ) {
-    static const unsigned long TransmitMessages[] = {
-            N2K_PGN_RUDDER,
-            0
+    static const unsigned long TransmitMessages[ ] = {
+        N2K_PGN_RUDDER,
+        0
     };
 
-    static const unsigned long ReceiveMessages[] = {
-            0
+    static const unsigned long ReceiveMessages[ ] = {
+        0
     };
 
     static const tNMEA2000::tProductInformation ProductInformation = {
-            2100,                        // N2kVersion
-            102,                        // Manufacturer's product code
-            "Rudder sensor",           // Manufacturer's Model ID
-            "1.0.0 (2024-09-24)",        // Manufacturer's Software version code
-            "1.0.0 (2024-09-24)",    // Manufacturer's Model version
-            "00000001",            // Manufacturer's Model serial code
-            0,                       // CertificationLevel
-            1                         // LoadEquivalency
+        2100, // N2kVersion
+        102, // Manufacturer's product code
+        "Rudder sensor", // Manufacturer's Model ID
+        "1.0.0 (2024-09-24)", // Manufacturer's Software version code
+        "1.0.0 (2024-09-24)", // Manufacturer's Model version
+        "00000001", // Manufacturer's Model serial code
+        0, // CertificationLevel
+        1 // LoadEquivalency
     };
 
     NMEA2000.SetProductInformation( &ProductInformation, iDev );
 
-    NMEA2000.SetDeviceInformation( n2k_get_device_id(),      // Unique number. Use e.g. Serial number.
-                                   155,    // Device function=Rudder
-                                   40,        // Device class=Steering and Control Surfaces
-                                   N2K_MANUFACTURER_CODE_VARILOG,
-                                   4,       // Marine
-                                   iDev
+    NMEA2000.SetDeviceInformation( n2k_get_device_id(), // Unique number. Use e.g. Serial number.
+        155, // Device function=Rudder
+        40, // Device class=Steering and Control Surfaces
+        N2K_MANUFACTURER_CODE_VARILOG,
+        4, // Marine
+        iDev
     );
 
     NMEA2000.ExtendTransmitMessages( TransmitMessages, iDev );
     NMEA2000.ExtendReceiveMessages( ReceiveMessages, iDev );
 }
 
-static bool send_rudder( int index, tN2kMsg &message, int& deviceIndex ) {
+static bool send_rudder( int index, tN2kMsg &message, int &deviceIndex ) {
     deviceIndex = myDeviceIndex;
     if ( index > 0 ) {
         return false;
@@ -99,53 +99,53 @@ static bool send_rudder( int index, tN2kMsg &message, int& deviceIndex ) {
     adc_get_channel_value( 0, &channel_data );
 
     SetN2kRudder( message,
-                  channel_data.display_value != INT_MIN ? DegToRad(channel_data.display_value) :  N2kDoubleNA , // radians
-                  0, // instance
-                  N2kRDO_NoDirectionOrder,
-                  N2kDoubleNA // angleOrder
+        channel_data.display_value != INT_MIN ? DegToRad( channel_data.display_value ) : N2kDoubleNA, // radians
+        0, // instance
+        N2kRDO_NoDirectionOrder,
+        N2kDoubleNA // angleOrder
     );
     return true;
 }
 
 #if USE_CONTINUOUS
-static void adc_callback(  int average_raw_value, int average_voltage_value ) {
+static void adc_callback( int average_raw_value, int average_voltage_value ) {
     tN2kMsg message;
     int display_value = 0;
-    convert_value(average_voltage_value, &display_value, nullptr);
+    convert_value( average_voltage_value, &display_value, nullptr );
 
     ESP_LOGI( LOG, "Raw: %4d Voltage: %4dmV Display: %5d", average_raw_value, average_voltage_value, display_value );
     SetN2kRudder( message,
-                  display_value != INT_MIN ? DegToRad(display_value) :  N2kDoubleNA , // radians
-                  0, // instance
-                  N2kRDO_NoDirectionOrder,
-                  N2kDoubleNA // angleOrder
+        display_value != INT_MIN ? DegToRad( display_value ) : N2kDoubleNA, // radians
+        0, // instance
+        N2kRDO_NoDirectionOrder,
+        N2kDoubleNA // angleOrder
     );
     NMEA2000.SendMsg( message, myDeviceIndex );
 }
 #endif
 
 static void setup_adc() {
-    ESP_LOGI(LOG,"Calculating with Rbottom=%d Rsensor=%d Rtop=%d "
-                 "Utotal=%.2lfV Itotal=%03duA "
-                 "Ulow=%03dmV Ucenter=%03dmV Uhigh=%03dmV "
-                 "Udiff=%03dmV max=%.1lf° correction=%.2f° direction=%d",
-             r_bottom,
-             r_sensor,
-             r_top,
-             u_total,
-             (int)(i_total*1000000),
-             (int)(r_bottom * i_total*1000),
-             (int)(u_center*1000),
-             (int)((r_bottom+r_sensor) * i_total*1000),
-             (int)(u_diff*1000),
-             max_degree / (double)display_multiplier,
-             correction_offset,
-             direction
+    ESP_LOGI( LOG, "Calculating with Rbottom=%d Rsensor=%d Rtop=%d "
+        "Utotal=%.2lfV Itotal=%03duA "
+        "Ulow=%03dmV Ucenter=%03dmV Uhigh=%03dmV "
+        "Udiff=%03dmV max=%.1lf° correction=%.2f° direction=%d",
+        r_bottom,
+        r_sensor,
+        r_top,
+        u_total,
+        (int)(i_total*1000000),
+        (int)(r_bottom * i_total*1000),
+        (int)(u_center*1000),
+        (int)((r_bottom+r_sensor) * i_total*1000),
+        (int)(u_diff*1000),
+        max_degree / (double)display_multiplier,
+        correction_offset,
+        direction
     );
 
     adc_add_channel( ADC_CHANNEL_IN, "position", nullptr, 0, convert_value );
 #if USE_CONTINUOUS
-    adc_main_continuous(adc_callback);
+    adc_main_continuous( adc_callback );
 #else
     adc_main_oneshot( false );
 #endif

@@ -6,6 +6,9 @@
 
 #ifdef __cplusplus
 extern "C" {
+
+
+
 #endif
 
 // on shot
@@ -28,29 +31,31 @@ typedef struct {
     void *user_data;
 } adc_channel_data_t;
 
-typedef void (*adc_value_converter)( int millivolts,
-                                     int *display_value,
-                                     int *correction );
+typedef void ( *adc_value_converter )( int channel,
+    void *user_data,
+    int millivolts,
+    int *display_value,
+    int *correction );
 
 extern esp_err_t adc_get_channel_value( int index,
-                                        adc_channel_value_t *channel_value );
+    adc_channel_value_t *channel_value );
 
 extern esp_err_t adc_get_channel_data( int index,
-                                       adc_channel_data_t *channel_value );
+    adc_channel_data_t *channel_value );
 
 extern void *adc_get_channel_user_data( int index );
 
 extern esp_err_t adc_add_channel( uint8_t adc_channel,
-                                  const char *name,
-                                  void *user_data,
-                                  size_t user_data_bytes,
-                                  adc_value_converter converter );
+    const char *name,
+    void *user_data,
+    size_t user_data_bytes,
+    adc_value_converter converter );
 
 extern void adc_read_all();
 
 // continuous
 
-typedef void (*adc_continuous_data_callback_t)( int average_raw_value, int average_voltage_value );
+typedef void ( *adc_continuous_data_callback_t )( int average_raw_value, int average_voltage_value );
 
 extern void adc_main_continuous( adc_continuous_data_callback_t callback );
 
