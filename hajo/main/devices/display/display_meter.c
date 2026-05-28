@@ -24,9 +24,11 @@ static lv_style_t style_indic_water_deplete;
 static lv_style_t style_indic_water_empty;
 static lv_style_t style_indic_fuel;
 static lv_style_t style_indic_fuel_empty;
+static lv_style_t style_indic_fuel_warn;
 static lv_style_t style_label;
 
 static lv_color_t color_indic_empty = LV_COLOR_MAKE( 0xF4, 0x43, 0x36 );
+static lv_color_t color_indic_warn = LV_COLOR_MAKE( 255, 170, 0 );
 static lv_color_t color_label = LV_COLOR_MAKE( 255, 255, 255 );
 
 static lv_obj_t *bar_water;
@@ -42,13 +44,16 @@ static lv_obj_t *bar_battery[ 3 ];
 #define STYLE_BAR_EMPTY_STATE 5
 #define STYLE_IMAGE_WIDTH 24
 #define STYLE_IMAGE_X (SDL_VER_RES-STYLE_IMAGE_WIDTH-4)
+
 #define BATTERY_VOLTAGE_START       90
 #define BATTERY_VOLTAGE_WARN_LOW   108
-#define BATTERY_VOLTAGE_DEPLETE    110
-#define BATTERY_VOLTAGE_WARN_DEPLETE   (BATTERY_VOLTAGE_DEPLETE+10)
+#define BATTERY_VOLTAGE_DEPLETE    113
 #define BATTERY_VOLTAGE_CHARGE     136
 #define BATTERY_VOLTAGE_WARN_HIGH  147
 #define BATTERY_VOLTAGE_END        140
+
+#define FUEL_EMPTY                  3
+#define FUEL_WARN                  20   // ~5 hours
 
 LV_IMG_DECLARE( img_battery );
 LV_IMG_DECLARE( img_battery_engine );
@@ -123,10 +128,6 @@ lv_obj_t *setup_water_bar( lv_obj_t *parent, int y0 ) {
     lv_style_init( &style_indic_water_deplete );
     lv_style_set_bg_opa( &style_indic_water_deplete, LV_OPA_COVER );
     lv_style_set_bg_color( &style_indic_water_deplete, color_indic_empty );
-    //    lv_style_set_bg_grad_color( &style_indic_water_deplete, color_indic_water );
-    //    lv_style_set_bg_grad_dir( &style_indic_water_deplete, LV_GRAD_DIR_VER );
-    ////    lv_style_set_bg_main_stop(&style_indic_water_25, 0);
-    //    lv_style_set_bg_grad_stop( &style_indic_water_deplete, 20 );
 
     lv_style_init( &style_indic_water_empty );
     lv_style_set_bg_opa( &style_indic_water_empty, LV_OPA_COVER );
@@ -153,13 +154,13 @@ lv_obj_t *setup_fuel_bar( lv_obj_t *parent, int y0 ) {
     lv_style_set_bg_opa( &style_indic_fuel, LV_OPA_COVER );
     lv_style_set_bg_color( &style_indic_fuel, color_indic_fuel );
 
+    lv_style_init( &style_indic_fuel_warn );
+    lv_style_set_bg_opa( &style_indic_fuel_warn, LV_OPA_COVER );
+    lv_style_set_bg_color( &style_indic_fuel_warn, color_indic_warn );
+
     lv_style_init( &style_indic_fuel_empty );
     lv_style_set_bg_opa( &style_indic_fuel_empty, LV_OPA_COVER );
-    //    lv_style_set_bg_color( &style_indic_fuel_empty, color_indic_empty );
-    //    lv_style_set_bg_grad_color( &style_indic_fuel_empty, color_indic_fuel );
-    //    lv_style_set_bg_grad_dir( &style_indic_fuel_empty, LV_GRAD_DIR_VER );
-    ////    lv_style_set_bg_main_stop(&style_indic_fuel_empty, 0);
-    //    lv_style_set_bg_grad_stop( &style_indic_fuel_empty, 20 );
+    lv_style_set_bg_color( &style_indic_fuel_empty, color_indic_empty );
 
     lv_obj_t *bar = lv_bar_create( parent );
     setup_bar_common( 1, bar, &style_indic_fuel, y0 );
@@ -177,7 +178,6 @@ lv_obj_t *setup_fuel_bar( lv_obj_t *parent, int y0 ) {
 
 void setup_battery_style() {
     lv_color_t color_indic_battery = LV_COLOR_MAKE( 85, 170, 0 );
-    lv_color_t color_indic_battery_warn = LV_COLOR_MAKE( 255, 170, 0 );
 
     lv_style_init( &style_indic_battery );
     lv_style_set_bg_opa( &style_indic_battery, LV_OPA_COVER );
@@ -187,26 +187,13 @@ void setup_battery_style() {
     lv_style_set_bg_opa( &style_indic_battery_empty, LV_OPA_COVER );
     lv_style_set_bg_color( &style_indic_battery_empty, color_indic_battery );
 
-    int position;
     lv_style_init( &style_indic_battery_deplete );
     lv_style_set_bg_opa( &style_indic_battery_deplete, LV_OPA_COVER );
-    lv_style_set_bg_color( &style_indic_battery_deplete, color_indic_empty );
-    //    lv_style_set_bg_grad_color( &style_indic_battery_deplete, color_indic_battery );
-    //    lv_style_set_bg_grad_dir( &style_indic_battery_deplete, LV_GRAD_DIR_VER );
-    //    position =
-    //            255 * ( BATTERY_VOLTAGE_DEPLETE - BATTERY_VOLTAGE_START ) / ( BATTERY_VOLTAGE_END - BATTERY_VOLTAGE_START );
-    //    lv_style_set_bg_main_stop( &style_indic_battery_deplete, position - 10 );
-    //    lv_style_set_bg_grad_stop( &style_indic_battery_deplete, position + 10 );
+    lv_style_set_bg_color( &style_indic_battery_deplete, color_indic_warn );
 
     lv_style_init( &style_indic_battery_charge );
     lv_style_set_bg_opa( &style_indic_battery_charge, LV_OPA_COVER );
     lv_style_set_bg_color( &style_indic_battery_charge, color_indic_battery );
-    //    lv_style_set_bg_grad_color( &style_indic_battery_charge, color_indic_battery_warn );
-    //    lv_style_set_bg_grad_dir( &style_indic_battery_charge, LV_GRAD_DIR_VER );
-    //    position =
-    //            255 * ( BATTERY_VOLTAGE_CHARGE - BATTERY_VOLTAGE_START ) / ( BATTERY_VOLTAGE_END - BATTERY_VOLTAGE_START );
-    //    lv_style_set_bg_main_stop( &style_indic_battery_charge, position - 10 );
-    //    lv_style_set_bg_grad_stop( &style_indic_battery_charge, position + 10 );
 }
 
 lv_obj_t *setup_battery_bar( lv_obj_t *parent, int y0, int index ) {
@@ -233,10 +220,7 @@ void setup_image_style() {
 void setup_label_style() {
     lv_style_init( &style_label );
     lv_style_set_text_color( &style_label, color_label );
-    //    lv_style_set_text_font(&style_label, &rubik_12);
-    //    lv_style_set_text_font(&style_label, &rubik_12_subpx);
     lv_style_set_text_font( &style_label, &lv_font_montserrat_12 );
-    //    lv_obj_set_style_text_font(ltr_label, &lv_font_montserrat_16, 0);
     lv_style_set_text_align( &style_label, LV_TEXT_ALIGN_CENTER );
 }
 
@@ -314,10 +298,10 @@ static void set_fuel_value( void *bar, int32_t percent ) {
         percent = 100;
     }
     lv_style_t *style;
-    if ( percent <= 3 ) {
-        style = &style_indic_water_empty;
-    } else if ( percent < 25 ) {
+    if ( percent <= FUEL_EMPTY ) {
         style = &style_indic_fuel_empty;
+    } else if ( percent < FUEL_WARN ) {
+        style = &style_indic_fuel_warn;
     } else {
         style = &style_indic_fuel;
     }
@@ -334,8 +318,8 @@ static void set_battery_value( void *bar, int32_t value ) {
     }
     lv_style_t *style;
     if ( value <= BATTERY_VOLTAGE_WARN_LOW || value >= BATTERY_VOLTAGE_WARN_HIGH ) {
-        style = &style_indic_water_empty;
-    } else if ( value <= BATTERY_VOLTAGE_WARN_DEPLETE ) {
+        style = &style_indic_battery_empty;
+    } else if ( value <= BATTERY_VOLTAGE_DEPLETE ) {
         style = &style_indic_battery_deplete;
     } else if ( value >= BATTERY_VOLTAGE_CHARGE ) {
         style = &style_indic_battery_charge;
