@@ -11,8 +11,14 @@
 static const char *LOG = "adc";
 
 // for one shot
-
 #define MAX_CHANNELS 8
+
+#define MAX_FILTER_POINTS   9
+#define FILTER_MODE_QUADRATIC_CUBIC_5   1
+#define FILTER_MODE_QUADRATIC_CUBIC_7   2
+#define FILTER_MODE_QUADRATIC_CUBIC_9   3
+#define FILTER_MODE_QUARTIC_QUINTIC_7   4
+#define FILTER_MODE_QUARTIC_QUINTIC_9   5
 
 typedef struct {
     adc_channel_t channel;
@@ -21,6 +27,10 @@ typedef struct {
     int raw_value;
     int converted_value;
     void *user_data;
+    int filter_values[ MAX_FILTER_POINTS ];
+    int filter_points;
+    int filter_mode;
+    unsigned has_filter_values: 1;
 } adc_channel_internal_t;
 
 static adc_channel_internal_t channels[ MAX_CHANNELS ];
@@ -48,6 +58,79 @@ static adc_continuous_data_callback_t continuous_data_callback;
 
 // code
 
+static int apply_filter( adc_channel_internal_t *channel, int converted_value ) {
+    if ( channel->has_filter_values ) {
+        memmove( &channel->filter_values[ 0 ], &channel->filter_values[ 1 ], sizeof( channel->filter_values[ 0 ] ) * ( channel->filter_points - 1 ) );
+        channel->filter_values[ channel->filter_points - 1 ] = converted_value;
+    } else {
+        for ( int i = 0; i < channel->filter_points; i++ ) {
+            channel->filter_values[ i ] = converted_value;
+        }
+        channel->has_filter_values = true;
+    }
+    // Savitzky–Golay filter, see https://en.wikipedia.org/wiki/Savitzky%E2%80%93Golay_filter#Appendix
+    switch ( channel->filter_mode ) {
+        case FILTER_MODE_QUADRATIC_CUBIC_5:
+            converted_value = ( -3 * channel->filter_values[ 0 ]
+                                + 12 * channel->filter_values[ 1 ]
+                                + 17 * channel->filter_values[ 2 ]
+                                + 12 * channel->filter_values[ 3 ]
+                                - 3 * channel->filter_values[ 4 ] )
+                              / 35;
+            break;
+        case FILTER_MODE_QUADRATIC_CUBIC_7:
+            converted_value = ( -2 * channel->filter_values[ 0 ]
+                                + 3 * channel->filter_values[ 1 ]
+                                + 6 * channel->filter_values[ 2 ]
+                                + 7 * channel->filter_values[ 3 ]
+                                + 6 * channel->filter_values[ 4 ]
+                                + 3 * channel->filter_values[ 5 ]
+                                - 2 * channel->filter_values[ 6 ] )
+                              / 21;
+            break;
+        case FILTER_MODE_QUADRATIC_CUBIC_9:
+            converted_value = ( -21 * channel->filter_values[ 0 ]
+                                + 14 * channel->filter_values[ 1 ]
+                                + 39 * channel->filter_values[ 2 ]
+                                + 54 * channel->filter_values[ 3 ]
+                                + 59 * channel->filter_values[ 4 ]
+                                + 54 * channel->filter_values[ 5 ]
+                                + 39 * channel->filter_values[ 6 ]
+                                + 14 * channel->filter_values[ 7 ]
+                                - 21 * channel->filter_values[ 8 ] )
+                              / 231;
+            break;
+        case FILTER_MODE_QUARTIC_QUINTIC_7:
+            converted_value = ( 5 * channel->filter_values[ 0 ]
+                                - 30 * channel->filter_values[ 1 ]
+                                + 75 * channel->filter_values[ 2 ]
+                                + 131 * channel->filter_values[ 3 ]
+                                + 75 * channel->filter_values[ 4 ]
+                                - 30 * channel->filter_values[ 5 ]
+                                - 5 * channel->filter_values[ 6 ] )
+                              / 231;
+            break;
+        case FILTER_MODE_QUARTIC_QUINTIC_9:
+            converted_value = ( 15 * channel->filter_values[ 0 ]
+                                - 55 * channel->filter_values[ 1 ]
+                                + 30 * channel->filter_values[ 2 ]
+                                + 135 * channel->filter_values[ 3 ]
+                                + 179 * channel->filter_values[ 4 ]
+                                + 135 * channel->filter_values[ 5 ]
+                                + 30 * channel->filter_values[ 6 ]
+                                - 55 * channel->filter_values[ 7 ]
+                                + 15 * channel->filter_values[ 8 ] )
+                              / 429;
+            break;
+        default:
+            ESP_LOGE( LOG, "Unimplemented mode %d", channel->filter_mode );
+            ESP_ERROR_CHECK( ESP_ERR_INVALID_ARG );
+            break;
+    }
+
+    return converted_value;
+}
+
 static void read_one( adc_channel_internal_t *channel ) {
     int sum_reading = 0;
     int count_reading = 0;
@@ -64,11 +147,13 @@ static void read_one( adc_channel_internal_t *channel ) {
     ESP_ERROR_CHECK( adc_cali_raw_to_voltage( scheme_handle, average_raw, &voltage ) );
     channel->raw_value = voltage;
     int correction = 0;
+    int converted_value;
     if ( channel->converter ) {
-        channel->converter( channel->channel, channel->user_data, voltage, &channel->converted_value, &correction );
+        channel->converter( channel->channel, channel->user_data, voltage, &converted_value, &correction );
     } else {
-        channel->converted_value = voltage;
+        converted_value = voltage;
     }
+    channel->converted_value = apply_filter( channel, converted_value );
     ESP_LOGI( LOG, "Channel %d %-10s Raw: %4d Voltage: %4dmV Display: %5d (corr %d, samples %d)",
         channel->channel,
         channel->name,
@@ -162,6 +247,27 @@ void *adc_get_channel_user_data( int index ) {
     return channels[ index ].user_data;
 }
 
+static void adc_set_filter_mode( adc_channel_internal_t *channel, int mode ) {
+    channel->filter_mode = mode;
+    switch ( mode ) {
+        case FILTER_MODE_QUADRATIC_CUBIC_5:
+            channel->filter_points = 5;
+            break;
+        case FILTER_MODE_QUADRATIC_CUBIC_7:
+        case FILTER_MODE_QUARTIC_QUINTIC_7:
+            channel->filter_points = 5;
+            break;
+        case FILTER_MODE_QUADRATIC_CUBIC_9:
+        case FILTER_MODE_QUARTIC_QUINTIC_9:
+            channel->filter_points = 5;
+            break;
+        default:
+            ESP_LOGE( LOG, "Mode %d is not known", mode );
+            ESP_ERROR_CHECK( ESP_ERR_INVALID_ARG );
+            break;
+    }
+}
+
 esp_err_t adc_add_channel( uint8_t adc_channel, const char *name, void *user_data, size_t user_data_bytes,
     adc_value_converter converter ) {
     if ( channel_count == MAX_CHANNELS ) {
@@ -186,6 +292,7 @@ esp_err_t adc_add_channel( uint8_t adc_channel, const char *name, void *user_dat
         memcpy( channel->user_data, user_data, user_data_bytes );
     }
     channel->name = strdup( name );
+    adc_set_filter_mode( channel, FILTER_MODE_QUADRATIC_CUBIC_7 );
     return ESP_OK;
 }
 
