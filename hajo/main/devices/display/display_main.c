@@ -46,17 +46,19 @@ static lv_indev_state_t indev_previous_state;
  **********************/
 
 void display_main() {
+    // int priority = configMAX_PRIORITIES - 1;
+    int priority = tskIDLE_PRIORITY + 5;
     /* If you want to use a task to create the graphic, you NEED to create a Pinned task
      * Otherwise there can be problem such as memory corruption and so on.
      * NOTE: When not using Wi-Fi nor Bluetooth you can pin the guiTask to core 0 */
-    xTaskCreatePinnedToCore( guiTask, "gui", 4096 * 2, NULL, configMAX_PRIORITIES - 1, NULL, 0 );
+    xTaskCreatePinnedToCore( guiTask, "gui", 4096 * 2, NULL, priority, NULL, 0 );
 
     backlight_timer = xTimerCreate(
-            "backlight",
-            pdMS_TO_TICKS( backlight_off_interval * 1000 ),
-            0,
-            NULL,
-            timer_callback_backlight );
+        "backlight",
+        pdMS_TO_TICKS( backlight_off_interval * 1000 ),
+        0,
+        NULL,
+        timer_callback_backlight );
 }
 
 bool display_start_task() {
@@ -91,7 +93,7 @@ static void indev_read( lv_indev_drv_t *drv, lv_indev_data_t *data ) {
     lv_indev_state_t current_state = indev->proc.state;
     if ( indev_previous_state != current_state ) {
         ESP_LOGI( LOG, "current_state %d, previous_state %d, display_on %d",
-                  current_state, indev_previous_state, is_display_on );
+            current_state, indev_previous_state, is_display_on );
         if ( current_state == LV_INDEV_STATE_PRESSED && !is_display_on ) {
             backlight_on();
         } else if ( current_state == LV_INDEV_STATE_RELEASED && is_display_on ) {
@@ -102,6 +104,9 @@ static void indev_read( lv_indev_drv_t *drv, lv_indev_data_t *data ) {
 }
 
 static void guiTask( void *pvParameter ) {
+    // delay display task to allow proper boot of USB CDC
+    vTaskDelay( pdMS_TO_TICKS( 1000 ) );
+
     xGuiSemaphore = xSemaphoreCreateMutex();
 
     /*Initialize LVGL*/
@@ -113,19 +118,18 @@ static void guiTask( void *pvParameter ) {
 
     // 25600 = 320 x (240/3)
     // 19200 = 320 x (240/4)
-//    uint32_t size_in_px = DISP_BUF_SIZE;
+    //    uint32_t size_in_px = DISP_BUF_SIZE;
     uint32_t size_in_px = 320 * ( 240 / 4 );
 
     uint32_t buffer_size = size_in_px * sizeof( lv_color_t );
     lv_color_t *buf1 = heap_caps_malloc( buffer_size, MALLOC_CAP_DMA );
     assert( buf1 != NULL );
-//    lv_color_t *buf2 = NULL;
     lv_color_t *buf2 = heap_caps_malloc( buffer_size, MALLOC_CAP_DMA );
     if ( buf2 == NULL ) {
         ESP_LOGE( LOG, "free mem %d, largest %d, needed %ld",
-                  heap_caps_get_free_size( MALLOC_CAP_DMA ),
-                  heap_caps_get_largest_free_block( MALLOC_CAP_DMA ),
-                  buffer_size );
+            heap_caps_get_free_size( MALLOC_CAP_DMA ),
+            heap_caps_get_largest_free_block( MALLOC_CAP_DMA ),
+            buffer_size );
         assert( buf2 != NULL );
     }
 
@@ -134,6 +138,7 @@ static void guiTask( void *pvParameter ) {
 
     lv_disp_drv_t disp_drv;
     lv_disp_drv_init( &disp_drv );
+
     disp_drv.hor_res = 320;
     disp_drv.ver_res = 240;
 #if CONFIG_LV_DISPLAY_ORIENTATION_PORTRAIT
@@ -159,8 +164,8 @@ static void guiTask( void *pvParameter ) {
 
     /* Create and start a periodic timer interrupt to call lv_tick_inc */
     const esp_timer_create_args_t periodic_timer_args = {
-            .callback = &lv_tick_task,
-            .name = "lvgl_gui"
+        .callback = &lv_tick_task,
+        .name = "lvgl_gui"
     };
     esp_timer_handle_t periodic_timer;
     ESP_ERROR_CHECK( esp_timer_create( &periodic_timer_args, &periodic_timer ) );
@@ -176,11 +181,10 @@ static void guiTask( void *pvParameter ) {
     display_meter_main();
     ESP_LOGI( LOG, "after display_meter_main" );
 
-    vTaskPrioritySet( NULL, tskIDLE_PRIORITY + 5 );
-    uint32_t next_log_time = 0;
+    //vTaskPrioritySet( NULL, tskIDLE_PRIORITY + 5 );
+    uint32_t ms_till_next = 10;
     while ( 1 ) {
-        /* Delay 1 tick (assumes FreeRTOS tick is 10ms */
-        vTaskDelay( pdMS_TO_TICKS( 10 ) );
+        vTaskDelay( pdMS_TO_TICKS( ms_till_next ) );
 
         if ( turn_off_display ) {
             turn_off_display = false;
@@ -189,13 +193,10 @@ static void guiTask( void *pvParameter ) {
 
         /* Try to take the semaphore, call lvgl related function on success */
         if ( display_start_task() ) {
-            lv_task_handler();
+            ms_till_next = lv_task_handler();
             display_end_task();
-        }
-
-        uint32_t current_time = lv_tick_get();
-        if ( current_time > next_log_time ) {
-            next_log_time = current_time + 1000;
+        } else {
+            ms_till_next = 10;
         }
     }
 }
