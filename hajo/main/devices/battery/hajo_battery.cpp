@@ -1,14 +1,17 @@
 #include "adc.h"
 #include "cmath"
+#include "esp_log.h"
 #include "hajo_battery.h"
 #include "n2k/n2k_sender.h"
 #include "n2k/n2k_struct_parser.h"
 #include "n2k/n2k_util.h"
 #include "n2k/N2kVarilog.h"
 
+static const char *TAG = "battery";
+
 static int battery_rmes = 16900;
 static int battery_rtop = 316000;
-static int battery_offset[ ] = { 20, 20, 30 };
+static int battery_offset_mV[ ] = { -10, -10, -10 };
 static double battery_multiplier;
 static int myDeviceIndex;
 
@@ -26,8 +29,8 @@ static void convert_battery_voltage( int channel, void *user_data, int millivolt
         *correction = 0;
     } else {
         // U=(Rtop+Rmes)/Rmes*Umes
-        *correction = battery_offset[ data->instance ];
-        value = millivolts * battery_multiplier + *correction;
+        *correction = battery_offset_mV[ data->instance ];
+        value = ( millivolts + *correction ) * battery_multiplier;
     }
     if ( value < 0.0 ) {
         value = 0.0;

@@ -13,8 +13,8 @@
 static void process_incoming_pgn_battery_status( const tN2kMsg &N2kMsg ) {
     N2kDCBatStatusData data;
     if ( ParseN2kDCBatStatus( N2kMsg, data ) ) {
-        //        ESP_LOGI( LOG, "packet battery status %d: voltage %lf", data.instance, data.voltage );
-        int voltageDisplayValue = (int) ( data.voltage * 10 );
+        //ESP_LOGI( TAG, "packet battery status %d: voltage %lf", data.instance, data.voltage );
+        int voltageDisplayValue = static_cast<int>(data.voltage * 10);
         display_set_value( VOLTAGE, data.instance, voltageDisplayValue );
     }
 }
@@ -22,7 +22,7 @@ static void process_incoming_pgn_battery_status( const tN2kMsg &N2kMsg ) {
 static void process_incoming_pgn_dc_detailed_status( const tN2kMsg &N2kMsg ) {
     ParseN2kDCStatusData data;
     if ( ParseN2kDCStatus( N2kMsg, data ) ) {
-        //        ESP_LOGI( LOG, "packet dc status %d", data.instance );
+        //ESP_LOGI( TAG, "packet dc status %d", data.instance );
     }
 }
 
@@ -30,7 +30,7 @@ static void process_incoming_pgn_battery_configuration( const tN2kMsg &N2kMsg ) 
     N2kBatConfData data;
     if ( ParseN2kBatConf( N2kMsg, data ) ) {
         data.batCapacity = CoulombToAh( data.batCapacity );
-        //        ESP_LOGI( LOG, "packet battery conf %d: capacity %lf", data.instance, data.batCapacity );
+        //ESP_LOGI( TAG, "packet battery conf %d: capacity %lf", data.instance, data.batCapacity );
     }
 }
 
@@ -43,7 +43,7 @@ static void process_incoming_pgn_fluid_level( const tN2kMsg &N2kMsg ) {
         } else {
             levelInPercent = -1;
         }
-        //        ESP_LOGI( LOG, "packet fluid level %d/%d = %lf", data.fluidType, data.instance, data.level );
+        //ESP_LOGI( TAG, "packet fluid level %d/%d = %lf", data.fluidType, data.instance, data.level );
         if ( data.fluidType == tN2kFluidType::N2kft_Fuel || data.fluidType == tN2kFluidType::N2kft_FuelGasoline ) {
             display_set_value( FUEL, data.instance, levelInPercent );
         } else if ( data.fluidType == tN2kFluidType::N2kft_Water ) {
@@ -77,17 +77,17 @@ static void process_incoming_pgn( const tN2kMsg &N2kMsg ) {
         case 0x0ff4f: // ?
             break;
         default:
-            //            ESP_LOGI( LOG, "new packet pgn %5lx", N2kMsg.PGN );
+            //ESP_LOGI( TAG, "new packet pgn %5lx", N2kMsg.PGN );
             break;
     }
 }
 
 void setup_n2k_device( int iDev ) {
-    static const unsigned long TransmitMessages[ ] = {
+    static constexpr unsigned long TransmitMessages[ ] = {
         0
     };
 
-    static const unsigned long ReceiveMessages[ ] = {
+    static constexpr unsigned long ReceiveMessages[ ] = {
         N2K_PGN_FLUID_LEVEL,
         N2K_PGN_BATTERY_STATUS,
         N2K_PGN_DC_DETAILED_STATUS,

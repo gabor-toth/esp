@@ -8,7 +8,7 @@
 #include "adc.h"
 #include "string.h"
 
-static const char *LOG = "adc";
+static const char *TAG = "adc";
 
 // for one shot
 #define MAX_CHANNELS 8
@@ -123,7 +123,7 @@ static int apply_filter( adc_channel_internal_t *channel, int converted_value ) 
                               / 429;
             break;
         default:
-            ESP_LOGE( LOG, "Unimplemented mode %d", channel->filter_mode );
+            ESP_LOGE( TAG, "Unimplemented mode %d", channel->filter_mode );
             ESP_ERROR_CHECK( ESP_ERR_INVALID_ARG );
             break;
     }
@@ -154,7 +154,7 @@ static void read_one( adc_channel_internal_t *channel ) {
         converted_value = voltage;
     }
     channel->converted_value = apply_filter( channel, converted_value );
-    ESP_LOGI( LOG, "Channel %d %-10s Raw: %4d Voltage: %4dmV Display: %5d (corr %d, samples %d)",
+    ESP_LOGI( TAG, "Channel %d %-10s Raw: %4d Voltage: %4dmV Display: %5d (corr %d, samples %d)",
         channel->channel,
         channel->name,
         average_raw,
@@ -185,17 +185,17 @@ static void timer_callback( TimerHandle_t timer ) {
     (void) timer;
 
     uint32_t dummy = 0;
-    ESP_LOGD( LOG, "tick" );
+    ESP_LOGD( TAG, "tick" );
     xQueueSendToBack( timer_event_queue, &dummy, 0 );
 }
 
 static void timer_start() {
     is_timer_started = true;
     timer_event_queue = xQueueCreate( 10, sizeof( uint32_t ) );
-    xTaskCreate( timer_task_main, LOG, 2048, NULL, 5, NULL );
+    xTaskCreate( timer_task_main, TAG, 2048, NULL, 5, NULL );
 
     TimerHandle_t timer = xTimerCreate(
-        LOG,
+        TAG,
         pdMS_TO_TICKS( sampling_interval_seconds * 1000 ),
         1,
         NULL,
@@ -241,7 +241,7 @@ esp_err_t adc_get_channel_data( int index, adc_channel_data_t *channel_value ) {
 
 void *adc_get_channel_user_data( int index ) {
     if ( index < 0 || index > channel_count ) {
-        ESP_LOGE( LOG, "Bad adc channel index %d", index );
+        ESP_LOGE( TAG, "Bad adc channel index %d", index );
         return NULL;
     }
     return channels[ index ].user_data;
@@ -255,14 +255,14 @@ static void adc_set_filter_mode( adc_channel_internal_t *channel, int mode ) {
             break;
         case FILTER_MODE_QUADRATIC_CUBIC_7:
         case FILTER_MODE_QUARTIC_QUINTIC_7:
-            channel->filter_points = 5;
+            channel->filter_points = 7;
             break;
         case FILTER_MODE_QUADRATIC_CUBIC_9:
         case FILTER_MODE_QUARTIC_QUINTIC_9:
-            channel->filter_points = 5;
+            channel->filter_points = 9;
             break;
         default:
-            ESP_LOGE( LOG, "Mode %d is not known", mode );
+            ESP_LOGE( TAG, "Mode %d is not known", mode );
             ESP_ERROR_CHECK( ESP_ERR_INVALID_ARG );
             break;
     }
@@ -277,7 +277,7 @@ esp_err_t adc_add_channel( uint8_t adc_channel, const char *name, void *user_dat
     }
     for ( int i = 0; i < channel_count; i++ ) {
         if ( channels[ i ].channel == adc_channel ) {
-            ESP_LOGE( LOG, "Channel %d is already used at position %d", adc_channel, i );
+            ESP_LOGE( TAG, "Channel %d is already used at position %d", adc_channel, i );
             ESP_ERROR_CHECK( ESP_ERR_INVALID_ARG );
         }
     }
@@ -297,7 +297,7 @@ esp_err_t adc_add_channel( uint8_t adc_channel, const char *name, void *user_dat
 }
 
 void adc_main_oneshot( bool start_timer ) {
-    ESP_LOGI( LOG, "adc start oneshot" );
+    ESP_LOGI( TAG, "adc start oneshot" );
 
     adc_cali_line_fitting_config_t cali_config = {
         .atten = ADC_ATTEN_DB_0,
@@ -318,15 +318,15 @@ void adc_main_oneshot( bool start_timer ) {
     };
 
     for ( int i = 0; i < channel_count; i++ ) {
-        ESP_LOGI( LOG, "add adc channel %d", channels[ i ].channel );
+        ESP_LOGI( TAG, "add adc channel %d", channels[ i ].channel );
         ESP_ERROR_CHECK( adc_oneshot_config_channel( oneshot_unit_handle, channels[ i ].channel, &channel_config ) );
     }
 
     if ( start_timer ) {
         timer_start();
-        ESP_LOGI( LOG, "adc started with timer" );
+        ESP_LOGI( TAG, "adc started with timer" );
     } else {
-        ESP_LOGI( LOG, "adc started without timer" );
+        ESP_LOGI( TAG, "adc started without timer" );
     }
 }
 
@@ -379,18 +379,18 @@ _Noreturn static void continuous_task_main( void *arg ) {
                 vTaskDelay( 0 );
             } else {
                 average >>= CONTINUOUS_ROTATE_BY;
-                ESP_LOGI( LOG, "average %d (bits %d)", average, CONTINUOUS_BITWIDTH - CONTINUOUS_ROTATE_BY );
+                ESP_LOGI( TAG, "average %d (bits %d)", average, CONTINUOUS_BITWIDTH - CONTINUOUS_ROTATE_BY );
             }
         }
     }
 }
 
 void adc_main_continuous( adc_continuous_data_callback_t callback ) {
-    ESP_LOGI( LOG, "adc start continuous" );
+    ESP_LOGI( TAG, "adc start continuous" );
 
     continuous_data_callback = callback;
 
-    xTaskCreate( continuous_task_main, LOG, 3072, NULL, 5, &continuous_task );
+    xTaskCreate( continuous_task_main, TAG, 3072, NULL, 5, &continuous_task );
 
     adc_cali_line_fitting_config_t cali_config = {
         .atten = ADC_ATTEN_DB_0,
@@ -413,14 +413,14 @@ void adc_main_continuous( adc_continuous_data_callback_t callback ) {
         .conv_mode = ADC_CONV_SINGLE_UNIT_1,
         .format = ADC_DIGI_OUTPUT_FORMAT_TYPE1
     };
-    ESP_LOGI( LOG, "adc continuous config: unit=%d, bits=%d, attenuation=%d, frame_size=%ld bytes, sample_freq=%ld Hz",
+    ESP_LOGI( TAG, "adc continuous config: unit=%d, bits=%d, attenuation=%d, frame_size=%ld bytes, sample_freq=%ld Hz",
         cali_config.unit_id,
         cali_config.bitwidth,
         cali_config.atten,
         handler_config.conv_frame_size,
         config.sample_freq_hz );
     for ( int i = 0; i < channel_count; i++ ) {
-        ESP_LOGI( LOG, "add adc channel %d", channels[ i ].channel );
+        ESP_LOGI( TAG, "add adc channel %d", channels[ i ].channel );
         config.adc_pattern[ i ] = (adc_digi_pattern_config_t){
             .atten = cali_config.atten,
             .channel = channels[ i ].channel,
@@ -436,5 +436,5 @@ void adc_main_continuous( adc_continuous_data_callback_t callback ) {
     ESP_ERROR_CHECK( adc_continuous_register_event_callbacks( continuous_handle, &callbacks, NULL ) );
 
     ESP_ERROR_CHECK( adc_continuous_start( continuous_handle ) );
-    ESP_LOGI( LOG, "adc started continuous" );
+    ESP_LOGI( TAG, "adc started continuous" );
 }
