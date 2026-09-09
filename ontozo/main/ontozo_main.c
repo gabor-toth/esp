@@ -12,8 +12,9 @@
 #include "sntp_main.h"
 #include "wifi/wifi_main.h"
 
-void app_main( void ) {
-    debug_start_heap_dump( 10 );
+void app_main(void)
+{
+    debug_start_heap_dump(10);
     main_main();
 
     nvs_init();
@@ -23,12 +24,12 @@ void app_main( void ) {
     sntp_main();
     discovery_register();
 
-    http_server_main( DEFAULT_HTTP_SERVER_CONTEXT_SIZE, 24 );
+    http_server_main(DEFAULT_HTTP_SERVER_CONTEXT_SIZE, 24);
     http_static_files_register();
     rest_register();
-    ESP_ERROR_CHECK( wifi_main( "ontozo" ) );
+    ESP_ERROR_CHECK(wifi_main( "ontozo" ));
 
-//    rest_init_after_wifi();
+    //    rest_init_after_wifi();
 
     program_logic_init();
     program_start_init();

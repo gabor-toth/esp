@@ -62,10 +62,10 @@ static bool is_file_cacheable( char *filepath ) {
 
 esp_err_t init_fs( void ) {
     esp_vfs_spiffs_conf_t conf = {
-            .base_path = CONFIG_EXAMPLE_WEB_MOUNT_POINT,
-            .partition_label = NULL,
-            .max_files = 5,
-            .format_if_mount_failed = false
+        .base_path = CONFIG_EXAMPLE_WEB_MOUNT_POINT,
+        .partition_label = NULL,
+        .max_files = 10,
+        .format_if_mount_failed = false
     };
     esp_err_t ret = esp_vfs_spiffs_register( &conf );
 
@@ -98,23 +98,23 @@ static void set_cache_forever( httpd_req_t *req, char *filepath ) {
     Cache-Control: max-age=533280
     Expires: Sun, 03 May 2015 23:02:37 GMT
      */
-//    static char last_modified_header_value[32];
-//    static char max_age_header_value[32];
+    //    static char last_modified_header_value[32];
+    //    static char max_age_header_value[32];
 
     httpd_resp_set_hdr( req, "Cache-Control", "private, max-age=31536000, immutable" ); // 1 year in seconds
 
-//    struct stat file_state;
-//    stat( filepath, &file_state );
-//    struct tm timeinfo = { 0 };
-//    localtime_r( &file_state.st_mtim.tv_sec, &timeinfo );
-//    strftime( last_modified_header_value, sizeof last_modified_header_value, "%r", &timeinfo );
-//    httpd_resp_set_hdr( req, "Last-Modified", last_modified_header_value );
+    //    struct stat file_state;
+    //    stat( filepath, &file_state );
+    //    struct tm timeinfo = { 0 };
+    //    localtime_r( &file_state.st_mtim.tv_sec, &timeinfo );
+    //    strftime( last_modified_header_value, sizeof last_modified_header_value, "%r", &timeinfo );
+    //    httpd_resp_set_hdr( req, "Last-Modified", last_modified_header_value );
 }
 
 /* Send HTTP response with the contents of the requested file */
 static esp_err_t http_file_get_handler( httpd_req_t *req ) {
-    char filepath[FILE_PATH_MAX];
-    char error_message[255];
+    char filepath[ FILE_PATH_MAX ];
+    char error_message[ 255 ];
 
     http_server_context_t *http_context = (http_server_context_t *) req->user_ctx;
     strlcpy( filepath, http_context->fs_base_path, sizeof( filepath ) );
@@ -171,7 +171,7 @@ static esp_err_t http_file_get_handler( httpd_req_t *req ) {
 }
 
 esp_err_t http_static_files_register_handler( httpd_handle_t server, http_server_context_t *http_context,
-                                              const char *static_files_base_path ) {
+    const char *static_files_base_path ) {
     if ( static_files_base_path == NULL ) {
         return ESP_ERR_INVALID_ARG;
     }
@@ -181,16 +181,17 @@ esp_err_t http_static_files_register_handler( httpd_handle_t server, http_server
     }
     /* URI handler for getting web server files */
     httpd_uri_t common_get_uri = {
-            .uri = "/*",
-            .method = HTTP_GET,
-            .handler = http_file_get_handler,
-            .user_ctx = http_context
+        .uri = "/*",
+        .method = HTTP_GET,
+        .handler = http_file_get_handler,
+        .user_ctx = http_context
     };
     return http_register_uri_handler( server, TAG, &common_get_uri );
 }
 
 void http_static_files_register( void ) {
-    ESP_ERROR_CHECK( init_fs() );
+    // ESP_ERROR_CHECK( init_fs() );
+    init_fs();
     // call http_static_files_register_handler as last to register it as a fallback handler
 }
 
