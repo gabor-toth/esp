@@ -1631,6 +1631,219 @@
 			)
 			(embedded_fonts no)
 		)
+		(symbol "Device:R_Potentiometer"
+			(pin_names
+				(offset 1.016)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "RV"
+				(at -4.445 0 90)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "R_Potentiometer"
+				(at -2.54 0 90)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Potentiometer"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Sim.Device" "R"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Sim.Type" "POT"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Sim.Pins" "1=r0 2=wiper 3=r1"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "resistor variable"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "Potentiometer*"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "R_Potentiometer_0_1"
+				(rectangle
+					(start 1.016 2.54)
+					(end -1.016 -2.54)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.143 0) (xy 2.286 0.508) (xy 2.286 -0.508) (xy 1.143 0)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type outline)
+					)
+				)
+				(polyline
+					(pts
+						(xy 2.54 0) (xy 1.524 0)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "R_Potentiometer_1_1"
+				(pin passive line
+					(at 0 3.81 270)
+					(length 1.27)
+					(name "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 3.81 0 180)
+					(length 1.27)
+					(name "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 0 -3.81 90)
+					(length 1.27)
+					(name "3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 		(symbol "Mechanical:MountingHole"
 			(pin_names
 				(offset 1.016)
@@ -2904,6 +3117,18 @@
 		(uuid "21b7fe4e-6be5-40b2-ba9b-1730d65c107e")
 	)
 	(junction
+		(at 36.83 73.66)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "405bc1db-59e3-4117-b659-c727acafa4ad")
+	)
+	(junction
+		(at 36.83 95.25)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "466d3023-920c-4d2b-a891-a5dd50d58d0d")
+	)
+	(junction
 		(at 88.9 36.83)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -2938,8 +3163,16 @@
 		(uuid "82b98bba-d9df-46d2-9939-645534021063")
 	)
 	(no_connect
+		(at 48.26 96.52)
+		(uuid "b423eeb8-6b8c-47e0-9d25-0414229f2dd5")
+	)
+	(no_connect
 		(at 165.1 39.37)
 		(uuid "c2a02412-67a0-480e-b95c-676fee16847a")
+	)
+	(no_connect
+		(at 48.26 74.93)
+		(uuid "d634e15a-9074-4e3a-b365-96f12fc8739e")
 	)
 	(no_connect
 		(at 165.1 46.99)
@@ -3007,6 +3240,16 @@
 	)
 	(wire
 		(pts
+			(xy 33.02 68.58) (xy 36.83 68.58)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "0f6dadc0-3224-4bff-9c4f-ca4e283d5a0f")
+	)
+	(wire
+		(pts
 			(xy 195.58 52.07) (xy 203.2 52.07)
 		)
 		(stroke
@@ -3014,6 +3257,16 @@
 			(type default)
 		)
 		(uuid "12175157-9c5d-4d42-80d1-9087fc72c8a8")
+	)
+	(wire
+		(pts
+			(xy 48.26 87.63) (xy 57.15 87.63)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "1615febf-8e89-49e3-ac46-fe1d7f1dab27")
 	)
 	(wire
 		(pts
@@ -3067,6 +3320,16 @@
 	)
 	(wire
 		(pts
+			(xy 33.02 92.71) (xy 44.45 92.71)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "37f4b7f8-af95-4fb6-87a0-8df9b01157cc")
+	)
+	(wire
+		(pts
 			(xy 99.06 41.91) (xy 102.87 41.91)
 		)
 		(stroke
@@ -3117,6 +3380,16 @@
 	)
 	(wire
 		(pts
+			(xy 48.26 88.9) (xy 48.26 87.63)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "46bbf078-a0c9-4746-8aeb-4f2ccedf660f")
+	)
+	(wire
+		(pts
 			(xy 41.91 22.86) (xy 30.48 22.86)
 		)
 		(stroke
@@ -3134,6 +3407,16 @@
 			(type default)
 		)
 		(uuid "49ff69d1-eb64-4f76-852f-34ca86c42dd9")
+	)
+	(wire
+		(pts
+			(xy 48.26 66.04) (xy 57.15 66.04)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "4a4b58a5-e3f6-40d6-84b7-4ce001132585")
 	)
 	(wire
 		(pts
@@ -3207,6 +3490,16 @@
 	)
 	(wire
 		(pts
+			(xy 48.26 67.31) (xy 48.26 66.04)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "63e74f25-ecf2-4b28-a0b3-3f8f11dc1d2a")
+	)
+	(wire
+		(pts
 			(xy 153.67 69.85) (xy 165.1 69.85)
 		)
 		(stroke
@@ -3227,7 +3520,7 @@
 	)
 	(wire
 		(pts
-			(xy 33.02 86.36) (xy 43.18 86.36)
+			(xy 33.02 87.63) (xy 43.18 87.63)
 		)
 		(stroke
 			(width 0)
@@ -3337,6 +3630,16 @@
 	)
 	(wire
 		(pts
+			(xy 36.83 68.58) (xy 36.83 73.66)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "877b202f-2c45-4adb-9ce3-082229f0867e")
+	)
+	(wire
+		(pts
 			(xy 88.9 115.57) (xy 88.9 111.76)
 		)
 		(stroke
@@ -3377,7 +3680,7 @@
 	)
 	(wire
 		(pts
-			(xy 33.02 71.12) (xy 43.18 71.12)
+			(xy 33.02 66.04) (xy 43.18 66.04)
 		)
 		(stroke
 			(width 0)
@@ -3447,7 +3750,7 @@
 	)
 	(wire
 		(pts
-			(xy 33.02 88.9) (xy 36.83 88.9)
+			(xy 33.02 95.25) (xy 36.83 95.25)
 		)
 		(stroke
 			(width 0)
@@ -3457,7 +3760,7 @@
 	)
 	(wire
 		(pts
-			(xy 36.83 88.9) (xy 36.83 90.17)
+			(xy 36.83 95.25) (xy 36.83 96.52)
 		)
 		(stroke
 			(width 0)
@@ -3607,6 +3910,16 @@
 	)
 	(wire
 		(pts
+			(xy 57.15 66.04) (xy 57.15 64.77)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c7251400-151e-4df9-88a3-682daa626edf")
+	)
+	(wire
+		(pts
 			(xy 175.26 24.13) (xy 175.26 29.21)
 		)
 		(stroke
@@ -3634,6 +3947,16 @@
 			(type default)
 		)
 		(uuid "c963c96f-0333-4ee3-9334-b9f04cf70406")
+	)
+	(wire
+		(pts
+			(xy 36.83 90.17) (xy 36.83 95.25)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c9841839-3bad-4b50-b03c-9cb12b7452c1")
 	)
 	(wire
 		(pts
@@ -3724,6 +4047,16 @@
 			(type default)
 		)
 		(uuid "ddd7b0bf-f1af-4cf3-a38f-3a12fced0ed4")
+	)
+	(wire
+		(pts
+			(xy 33.02 71.12) (xy 44.45 71.12)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "df19972a-01cb-4600-ae50-2ca64131f0e3")
 	)
 	(wire
 		(pts
@@ -3857,6 +4190,16 @@
 	)
 	(wire
 		(pts
+			(xy 33.02 90.17) (xy 36.83 90.17)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "f026a7ec-3841-440f-905e-aaa0f0fd0d39")
+	)
+	(wire
+		(pts
 			(xy 88.9 29.21) (xy 88.9 36.83)
 		)
 		(stroke
@@ -3894,6 +4237,16 @@
 			(type default)
 		)
 		(uuid "f8d7a18f-d1b3-4f9d-bf22-04e25a410c53")
+	)
+	(wire
+		(pts
+			(xy 57.15 87.63) (xy 57.15 86.36)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "fa7875ae-b1d6-4822-9ea6-17576609f60c")
 	)
 	(wire
 		(pts
@@ -3946,7 +4299,7 @@
 		(uuid "0be8686c-422d-4682-80bf-2271e4fbca97")
 	)
 	(label "Button2"
-		(at 43.18 86.36 180)
+		(at 43.18 87.63 180)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -4106,7 +4459,7 @@
 		(uuid "5af4e317-a4e6-4ffb-a924-d52745efa850")
 	)
 	(label "Button1"
-		(at 43.18 71.12 180)
+		(at 43.18 66.04 180)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -4986,6 +5339,124 @@
 		)
 	)
 	(symbol
+		(lib_id "Device:R_Potentiometer")
+		(at 48.26 92.71 0)
+		(mirror y)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "1c06e4a5-2f71-45f2-bc5b-971deea4db3c")
+		(property "Reference" "RV1"
+			(at 50.8 91.4399 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(property "Value" "10k"
+			(at 50.8 93.9799 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(property "Footprint" "Potentiometer_THT:Potentiometer_Bourns_3386P_Vertical"
+			(at 48.26 92.71 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 48.26 92.71 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Potentiometer"
+			(at 48.26 92.71 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Device" "R"
+			(at 48.26 92.71 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Type" "POT"
+			(at 48.26 92.71 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" "1=r0 2=wiper 3=r1"
+			(at 48.26 92.71 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "3"
+			(uuid "6c4a9e0f-1ec5-469f-8c39-343c399b44cc")
+		)
+		(pin "2"
+			(uuid "02860885-9334-45ed-82b5-6f981f708294")
+		)
+		(pin "1"
+			(uuid "fada2d33-24a0-4829-a920-1746be214006")
+		)
+		(instances
+			(project "vezerlo"
+				(path "/900bec57-3a0d-41dc-a45c-3ae29a4b144e"
+					(reference "RV1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "power:GND")
 		(at 81.28 45.72 0)
 		(unit 1)
@@ -5065,8 +5536,7 @@
 	)
 	(symbol
 		(lib_id "Connector:Conn_01x02_Socket")
-		(at 27.94 52.07 0)
-		(mirror y)
+		(at 27.94 54.61 180)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -5076,7 +5546,7 @@
 		(dnp no)
 		(uuid "2419f641-10a7-4022-aa8a-2c68dc577ded")
 		(property "Reference" "J5"
-			(at 26.67 52.0699 0)
+			(at 26.67 54.6101 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -5087,7 +5557,7 @@
 			)
 		)
 		(property "Value" "PowerIn"
-			(at 26.67 54.6099 0)
+			(at 26.67 52.0701 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -5098,7 +5568,7 @@
 			)
 		)
 		(property "Footprint" "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal"
-			(at 27.94 52.07 0)
+			(at 27.94 54.61 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -5109,7 +5579,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 27.94 52.07 0)
+			(at 27.94 54.61 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -5120,7 +5590,7 @@
 			)
 		)
 		(property "Description" "Generic connector, single row, 01x02, script generated"
-			(at 27.94 52.07 0)
+			(at 27.94 54.61 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -5720,87 +6190,6 @@
 		)
 	)
 	(symbol
-		(lib_id "Connector:Conn_01x02_Socket")
-		(at 27.94 73.66 180)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "5919af34-a0a8-4ad3-a2d5-1224e23385d7")
-		(property "Reference" "J7"
-			(at 26.67 73.6601 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "Btn1"
-			(at 26.67 71.1201 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal"
-			(at 27.94 73.66 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 27.94 73.66 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Generic connector, single row, 01x02, script generated"
-			(at 27.94 73.66 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "2"
-			(uuid "ab4b6b71-7526-4746-8844-4083ce18df5e")
-		)
-		(pin "1"
-			(uuid "53dbf8ad-1b53-4fb5-8dd0-f0706333dd19")
-		)
-		(instances
-			(project "vezerlo"
-				(path "/900bec57-3a0d-41dc-a45c-3ae29a4b144e"
-					(reference "J7")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "Device:R")
 		(at 88.9 25.4 0)
 		(mirror y)
@@ -5963,6 +6352,94 @@
 			(project "vezerlo"
 				(path "/900bec57-3a0d-41dc-a45c-3ae29a4b144e"
 					(reference "J6")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Connector:Conn_01x04_Pin")
+		(at 27.94 92.71 0)
+		(mirror x)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "698af4f4-d81b-4747-9bb5-062061f0f1ba")
+		(property "Reference" "J11"
+			(at 26.67 92.075 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(property "Value" "Btn2"
+			(at 26.67 89.535 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(property "Footprint" "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-4-5.08_1x04_P5.08mm_Horizontal"
+			(at 27.94 92.71 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 27.94 92.71 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Generic connector, single row, 01x04, script generated"
+			(at 27.94 92.71 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "1a8b75bd-0588-486b-ab61-64e1a7353666")
+		)
+		(pin "2"
+			(uuid "42a1f4f9-c871-468f-801d-3871ef29a4dc")
+		)
+		(pin "3"
+			(uuid "bf5c47e6-2d16-447c-8d6f-dd338570acfe")
+		)
+		(pin "4"
+			(uuid "b409ae23-9776-488a-a43d-ab8e27e45ab9")
+		)
+		(instances
+			(project "vezerlo"
+				(path "/900bec57-3a0d-41dc-a45c-3ae29a4b144e"
+					(reference "J11")
 					(unit 1)
 				)
 			)
@@ -6577,6 +7054,84 @@
 	)
 	(symbol
 		(lib_id "power:+5V")
+		(at 57.15 86.36 0)
+		(mirror y)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "a52a7233-6d6a-4058-94e3-72f5fdd42e0e")
+		(property "Reference" "#PWR021"
+			(at 57.15 90.17 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "+5V"
+			(at 57.15 82.55 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 57.15 86.36 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 57.15 86.36 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"+5V\""
+			(at 57.15 86.36 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "5078f92b-bcfa-4483-a2fb-bbd8b8d873b7")
+		)
+		(instances
+			(project "vezerlo"
+				(path "/900bec57-3a0d-41dc-a45c-3ae29a4b144e"
+					(reference "#PWR021")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:+5V")
 		(at 88.9 111.76 0)
 		(unit 1)
 		(body_style 1)
@@ -6654,89 +7209,8 @@
 		)
 	)
 	(symbol
-		(lib_id "Connector:Conn_01x02_Socket")
-		(at 27.94 88.9 180)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "ab575081-e8ab-429e-a1ab-bf7fd18f5f02")
-		(property "Reference" "J8"
-			(at 26.67 88.9001 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "Btn2"
-			(at 26.67 86.3601 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal"
-			(at 27.94 88.9 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 27.94 88.9 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Generic connector, single row, 01x02, script generated"
-			(at 27.94 88.9 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "2"
-			(uuid "93ff6ed4-cd28-42ed-b01a-0e1aebca27a9")
-		)
-		(pin "1"
-			(uuid "851a4145-33e7-4d1b-bdd7-a99ca95d8482")
-		)
-		(instances
-			(project "vezerlo"
-				(path "/900bec57-3a0d-41dc-a45c-3ae29a4b144e"
-					(reference "J8")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "power:GND")
-		(at 36.83 90.17 0)
+		(at 36.83 96.52 0)
 		(mirror y)
 		(unit 1)
 		(body_style 1)
@@ -6748,7 +7222,7 @@
 		(fields_autoplaced yes)
 		(uuid "bbd28b63-542a-4e05-bd78-69a26e18d942")
 		(property "Reference" "#PWR02"
-			(at 36.83 96.52 0)
+			(at 36.83 102.87 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6759,7 +7233,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 36.83 95.25 0)
+			(at 36.83 101.6 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -6769,7 +7243,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 36.83 90.17 0)
+			(at 36.83 96.52 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6780,7 +7254,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 36.83 90.17 0)
+			(at 36.83 96.52 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6791,7 +7265,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 36.83 90.17 0)
+			(at 36.83 96.52 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6808,6 +7282,84 @@
 			(project "vezerlo"
 				(path "/900bec57-3a0d-41dc-a45c-3ae29a4b144e"
 					(reference "#PWR02")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:+5V")
+		(at 57.15 64.77 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "c37caf02-a35e-4088-9be2-2f1c32065136")
+		(property "Reference" "#PWR020"
+			(at 57.15 68.58 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "+5V"
+			(at 57.15 60.96 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 57.15 64.77 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 57.15 64.77 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"+5V\""
+			(at 57.15 64.77 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "e3b96c22-46ed-403d-b93b-732399c9441e")
+		)
+		(instances
+			(project "vezerlo"
+				(path "/900bec57-3a0d-41dc-a45c-3ae29a4b144e"
+					(reference "#PWR020")
 					(unit 1)
 				)
 			)
@@ -7200,6 +7752,212 @@
 			(project "vezerlo"
 				(path "/900bec57-3a0d-41dc-a45c-3ae29a4b144e"
 					(reference "R1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:R_Potentiometer")
+		(at 48.26 71.12 0)
+		(mirror y)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "d78e150f-af39-40fa-8221-f1e5f588ef14")
+		(property "Reference" "RV2"
+			(at 50.8 69.8499 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(property "Value" "10k"
+			(at 50.8 72.3899 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(property "Footprint" "Potentiometer_THT:Potentiometer_Bourns_3386P_Vertical"
+			(at 48.26 71.12 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 48.26 71.12 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Potentiometer"
+			(at 48.26 71.12 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Device" "R"
+			(at 48.26 71.12 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Type" "POT"
+			(at 48.26 71.12 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" "1=r0 2=wiper 3=r1"
+			(at 48.26 71.12 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "3"
+			(uuid "1eeb3d12-9a1a-4702-bc67-bbe447c9d57a")
+		)
+		(pin "2"
+			(uuid "dbd9b3fc-99c7-4091-9479-5d74f01ec318")
+		)
+		(pin "1"
+			(uuid "59f1dae2-e8e4-4870-bfae-a238c170b4e9")
+		)
+		(instances
+			(project "vezerlo"
+				(path "/900bec57-3a0d-41dc-a45c-3ae29a4b144e"
+					(reference "RV2")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Connector:Conn_01x04_Pin")
+		(at 27.94 71.12 0)
+		(mirror x)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "de0fa7d1-4727-4b6e-97ad-9a8e93de997d")
+		(property "Reference" "J9"
+			(at 26.67 70.485 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(property "Value" "Btn1"
+			(at 26.67 67.945 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(property "Footprint" "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-4-5.08_1x04_P5.08mm_Horizontal"
+			(at 27.94 71.12 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 27.94 71.12 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Generic connector, single row, 01x04, script generated"
+			(at 27.94 71.12 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "5c518bbe-6e59-4f35-b66f-667a4c5422ff")
+		)
+		(pin "2"
+			(uuid "de0d4c5d-9e56-4870-9d58-1596086bd4ae")
+		)
+		(pin "3"
+			(uuid "3c0c3096-e5df-44fe-ae6d-e768272f4524")
+		)
+		(pin "4"
+			(uuid "b50f890e-b2a3-4aed-b6a6-06497387864c")
+		)
+		(instances
+			(project "vezerlo"
+				(path "/900bec57-3a0d-41dc-a45c-3ae29a4b144e"
+					(reference "J9")
 					(unit 1)
 				)
 			)
