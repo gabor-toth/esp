@@ -87,7 +87,7 @@ void program_start_init() {
     check_for_program_start();
 
     gpio_evt_queue = xQueueCreate( 10, sizeof( uint32_t ));
-    xTaskCreate( task_main, LOG_TAG, 2048, NULL, 10, NULL );
+    xTaskCreate( task_main, LOG_TAG, 3072, NULL, 10, NULL );
 
     TimerHandle_t timer = xTimerCreate(
             LOG_TAG,

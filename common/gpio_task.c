@@ -56,7 +56,7 @@ void gpio_task_init( gpio_change_callback _change_callback ) {
     //create a queue to handle gpio event from isr
     gpio_evt_queue = xQueueCreate( 10, sizeof( gpio_num_t ) );
     //start gpio task
-    xTaskCreate( task_gpio, "task_gpio", 2048, NULL, 10, NULL );
+    xTaskCreate( task_gpio, "task_gpio", 3072, NULL, 10, NULL );
 }
 
 static TimerHandle_t create_timer( const char *timer_name, const GpioTimer *timer_data, int delay_ms ) {
