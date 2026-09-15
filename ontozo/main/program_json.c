@@ -332,7 +332,7 @@ void program_write_to_string( Program *program, char **json_out ) {
 
     add_program_to_json( program, root );
 
-    *json_out = cJSON_Print( root );
+    *json_out = cJSON_PrintUnformatted( root );
     cJSON_Delete( root );
 }
 
@@ -354,6 +354,6 @@ void programs_write_to_json( char **json_out ) {
         // TODO FIELD_NEXT_START_TIME
     }
 
-    *json_out = cJSON_Print( jsonRoot );
+    *json_out = cJSON_PrintUnformatted( jsonRoot );
     cJSON_Delete( jsonRoot );
 }

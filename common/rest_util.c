@@ -66,7 +66,7 @@ void rest_send_message_back( httpd_req_t *req, const char *format, ... ) {
 }
 
 void rest_send_json_back_and_delete( httpd_req_t *req, cJSON *root ) {
-    const char *json_response = cJSON_Print( root );
+    const char *json_response = cJSON_PrintUnformatted( root );
     cJSON_Delete( root );
     rest_set_json_content_type( req );
     httpd_resp_sendstr( req, json_response );
