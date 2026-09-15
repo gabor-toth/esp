@@ -1,0 +1,25 @@
+button {
+    margin-left: 1em;
+}
+
+mat-icon {
+    margin-right: 0.5em;
+}
+
+.snackbar-message {
+    align-items: center;
+    display: flex;
+}
+
+.snackbar-success-message {
+    mat-icon, > span {
+        color: #8bc34a;
+    }
+}
+
+.snackbar-error-message {
+    mat-icon, > span {
+        color: #f44336;
+    }
+}
+

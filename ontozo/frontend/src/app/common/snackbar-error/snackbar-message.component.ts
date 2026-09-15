@@ -5,7 +5,7 @@ import { MatButton } from '@angular/material/button';
 import { SnackbarComponent, SnackBarType } from "./snackbar.component";
 
 @Component( {
-  selector: 'app-snackbar-error',
+  selector: 'app-snackbar-message',
   templateUrl: './snackbar.component.html',
   imports: [
     MatIcon,
@@ -13,10 +13,10 @@ import { SnackbarComponent, SnackBarType } from "./snackbar.component";
   ],
   styleUrls: [ './snackbar.component.css' ]
 } )
-export class SnackbarErrorComponent extends SnackbarComponent {
+export class SnackbarMessageComponent extends SnackbarComponent {
 
   constructor( @Inject( MAT_SNACK_BAR_DATA ) public override message: any ) {
-    super( message, SnackBarType.error );
+    super( message, SnackBarType.message );
   }
 
 }
