@@ -11,7 +11,6 @@ import { PinStateAmender } from "./pin.state.amender";
 } )
 export class PinService {
 
-  private timer: number = 0;
   private cached: PinsConfiguration | undefined = undefined;
 
   constructor( private http: HttpClient,
@@ -53,9 +52,16 @@ export class PinService {
       } ) );
   }
 
-  setConfiguration( type: string, id: number, name: string ): Observable<Object> {
-    let url = environment.baseUrl + type;
-    let body = `{"id":${id}, "name": ${name}}`;
+  setConfiguration( type: string, id: number, name: string, inactive: boolean, hidden: boolean ): Observable<Object> {
+    console.log(
+      "setConfiguration type", type,
+      "id", id,
+      "name", name,
+      "inactive", inactive,
+      "hidden", hidden
+    );
+    let url = environment.baseUrl + `pins/${type}`;
+    let body = `{"id":${id}, "name": "${name}", "inactive": ${inactive}, "hidden": ${hidden}}`;
     return this.http.put( url, body );
   }
 

@@ -1,15 +1,40 @@
 import { Component, OnInit } from '@angular/core';
+import { MatButton } from "@angular/material/button";
+import { MatProgressSpinner } from "@angular/material/progress-spinner";
+import { PinService } from "../pin/pin.service";
+import { PinsConfiguration } from "../pin/pin";
+import { RouterLink } from "@angular/router";
 
-@Component({
+@Component( {
   selector: 'app-admin',
   templateUrl: './admin.component.html',
-  styleUrls: ['./admin.component.scss']
-})
+  imports: [
+    MatButton,
+    MatProgressSpinner,
+    RouterLink
+  ],
+  styleUrls: [ './admin.component.scss' ]
+} )
 export class AdminComponent implements OnInit {
+  pins: PinsConfiguration | undefined;
 
-  constructor() { }
-
-  ngOnInit(): void {
+  constructor( private pinService: PinService ) {
   }
 
+  ngOnInit(): void {
+    this.loadConfiguration();
+  }
+
+  private loadConfiguration() {
+    this.pins = undefined;
+    let component = this;
+    this.pinService.getCachedOrLatestConfiguration( '' ).subscribe( {
+      next( pinsConfiguration ) {
+        component.pins = pinsConfiguration;
+      },
+      error( err ) {
+        console.error( 'Error loading config', err );
+      }
+    } );
+  }
 }

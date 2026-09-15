@@ -3,19 +3,22 @@
  */
 
 export interface PinConfiguration {
+  hidden: boolean;
   id: number;
+  inactive: boolean;
   name: string;
   manual: boolean;
 }
 
 export interface PinInputsConfiguration {
-  levels: PinConfiguration[];
   buttons: PinConfiguration[];
+  levels: PinConfiguration[];
 }
 
 export interface PinOutputsConfiguration {
-  zones: PinConfiguration[];
   pumps: PinConfiguration[];
+  zones: PinConfiguration[];
+
 }
 
 export interface PinsConfiguration {
@@ -35,18 +38,18 @@ export interface PinState {
 }
 
 export interface PinInputsState {
-  levels: PinState[];
   buttons: PinState[];
+  levels: PinState[];
 }
 
 export interface PinOutputsState {
-  zones: PinState[];
   pumps: PinState[];
+  zones: PinState[];
 }
 
 export interface TimeState {
-  time?: string;
   isTimeSet: boolean;
+  time?: string;
 }
 
 export enum LevelState {
@@ -58,8 +61,15 @@ export enum LevelState {
 
 export interface PinsState {
   inputs: PinInputsState;
-  outputs: PinOutputsState;
   levels: LevelState[];
-  version: string;
+  outputs: PinOutputsState;
   time?: TimeState | undefined;
+  version: string;
+}
+
+export class PinHelper {
+
+  static getPinById( pins: PinConfiguration[] | undefined, id: number ): PinConfiguration | undefined {
+    return pins == undefined ? undefined : pins.find( pin => pin.id === id );
+  }
 }
