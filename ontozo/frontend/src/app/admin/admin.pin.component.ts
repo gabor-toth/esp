@@ -35,11 +35,11 @@ class AdminPinComponent implements OnInit {
   pins: PinsConfiguration | undefined;
   nameFormControl = new FormControl( '', [ Validators.required ] );
 
-  private readonly formBuilder = inject( FormBuilder );
-  private readonly snackBar = inject( SnackBar );
-  private readonly pinService = inject( PinService );
   private readonly activatedRoute = inject( ActivatedRoute );
+  private readonly formBuilder = inject( FormBuilder );
+  private readonly pinService = inject( PinService );
   private readonly router = inject( Router );
+  private readonly snackBar = inject( SnackBar );
 
   readonly settings = this.formBuilder.group( {
     active: false,

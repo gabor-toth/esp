@@ -1,0 +1,58 @@
+<div class="page-container programs">
+    <h2>Programok</h2>
+
+    @if (program) {
+        <form>
+            <mat-form-field>
+                <mat-label>Név</mat-label>
+                <input type="text" matInput [formControl]="nameFormControl">
+                @if (nameFormControl.hasError( 'required' )) {
+                    <mat-error>Kötelező mező!</mat-error>
+                }
+            </mat-form-field>
+
+            <div class="settings" [formGroup]="settings">
+                <div>
+                    <mat-checkbox id="active" formControlName="active">Aktív</mat-checkbox>
+                </div>
+            </div>
+
+            <div>
+                <mat-label>Idők</mat-label>
+                <div class="program-start-times">
+                    @for (time of program.startTimes; track $index) {
+                        {{ time }} x
+                    }
+                    <button mat-flat-button color="primary" routerLink="/programs/0" class="add-button">
+                        <mat-icon class="material-symbols-outlined">add</mat-icon>
+                    </button>
+                </div>
+            </div>
+            <mat-card-content>
+                <div class="program-days">
+                    @if (program.days.type == ProgramDayType.onDays) {
+                        <div>
+                            @for (day of programDaysDisplay; track $index) {
+                                <div class="program-day {{this.hasDay(program, $index)?'on':'off'}}">
+                                    {{ day }}
+                                </div>
+                            }
+                        </div>
+                    } @else if (program.days.type == ProgramDayType.interval) {
+                        <div>
+                            {{ program.days.intervalDays }} naponta
+                        </div>
+                    }
+                </div>
+            </mat-card-content>
+            <div class="btn-group">
+                <button mat-flat-button color="primary" (click)="save(program)">Mentés</button>
+                <button mat-flat-button routerLink="/programs">Mégsem</button>
+            </div>
+        </form>
+    } @else {
+        <div class="load-spinner">
+            <mat-spinner diameter="30"></mat-spinner>
+        </div>
+    }
+</div>

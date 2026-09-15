@@ -1,15 +1,15 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { Program, ProgramDayType, ProgramDayValue } from "./program";
 import { ProgramService } from "./program.service";
-import { RunService } from "./run.service";
 import { MatIcon } from '@angular/material/icon';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { MatCard, MatCardActions, MatCardContent, MatCardHeader, MatCardTitle } from "@angular/material/card";
 import { MatButton } from "@angular/material/button";
 import { SnackBar } from "../common/snackbar-error/snackbar";
+import { RouterLink } from "@angular/router";
 
 @Component( {
-  selector: 'app-program',
+  selector: 'app-programs',
   templateUrl: './programs.component.html',
   styleUrls: [ './programs.component.scss' ],
   imports: [
@@ -20,18 +20,18 @@ import { SnackBar } from "../common/snackbar-error/snackbar";
     MatCardHeader,
     MatCardTitle,
     MatCardActions,
-    MatButton
+    MatButton,
+    RouterLink
   ]
 } )
 export class ProgramsComponent implements OnInit {
   programs: Program[] | undefined;
-  expandedElement: Program | null;
   programDaysDisplay: string[] = [ 'H', 'K', 'Sz', 'Cs', 'P', 'Sz', 'V' ];
 
-  constructor( private programService: ProgramService,
-               private runService: RunService,
-               private snackBar: SnackBar ) {
-    this.expandedElement = null;
+  private programService = inject( ProgramService );
+  private snackBar = inject( SnackBar );
+
+  constructor() {
   }
 
   ngOnInit(): void {
@@ -55,8 +55,6 @@ export class ProgramsComponent implements OnInit {
     return program.days.onDays.find( e => e.valueOf().toString() == dayValue ) != null;
   }
 
-  protected readonly ProgramDayType = ProgramDayType;
-
   setEnabled( program: Program, enabled: boolean ) {
     let component = this;
     this.programService.setEnabled( program.index, enabled ).subscribe( {
@@ -68,4 +66,6 @@ export class ProgramsComponent implements OnInit {
       }
     } );
   }
+
+  protected readonly ProgramDayType = ProgramDayType;
 }

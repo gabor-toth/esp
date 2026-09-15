@@ -143,6 +143,10 @@ mat-icon.mat-icon {
       color: var(--mat-button-outlined-label-text-color, var(--mat-sys-primary));
     }
   }
+
+  &.mat-mdc-unelevated-button > .mat-icon {
+    margin: 0;
+  }
 }
 
 .mat-mdc-table {
