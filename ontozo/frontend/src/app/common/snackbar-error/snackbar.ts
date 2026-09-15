@@ -18,7 +18,7 @@ export class SnackBar {
         data: message != undefined ? message : 'Hiba a kapcsolatban.',
         duration: 10000,
         horizontalPosition: 'right',
-        panelClass: 'error-snackbar',
+        panelClass: 'snackbar-panel-error',
         verticalPosition: 'bottom',
       } );
   }
@@ -27,10 +27,10 @@ export class SnackBar {
     this.snackBar.openFromComponent(
       SnackbarMessageComponent,
       {
-        data: message != undefined ? message : 'Hiba a kapcsolatban.',
-        duration: 10000,
+        data: message != undefined ? message : 'Sikeres művelet.',
+        duration: 3000,
         horizontalPosition: 'right',
-        panelClass: 'error-snackbar',
+        panelClass: 'snackbar-panel-message',
         verticalPosition: 'bottom',
       } );
   }

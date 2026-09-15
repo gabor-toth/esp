@@ -4,28 +4,30 @@
             {{ typeLabel }} {{ id }}
         </h1>
 
-        <mat-form-field>
-            <mat-label>Név</mat-label>
-            <input type="text" matInput [formControl]="nameFormControl">
-            @if (nameFormControl.hasError( 'required' )) {
-                <mat-error>Kötelező mező!</mat-error>
-            }
-        </mat-form-field>
+        <form>
+            <mat-form-field>
+                <mat-label>Név</mat-label>
+                <input type="text" matInput [formControl]="nameFormControl">
+                @if (nameFormControl.hasError( 'required' )) {
+                    <mat-error>Kötelező mező!</mat-error>
+                }
+            </mat-form-field>
 
-        <div class="settings" [formGroup]="settings">
-            <div>
-                <mat-checkbox id="active" formControlName="active">Aktív</mat-checkbox>
+            <div class="settings" [formGroup]="settings">
+                <div>
+                    <mat-checkbox id="active" formControlName="active">Aktív</mat-checkbox>
+                </div>
+                <div>
+                    <mat-checkbox id="hidden" formControlName="hidden">Rejtett</mat-checkbox>
+                </div>
             </div>
-            <div>
-                <mat-checkbox id="hidden" formControlName="hidden">Rejtett</mat-checkbox>
+            <div class="btn-group">
+                <button mat-flat-button color="primary" (click)="save()">
+                    Mentés
+                </button>
+                <a mat-flat-button color="secondary" routerLink="/admin">Mégsem</a>
             </div>
-        </div>
-        <div>
-            <button mat-flat-button color="primary" (click)="save()">
-                Mentés
-            </button>
-            <a mat-flat-button color="secondary" routerLink="/admin">Mégsem</a>
-        </div>
+        </form>
     } @else {
         <div class="load-spinner">
             <mat-spinner diameter="30"></mat-spinner>

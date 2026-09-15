@@ -1,9 +1,5 @@
 import { Injectable } from '@angular/core';
 import { PinConfiguration, PinsConfiguration, PinsState, PinState } from './pin';
-import { Observable, of, Subscriber } from "rxjs";
-import { HttpClient } from '@angular/common/http';
-import { environment } from '../../environments/environment';
-import { simulatedPinConfiguration, simulatedPinState } from '../simulator/simulator';
 
 @Injectable( {
   providedIn: 'root'
@@ -23,7 +19,7 @@ export class PinStateAmender {
 
   private copyConfiguration( configuration: PinConfiguration[], state: PinState[] ) {
     for ( let i = 0; i < configuration.length; i++ ) {
-      state[ i ].name = configuration[ i ].name;
+      state[ i ] = <PinState>configuration[ i ];
     }
   }
 }

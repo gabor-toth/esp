@@ -9,9 +9,14 @@ extern "C" {
 #endif
 
 // caller should free returned pointer
-extern char *gpio_data_to_json_string( PinData *config );
+extern char *gpio_data_to_json_string( PinData * config );
 
 extern void gpio_data_from_json_string( const char *json_string, PinData *config );
+
+#define GPIO_FIELD_HIDDEN  "hidden"
+#define GPIO_FIELD_INACTIVE  "inactive"
+#define GPIO_FIELD_MANUAL  "manual"
+#define GPIO_FIELD_NAME    "name"
 
 #ifdef __cplusplus
 }

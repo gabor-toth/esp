@@ -157,7 +157,7 @@ static esp_err_t pins_put_handler_inner(httpd_req_t* req, cJSON* root, bool is_i
     if (cJSON_IsString(element))
     {
         changed = true;
-        pin_data.name = element->valuestring;
+        pin_data.name = strdup(element->valuestring);
         ESP_LOGI(LOG_TAG, "%s %d name changed to %s", class_name, pin_index + 1, pin_data.name);
     }
     element = cJSON_GetObjectItem(root, GPIO_FIELD_INACTIVE);

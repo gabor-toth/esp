@@ -3,13 +3,15 @@
     @if (state && state.outputs) {
         <div class="card-container">
             @for (pump of state.outputs.pumps; track pump.id) {
-                <button mat-stroked-button color="foreground" class="card icon-switch"
-                        (click)="click('pumps',pump.id,!pump.on)">
-                    <mat-icon
-                            class="material-symbols-outlined {{pump.on ? 'on':'off'}}">{{ pump.on ? 'toggle_on' : 'toggle_off' }}
-                    </mat-icon>
-                    <span>{{ pump.name }}</span>
-                </button>
+                @if (!pump.hidden) {
+                    <button mat-stroked-button color="foreground" class="card icon-switch"
+                            (click)="click('pumps',pump.id,!pump.on)">
+                        <mat-icon
+                                class="material-symbols-outlined {{pump.on ? 'on':'off'}}">{{ pump.on ? 'toggle_on' : 'toggle_off' }}
+                        </mat-icon>
+                        <span>{{ pump.name }}</span>
+                    </button>
+                }
             }
         </div>
     } @else {
@@ -22,13 +24,15 @@
     @if (state && state.outputs) {
         <div class="card-container">
             @for (zone of state.outputs.zones; track zone.id) {
-                <button mat-stroked-button color="foreground" class="card icon-switch"
-                        (click)="click('zones',zone.id,!zone.on)">
-                    <mat-icon
-                            class="material-symbols-outlined {{zone.on ? 'on':'off'}}">{{ zone.on ? 'toggle_on' : 'toggle_off' }}
-                    </mat-icon>
-                    <span>{{ zone.name }}</span>
-                </button>
+                @if (!zone.hidden) {
+                    <button mat-stroked-button color="foreground" class="card icon-switch"
+                            (click)="click('zones',zone.id,!zone.on)">
+                        <mat-icon
+                                class="material-symbols-outlined {{zone.on ? 'on':'off'}}">{{ zone.on ? 'toggle_on' : 'toggle_off' }}
+                        </mat-icon>
+                        <span>{{ zone.name }}</span>
+                    </button>
+                }
             }
         </div>
     } @else {
@@ -60,14 +64,16 @@
     @if (state && state.inputs) {
         <div class="card-container">
             @for (button of state.inputs.buttons; track button.id) {
-                <button mat-stroked-button color="foreground"
-                        class="card icon-switch"
-                        (click)="click('buttons',button.id,!button.on)">
-                    <mat-icon
-                            class="material-symbols-outlined {{button.on ? 'on':'off'}}">{{ button.on ? 'toggle_on' : 'toggle_off' }}
-                    </mat-icon>
-                    <span>{{ button.name }}</span>
-                </button>
+                @if (!button.hidden) {
+                    <button mat-stroked-button color="foreground"
+                            class="card icon-switch"
+                            (click)="click('buttons',button.id,!button.on)">
+                        <mat-icon
+                                class="material-symbols-outlined {{button.on ? 'on':'off'}}">{{ button.on ? 'toggle_on' : 'toggle_off' }}
+                        </mat-icon>
+                        <span>{{ button.name }}</span>
+                    </button>
+                }
             }
         </div>
     } @else {

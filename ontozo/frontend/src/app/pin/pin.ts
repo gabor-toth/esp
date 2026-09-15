@@ -31,9 +31,7 @@ export interface PinsConfiguration {
  * state
  */
 
-export interface PinState {
-  id: number;
-  name: string; // filled from PinConfiguration.name
+export interface PinState extends PinConfiguration {
   on: boolean;
 }
 
