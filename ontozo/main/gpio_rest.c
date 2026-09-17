@@ -158,34 +158,28 @@ static esp_err_t pins_put_handler_inner(httpd_req_t* req, cJSON* root, bool is_i
     {
         changed = true;
         pin_data.name = strdup(element->valuestring);
-        ESP_LOGI(LOG_TAG, "%s %d name changed to %s", class_name, pin_index + 1, pin_data.name);
     }
     element = cJSON_GetObjectItem(root, GPIO_FIELD_INACTIVE);
     if (cJSON_IsBool(element))
     {
         changed = true;
         pin_data.is_inactive = cJSON_IsTrue(element);
-        ESP_LOGI(LOG_TAG, "%s %d inactive changed to %d", class_name, pin_index + 1, pin_data.is_inactive);
     }
     element = cJSON_GetObjectItem(root, GPIO_FIELD_HIDDEN);
     if (cJSON_IsBool(element))
     {
         changed = true;
         pin_data.is_hidden = cJSON_IsTrue(element);
-        ESP_LOGI(LOG_TAG, "%s %d hidden changed to %d", class_name, pin_index + 1, pin_data.is_hidden);
     }
     element = cJSON_GetObjectItem(root, GPIO_FIELD_MANUAL);
     if (cJSON_IsBool(element))
     {
         changed = true;
         pin_data.is_manual = cJSON_IsTrue(element);
-        ESP_LOGI(LOG_TAG, "%s %d manual changed to %d", class_name, pin_index + 1, pin_data.is_manual);
     }
     if (!changed)
     {
-        char* msg = "Nothing changed";
-        ESP_LOGW(LOG_TAG, "%s %s: %s", http_method_str( req->method ), req->uri, msg);
-        return httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, msg);
+        return httpd_resp_send_err(req, 304, "Nothing changed"); // 304 Not Modified
     }
     gpio_set_pin_data(is_input, class, pin_index, &pin_data);
 

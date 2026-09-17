@@ -125,7 +125,6 @@ static void read_nvs_or_default(bool is_input, int class_id, int index, PinData*
         pin_data->name = strdup(nvs_key);
         return;
     }
-    ESP_LOGI(LOG_TAG, "read json %s", json_string);
 
     gpio_data_from_json_string(json_string, pin_data);
     free(json_string);
@@ -344,7 +343,6 @@ bool gpio_set_pin_data(bool is_input, int class_id, int index, PinData* pin_data
     nvs_write_string(nvs_handle, nvs_key, json_string);
     config_version_set_and_write(nvs_handle, &version);
     nvs_close_storage(nvs_handle);
-    ESP_LOGI(LOG_TAG, "write json %s", json_string);
 
     free(json_string);
     return true;
