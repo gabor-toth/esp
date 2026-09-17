@@ -24,31 +24,31 @@
                                 }
                             </div>
                         } @else if (program.days.type == ProgramDayType.interval) {
-                            <div>
-                                {{ program.days.intervalDays }} naponta
-                            </div>
-                        }
+                        <div>
+                            {{ program.days.intervalDays }} naponta
+                        </div>
+                    }
                     </div>
                 </mat-card-content>
                 <mat-card-actions align="end">
                     @if (program.enabled) {
                         <button matButton (click)="setEnabled(program,false)">Letilt</button>
                     } @else {
-                        <button matButton (click)="setEnabled(program,true)">Engedélyez</button>
-                    }
-                    <button matButton routerLink="/programs/{{program.index}}">Szerkeszt</button>
-                    <button matButton disabled>Töröl</button>
+                    <button matButton (click)="setEnabled(program,true)">Engedélyez</button>
+                }
+                    <button matButton="filled" routerLink="/programs/{{program.index}}">Szerkeszt</button>
+                    <button matButton="filled" disabled>Töröl</button>
                 </mat-card-actions>
             </mat-card>
         }
         <div class="btn-group">
-            <button mat-flat-button routerLink="/programs/0">
+            <button matButton="filled" routerLink="/programs/0">
                 <mat-icon class="material-symbols-outlined">add</mat-icon>
             </button>
         </div>
     } @else {
-        <div class="load-spinner">
-            <mat-spinner diameter="30"></mat-spinner>
-        </div>
-    }
+    <div class="load-spinner">
+        <mat-spinner diameter="30"></mat-spinner>
+    </div>
+}
 </div>

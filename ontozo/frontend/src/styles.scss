@@ -1,6 +1,6 @@
 @use "theme";
 
-@import url('https://fonts.googleapis.com/css2?family=Material+Icons&icon_names=check,warning');
+@import url('https://fonts.googleapis.com/css2?family=Material+Icons&icon_names=cancel,check,warning');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&icon_names=add,alarm_off,alarm_on,cancel,delete,edit,hotel,keyboard_arrow_down,keyboard_arrow_up,play_arrow,step_over,toggle_off,toggle_on');
 @import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
 
@@ -114,8 +114,12 @@ mat-icon.mat-icon {
   }
 }
 
-.btn-group > * {
-  margin: 0.2em;
+.btn-group {
+  margin-top: 1em;
+
+  > * {
+    margin-right: 0.3em;
+  }
 }
 
 .mdc-button {

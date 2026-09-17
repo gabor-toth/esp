@@ -10,6 +10,7 @@ import { ActivatedRoute, RouterLink } from "@angular/router";
 import { FormBuilder, FormControl, FormsModule, ReactiveFormsModule, Validators } from "@angular/forms";
 import { MatError, MatFormField, MatInput, MatLabel } from "@angular/material/input";
 import { MatCheckbox } from "@angular/material/checkbox";
+import { MatChipGrid, MatChipInput, MatChipInputEvent, MatChipRow, MatChipsModule } from "@angular/material/chips";
 
 @Component( {
   selector: 'app-program',
@@ -27,11 +28,13 @@ import { MatCheckbox } from "@angular/material/checkbox";
     MatInput,
     MatLabel,
     ReactiveFormsModule,
-    MatCheckbox
+    MatCheckbox,
+    MatChipsModule,
   ]
 } )
 export class ProgramComponent implements OnInit {
   readonly program = signal<Program | undefined>( undefined );
+  readonly keywords = signal<string[]>( [] );
   programDaysDisplay: string[] = [ 'H', 'K', 'Sz', 'Cs', 'P', 'Sz', 'V' ];
   id: number | null = null;
 
@@ -40,10 +43,15 @@ export class ProgramComponent implements OnInit {
   private readonly programService = inject( ProgramService );
   private readonly snackBar = inject( SnackBar );
 
+  // workaround
+  protected readonly ProgramDayType = ProgramDayType;
+
   nameFormControl = new FormControl( '', [ Validators.required ] );
   readonly settings = this.formBuilder.group( {
     active: false,
   } );
+
+  readonly chipFormControl = new FormControl( '', [ Validators.pattern( /^[0-2]?[0-9]:[0-9]{2}$/ ) ] );
 
   constructor() {
     let id = this.activatedRoute.snapshot.params[ 'id' ];
@@ -101,5 +109,28 @@ export class ProgramComponent implements OnInit {
 
   }
 
-  protected readonly ProgramDayType = ProgramDayType;
+  removeKeyword( keyword: string ) {
+    this.keywords.update( keywords => {
+      const index = keywords.indexOf( keyword );
+      if ( index < 0 ) {
+        return keywords;
+      }
+
+      keywords.splice( index, 1 );
+      return [ ...keywords ];
+    } );
+  }
+
+  add( event: MatChipInputEvent ): void {
+    // todo validateTime
+    const value = ( event.value || '' ).trim();
+
+    // Add our keyword
+    if ( value ) {
+      this.keywords.update( keywords => [ ...keywords, value ].sort(/*todo compareTime*/ ) );
+    }
+
+    // Clear the input value
+    event.chipInput!.clear();
+  }
 }
