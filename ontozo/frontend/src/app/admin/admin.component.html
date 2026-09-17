@@ -3,7 +3,7 @@
     @if (pins()?.outputs; as outputs) {
         <div class="card-container">
             @for (pump of outputs.pumps; track pump.id) {
-                <button mat-stroked-button color="foreground" class="card icon-switch"
+                <button mat-stroked-button class="card icon-switch"
                         routerLink="/admin/pin/pumps/{{pump.id}}">
                     <span>{{ pump.name }}</span>
                 </button>
@@ -19,7 +19,7 @@
     @if (pins()?.outputs; as outputs) {
         <div class="card-container">
             @for (zone of outputs.zones; track zone.id) {
-                <button mat-stroked-button color="foreground" class="card icon-switch"
+                <button mat-stroked-button class="card icon-switch"
                         routerLink="/admin/pin/zones/{{zone.id}}">
                     <span>{{ zone.name }}</span>
                 </button>
@@ -35,7 +35,7 @@
     @if (pins()?.inputs; as inputs) {
         <div class="card-container">
             @for (level of inputs.levels; track level.id) {
-                <button mat-stroked-button color="foreground" class="card icon-switch"
+                <button mat-stroked-button class="card icon-switch"
                         routerLink="/admin/pin/levels/{{level.id}}">
                     <span>{{ level.name }}</span>
                 </button>
@@ -51,7 +51,7 @@
     @if (pins()?.inputs; as inputs) {
         <div class="card-container">
             @for (button of inputs.buttons; track button.id) {
-                <button mat-stroked-button color="foreground" class="card icon-switch"
+                <button mat-stroked-button class="card icon-switch"
                         routerLink="/admin/pin/buttons/{{button.id}}">
                     <span>{{ button.name }}</span>
                 </button>

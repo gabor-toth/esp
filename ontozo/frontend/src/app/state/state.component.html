@@ -9,7 +9,7 @@
             @if (pinState()?.outputs; as outputs) {
                 <div class="card-container">
                     @for (pump of outputs.pumps; track pump.id) {
-                        <button mat-stroked-button color="foreground" class="card icon-switch"
+                        <button mat-stroked-button class="card icon-switch"
                                 (click)="click('pumps',pump.id,!pump.on)">
                             <mat-icon
                                     class="material-symbols-outlined  {{ pump.on ? 'on' : 'off' }}"> {{ pump.on ? 'toggle_on' : 'toggle_off' }}
@@ -60,7 +60,7 @@
                             }
                         </mat-select>
                     </mat-form-field>
-                    <button mat-raised-button color="primary" (click)="startProgram()"
+                    <button mat-raised-button (click)="startProgram()"
                             [disabled]="selectedProgramIndex() == 0">
                         <mat-icon class="material-symbols-outlined icon-big">play_arrow</mat-icon>
                     </button>
@@ -78,7 +78,7 @@
             <mat-card-title>Futó program</mat-card-title>
             @if (runState()?.running && queueState()) {
                 <div class="stop-button-holder">
-                    <button mat-raised-button color="primary" (click)="stopProgram()">
+                    <button mat-raised-button (click)="stopProgram()">
                         <mat-icon class="material-symbols-outlined icon-big">cancel</mat-icon>
                     </button>
                 </div>
@@ -94,7 +94,7 @@
                                 <span class="duration">{{ ( runState.duration * 1000 ) | date:'m:ss' }}</span>
                             </div>
                             <div class="program-action lg-6">
-                                <button mat-raised-button color="primary"
+                                <button mat-raised-button
                                         (click)="nextProgram()"
                                         [disabled]="queueState()?.length == 0">
                                     <mat-icon class="material-symbols-outlined icon-big">step_over</mat-icon>
@@ -110,13 +110,13 @@
                                     </div>
                                     <div class="zone-action lg-4">
                                         @if ($first) {
-                                            <button mat-raised-button color="primary"
+                                            <button mat-raised-button
                                                     (click)="nextZone()">
                                                 <mat-icon class="material-symbols-outlined icon-big">step_over
                                                 </mat-icon>
                                             </button>
                                         } @else {
-                                            <button mat-raised-button color="primary"
+                                            <button mat-raised-button
                                                     (click)="toggleScheduledZoneState(runState, zone)"
                                                     [disabled]="!featureToggleZone()">
                                                 <mat-icon
@@ -155,7 +155,7 @@
                                 <span class="duration">{{ ( queued.duration * 1000 ) | date:'m:ss' }}</span>
                             </div>
                             <div class="program-action lg-6">
-                                <button mat-raised-button color="primary"
+                                <button mat-raised-button
                                         (click)="cancelSchedule(queued)"
                                         [disabled]="queueState.length == 0">
                                     <mat-icon class="material-symbols-outlined icon-big">cancel</mat-icon>
@@ -170,7 +170,7 @@
                                         <span class="duration">{{ ( zone.duration * 1000 ) | date:'m:ss' }}</span>
                                     </div>
                                     <div class="zone-action lg-4">
-                                        <button mat-raised-button color="primary"
+                                        <button mat-raised-button
                                                 (click)="toggleScheduledZoneState(queued, zone)"
                                                 [disabled]="!featureToggleZone()">
                                             <mat-icon

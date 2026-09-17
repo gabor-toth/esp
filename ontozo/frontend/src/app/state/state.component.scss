@@ -1,11 +1,4 @@
-@use 'sass:map';
-@use '@angular/material' as mat;
-@use "../../theme" as *;
-
-$color-config: mat.m2-get-color-config($my-app-theme);
-$primary-palette: map.get($color-config, 'primary');
-$foreground-palette: map.get($color-config, 'foreground');
-$foreground-icon: map.get($foreground-palette, "icon");
+$foreground-icon: var(--mat-sys-on-surface-variant);
 
 .page-state {
   .mat-mdc-card-header {
@@ -83,7 +76,7 @@ $foreground-icon: map.get($foreground-palette, "icon");
         }
 
         &.off {
-          color: var(--mat-checkbox-disabled-label-color, inherit);
+          color: color-mix(in srgb, var(--mat-sys-on-surface) 38%, transparent);
         }
       }
     }

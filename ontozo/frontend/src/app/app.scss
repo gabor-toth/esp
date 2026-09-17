@@ -1,14 +1,7 @@
-@use 'sass:map';
-@use '@angular/material' as mat;
-@use "../theme" as *;
-
-$color-config: mat.m2-get-color-config($my-app-theme);
-$primary-palette: map.get($color-config, 'primary');
-
 .toolbar {
   align-items: center;
-  background-color: mat.m2-get-color-from-palette($primary-palette, 700);
-  color: mat.m2-get-color-from-palette($primary-palette, 50);
+  background-color: var(--mat-sys-primary);
+  color: var(--mat-sys-on-primary);
   display: flex;
   font-weight: normal;
   height: 60px;

@@ -4,7 +4,7 @@
         <div class="card-container">
             @for (pump of outputs.pumps; track pump.id) {
                 @if (!pump.hidden) {
-                    <button mat-stroked-button color="foreground" class="card icon-switch"
+                    <button mat-stroked-button class="card icon-switch"
                             (click)="click('pumps',pump.id,!pump.on)">
                         <mat-icon
                                 class="material-symbols-outlined {{pump.on ? 'on':'off'}}">{{ pump.on ? 'toggle_on' : 'toggle_off' }}
@@ -25,7 +25,7 @@
         <div class="card-container">
             @for (zone of outputs.zones; track zone.id) {
                 @if (!zone.hidden) {
-                    <button mat-stroked-button color="foreground" class="card icon-switch"
+                    <button mat-stroked-button class="card icon-switch"
                             (click)="click('zones',zone.id,!zone.on)">
                         <mat-icon
                                 class="material-symbols-outlined {{zone.on ? 'on':'off'}}">{{ zone.on ? 'toggle_on' : 'toggle_off' }}
@@ -45,7 +45,7 @@
     @if (state()?.inputs; as inputs) {
         <div class="card-container">
             @for (level of inputs.levels; track level.id) {
-                <button mat-stroked-button color="foreground"
+                <button mat-stroked-button
                         class="card icon-switch">
                     <mat-icon
                             class="material-symbols-outlined {{level.on ? 'on':'off'}}">{{ level.on ? 'toggle_on' : 'toggle_off' }}
@@ -65,7 +65,7 @@
         <div class="card-container">
             @for (button of inputs.buttons; track button.id) {
                 @if (!button.hidden) {
-                    <button mat-stroked-button color="foreground"
+                    <button mat-stroked-button
                             class="card icon-switch"
                             (click)="click('buttons',button.id,!button.on)">
                         <mat-icon

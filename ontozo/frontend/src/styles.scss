@@ -1,18 +1,13 @@
-@use 'sass:map';
-@use '@angular/material' as mat;
-@use "theme" as *;
+@use "theme";
 
 @import url('https://fonts.googleapis.com/css2?family=Material+Icons&icon_names=check,warning');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&icon_names=add,alarm_off,alarm_on,cancel,delete,edit,hotel,keyboard_arrow_down,keyboard_arrow_up,play_arrow,step_over,toggle_off,toggle_on');
 @import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
 
-$theme-color-config: mat.m2-get-color-config($my-app-theme);
-$primary-palette: map.get($theme-color-config, 'primary');
-$background-palette: map.get($theme-color-config, 'background');
-$color-background: mat.m2-get-color-from-palette($background-palette, 'background');
+$color-background: var(--mat-sys-surface);
 $color-filling: #e6ee9c; /* Colors.line.shade200*/
 $color-icon-off: #be0000;
-$color-icon-on: mat.m2-get-color-from-palette($primary-palette, 700);
+$color-icon-on: var(--mat-sys-primary);
 
 :host {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
@@ -27,7 +22,7 @@ html {
 
   --mat-button-outlined-label-text-weight: 400;
   --mat-card-title-text-weight: 400;
-  --mat-table-header-headline-color: rgba(0, 0, 0, 0.54);
+  --mat-table-header-headline-color: var(--mat-sys-on-surface-variant);
   --mdc-outlined-button-label-text-tracking: 0;
 }
 
@@ -59,12 +54,12 @@ p {
 
 a {
   &, &:visited, &:hover {
-    color: mat.m2-get-color-from-palette($primary-palette, 50);
+    color: var(--mat-sys-on-primary);
     text-decoration: none;
   }
 
   &:hover {
-    color: mat.m2-get-color-from-palette($primary-palette, 200);
+    color: var(--mat-sys-primary-container);
   }
 }
 
@@ -188,7 +183,7 @@ mat-icon.mat-icon {
   width: 50px;
 
   &.full {
-    background-color: mat.m2-get-color-from-palette($primary-palette, 700);
+    background-color: var(--mat-sys-primary);
   }
 
   &.filling {
@@ -203,7 +198,7 @@ mat-icon.mat-icon {
   }
 
   &.failure {
-    background-color: var(--mat-form-field-error-text-color);
+    background-color: var(--mat-sys-error);
   }
 }
 

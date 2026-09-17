@@ -23,7 +23,7 @@
                     @for (time of program.startTimes; track $index) {
                         {{ time }} x
                     }
-                    <button mat-flat-button color="primary" routerLink="/programs/0" class="add-button">
+                    <button mat-flat-button routerLink="/programs/0" class="add-button">
                         <mat-icon class="material-symbols-outlined">add</mat-icon>
                     </button>
                 </div>
@@ -46,7 +46,7 @@
                 </div>
             </mat-card-content>
             <div class="btn-group">
-                <button mat-flat-button color="primary" (click)="save(program)">Mentés</button>
+                <button mat-flat-button (click)="save(program)">Mentés</button>
                 <button mat-flat-button routerLink="/programs">Mégsem</button>
             </div>
         </form>
