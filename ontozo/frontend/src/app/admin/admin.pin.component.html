@@ -1,7 +1,7 @@
 <div class="page-container">
-    @if (pin) {
+    @if (pin()) {
         <h1>
-            {{ typeLabel }} {{ id }}
+            {{ typeLabel() }} {{ id }}
         </h1>
 
         <form>

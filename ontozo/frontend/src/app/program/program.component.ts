@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { Program, ProgramDay, ProgramDayType, ProgramDayValue, ProgramZone } from "./program";
 import { ProgramService } from "./program.service";
 import { MatIcon } from '@angular/material/icon';
@@ -31,7 +31,7 @@ import { MatCheckbox } from "@angular/material/checkbox";
   ]
 } )
 export class ProgramComponent implements OnInit {
-  program: Program | undefined;
+  readonly program = signal<Program | undefined>( undefined );
   programDaysDisplay: string[] = [ 'H', 'K', 'Sz', 'Cs', 'P', 'Sz', 'V' ];
   id: number | null = null;
 
@@ -61,7 +61,7 @@ export class ProgramComponent implements OnInit {
       return;
     }
     if ( this.id == 0 ) {
-      this.program = {
+      this.program.set( {
         enabled: true,
         days: <ProgramDay>{
           type: <ProgramDayType><unknown>ProgramDayType[ ProgramDayType.onDays ],
@@ -74,20 +74,21 @@ export class ProgramComponent implements OnInit {
         startTimes: [],
         valid: true,
         zones: <ProgramZone[]>[]
-      };
+      } );
     } else {
       let component = this;
       this.programService.get( this.id ).subscribe( {
         next( program ) {
-          component.program = program;
+          component.program.set( program );
         },
         error( error ) {
           component.snackBar.open( 'Hiba a program betöltése közben', error );
         },
       } );
     }
-    if ( this.program ) {
-      this.settings.controls.active.setValue( this.program.enabled );
+    let program = this.program();
+    if ( program ) {
+      this.settings.controls.active.setValue( program.enabled );
     }
   }
 

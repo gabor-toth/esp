@@ -1,7 +1,7 @@
 <div class="page-container programs">
     <h2>Programok</h2>
 
-    @if (program) {
+    @if (program(); as program) {
         <form>
             <mat-form-field>
                 <mat-label>Név</mat-label>

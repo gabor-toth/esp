@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { MatButton } from "@angular/material/button";
 import { MatProgressSpinner } from "@angular/material/progress-spinner";
 import { PinService } from "../pin/pin.service";
@@ -16,7 +16,7 @@ import { RouterLink } from "@angular/router";
   styleUrls: [ './admin.component.scss' ]
 } )
 export class AdminComponent implements OnInit {
-  pins: PinsConfiguration | undefined;
+  readonly pins = signal<PinsConfiguration | undefined>( undefined );
 
   constructor( private pinService: PinService ) {
   }
@@ -26,11 +26,11 @@ export class AdminComponent implements OnInit {
   }
 
   private loadConfiguration() {
-    this.pins = undefined;
+    this.pins.set( undefined );
     let component = this;
     this.pinService.getCachedOrLatestConfiguration( '' ).subscribe( {
       next( pinsConfiguration ) {
-        component.pins = pinsConfiguration;
+        component.pins.set( pinsConfiguration );
       },
       error( err ) {
         console.error( 'Error loading config', err );

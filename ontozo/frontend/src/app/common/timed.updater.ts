@@ -1,8 +1,21 @@
-import { Observable, Observer, Subscription } from "rxjs";
+import { signal, Signal } from "@angular/core";
+import { Observable } from "rxjs";
 
+export interface UpdaterHandle {
+  unsubscribe(): void;
+}
+
+/**
+ * Polls the device every 5 seconds and publishes the result as a signal, so that
+ * components reading it are refreshed even though they are `OnPush`.
+ */
 export abstract class TimedUpdater<T> {
-  subscribers: Set<( Partial<Observer<T>> )> = new Set<( Partial<Observer<T>> )>();
-  timer: number = 0;
+  private readonly latestState = signal<T | undefined>( undefined );
+  private watchers = 0;
+  private timer: number = 0;
+
+  /** Latest polled state, `undefined` until the first response arrives. */
+  public readonly state: Signal<T | undefined> = this.latestState.asReadonly();
 
   protected constructor() {
     this.scheduleUpdate();
@@ -17,18 +30,28 @@ export abstract class TimedUpdater<T> {
     }, 5000 );
   }
 
-  public subscribe( observer: Partial<Observer<T>> ): Subscription {
-    this.subscribers.add( observer );
-    if ( this.subscribers.size === 1 ) {
+  /**
+   * Registers interest in the polled state. Polling stops once every watcher has
+   * released its handle.
+   */
+  public watch(): UpdaterHandle {
+    this.watchers++;
+    if ( this.watchers === 1 ) {
       this.updateState();
     }
 
     let component = this;
-    return <Subscription>{
+    let released = false;
+    return {
       unsubscribe() {
-        component.subscribers.delete( observer );
-        if ( component.subscribers.size === 0 ) {
+        if ( released ) {
+          return;
+        }
+        released = true;
+        component.watchers--;
+        if ( component.watchers === 0 ) {
           clearTimeout( component.timer );
+          component.timer = 0;
         }
       }
     };
@@ -39,15 +62,12 @@ export abstract class TimedUpdater<T> {
     let component = this;
     this.getState().subscribe( {
       next( state ) {
-        component.subscribers.forEach( ( e ) => e.next?.( state ) );
+        component.latestState.set( state );
         component.scheduleUpdate();
       },
       error( err ) {
         component.scheduleUpdate();
         console.error( 'Error reading state', err );
-      },
-      complete() {
-        component.subscribers.forEach( ( e ) => e.complete?.() );
       }
     } );
   }

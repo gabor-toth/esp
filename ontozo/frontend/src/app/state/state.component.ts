@@ -1,15 +1,12 @@
-import { Component, OnInit } from '@angular/core';
-import { PinsConfiguration, PinsState } from "../pin/pin";
+import { Component, computed, OnDestroy, OnInit, signal } from '@angular/core';
+import { PinsState } from "../pin/pin";
 import { PinService } from "../pin/pin.service";
-import { animate, state, style, transition, trigger } from "@angular/animations";
 import { RunService } from "../program/run.service";
-import { RunProgramState, RunState, RunZoneState } from "../program/run";
+import { RunProgramState, RunZoneState } from "../program/run";
 import { PinUpdater } from "../pin/pin.updater";
-import { Subscription } from "rxjs";
 import { RunUpdater } from "../program/run.updater";
+import { UpdaterHandle } from "../common/timed.updater";
 import { ProgramService } from "../program/program.service";
-import { MatSnackBar } from "@angular/material/snack-bar";
-import { SnackbarErrorComponent } from "../common/snackbar-error/snackbar-error.component";
 import { DatePipe } from '@angular/common';
 import { MatIcon } from '@angular/material/icon';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
@@ -20,17 +17,13 @@ import { MatCard, MatCardContent, MatCardHeader, MatCardTitle } from "@angular/m
 import { Program } from "../program/program";
 import { SnackBar } from "../common/snackbar-error/snackbar";
 
+/** Ignores identity changes so that an unchanged poll result does not redraw the cards. */
+const sameJson = <T>( a: T, b: T ) => JSON.stringify( a ) === JSON.stringify( b );
+
 @Component( {
   selector: 'app-state',
   templateUrl: './state.component.html',
   styleUrls: [ './state.component.scss' ],
-  animations: [
-    trigger( 'detailExpand', [
-      state( 'collapsed', style( { height: '0px', minHeight: '0' } ) ),
-      state( 'expanded', style( { height: '*' } ) ),
-      transition( 'expanded <=> collapsed', animate( '225ms cubic-bezier(0.4, 0.0, 0.2, 1)' ) ),
-    ] ),
-  ],
   imports: [
     DatePipe,
     MatIcon,
@@ -45,18 +38,12 @@ import { SnackBar } from "../common/snackbar-error/snackbar";
     MatCardTitle,
   ]
 } )
-export class StateComponent implements OnInit {
-  pins: PinsConfiguration | undefined;
-  pinState: PinsState | undefined;
-  pinStateAsString = "";
-  pinUpdaterSubscription?: Subscription;
-  programStateAsString = "";
-  queueState: RunProgramState[] | undefined;
-  programs: Program[] | undefined;
-  remoteTime: string | undefined;
-  runState: RunProgramState | undefined;
-  runUpdaterSubscription?: Subscription;
-  selectedProgramIndex: number = 0;
+export class StateComponent implements OnInit, OnDestroy {
+  readonly programs = signal<Program[] | undefined>( undefined );
+  readonly selectedProgramIndex = signal( 0 );
+
+  private pinUpdaterHandle?: UpdaterHandle;
+  private runUpdaterHandle?: UpdaterHandle;
 
   constructor( private snackBar: SnackBar,
                private pinService: PinService,
@@ -66,21 +53,49 @@ export class StateComponent implements OnInit {
                private runUpdater: RunUpdater ) {
   }
 
+  /** Polled pin state without `time`, so that the advancing clock alone does not redraw. */
+  readonly pinState = computed<PinsState | undefined>( () => {
+    let state = this.pinUpdater.state();
+    return state === undefined ? undefined : { ...state, time: undefined };
+  }, { equal: sameJson } );
+
+  readonly remoteTime = computed( () => this.pinUpdater.state()?.time?.time );
+
+  /** Splits the polled run state into the running program and the queued ones. */
+  private readonly runPrograms = computed( () => {
+    let state = this.runUpdater.state();
+    if ( state === undefined ) {
+      return undefined;
+    }
+    if ( !state.isProgramRunning || state.programs.length === 0 ) {
+      return { running: <RunProgramState>{}, queued: <RunProgramState[]>[] };
+    }
+    let [ running, ...queued ] = state.programs;
+    return {
+      running: this.withTotalDuration( this.trimToRunningZone( running ) ),
+      queued: queued.map( ( program ) => this.withTotalDuration( program ) ),
+    };
+  }, { equal: sameJson } );
+
+  readonly runState = computed( () => this.runPrograms()?.running );
+  readonly queueState = computed( () => this.runPrograms()?.queued );
+
   ngOnInit(): void {
-    this.subscribeForUpdates();
+    this.pinUpdaterHandle = this.pinUpdater.watch();
+    this.runUpdaterHandle = this.runUpdater.watch();
     this.loadPrograms();
   }
 
   ngOnDestroy(): void {
-    this.pinUpdaterSubscription?.unsubscribe();
-    this.runUpdaterSubscription?.unsubscribe();
+    this.pinUpdaterHandle?.unsubscribe();
+    this.runUpdaterHandle?.unsubscribe();
   }
 
   private loadPrograms() {
     let component = this;
     this.programService.getAll().subscribe( {
       next( state ) {
-        component.programs = state;
+        component.programs.set( state );
       },
       error( error ) {
         component.snackBar.open( 'Error loading programs', error );
@@ -88,61 +103,27 @@ export class StateComponent implements OnInit {
     } );
   }
 
-  private subscribeForUpdates() {
-    let component = this;
-    this.pinUpdaterSubscription = this.pinUpdater.subscribe( {
-      next( state ) {
-        component.onUpdatePinState( state );
-      },
-    } );
-    this.runUpdaterSubscription = this.runUpdater.subscribe( {
-      next( state ) {
-        component.onUpdateRunState( state );
-      },
-    } );
-  }
-
-  private onUpdatePinState( newState: PinsState ) {
-    this.remoteTime = newState.time?.time;
-    newState.time = undefined;
-    let newStateAsString = JSON.stringify( newState );
-    if ( newStateAsString != this.pinStateAsString ) {
-      this.pinState = newState;
-      this.pinStateAsString = newStateAsString;
+  /** Drops the zones already finished and shows the running one's remaining time. */
+  private trimToRunningZone( program: RunProgramState ): RunProgramState {
+    let zones = program.zones ?? [];
+    let runningIndex = zones.findIndex( ( zone ) => zone.running );
+    if ( runningIndex < 0 ) {
+      return { ...program, running: true };
     }
+    return {
+      ...program,
+      running: true,
+      zones: zones.slice( runningIndex )
+        .map( ( zone, index ) => index === 0 ? { ...zone, duration: zone.leftSeconds } : zone ),
+    };
   }
 
-  private onUpdateRunState( newState: RunState ) {
-    let newStateAsString = JSON.stringify( newState );
-    if ( newStateAsString != this.programStateAsString ) {
-      if ( newState.isProgramRunning ) {
-        this.runState = newState.programs[ 0 ];
-        this.runState.running = true;
-        for ( let zoneIndex = 0; this.runState.zones.length; zoneIndex++ ) {
-          let zone = this.runState.zones[ zoneIndex ];
-          if ( zone.running ) {
-            zone.duration = zone.leftSeconds;
-            if ( zoneIndex > 0 ) {
-              this.runState.zones = this.runState.zones.slice( zoneIndex );
-            }
-            break;
-          }
-        }
-        this.calculateDuration( this.runState );
-        this.queueState = newState.programs.slice( 1 );
-        this.queueState.forEach( ( p ) => this.calculateDuration( p ) );
-      } else {
-        this.runState = <RunProgramState>{};
-        this.queueState = [];
-      }
-      this.programStateAsString = newStateAsString;
-    }
-  }
-
-  private calculateDuration( program: RunProgramState ) {
-    let duration = 0;
-    program.zones.forEach( ( zone ) => duration += zone.duration );
-    program.duration = duration;
+  private withTotalDuration( program: RunProgramState ): RunProgramState {
+    let zones = program.zones ?? [];
+    return {
+      ...program,
+      duration: zones.reduce( ( total, zone ) => total + zone.duration, 0 ),
+    };
   }
 
   click( type: string, id: number, state: boolean ) {
@@ -158,7 +139,7 @@ export class StateComponent implements OnInit {
   }
 
   onSelectedProgram( programIndex: number ) {
-    this.selectedProgramIndex = programIndex;
+    this.selectedProgramIndex.set( programIndex );
   }
 
   updateView() {
@@ -167,12 +148,12 @@ export class StateComponent implements OnInit {
   }
 
   startProgram() {
-    console.log( "Starting program", this.selectedProgramIndex );
-    if ( this.selectedProgramIndex === 0 ) {
+    console.log( "Starting program", this.selectedProgramIndex() );
+    if ( this.selectedProgramIndex() === 0 ) {
       return;
     }
     let component = this;
-    this.runService.start( this.selectedProgramIndex ).subscribe( {
+    this.runService.start( this.selectedProgramIndex() ).subscribe( {
       next() {
         component.updateView();
       },

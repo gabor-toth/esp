@@ -7,8 +7,6 @@ if ( environment.production ) {
   enableProdMode();
 }
 
-// AppModule import is needed, it loads the Material stuff
-import { AppModule } from './app/app.module';
 import { appConfig } from './app/app.config';
 import { App } from './app/app';
 

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { Program, ProgramDayType, ProgramDayValue } from "./program";
 import { ProgramService } from "./program.service";
 import { MatIcon } from '@angular/material/icon';
@@ -25,7 +25,7 @@ import { RouterLink } from "@angular/router";
   ]
 } )
 export class ProgramsComponent implements OnInit {
-  programs: Program[] | undefined;
+  readonly programs = signal<Program[] | undefined>( undefined );
   programDaysDisplay: string[] = [ 'H', 'K', 'Sz', 'Cs', 'P', 'Sz', 'V' ];
 
   private programService = inject( ProgramService );
@@ -42,7 +42,7 @@ export class ProgramsComponent implements OnInit {
     let component = this;
     this.programService.getAll().subscribe( {
       next( programs ) {
-        component.programs = programs;
+        component.programs.set( programs );
       },
       error( error ) {
         component.snackBar.open( 'Error in updateState', error );

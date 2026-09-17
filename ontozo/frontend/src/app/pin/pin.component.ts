@@ -1,9 +1,8 @@
-import { Component, OnInit } from '@angular/core';
-import { PinsConfiguration, PinsState } from "./pin";
+import { Component, computed, OnDestroy, OnInit } from '@angular/core';
+import { PinsState } from "./pin";
 import { PinService } from "./pin.service";
-import { animate, state, style, transition, trigger } from "@angular/animations";
 import { PinUpdater } from "./pin.updater";
-import { Subscription } from "rxjs";
+import { UpdaterHandle } from "../common/timed.updater";
 import { MatIcon } from '@angular/material/icon';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { MatButton } from '@angular/material/button';
@@ -12,55 +11,33 @@ import { MatButton } from '@angular/material/button';
   selector: 'app-pin',
   templateUrl: './pin.component.html',
   styleUrls: [ './pin.component.scss' ],
-  animations: [
-    trigger( 'detailExpand', [
-      state( 'collapsed', style( { height: '0px', minHeight: '0' } ) ),
-      state( 'expanded', style( { height: '*' } ) ),
-      transition( 'expanded <=> collapsed', animate( '225ms cubic-bezier(0.4, 0.0, 0.2, 1)' ) ),
-    ] ),
-  ],
   imports: [
     MatIcon,
     MatProgressSpinner,
     MatButton,
   ]
 } )
-export class PinComponent implements OnInit {
-  pins: PinsConfiguration | undefined;
-  state: PinsState | undefined;
-  remoteTime: string | undefined;
-  stateAsString = "";
-  pinUpdaterSubscription?: Subscription;
+export class PinComponent implements OnInit, OnDestroy {
+  private pinUpdaterHandle?: UpdaterHandle;
 
   constructor( private pinService: PinService,
                private pinUpdater: PinUpdater ) {
   }
 
+  /** Polled pin state without `time`, so that the advancing clock alone does not redraw. */
+  readonly state = computed<PinsState | undefined>( () => {
+    let state = this.pinUpdater.state();
+    return state === undefined ? undefined : { ...state, time: undefined };
+  }, { equal: ( a, b ) => JSON.stringify( a ) === JSON.stringify( b ) } );
+
+  readonly remoteTime = computed( () => this.pinUpdater.state()?.time?.time );
+
   ngOnInit(): void {
-    this.subscribeForUpdates();
+    this.pinUpdaterHandle = this.pinUpdater.watch();
   }
 
   ngOnDestroy(): void {
-    this.pinUpdaterSubscription?.unsubscribe();
-  }
-
-  private subscribeForUpdates() {
-    let component = this;
-    this.pinUpdaterSubscription = this.pinUpdater.subscribe( {
-      next( state ) {
-        component.onUpdate( state );
-      },
-    } );
-  }
-
-  private onUpdate( newState: PinsState ) {
-    this.remoteTime = newState.time?.time;
-    newState.time = undefined;
-    let newStateAsString = JSON.stringify( newState );
-    if ( newStateAsString != this.stateAsString ) {
-      this.state = newState;
-      this.stateAsString = newStateAsString;
-    }
+    this.pinUpdaterHandle?.unsubscribe();
   }
 
   click( type: string, id: number, state: boolean ) {

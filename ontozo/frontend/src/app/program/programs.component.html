@@ -1,7 +1,7 @@
 <div class="page-container programs">
     <h2>Programok</h2>
 
-    @if (programs) {
+    @if (programs(); as programs) {
         @for (program of programs; track program.index) {
             <mat-card class="program-config">
                 <mat-card-header>

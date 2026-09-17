@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { MatButton, MatButtonModule } from "@angular/material/button";
 import { MatProgressSpinner } from "@angular/material/progress-spinner";
 import { PinService } from "../pin/pin.service";
@@ -29,10 +29,10 @@ import { SnackBar } from "../common/snackbar-error/snackbar";
 } )
 class AdminPinComponent implements OnInit {
   type: string | null = null;
-  typeLabel: string | undefined = undefined;
   id: number | null = null;
-  pin: PinConfiguration | undefined = undefined;
-  pins: PinsConfiguration | undefined;
+  readonly typeLabel = signal<string | undefined>( undefined );
+  readonly pin = signal<PinConfiguration | undefined>( undefined );
+  private readonly pins = signal<PinsConfiguration | undefined>( undefined );
   nameFormControl = new FormControl( '', [ Validators.required ] );
 
   private readonly activatedRoute = inject( ActivatedRoute );
@@ -62,11 +62,11 @@ class AdminPinComponent implements OnInit {
   }
 
   private loadConfiguration() {
-    this.pins = undefined;
+    this.pins.set( undefined );
     let component = this;
     this.pinService.getCachedOrLatestConfiguration( '' ).subscribe( {
       next( pinsConfiguration ) {
-        component.pins = pinsConfiguration;
+        component.pins.set( pinsConfiguration );
         component.selectPin();
       },
       error( err ) {
@@ -79,31 +79,32 @@ class AdminPinComponent implements OnInit {
     if ( this.id == undefined ) {
       return;
     }
+    let pins = this.pins();
     let pin;
     let typeLabel;
     switch ( this.type ) {
       case 'buttons':
         typeLabel = 'Gomb';
-        pin = PinHelper.getPinById( this.pins?.inputs.buttons, this.id );
+        pin = PinHelper.getPinById( pins?.inputs.buttons, this.id );
         break;
       case 'levels':
         typeLabel = 'Szint';
-        pin = PinHelper.getPinById( this.pins?.inputs.levels, this.id );
+        pin = PinHelper.getPinById( pins?.inputs.levels, this.id );
         break;
       case 'pumps':
         typeLabel = 'Pumpa';
-        pin = PinHelper.getPinById( this.pins?.outputs.pumps, this.id );
+        pin = PinHelper.getPinById( pins?.outputs.pumps, this.id );
         break;
       case 'zones':
         typeLabel = 'Zóna';
-        pin = PinHelper.getPinById( this.pins?.outputs.zones, this.id );
+        pin = PinHelper.getPinById( pins?.outputs.zones, this.id );
         break;
     }
     if ( pin == undefined ) {
       return;
     }
-    this.typeLabel = typeLabel;
-    this.pin = pin;
+    this.typeLabel.set( typeLabel );
+    this.pin.set( pin );
     this.nameFormControl.setValue( pin.name );
     this.settings.controls.active.setValue( !pin.inactive );
     this.settings.controls.hidden.setValue( pin.hidden );

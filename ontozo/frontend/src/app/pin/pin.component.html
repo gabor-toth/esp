@@ -1,8 +1,8 @@
 <div class="page-container">
     <h2>Pumpák</h2>
-    @if (state && state.outputs) {
+    @if (state()?.outputs; as outputs) {
         <div class="card-container">
-            @for (pump of state.outputs.pumps; track pump.id) {
+            @for (pump of outputs.pumps; track pump.id) {
                 @if (!pump.hidden) {
                     <button mat-stroked-button color="foreground" class="card icon-switch"
                             (click)="click('pumps',pump.id,!pump.on)">
@@ -21,9 +21,9 @@
     }
 
     <h2>Zónák</h2>
-    @if (state && state.outputs) {
+    @if (state()?.outputs; as outputs) {
         <div class="card-container">
-            @for (zone of state.outputs.zones; track zone.id) {
+            @for (zone of outputs.zones; track zone.id) {
                 @if (!zone.hidden) {
                     <button mat-stroked-button color="foreground" class="card icon-switch"
                             (click)="click('zones',zone.id,!zone.on)">
@@ -42,9 +42,9 @@
     }
 
     <h2>Szintek</h2>
-    @if (state && state.inputs) {
+    @if (state()?.inputs; as inputs) {
         <div class="card-container">
-            @for (level of state.inputs.levels; track level.id) {
+            @for (level of inputs.levels; track level.id) {
                 <button mat-stroked-button color="foreground"
                         class="card icon-switch">
                     <mat-icon
@@ -61,9 +61,9 @@
     }
 
     <h2>Gombok</h2>
-    @if (state && state.inputs) {
+    @if (state()?.inputs; as inputs) {
         <div class="card-container">
-            @for (button of state.inputs.buttons; track button.id) {
+            @for (button of inputs.buttons; track button.id) {
                 @if (!button.hidden) {
                     <button mat-stroked-button color="foreground"
                             class="card icon-switch"
@@ -83,6 +83,6 @@
     }
 
     <div class="time-container">
-        {{ remoteTime! }}
+        {{ remoteTime() }}
     </div>
 </div>

@@ -6,9 +6,9 @@
             <mat-card-title>Pumpák</mat-card-title>
         </mat-card-header>
         <mat-card-content>
-            @if (pinState && pinState.outputs) {
+            @if (pinState()?.outputs; as outputs) {
                 <div class="card-container">
-                    @for (pump of pinState.outputs.pumps; track pump.id) {
+                    @for (pump of outputs.pumps; track pump.id) {
                         <button mat-stroked-button color="foreground" class="card icon-switch"
                                 (click)="click('pumps',pump.id,!pump.on)">
                             <mat-icon
@@ -31,9 +31,9 @@
             <mat-card-title>Szintek</mat-card-title>
         </mat-card-header>
         <mat-card-content>
-            @if (pinState && pinState.levels) {
+            @if (pinState()?.levels; as levels) {
                 <div class="card-container">
-                    @for (level of pinState.levels; track level) {
+                    @for (level of levels; track level) {
                         <div class="card-level {{level}}"></div>
                     }
                 </div>
@@ -50,7 +50,7 @@
             <mat-card-title>Indítás</mat-card-title>
         </mat-card-header>
         <mat-card-content>
-            @if (programs) {
+            @if (programs(); as programs) {
                 <div>
                     <mat-form-field>
                         <mat-select #selectedProgram (selectionChange)="onSelectedProgram(selectedProgram.value)">
@@ -61,7 +61,7 @@
                         </mat-select>
                     </mat-form-field>
                     <button mat-raised-button color="primary" (click)="startProgram()"
-                            [disabled]="selectedProgramIndex == 0">
+                            [disabled]="selectedProgramIndex() == 0">
                         <mat-icon class="material-symbols-outlined icon-big">play_arrow</mat-icon>
                     </button>
                 </div>
@@ -76,7 +76,7 @@
     <mat-card class="state-program">
         <mat-card-header>
             <mat-card-title>Futó program</mat-card-title>
-            @if (runState?.running && queueState) {
+            @if (runState()?.running && queueState()) {
                 <div class="stop-button-holder">
                     <button mat-raised-button color="primary" (click)="stopProgram()">
                         <mat-icon class="material-symbols-outlined icon-big">cancel</mat-icon>
@@ -85,7 +85,7 @@
             }
         </mat-card-header>
         <mat-card-content>
-            @if (runState) {
+            @if (runState(); as runState) {
                 @if (runState.running) {
                     <div class="row program-container">
                         <div class="row program-card lg-6">
@@ -96,7 +96,7 @@
                             <div class="program-action lg-6">
                                 <button mat-raised-button color="primary"
                                         (click)="nextProgram()"
-                                        [disabled]="queueState?.length == 0">
+                                        [disabled]="queueState()?.length == 0">
                                     <mat-icon class="material-symbols-outlined icon-big">step_over</mat-icon>
                                 </button>
                             </div>
@@ -141,7 +141,7 @@
         </mat-card-content>
     </mat-card>
 
-    @if (queueState) {
+    @if (queueState(); as queueState) {
         <mat-card class="state-queue">
             <mat-card-header>
                 <mat-card-title>Sorbanálló programok</mat-card-title>
@@ -190,6 +190,6 @@
         </mat-card>
     }
     <div class="time-container">
-        {{ remoteTime! }}
+        {{ remoteTime() }}
     </div>
 </div>

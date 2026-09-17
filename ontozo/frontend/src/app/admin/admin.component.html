@@ -1,8 +1,8 @@
 <div class="page-container" id="pins">
     <h2>Pumpák</h2>
-    @if (pins && pins.outputs) {
+    @if (pins()?.outputs; as outputs) {
         <div class="card-container">
-            @for (pump of pins.outputs.pumps; track pump.id) {
+            @for (pump of outputs.pumps; track pump.id) {
                 <button mat-stroked-button color="foreground" class="card icon-switch"
                         routerLink="/admin/pin/pumps/{{pump.id}}">
                     <span>{{ pump.name }}</span>
@@ -16,9 +16,9 @@
     }
 
     <h2>Zónák</h2>
-    @if (pins && pins.outputs) {
+    @if (pins()?.outputs; as outputs) {
         <div class="card-container">
-            @for (zone of pins.outputs.zones; track zone.id) {
+            @for (zone of outputs.zones; track zone.id) {
                 <button mat-stroked-button color="foreground" class="card icon-switch"
                         routerLink="/admin/pin/zones/{{zone.id}}">
                     <span>{{ zone.name }}</span>
@@ -32,9 +32,9 @@
     }
 
     <h2>Szintek</h2>
-    @if (pins && pins.inputs) {
+    @if (pins()?.inputs; as inputs) {
         <div class="card-container">
-            @for (level of pins.inputs.levels; track level.id) {
+            @for (level of inputs.levels; track level.id) {
                 <button mat-stroked-button color="foreground" class="card icon-switch"
                         routerLink="/admin/pin/levels/{{level.id}}">
                     <span>{{ level.name }}</span>
@@ -48,9 +48,9 @@
     }
 
     <h2>Gombok</h2>
-    @if (pins && pins.inputs) {
+    @if (pins()?.inputs; as inputs) {
         <div class="card-container">
-            @for (button of pins.inputs.buttons; track button.id) {
+            @for (button of inputs.buttons; track button.id) {
                 <button mat-stroked-button color="foreground" class="card icon-switch"
                         routerLink="/admin/pin/buttons/{{button.id}}">
                     <span>{{ button.name }}</span>
