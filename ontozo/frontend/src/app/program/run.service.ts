@@ -3,9 +3,7 @@ import { Observable, of } from "rxjs";
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { RunState } from "./run";
-import { TimeoutInterceptor } from "../common/timeout.interceptor";
-import { PinsState } from '../pin/pin';
-import { simulatedPinConfiguration, simulatedPinState, simulatedPrograms } from '../simulator/simulator';
+import { simulatedPinConfiguration, simulatedPrograms } from '../simulator/simulator';
 
 @Injectable( {
   providedIn: 'root'

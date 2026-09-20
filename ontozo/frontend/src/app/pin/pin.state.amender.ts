@@ -19,7 +19,7 @@ export class PinStateAmender {
 
   private copyConfiguration( configuration: PinConfiguration[], state: PinState[] ) {
     for ( let i = 0; i < configuration.length; i++ ) {
-      state[ i ] = <PinState>configuration[ i ];
+      state[ i ] = { ...configuration[ i ], on: state[ i ].on };
     }
   }
 }

@@ -12,7 +12,7 @@ import { MatIcon } from '@angular/material/icon';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { MatFormField } from '@angular/material/form-field';
 import { MatOption, MatSelect } from '@angular/material/select';
-import { MatButton } from '@angular/material/button';
+import { MatButton, MatFabButton } from '@angular/material/button';
 import { MatCard, MatCardContent, MatCardHeader, MatCardTitle } from "@angular/material/card";
 import { Program } from "../program/program";
 import { SnackBar } from "../common/snackbar-error/snackbar";
@@ -36,6 +36,7 @@ const sameJson = <T>( a: T, b: T ) => JSON.stringify( a ) === JSON.stringify( b 
     MatCardHeader,
     MatCardContent,
     MatCardTitle,
+    MatFabButton,
   ]
 } )
 export class StateComponent implements OnInit, OnDestroy {

@@ -5,7 +5,8 @@ import { PinUpdater } from "./pin.updater";
 import { UpdaterHandle } from "../common/timed.updater";
 import { MatIcon } from '@angular/material/icon';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
-import { MatButton } from '@angular/material/button';
+import { MatButton, MatFabButton } from '@angular/material/button';
+import { MatCard, MatCardContent, MatCardHeader, MatCardTitle } from "@angular/material/card";
 
 @Component( {
   selector: 'app-pin',
@@ -15,6 +16,11 @@ import { MatButton } from '@angular/material/button';
     MatIcon,
     MatProgressSpinner,
     MatButton,
+    MatFabButton,
+    MatCard,
+    MatCardContent,
+    MatCardHeader,
+    MatCardTitle,
   ]
 } )
 export class PinComponent implements OnInit, OnDestroy {

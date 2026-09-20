@@ -4,6 +4,7 @@ import { MatProgressSpinner } from "@angular/material/progress-spinner";
 import { PinService } from "../pin/pin.service";
 import { PinsConfiguration } from "../pin/pin";
 import { RouterLink } from "@angular/router";
+import { MatCard, MatCardContent, MatCardHeader, MatCardTitle } from "@angular/material/card";
 
 @Component( {
   selector: 'app-admin',
@@ -11,7 +12,11 @@ import { RouterLink } from "@angular/router";
   imports: [
     MatButton,
     MatProgressSpinner,
-    RouterLink
+    RouterLink,
+    MatCardContent,
+    MatCardHeader,
+    MatCardTitle,
+    MatCard
   ],
   styleUrls: [ './admin.component.scss' ]
 } )

@@ -170,13 +170,9 @@ mat-icon.mat-icon {
   }
 }
 
-.load-spinner {
-  width: 100%;
-
-  mat-spinner {
-    margin-left: auto;
-    margin-right: auto;
-  }
+mat-spinner {
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .card-level {
@@ -210,6 +206,7 @@ mat-icon.mat-icon {
 .card-container {
   display: flex;
   flex-wrap: wrap;
+  gap: 1em 1em;
   justify-content: center;
 
   @media screen and (max-width: 767px) {
@@ -219,13 +216,13 @@ mat-icon.mat-icon {
   }
 
   .card {
+    background-color: var(--mat-fab-container-color, var(--mat-sys-background));
     border: 1px solid rgba(0, 0, 0, 0.12);
     box-sizing: border-box;
     cursor: pointer;
     flex-direction: column;
-    height: 70px;
-    margin: 0 8px;
-    padding: 16px;
+    height: auto;
+    padding: 0.5em;
     text-align: center;
     width: 130px;
 
@@ -254,6 +251,12 @@ mat-icon.mat-icon {
     }
 
   }
+}
+
+.state-container {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
 }
 
 .mat-mdc-card {

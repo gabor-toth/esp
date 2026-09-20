@@ -1,86 +1,102 @@
 <div class="page-container">
-    <h2>Pumpák</h2>
-    @if (state()?.outputs; as outputs) {
-        <div class="card-container">
-            @for (pump of outputs.pumps; track pump.id) {
-                @if (!pump.hidden) {
-                    <button mat-stroked-button class="card icon-switch"
-                            (click)="click('pumps',pump.id,!pump.on)">
-                        <mat-icon
-                                class="material-symbols-outlined {{pump.on ? 'on':'off'}}">{{ pump.on ? 'toggle_on' : 'toggle_off' }}
-                        </mat-icon>
-                        <span>{{ pump.name }}</span>
-                    </button>
-                }
+    <mat-card>
+        <mat-card-header>
+            <mat-card-title>Pumpák</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+            @if (state()?.outputs; as outputs) {
+                <div class="card-container">
+                    @for (pump of outputs.pumps; track pump.id) {
+                        @if (!pump.hidden) {
+                            <button matFab extended class="card icon-switch"
+                                    (click)="click('pumps',pump.id,!pump.on)">
+                                <mat-icon
+                                        class="material-symbols-outlined {{pump.on ? 'on':'off'}}">{{ pump.on ? 'toggle_on' : 'toggle_off' }}
+                                </mat-icon>
+                                <span>{{ pump.name }}</span>
+                            </button>
+                        }
+                    }
+                </div>
+            } @else {
+                    <mat-spinner diameter="30"></mat-spinner>
             }
-        </div>
-    } @else {
-        <div class="load-spinner">
-            <mat-spinner diameter="30"></mat-spinner>
-        </div>
-    }
+        </mat-card-content>
+    </mat-card>
 
-    <h2>Zónák</h2>
-    @if (state()?.outputs; as outputs) {
-        <div class="card-container">
-            @for (zone of outputs.zones; track zone.id) {
-                @if (!zone.hidden) {
-                    <button mat-stroked-button class="card icon-switch"
-                            (click)="click('zones',zone.id,!zone.on)">
-                        <mat-icon
-                                class="material-symbols-outlined {{zone.on ? 'on':'off'}}">{{ zone.on ? 'toggle_on' : 'toggle_off' }}
-                        </mat-icon>
-                        <span>{{ zone.name }}</span>
-                    </button>
-                }
+    <mat-card>
+        <mat-card-header>
+            <mat-card-title>Zónák</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+            @if (state()?.outputs; as outputs) {
+                <div class="card-container">
+                    @for (zone of outputs.zones; track zone.id) {
+                        @if (!zone.hidden) {
+                            <button matFab extended class="card icon-switch"
+                                    (click)="click('zones',zone.id,!zone.on)">
+                                <mat-icon
+                                        class="material-symbols-outlined {{zone.on ? 'on':'off'}}">{{ zone.on ? 'toggle_on' : 'toggle_off' }}
+                                </mat-icon>
+                                {{ zone.name }}
+                            </button>
+                        }
+                    }
+                </div>
+            } @else {
+                    <mat-spinner diameter="30"></mat-spinner>
             }
-        </div>
-    } @else {
-        <div class="load-spinner">
-            <mat-spinner diameter="30"></mat-spinner>
-        </div>
-    }
+        </mat-card-content>
+    </mat-card>
 
-    <h2>Szintek</h2>
-    @if (state()?.inputs; as inputs) {
-        <div class="card-container">
-            @for (level of inputs.levels; track level.id) {
-                <button mat-stroked-button
-                        class="card icon-switch">
-                    <mat-icon
-                            class="material-symbols-outlined {{level.on ? 'on':'off'}}">{{ level.on ? 'toggle_on' : 'toggle_off' }}
-                    </mat-icon>
-                    <span>{{ level.name }}</span>
-                </button>
+    <mat-card>
+        <mat-card-header>
+            <mat-card-title>Szintek</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+            @if (state()?.inputs; as inputs) {
+                <div class="card-container">
+                    @for (level of inputs.levels; track level.id) {
+                        <button matFab extended
+                                class="card icon-switch">
+                            <mat-icon
+                                    class="material-symbols-outlined {{level.on ? 'on':'off'}}">{{ level.on ? 'toggle_on' : 'toggle_off' }}
+                            </mat-icon>
+                            <span>{{ level.name }}</span>
+                        </button>
+                    }
+                </div>
+            } @else {
+                    <mat-spinner diameter="30"></mat-spinner>
             }
-        </div>
-    } @else {
-        <div class="load-spinner">
-            <mat-spinner diameter="30"></mat-spinner>
-        </div>
-    }
+        </mat-card-content>
+    </mat-card>
 
-    <h2>Gombok</h2>
-    @if (state()?.inputs; as inputs) {
-        <div class="card-container">
-            @for (button of inputs.buttons; track button.id) {
-                @if (!button.hidden) {
-                    <button mat-stroked-button
-                            class="card icon-switch"
-                            (click)="click('buttons',button.id,!button.on)">
-                        <mat-icon
-                                class="material-symbols-outlined {{button.on ? 'on':'off'}}">{{ button.on ? 'toggle_on' : 'toggle_off' }}
-                        </mat-icon>
-                        <span>{{ button.name }}</span>
-                    </button>
-                }
+    <mat-card>
+        <mat-card-header>
+            <mat-card-title>Gombok</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+            @if (state()?.inputs; as inputs) {
+                <div class="card-container">
+                    @for (button of inputs.buttons; track button.id) {
+                        @if (!button.hidden) {
+                            <button matFab extended
+                                    class="card icon-switch"
+                                    (click)="click('buttons',button.id,!button.on)">
+                                <mat-icon
+                                        class="material-symbols-outlined {{button.on ? 'on':'off'}}">{{ button.on ? 'toggle_on' : 'toggle_off' }}
+                                </mat-icon>
+                                <span>{{ button.name }}</span>
+                            </button>
+                        }
+                    }
+                </div>
+            } @else {
+                    <mat-spinner diameter="30"></mat-spinner>
             }
-        </div>
-    } @else {
-        <div class="load-spinner">
-            <mat-spinner diameter="30"></mat-spinner>
-        </div>
-    }
+        </mat-card-content>
+    </mat-card>
 
     <div class="time-container">
         {{ remoteTime() }}

@@ -9,7 +9,7 @@
             @if (pinState()?.outputs; as outputs) {
                 <div class="card-container">
                     @for (pump of outputs.pumps; track pump.id) {
-                        <button mat-stroked-button class="card icon-switch"
+                        <button mat-fab extended class="card icon-switch"
                                 (click)="click('pumps',pump.id,!pump.on)">
                             <mat-icon
                                     class="material-symbols-outlined  {{ pump.on ? 'on' : 'off' }}"> {{ pump.on ? 'toggle_on' : 'toggle_off' }}
@@ -19,28 +19,24 @@
                     }
                 </div>
             } @else {
-                <div class="load-spinner">
-                    <mat-spinner diameter="30"></mat-spinner>
-                </div>
+                <mat-spinner diameter="30"></mat-spinner>
             }
         </mat-card-content>
     </mat-card>
 
-    <mat-card class="state-level">
+    <mat-card>
         <mat-card-header>
             <mat-card-title>Szintek</mat-card-title>
         </mat-card-header>
         <mat-card-content>
             @if (pinState()?.levels; as levels) {
-                <div class="card-container">
+                <div class="state-container">
                     @for (level of levels; track level) {
                         <div class="card-level {{level}}"></div>
                     }
                 </div>
             } @else {
-                <div class="load-spinner">
-                    <mat-spinner diameter="30"></mat-spinner>
-                </div>
+                <mat-spinner diameter="30"></mat-spinner>
             }
         </mat-card-content>
     </mat-card>
@@ -66,9 +62,7 @@
                     </button>
                 </div>
             } @else {
-                <div class="load-spinner">
-                    <mat-spinner diameter="30"></mat-spinner>
-                </div>
+                <mat-spinner diameter="30"></mat-spinner>
             }
         </mat-card-content>
     </mat-card>
@@ -134,9 +128,7 @@
                     <mat-icon class="material-symbols-outlined icon-hotel">hotel</mat-icon>
                 }
             } @else {
-                <div class="load-spinner">
-                    <mat-spinner diameter="30"></mat-spinner>
-                </div>
+                <mat-spinner diameter="30"></mat-spinner>
             }
         </mat-card-content>
     </mat-card>
