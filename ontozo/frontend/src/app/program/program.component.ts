@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, WritableSignal } from '@angular/core';
 import { Program, ProgramDay, ProgramDayType, ProgramDayValue, ProgramZone } from "./program";
 import { ProgramService } from "./program.service";
 import { MatIcon } from '@angular/material/icon';
@@ -10,7 +10,9 @@ import { ActivatedRoute, RouterLink } from "@angular/router";
 import { FormBuilder, FormControl, FormsModule, ReactiveFormsModule, Validators } from "@angular/forms";
 import { MatError, MatFormField, MatInput, MatLabel } from "@angular/material/input";
 import { MatCheckbox } from "@angular/material/checkbox";
-import { MatChipGrid, MatChipInput, MatChipInputEvent, MatChipRow, MatChipsModule } from "@angular/material/chips";
+import { MatChipInputEvent, MatChipsModule } from "@angular/material/chips";
+import { MatRadioChange, MatRadioModule } from "@angular/material/radio";
+import { interval } from "rxjs";
 
 @Component( {
   selector: 'app-program',
@@ -30,6 +32,7 @@ import { MatChipGrid, MatChipInput, MatChipInputEvent, MatChipRow, MatChipsModul
     ReactiveFormsModule,
     MatCheckbox,
     MatChipsModule,
+    MatRadioModule,
   ]
 } )
 export class ProgramComponent implements OnInit {
@@ -51,7 +54,9 @@ export class ProgramComponent implements OnInit {
     active: false,
   } );
 
-  readonly chipFormControl = new FormControl( '', [ Validators.pattern( /^[0-2]?[0-9]:[0-9]{2}$/ ) ] );
+  readonly chipFormControl = new FormControl( '', [ Validators.required, Validators.pattern( /^[0-2]?[0-9]:[0-9]{2}$/ ) ] );
+  readonly selectedProgramDayType = signal<ProgramDayType | undefined>( undefined );
+  readonly selectedDays = signal<number[]>( [] );
 
   constructor() {
     let id = this.activatedRoute.snapshot.params[ 'id' ];
@@ -69,11 +74,13 @@ export class ProgramComponent implements OnInit {
       return;
     }
     if ( this.id == 0 ) {
-      this.program.set( {
+      let program = {
         enabled: true,
         days: <ProgramDay>{
-          type: <ProgramDayType><unknown>ProgramDayType[ ProgramDayType.onDays ],
-          onDays: <ProgramDayValue[]><unknown>[]
+          type: <ProgramDayType><unknown>ProgramDayType[ ProgramDayType.interval ],
+          intervalDays: 3,
+          // type: <ProgramDayType><unknown>ProgramDayType[ ProgramDayType.onDays ],
+          // onDays: <ProgramDayValue[]><unknown>[]
         },
         index: 0,
         lastRunTime: 0,
@@ -82,30 +89,33 @@ export class ProgramComponent implements OnInit {
         startTimes: [],
         valid: true,
         zones: <ProgramZone[]>[]
-      } );
+      };
+      this.programLoaded( program );
     } else {
       let component = this;
       this.programService.get( this.id ).subscribe( {
         next( program ) {
-          component.program.set( program );
+          component.programLoaded( program );
         },
         error( error ) {
           component.snackBar.open( 'Hiba a program betöltése közben', error );
         },
       } );
     }
-    let program = this.program();
-    if ( program ) {
-      this.settings.controls.active.setValue( program.enabled );
-    }
   }
 
-  hasDay( program: Program, dayIndex: number ): boolean {
-    let dayValue = ProgramDayValue[ dayIndex ];
-    return program.days.onDays.find( e => e.valueOf().toString() == dayValue ) != null;
+  protected programLoaded( program: Program ) {
+    this.program.set( program );
+    this.settings.controls.active.setValue( program.enabled );
+    let programDayType = parseInt( ProgramDayType[ program.days.type.valueOf() ] );
+    this.selectedProgramDayType.set( programDayType );
   }
 
-  save( program: Program ): void {
+  hasDay( dayIndex: number ): boolean {
+    return this.selectedDays().includes( dayIndex );
+  }
+
+  save(): void {
 
   }
 
@@ -132,5 +142,21 @@ export class ProgramComponent implements OnInit {
 
     // Clear the input value
     event.chipInput!.clear();
+  }
+
+  onRadioChange( event: MatRadioChange ) {
+    this.selectedProgramDayType.set( event.value );
+  }
+
+  protected onDayChange( dayIndex: number, hasDay: boolean ) {
+    this.selectedDays.update( selectedDays => {
+      let dayValue = ProgramDayValue[ dayIndex ];
+      if ( hasDay ) {
+        selectedDays = selectedDays.filter( e => e != dayIndex );
+      } else {
+        selectedDays.push( dayIndex );
+      }
+      return selectedDays;
+    } );
   }
 }

@@ -15,7 +15,6 @@ import { MatCard, MatCardContent, MatCardHeader, MatCardTitle } from "@angular/m
   imports: [
     MatIcon,
     MatProgressSpinner,
-    MatButton,
     MatFabButton,
     MatCard,
     MatCardContent,

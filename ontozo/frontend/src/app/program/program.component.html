@@ -1,7 +1,7 @@
 <div class="page-container programs">
-    <h2>{{ id == 0 ? "Új program" : "Program " + program()?.name }}</h2>
-
     @if (program(); as program) {
+        <h2>{{ id == 0 ? "Új program" : "Program " + program.name }}</h2>
+
         <form>
             <mat-form-field>
                 <mat-label>Név</mat-label>
@@ -37,35 +37,40 @@
             </mat-form-field>
 
             <div>
-                <mat-label>Idők</mat-label>
-                <div class="program-start-times">
-                    @for (time of program.startTimes; track $index) {
-                        {{ time }} x
-                    }
-                    <button matButton="filled" routerLink="/programs/0" class="add-button">
-                        <mat-icon class="material-symbols-outlined">add</mat-icon>
-                    </button>
-                </div>
+                <mat-radio-group [(ngModel)]="selectedProgramDayType" name="programDayType"
+                                 (change)="onRadioChange($event)">
+                    <mat-radio-button [value]="ProgramDayType.onDays">megadott napokon</mat-radio-button>
+                    <mat-radio-button [value]="ProgramDayType.interval">x napokként</mat-radio-button>
+                </mat-radio-group>
             </div>
+
             <mat-card-content>
                 <div class="program-days">
-                    @if (program.days.type == ProgramDayType.onDays) {
+                    @if (selectedProgramDayType() == ProgramDayType.onDays) {
                         <div>
                             @for (day of programDaysDisplay; track $index) {
-                                <div class="program-day {{this.hasDay(program, $index)?'on':'off'}}">
+                                @let hasDay = this.hasDay( $index );
+                                <button matButton="filled" disabled="{{!hasDay}}"
+                                        disabledInteractive
+                                        class="day-button {{hasDay?'on':'off'}}"
+                                        (click)="onDayChange($index,hasDay)"
+                                >
                                     {{ day }}
-                                </div>
+                                </button>
                             }
                         </div>
-                    } @else if (program.days.type == ProgramDayType.interval) {
-                    <div>
-                        {{ program.days.intervalDays }} naponta
-                    </div>
-                }
+                    } @else if (selectedProgramDayType() == ProgramDayType.interval) {
+                        <div>
+                            {{ program.days.intervalDays }} naponta
+                        </div>
+                    } @else {
+                        {{ selectedProgramDayType() }} {{ typeof selectedProgramDayType() }}
+                    }
                 </div>
             </mat-card-content>
+
             <div class="btn-group">
-                <button matButton="filled" (click)="save(program)">Mentés</button>
+                <button matButton="filled" (click)="save()">Mentés</button>
                 <button matButton="outlined" routerLink="/programs">Mégsem</button>
             </div>
         </form>
