@@ -5,6 +5,7 @@
 #include "http/http_static_file.h"
 #include "main_main.h"
 #include "nvs_main.h"
+#include "power_led.h"
 #include "program.h"
 #include "program_logic.h"
 #include "program_start.h"
@@ -14,6 +15,7 @@
 
 void app_main(void)
 {
+    power_led_main();
     debug_start_heap_dump(10);
     main_main();
 

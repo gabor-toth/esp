@@ -24,6 +24,7 @@
 #include "esp_event.h"
 #include "esp_wifi.h"
 #include "esp_wifi_default.h"
+#include "power_led.h"
 #include "sdkconfig.h"
 #include "wifi_main.h"
 #include "wifi/wifi_main.h"
@@ -122,6 +123,7 @@ static void example_handler_on_sta_got_ip(void *arg, esp_event_base_t event_base
     } else {
         ESP_LOGI(TAG, "- IPv4 address: " IPSTR ",", IP2STR(&event->ip_info.ip));
     }
+    power_led_set_mode(POWER_LED_MODE_RUNNING);
 }
 
 #if CONFIG_EXAMPLE_CONNECT_IPV6

@@ -9,6 +9,7 @@ idf_component_register(
         "../../common/http/http_static_file.c"
         "../../common/main_main.c"
         "../../common/nvs_main.c"
+        "../../common/power_led.c"
         "../../common/rest_util.c"
         "../../common/sntp_main.c"
         "../../common/system_info_rest.c"
