@@ -30,15 +30,10 @@ export interface ProgramDay {
 export interface Program {
   days: ProgramDay;
   enabled: boolean;
-  nextRunTime?: number;
   index: number;
   lastRunTime?: number;
   name: string;
+  nextRunTime?: number;
   startTimes: string[];
   zones: ProgramZone[];
-}
-
-export interface Programs {
-  programs: Program[];
-  version: string;
 }

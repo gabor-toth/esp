@@ -1,71 +1,50 @@
-import { Injectable } from '@angular/core';
-import { Program, ProgramDayType, ProgramDayValue, Programs } from './program';
+import { inject, Injectable } from '@angular/core';
+import { Program } from './program';
 import { map, Observable, of, switchMap } from "rxjs";
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { simulatedPrograms } from '../simulator/simulator';
+import { ProgramsWire, ProgramWire } from "./program.wire";
+import { ProgramWireMapper } from "./program.wire.mapper";
 
 @Injectable( {
   providedIn: 'root'
 } )
 export class ProgramService {
-  constructor( private http: HttpClient ) {
+  private readonly http = inject( HttpClient );
+  private readonly mapper = inject( ProgramWireMapper );
+
+  constructor() {
   }
 
   getAll(): Observable<Program[]> {
     let service = this;
     if ( environment.simulateRestCall ) {
-      return of( simulatedPrograms.programs );
+      return of( simulatedPrograms );
     } else {
-        return this.http.get<Programs>( environment.baseUrl + 'programs' ).pipe(
-          map( programs => service.mapPrograms(programs))
-        );
+      return this.http.get<ProgramsWire>( environment.baseUrl + 'programs' ).pipe(
+        map( programs => service.mapper.mapProgramsFromWire( programs.programs ) )
+      );
     }
-  }
-
-  private mapProgram( program: Program ) {
-    program.days.type = <ProgramDayType><unknown>ProgramDayType[ program.days.type ];
-    program.days.onDays?.map( value => {
-      return ProgramService.mapDay( value );
-    } );
-    console.log( "intervalStartsOn", program.days.intervalStartsOn );
-    if ( program.days.intervalStartsOn != undefined ) {
-      console.log( program.days.intervalStartsOn, "-->", ProgramService.mapDay( program.days.intervalStartsOn ) );
-      program.days.intervalStartsOn = ProgramService.mapDay( program.days.intervalStartsOn );
-    } else {
-      console.log( "xxx" );
-    }
-    return program;
-  }
-
-  private mapPrograms( programs: Programs ) {
-    let service = this;
-    programs.programs.forEach( ( program ) => {
-      service.mapProgram( program );
-    } );
-    return programs.programs;
-  }
-
-  private static mapDay( value: ProgramDayValue ) {
-    return <ProgramDayValue><unknown>ProgramDayValue[ value ];
   }
 
   get( index: number ): Observable<Program> {
     if ( environment.simulateRestCall ) {
-      return of( simulatedPrograms.programs[ index ] );
+      return of( simulatedPrograms[ index ] );
     } else {
       let service = this;
-      return this.http.get<Program>( environment.baseUrl + 'programs/' + index )
-        .pipe(map( program => service.mapProgram(program) ) );
+      return this.http.get<ProgramWire>( environment.baseUrl + 'programs/' + index )
+        .pipe( map( program => service.mapper.mapProgramFromWire( program ) ) );
     }
   }
 
   set( program: Program ): Observable<Object> {
     let url = environment.baseUrl + 'programs';
+    let programWire = this.mapper.mapProgramToWire( program );
     if ( program.index == 0 ) {
-      return this.http.put( url, program );
+      return this.http.put( url, programWire );
     } else {
-      return this.http.post( url, program );
+      return this.http.post( url, programWire );
     }
   }
 

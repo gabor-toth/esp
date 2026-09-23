@@ -1,4 +1,4 @@
-import {  ProgramDayType, ProgramDayValue, Programs } from '../program/program';
+import { ProgramDayType, ProgramDayValue, Program } from '../program/program';
 
 export const simulatedPinConfiguration = {
   version: "1",
@@ -134,69 +134,65 @@ export const simulatedPinState = {
   }
 }
 
-export const simulatedPrograms: Programs =
-  {
-    version: "",
-    programs:
-      [
+export const simulatedPrograms: Program[] =
+  [
+    {
+      enabled: true,
+      days: {
+        type: ProgramDayType.onDays,
+        onDays: [
+          ProgramDayValue.Mon,
+          ProgramDayValue.Wed,
+          ProgramDayValue.Fri
+        ]
+      },
+      index: 1,
+      lastRunTime: 0,
+      name: "fű",
+      nextRunTime: 0,
+      startTimes: [
+        "06:00",
+        "18:00"
+      ],
+      zones: [
         {
-          enabled: true,
-          days: {
-            type: ProgramDayType.onDays,
-            onDays: [
-              ProgramDayValue.Mon,
-              ProgramDayValue.Wed,
-              ProgramDayValue.Fri
-            ]
-          },
-          index: 1,
-          lastRunTime: 0,
-          name: "fű",
-          nextRunTime: 0,
-          startTimes: [
-            "06:00",
-            "18:00"
-          ],
-          zones: [
-            {
-              zoneId: 1,
-              duration: 600
-            },
-            {
-              zoneId: 2,
-              duration: 300
-            },
-            {
-              zoneId: 3,
-              duration: 300
-            }
-          ]
+          zoneId: 1,
+          duration: 600
         },
         {
-          enabled: false,
-          days: {
-            type: ProgramDayType.onDays,
-            onDays: [
-              ProgramDayValue.Mon,
-              ProgramDayValue.Wed,
-              ProgramDayValue.Fri
-            ]
-          },
-          index: 2,
-          lastRunTime: 0,
-          nextRunTime: 0,
-          name: "veteményes",
-          zones: [
-            {
-              zoneId: 5,
-              duration: 1800
-            }
-          ],
-          startTimes: [
-            "06:00",
-            "18:00"
-          ]
+          zoneId: 2,
+          duration: 300
+        },
+        {
+          zoneId: 3,
+          duration: 300
         }
       ]
-  };
+    },
+    {
+      enabled: false,
+      days: {
+        type: ProgramDayType.onDays,
+        onDays: [
+          ProgramDayValue.Mon,
+          ProgramDayValue.Wed,
+          ProgramDayValue.Fri
+        ]
+      },
+      index: 2,
+      lastRunTime: 0,
+      nextRunTime: 0,
+      name: "veteményes",
+      zones: [
+        {
+          zoneId: 5,
+          duration: 1800
+        }
+      ],
+      startTimes: [
+        "06:00",
+        "18:00"
+      ]
+    }
+  ];
 
