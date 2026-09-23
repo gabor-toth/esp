@@ -129,7 +129,6 @@ export class ProgramComponent implements OnInit {
     } else {
       this.intervalDays.set( program.days.intervalDays );
       this.intervalStartsOn.set( program.days.intervalStartsOn );
-      console.log("this.intervalStartsOn", this.intervalStartsOn());
       //this.intervalStartReset.set( program.intervalStartReset );
     }
   }

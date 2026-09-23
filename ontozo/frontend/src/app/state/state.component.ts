@@ -149,7 +149,6 @@ export class StateComponent implements OnInit, OnDestroy {
   }
 
   startProgram() {
-    console.log( "Starting program", this.selectedProgramIndex() );
     if ( this.selectedProgramIndex() === 0 ) {
       return;
     }

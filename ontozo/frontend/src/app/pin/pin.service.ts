@@ -53,13 +53,6 @@ export class PinService {
   }
 
   setConfiguration( type: string, id: number, name: string, inactive: boolean, hidden: boolean ): Observable<Object> {
-    console.log(
-      "setConfiguration type", type,
-      "id", id,
-      "name", name,
-      "inactive", inactive,
-      "hidden", hidden
-    );
     let url = environment.baseUrl + `pins/${type}`;
     let body = `{"id":${id}, "name": "${name}", "inactive": ${inactive}, "hidden": ${hidden}}`;
     return this.http.put( url, body );

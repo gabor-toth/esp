@@ -42,7 +42,6 @@ export class ProgramsComponent implements OnInit {
     let component = this;
     this.programService.getAll().subscribe( {
       next( programs ) {
-        console.log(programs);
         component.programs.set( programs );
       },
       error( error ) {

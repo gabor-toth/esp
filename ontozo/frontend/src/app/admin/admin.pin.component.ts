@@ -108,13 +108,6 @@ class AdminPinComponent implements OnInit {
     this.nameFormControl.setValue( pin.name );
     this.settings.controls.active.setValue( !pin.inactive );
     this.settings.controls.hidden.setValue( pin.hidden );
-    console.log(
-      "selectPin type", typeLabel,
-      "id", pin.id,
-      "name", pin.name,
-      " active", pin.inactive,
-      " hidden", pin.hidden
-    );
   }
 
   save() {
@@ -122,10 +115,6 @@ class AdminPinComponent implements OnInit {
     let name = this.nameFormControl.getRawValue();
     let active = this.settings.controls.active.getRawValue() || false;
     let hidden = this.settings.controls.hidden.getRawValue() || false;
-    console.log( "save name", name,
-      " active", active, this.settings.controls.active.getRawValue(), //this.settings.controls.active.value() != null ? this.settings.controls.active.value() : "null",
-      " hidden", hidden
-    );
     if ( name == null || this.type == null || this.id == null ) {
       return;
     }
