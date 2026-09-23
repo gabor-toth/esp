@@ -164,6 +164,11 @@ void read_days( const cJSON *root, Program *program ) {
         program->valid = false;
     } else {
         char *type_as_string = type_element->valuestring;
+        if ( type_as_string == NULL ) {
+            ESP_LOGW( LOG_TAG, "no string in %s", FIELD_TYPE );
+            program->valid = false;
+            return;
+        }
         if ( strcmp( VALUE_TYPE_ON_DAYS, type_as_string ) == 0 || strcmp( VALUE_TYPE_ON, type_as_string ) == 0 ) {
             program->days.type = onDays;
         } else if ( strcmp( VALUE_TYPE_INTERVAL, type_as_string ) == 0 ) {

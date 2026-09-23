@@ -9,8 +9,10 @@ typedef struct {
     const char *nvs_key;
 } ConfigVersion;
 
+extern void config_version_init( ConfigVersion *version, const char *nvs_key );
+
 extern void config_version_set_and_write( uint32_t nvs_handle, ConfigVersion *version );
 
-extern void config_version_read( uint32_t nvs_handle, const char *nvs_key, ConfigVersion *version );
+extern void config_version_read( uint32_t nvs_handle, ConfigVersion *version );
 
 #endif //ONTOZO_CONFIG_VERSION_H

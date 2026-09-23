@@ -13,6 +13,8 @@ import { MatCheckbox } from "@angular/material/checkbox";
 import { MatChipInputEvent, MatChipsModule } from "@angular/material/chips";
 import { MatRadioChange, MatRadioModule } from "@angular/material/radio";
 import { interval } from "rxjs";
+import { MatOption, MatSelect } from "@angular/material/select";
+import { MatListOption, MatSelectionList } from "@angular/material/list";
 
 @Component( {
   selector: 'app-program',
@@ -33,12 +35,19 @@ import { interval } from "rxjs";
     MatCheckbox,
     MatChipsModule,
     MatRadioModule,
+    MatSelect,
+    MatOption,
+    MatCard,
+    MatCardHeader,
+    MatCardTitle,
+    MatSelectionList,
+    MatListOption,
   ]
 } )
 export class ProgramComponent implements OnInit {
   readonly program = signal<Program | undefined>( undefined );
-  readonly keywords = signal<string[]>( [] );
-  programDaysDisplay: string[] = [ 'H', 'K', 'Sz', 'Cs', 'P', 'Sz', 'V' ];
+  readonly startTimes = signal<string[]>( [] );
+  readonly programDaysDisplay: string[] = [ 'Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap' ];
   id: number | null = null;
 
   private readonly activatedRoute = inject( ActivatedRoute );
@@ -55,8 +64,11 @@ export class ProgramComponent implements OnInit {
   } );
 
   readonly chipFormControl = new FormControl( '', [ Validators.required, Validators.pattern( /^[0-2]?[0-9]:[0-9]{2}$/ ) ] );
-  readonly selectedProgramDayType = signal<ProgramDayType | undefined>( undefined );
+  selectedProgramDayType = signal<ProgramDayType | undefined>( undefined );
   readonly selectedDays = signal<number[]>( [] );
+  intervalDays = signal<number | undefined>( 3 );
+  intervalStartsOn = signal<number | undefined>( 1 );
+  intervalStartReset = signal<boolean>( false );
 
   constructor() {
     let id = this.activatedRoute.snapshot.params[ 'id' ];
@@ -77,16 +89,17 @@ export class ProgramComponent implements OnInit {
       let program = {
         enabled: true,
         days: <ProgramDay>{
-          type: <ProgramDayType><unknown>ProgramDayType[ ProgramDayType.interval ],
+          type: ProgramDayType.interval,
+          // type: ProgramDayType.onDays,
           intervalDays: 3,
-          // type: <ProgramDayType><unknown>ProgramDayType[ ProgramDayType.onDays ],
-          // onDays: <ProgramDayValue[]><unknown>[]
+          intervalStartsOn: 5,
+          onDays: <ProgramDayValue[]><unknown>[ 1, 3, 5 ]
         },
         index: 0,
         lastRunTime: 0,
-        name: "",
+        name: "Teszt",
         nextRunTime: 0,
-        startTimes: [],
+        startTimes: [ "11:00", "13:15" ],
         valid: true,
         zones: <ProgramZone[]>[]
       };
@@ -106,9 +119,19 @@ export class ProgramComponent implements OnInit {
 
   protected programLoaded( program: Program ) {
     this.program.set( program );
+    this.nameFormControl.setValue( program.name );
     this.settings.controls.active.setValue( program.enabled );
-    let programDayType = parseInt( ProgramDayType[ program.days.type.valueOf() ] );
+    let programDayType = program.days.type;
+    this.startTimes.set(program.startTimes );
     this.selectedProgramDayType.set( programDayType );
+    if ( programDayType == ProgramDayType.onDays ) {
+      this.selectedDays.set( program.days.onDays || [] );
+    } else {
+      this.intervalDays.set( program.days.intervalDays );
+      this.intervalStartsOn.set( program.days.intervalStartsOn );
+      console.log("this.intervalStartsOn", this.intervalStartsOn());
+      //this.intervalStartReset.set( program.intervalStartReset );
+    }
   }
 
   hasDay( dayIndex: number ): boolean {
@@ -116,11 +139,33 @@ export class ProgramComponent implements OnInit {
   }
 
   save(): void {
+    let program = this.program();
+    if ( program == undefined ) {
+      return;
+    }
+    program.name = this.nameFormControl.getRawValue() || "";
+    program.enabled = this.settings.controls.active.getRawValue() || false;
+    //let programDayType = parseInt( ProgramDayType[ program.days.type.valueOf() ] );
+    program.days.type = this.selectedProgramDayType() || ProgramDayType.unused;
+    program.startTimes = this.startTimes();
+    program.days.intervalDays = this.intervalDays() || 0;
+    program.days.intervalStartsOn = this.intervalStartsOn() || -1;
+    //mprogram.intervalStartReset = this.intervalStartReset();
+    program.days.onDays = this.selectedDays() || [];
 
+    let component = this;
+    this.programService.set(program).subscribe( {
+      next( program ) {
+        component.snackBar.message( 'Program sikeresen mentve.' );
+      },
+      error( error ) {
+        component.snackBar.open( 'Hiba a program mentése közben', error );
+      },
+    } );
   }
 
   removeKeyword( keyword: string ) {
-    this.keywords.update( keywords => {
+    this.startTimes.update( keywords => {
       const index = keywords.indexOf( keyword );
       if ( index < 0 ) {
         return keywords;
@@ -137,7 +182,7 @@ export class ProgramComponent implements OnInit {
 
     // Add our keyword
     if ( value ) {
-      this.keywords.update( keywords => [ ...keywords, value ].sort(/*todo compareTime*/ ) );
+      this.startTimes.update( keywords => [ ...keywords, value ].sort(/*todo compareTime*/ ) );
     }
 
     // Clear the input value

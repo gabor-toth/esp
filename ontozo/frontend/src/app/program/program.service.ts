@@ -13,41 +13,60 @@ export class ProgramService {
   }
 
   getAll(): Observable<Program[]> {
+    let service = this;
     if ( environment.simulateRestCall ) {
       return of( simulatedPrograms.programs );
     } else {
-      return new Observable<Program[]>( ( subscriber ) => {
-        this.http.get<Programs>( environment.baseUrl + 'programs' ).subscribe( {
-          next( programs ) {
-            programs.programs.forEach( ( program ) => {
-              program.days.type = <ProgramDayType><unknown>ProgramDayType[ program.days.type ];
-              program.days.onDays.map( value => {
-                return <ProgramDayValue><unknown>ProgramDayValue[ value ];
-              } );
-            } )
-            subscriber.next( programs.programs );
-            subscriber.complete();
-          },
-          error( err ) {
-            console.error( 'Error reading programs', err );
-            subscriber.error( err );
-          }
-        } );
-      } );
+        return this.http.get<Programs>( environment.baseUrl + 'programs' ).pipe(
+          map( programs => service.mapPrograms(programs))
+        );
     }
+  }
+
+  private mapProgram( program: Program ) {
+    program.days.type = <ProgramDayType><unknown>ProgramDayType[ program.days.type ];
+    program.days.onDays?.map( value => {
+      return ProgramService.mapDay( value );
+    } );
+    console.log( "intervalStartsOn", program.days.intervalStartsOn );
+    if ( program.days.intervalStartsOn != undefined ) {
+      console.log( program.days.intervalStartsOn, "-->", ProgramService.mapDay( program.days.intervalStartsOn ) );
+      program.days.intervalStartsOn = ProgramService.mapDay( program.days.intervalStartsOn );
+    } else {
+      console.log( "xxx" );
+    }
+    return program;
+  }
+
+  private mapPrograms( programs: Programs ) {
+    let service = this;
+    programs.programs.forEach( ( program ) => {
+      service.mapProgram( program );
+    } );
+    return programs.programs;
+  }
+
+  private static mapDay( value: ProgramDayValue ) {
+    return <ProgramDayValue><unknown>ProgramDayValue[ value ];
   }
 
   get( index: number ): Observable<Program> {
     if ( environment.simulateRestCall ) {
       return of( simulatedPrograms.programs[ index ] );
     } else {
-      return this.http.get<Program>( environment.baseUrl + 'programs/' + index );
+      let service = this;
+      return this.http.get<Program>( environment.baseUrl + 'programs/' + index )
+        .pipe(map( program => service.mapProgram(program) ) );
     }
   }
 
   set( program: Program ): Observable<Object> {
     let url = environment.baseUrl + 'programs';
-    return this.http.put( url, program );
+    if ( program.index == 0 ) {
+      return this.http.put( url, program );
+    } else {
+      return this.http.post( url, program );
+    }
   }
 
   setEnabled( index: number, enabled: boolean ): Observable<Object> {

@@ -23,7 +23,6 @@ export class SnackbarComponent implements OnInit {
   public readonly cssClass: string;
 
   constructor( @Inject( MAT_SNACK_BAR_DATA ) public message: any, type: SnackBarType ) {
-    console.log( "type", type );
     switch ( type ) {
       case SnackBarType.message:
         this.icon = "check";

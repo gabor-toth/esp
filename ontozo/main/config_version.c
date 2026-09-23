@@ -10,6 +10,10 @@ static void set_string( ConfigVersion *version ) {
     snprintf( version->string, sizeof( version->string ), "%llx", version->version );
 }
 
+void config_version_init( ConfigVersion *version, const char *nvs_key ) {
+    version->nvs_key = nvs_key;
+}
+
 void config_version_set_and_write( uint32_t nvs_handle, ConfigVersion *version ) {
     if ( sntp_is_time_set() ) {
         time( &version->version );
@@ -25,8 +29,7 @@ void config_version_set_and_write( uint32_t nvs_handle, ConfigVersion *version )
     set_string( version );
 }
 
-void config_version_read( uint32_t nvs_handle, const char *nvs_key, ConfigVersion *version ) {
-    version->nvs_key = nvs_key;
+void config_version_read( uint32_t nvs_handle,ConfigVersion *version ) {
     esp_err_t result = nvs_get_i64( nvs_handle, version->nvs_key, &version->version );
     if ( result != ESP_OK ) {
         ESP_LOGW( TAG, "Unable to read version from key %s: %04x", version->nvs_key, result );

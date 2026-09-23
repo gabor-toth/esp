@@ -277,6 +277,22 @@ mat-spinner {
   margin: 0.5em;
 }
 
+
+.form-field-container {
+  &.mat-mdc-card-content > * {
+    margin-bottom: 1em;
+  }
+
+  .mat-mdc-form-field {
+    display: flex;
+  }
+}
+
+
+form mat-card {
+  margin-bottom: 1em;
+}
+
 .row {
   display: flex;
   flex-direction: row;

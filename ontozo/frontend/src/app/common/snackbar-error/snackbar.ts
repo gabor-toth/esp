@@ -11,11 +11,11 @@ export class SnackBar {
   }
 
   open( log: string, error: any, message?: string ) {
-    console.error( log, error );
+    console.error( log, error, message, typeof message);
     this.snackBar.openFromComponent(
       SnackbarErrorComponent,
       {
-        data: message != undefined ? message : 'Hiba a kapcsolatban.',
+        data: message || log,
         duration: 10000,
         horizontalPosition: 'right',
         panelClass: 'snackbar-panel-error',

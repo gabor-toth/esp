@@ -21,21 +21,20 @@ export enum ProgramDayValue {
 
 export interface ProgramDay {
   type: ProgramDayType;
-  onDays: ProgramDayValue[];
-  intervalDays: number;
-  intervalStartsOn: number;
-  intervalStartReset: boolean;
+  onDays?: ProgramDayValue[];
+  intervalDays?: number;
+  intervalStartsOn?: number;
+  intervalStartReset?: boolean;
 }
 
 export interface Program {
   days: ProgramDay;
   enabled: boolean;
-  nextRunTime: number;
+  nextRunTime?: number;
   index: number;
-  lastRunTime: number;
+  lastRunTime?: number;
   name: string;
   startTimes: string[];
-  valid: boolean;
   zones: ProgramZone[];
 }
 

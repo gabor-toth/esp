@@ -65,6 +65,7 @@ static esp_err_t program_put_post_handler( httpd_req_t *req, bool is_put ) {
     ESP_LOGI( LOG_TAG, "%s %s", http_method_str( req->method ), req->uri );
 
     debug_print_free_mem( LOG_TAG );
+    rest_allow_cors( req );
     cJSON *root;
     result = rest_receive_json_body( req, (http_server_context_t *) req->user_ctx, &root );
     if ( result != ESP_OK ) {

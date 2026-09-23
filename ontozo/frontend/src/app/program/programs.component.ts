@@ -42,6 +42,7 @@ export class ProgramsComponent implements OnInit {
     let component = this;
     this.programService.getAll().subscribe( {
       next( programs ) {
+        console.log(programs);
         component.programs.set( programs );
       },
       error( error ) {
@@ -52,7 +53,7 @@ export class ProgramsComponent implements OnInit {
 
   hasDay( program: Program, dayIndex: number ): boolean {
     let dayValue = ProgramDayValue[ dayIndex ];
-    return program.days.onDays.find( e => e.valueOf().toString() == dayValue ) != null;
+    return program.days.onDays?.find( e => e.valueOf().toString() == dayValue ) != null;
   }
 
   setEnabled( program: Program, enabled: boolean ) {

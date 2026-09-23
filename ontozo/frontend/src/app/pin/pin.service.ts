@@ -25,7 +25,7 @@ export class PinService {
 
   getState(): Observable<PinsState> {
     if ( environment.simulateRestCall ) {
-      return of( simulatedPinState );
+      return of( <PinsState>simulatedPinState );
     }
 
     return this.http.get<PinsState>( environment.baseUrl + 'pins/state' )
@@ -44,7 +44,7 @@ export class PinService {
 
   getConfiguration(): Observable<PinsConfiguration> {
     if ( environment.simulateRestCall ) {
-      return of( simulatedPinConfiguration );
+      return of( <PinsConfiguration>simulatedPinConfiguration );
     }
     return this.http.get<PinsConfiguration>( environment.baseUrl + 'pins' )
       .pipe( tap( pins => {

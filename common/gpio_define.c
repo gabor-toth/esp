@@ -240,7 +240,8 @@ static void add_output_pins(void* user_context)
 void gpio_init(void* user_context, gpio_changed_callback_t gpio_changed_callback)
 {
     nvs_storage_handle = nvs_open_storage();
-    config_version_read(nvs_storage_handle, NVS_KEY_VERSION, &version);
+    config_version_init(&version, NVS_KEY_VERSION);
+    config_version_read(nvs_storage_handle, &version);
     add_input_pins(user_context, gpio_changed_callback);
     add_output_pins(user_context);
     nvs_close_storage(nvs_storage_handle);

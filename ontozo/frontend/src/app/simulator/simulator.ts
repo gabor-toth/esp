@@ -1,7 +1,6 @@
-import { Program, ProgramDay, ProgramDayType, ProgramDayValue, Programs, ProgramZone } from '../program/program';
-import { PinsConfiguration, PinsState } from '../pin/pin';
+import {  ProgramDayType, ProgramDayValue, Programs } from '../program/program';
 
-export const simulatedPinConfiguration = <PinsConfiguration>{
+export const simulatedPinConfiguration = {
   version: "1",
   inputs: {
     levels: [
@@ -68,7 +67,7 @@ export const simulatedPinConfiguration = <PinsConfiguration>{
   }
 }
 
-export const simulatedPinState = <PinsState>{
+export const simulatedPinState = {
   version: "1",
   inputs: {
     levels: [
@@ -142,12 +141,12 @@ export const simulatedPrograms: Programs =
       [
         {
           enabled: true,
-          days: <ProgramDay>{
-            type: <ProgramDayType><unknown>ProgramDayType[ ProgramDayType.onDays ],
-            onDays: <ProgramDayValue[]><unknown>[
-              ProgramDayValue[ ProgramDayValue.Mon ],
-              ProgramDayValue[ ProgramDayValue.Wed ],
-              ProgramDayValue[ ProgramDayValue.Fri ]
+          days: {
+            type: ProgramDayType.onDays,
+            onDays: [
+              ProgramDayValue.Mon,
+              ProgramDayValue.Wed,
+              ProgramDayValue.Fri
             ]
           },
           index: 1,
@@ -158,41 +157,45 @@ export const simulatedPrograms: Programs =
             "06:00",
             "18:00"
           ],
-          valid: true,
-          zones: <ProgramZone[]>[
-            <ProgramZone>{
+          zones: [
+            {
               zoneId: 1,
               duration: 600
             },
-            <ProgramZone>{
+            {
               zoneId: 2,
               duration: 300
             },
-            <ProgramZone>{
+            {
               zoneId: 3,
               duration: 300
             }
           ]
         },
-        <Program>{
+        {
           enabled: false,
-          days: <ProgramDay>{
-            type: <ProgramDayType><unknown>ProgramDayType[ ProgramDayType.onDays ],
-            onDays: <ProgramDayValue[]><unknown>[
-              ProgramDayValue[ ProgramDayValue.Mon ],
-              ProgramDayValue[ ProgramDayValue.Wed ],
-              ProgramDayValue[ ProgramDayValue.Fri ]
+          days: {
+            type: ProgramDayType.onDays,
+            onDays: [
+              ProgramDayValue.Mon,
+              ProgramDayValue.Wed,
+              ProgramDayValue.Fri
             ]
           },
           index: 2,
+          lastRunTime: 0,
+          nextRunTime: 0,
           name: "veteményes",
-          zones: <ProgramZone[]>[
-            <ProgramZone>{
+          zones: [
+            {
               zoneId: 5,
               duration: 1800
             }
           ],
-          valid: true,
+          startTimes: [
+            "06:00",
+            "18:00"
+          ]
         }
       ]
   };

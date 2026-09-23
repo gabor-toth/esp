@@ -153,8 +153,9 @@ void program_init() {
     uint32_t count;
     char nvs_key[256];
 
+    config_version_init(&version, NVS_NAME_PROGRAM_VERSION );
     if ( nvs_get_u32( nvs_handle, NVS_NAME_PROGRAM_COUNT, &count ) == ESP_OK ) {
-        config_version_read( nvs_handle, NVS_NAME_PROGRAM_VERSION, &version );
+        config_version_read( nvs_handle, &version );
         program_max_count = (int) ( ( ( count - 1 ) / PROGRAM_INITIAL_COUNT + 1 ) * PROGRAM_INITIAL_COUNT );
         programs = malloc( sizeof( Program * ) * program_max_count );
         ESP_LOGI( LOG_TAG, "Reading %ld programs", count );
@@ -175,6 +176,8 @@ void program_init() {
         }
     } else {
         ESP_LOGI( LOG_TAG, "No programs stored" );
+        program_max_count = PROGRAM_INITIAL_COUNT;
+        programs = malloc( sizeof( Program * ) * program_max_count );
     }
     nvs_close_storage( nvs_handle );
 }
