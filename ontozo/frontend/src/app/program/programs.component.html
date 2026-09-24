@@ -24,20 +24,20 @@
                                 }
                             </div>
                         } @else if (program.days.type == ProgramDayType.interval) {
-                        <div>
-                            {{ program.days.intervalDays }} naponta
-                        </div>
-                    }
+                            <div>
+                                {{ program.days.intervalDays }} naponta
+                            </div>
+                        }
                     </div>
                 </mat-card-content>
-                <mat-card-actions align="end">
+                <mat-card-actions align="end" class="button-holder">
                     @if (program.enabled) {
-                        <button matButton (click)="setEnabled(program,false)">Letilt</button>
+                        <button matButton="outlined" (click)="setEnabled(program,false)">Letilt</button>
                     } @else {
-                    <button matButton (click)="setEnabled(program,true)">Engedélyez</button>
-                }
-                    <button matButton="filled" routerLink="/programs/{{program.index}}">Szerkeszt</button>
-                    <button matButton="filled" disabled>Töröl</button>
+                        <button matButton="outlined" (click)="setEnabled(program,true)">Engedélyez</button>
+                    }
+                    <button matButton="outlined" routerLink="/programs/{{program.index}}">Szerkeszt</button>
+                    <button matButton="outlined" disabled>Töröl</button>
                 </mat-card-actions>
             </mat-card>
         }

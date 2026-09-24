@@ -7,6 +7,7 @@ import { Program, ProgramDay, ProgramDayType, ProgramDayValue } from "./program"
 } )
 export class ProgramWireMapper {
   public mapProgramFromWire( programWire: ProgramWire ) {
+    console.log( programWire );
     let service = this;
     let days = <ProgramDay>{
       type: ProgramDayType[ programWire.days.type as keyof typeof ProgramDayType ],

@@ -109,8 +109,12 @@ mat-icon.mat-icon {
 .button-holder {
   margin-bottom: 0.5em;
 
-  button {
-    margin-right: 1em;
+  &.mat-mdc-card-actions {
+    margin-bottom: 0;
+  }
+
+  button:not(:last-child) {
+    margin-right: 0.5em;
   }
 }
 

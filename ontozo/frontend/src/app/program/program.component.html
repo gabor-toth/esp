@@ -11,7 +11,7 @@
                 }
             </mat-form-field>
 
-            <div class="settings" [formGroup]="settings">
+            <div class="settings" [formGroup]="fields">
                 <div>
                     <mat-checkbox id="active" formControlName="active">Aktív</mat-checkbox>
                 </div>
@@ -25,7 +25,7 @@
                     <mat-form-field>
                         <mat-chip-grid #chipGrid aria-label="Új idő" [formControl]="chipFormControl">
                             @for (keyword of startTimes(); track $index) {
-                                <mat-chip-row (removed)="removeKeyword(keyword)">
+                                <mat-chip-row (removed)="removeStartTime(keyword)">
                                     {{ keyword }}
                                     <button matChipRemove [attr.aria-label]="'remove ' + keyword">
                                         <mat-icon>cancel</mat-icon>
@@ -34,10 +34,17 @@
                             }
                         </mat-chip-grid>
                         <input
+                                matInput
                                 placeholder="Új idő..."
                                 [matChipInputFor]="chipGrid"
-                                (matChipInputTokenEnd)="add($event)"
+                                (matChipInputTokenEnd)="addStartTime($event)"
                         />
+                        @if (chipFormControl.hasError( 'required' )) {
+                            <mat-error>Kötelező mező!</mat-error>
+                        }
+                        @if (chipFormControl.hasError( 'invalidTime' )) {
+                            <mat-error>Hibás idő!</mat-error>
+                        }
                     </mat-form-field>
                 </mat-card-content>
             </mat-card>
@@ -49,45 +56,57 @@
                 <mat-card-content class="form-field-container">
 
                     <mat-form-field>
-                        <!--<mat-label>Indítás</mat-label>-->
-                        <mat-select [(value)]="selectedProgramDayType">
+                        <mat-select [(value)]="selectedProgramDayType" [formControl]="selectedProgramDayTypeControl">
                             <mat-option [value]="ProgramDayType.onDays.valueOf()">megadott napokon</mat-option>
                             <mat-option [value]="ProgramDayType.interval.valueOf()">intervallum</mat-option>
                         </mat-select>
+                        @if (selectedProgramDayTypeControl.hasError( 'required' )) {
+                            <mat-error>Kötelező mező!</mat-error>
+                        }
                     </mat-form-field>
 
                     @if (selectedProgramDayType() == ProgramDayType.onDays) {
-                        <mat-selection-list>
-                            @for (day of programDaysDisplay; track $index) {
-                                @let hasDay = this.hasDay( $index );
-                                <mat-list-option selected="{{hasDay}}" (click)="onDayChange($index,hasDay)">{{day}}</mat-list-option>
+                        <div class="mat-mdc-form-field-subscript-wrapper">
+                            <mat-selection-list [formControl]="selectedDaysControl">
+                                @for (day of programDaysDisplay; track $index) {
+                                    @let hasDay = this.hasDay( $index );
+                                    <mat-list-option selected="{{hasDay}}"
+                                                     (click)="onDayChange($index,hasDay)">{{ day }}
+                                    </mat-list-option>
+                                }
+                            </mat-selection-list>
+                            @if (selectedDaysControl.hasError( 'required' )) {
+                                <mat-error>Kötelező mező!</mat-error>
                             }
-                        </mat-selection-list>
+                        </div>
                     } @else if (selectedProgramDayType() == ProgramDayType.interval) {
                         <mat-form-field>
-                            <mat-select [(value)]="intervalDays">
+                            <mat-select [(value)]="intervalDays" [formControl]="intervalDaysControl">
                                 @for (day of [ 1, 2, 3, 4, 5, 6, 7 ]; track $index) {
                                     <mat-option [value]="day">{{ day }}</mat-option>
                                 }
                             </mat-select>
                             naponta
+                            @if (intervalDaysControl.hasError( 'required' )) {
+                                <mat-error>Kötelező mező!</mat-error>
+                            }
                         </mat-form-field>
                         <mat-form-field>
                             Következő nap
-                            <mat-select [(value)]="intervalStartsOn">
+                            <mat-select [(value)]="intervalStartsOn" [formControl]="intervalStartsOnControl">
                                 @for (day of programDaysDisplay; track $index) {
                                     <mat-option [value]="$index">{{ day }}</mat-option>
                                 }
                             </mat-select>
+                            @if (intervalStartsOnControl.hasError( 'required' )) {
+                                <mat-error>Kötelező mező!</mat-error>
+                            }
                         </mat-form-field>
                         <!--
                         <div>
                             <mat-checkbox id="active" [checked]="intervalStartReset()" (change)="intervalStartReset.set($event.checked)">Visszaállítás</mat-checkbox>
                         </div>
                         -->
-
-                    } @else {
-                        {{ selectedProgramDayType() }} {{ typeof selectedProgramDayType() }}
                     }
                 </mat-card-content>
             </mat-card>

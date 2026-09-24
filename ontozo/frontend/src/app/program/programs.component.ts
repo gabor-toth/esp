@@ -62,7 +62,7 @@ export class ProgramsComponent implements OnInit {
         component.updateState();
       },
       error( error ) {
-        component.snackBar.open( 'Error in setEnabled', error );
+        component.snackBar.open( 'Error in setEnabled', error, 'Nem sikerült a módosítás.' );
       }
     } );
   }
