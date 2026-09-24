@@ -54,4 +54,9 @@ export class ProgramService {
       return this.set( program );
     } ) );
   }
+
+  delete( index: number ) {
+    let url = environment.baseUrl + 'programs/' + index;
+    return this.http.delete( url );
+  }
 }

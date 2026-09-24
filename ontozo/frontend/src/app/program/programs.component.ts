@@ -7,6 +7,9 @@ import { MatCard, MatCardActions, MatCardContent, MatCardHeader, MatCardTitle } 
 import { MatButton } from "@angular/material/button";
 import { SnackBar } from "../common/snackbar-error/snackbar";
 import { RouterLink } from "@angular/router";
+import { MatDialog } from "@angular/material/dialog";
+import { ConfirmationDialog } from "../common/confirmation/confirmation.dialog";
+import { Confirmation } from "../common/confirmation/confirmation";
 
 @Component( {
   selector: 'app-programs',
@@ -26,10 +29,12 @@ import { RouterLink } from "@angular/router";
 } )
 export class ProgramsComponent implements OnInit {
   readonly programs = signal<Program[] | undefined>( undefined );
-  programDaysDisplay: string[] = [ 'H', 'K', 'Sz', 'Cs', 'P', 'Sz', 'V' ];
+  readonly programDaysDisplay: string[] = [ 'H', 'K', 'Sz', 'Cs', 'P', 'Sz', 'V' ];
 
-  private programService = inject( ProgramService );
-  private snackBar = inject( SnackBar );
+  private readonly programService = inject( ProgramService );
+  private readonly snackBar = inject( SnackBar );
+  private readonly dialog = inject( MatDialog );
+  private readonly confirmation = inject( Confirmation );
 
   constructor() {
   }
@@ -65,6 +70,22 @@ export class ProgramsComponent implements OnInit {
         component.snackBar.open( 'Error in setEnabled', error, 'Nem sikerült a módosítás.' );
       }
     } );
+  }
+
+  delete( program: Program ) {
+    let component = this;
+    this.confirmation.open( `Biztosan törölni akarod a(z) "${program.name}" programot?` ).subscribe( result => {
+      this.programService.delete( program.index ).subscribe( {
+        next( object ) {
+          component.snackBar.message( 'Program sikeresen törölve.' );
+          component.updateState();
+        },
+        error( error ) {
+          component.snackBar.open( 'Nem sikerült a törlés.', error );
+        }
+      } );
+    } );
+
   }
 
   protected readonly ProgramDayType = ProgramDayType;

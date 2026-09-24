@@ -37,7 +37,7 @@
                         <button matButton="outlined" (click)="setEnabled(program,true)">Engedélyez</button>
                     }
                     <button matButton="outlined" routerLink="/programs/{{program.index}}">Szerkeszt</button>
-                    <button matButton="outlined" disabled>Töröl</button>
+                    <button matButton="outlined" (click)="delete(program)">Töröl</button>
                 </mat-card-actions>
             </mat-card>
         }
