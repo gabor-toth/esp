@@ -7,8 +7,6 @@ import { MatCard, MatCardActions, MatCardContent, MatCardHeader, MatCardTitle } 
 import { MatButton } from "@angular/material/button";
 import { SnackBar } from "../common/snackbar-error/snackbar";
 import { RouterLink } from "@angular/router";
-import { MatDialog } from "@angular/material/dialog";
-import { ConfirmationDialog } from "../common/confirmation/confirmation.dialog";
 import { Confirmation } from "../common/confirmation/confirmation";
 
 @Component( {
@@ -33,7 +31,6 @@ export class ProgramsComponent implements OnInit {
 
   private readonly programService = inject( ProgramService );
   private readonly snackBar = inject( SnackBar );
-  private readonly dialog = inject( MatDialog );
   private readonly confirmation = inject( Confirmation );
 
   constructor() {
@@ -47,6 +44,7 @@ export class ProgramsComponent implements OnInit {
     let component = this;
     this.programService.getAll().subscribe( {
       next( programs ) {
+        programs.sort( ( a, b ) => a.name.localeCompare( b.name ) );
         component.programs.set( programs );
       },
       error( error ) {
@@ -62,7 +60,7 @@ export class ProgramsComponent implements OnInit {
 
   setEnabled( program: Program, enabled: boolean ) {
     let component = this;
-    this.programService.setEnabled( program.index, enabled ).subscribe( {
+    this.programService.setEnabled( program.id, enabled ).subscribe( {
       next( object ) {
         component.updateState();
       },
@@ -74,8 +72,8 @@ export class ProgramsComponent implements OnInit {
 
   delete( program: Program ) {
     let component = this;
-    this.confirmation.open( `Biztosan törölni akarod a(z) "${program.name}" programot?` ).subscribe( result => {
-      this.programService.delete( program.index ).subscribe( {
+    this.confirmation.open( `Biztosan törölni akarod a(z) "${ program.name }" programot?` ).subscribe( result => {
+      this.programService.delete( program.id ).subscribe( {
         next( object ) {
           component.snackBar.message( 'Program sikeresen törölve.' );
           component.updateState();

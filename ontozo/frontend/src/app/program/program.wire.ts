@@ -1,4 +1,4 @@
-import { ProgramDayType, ProgramDayValue, ProgramZone } from "./program";
+import {ProgramDayType, ProgramDayValue, ProgramZone} from "./program";
 
 export interface ProgramDayWire {
   type: string;
@@ -11,10 +11,10 @@ export interface ProgramDayWire {
 export interface ProgramWire {
   days: ProgramDayWire;
   enabled: boolean;
-  nextRunTime?: number;
-  index: number;
+  id: number;
   lastRunTime?: number;
   name: string;
+  nextRunTime?: number;
   startTimes: string[];
   zones: ProgramZone[];
 }

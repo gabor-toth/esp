@@ -8,31 +8,31 @@
 #include "program_logic.h"
 #include "program.h"
 
-static const char *LOG_TAG = "program_logic";
+static const char* LOG_TAG = "program_logic";
 
 struct queue_item_t {
     int64_t program_id;
     int program_index;
     int zones_count;
-    bool *zones_disabled;
-    struct queue_item_t *next;
+    bool* zones_disabled;
+    struct queue_item_t* next;
 };
 
 static bool is_running = false;
 static int current_program_index;
 static int current_zone_id = -1;
 static int current_zone_index;
-static Program *current_program;
+static Program* current_program;
 static int64_t current_program_id;
 static TimerHandle_t timer;
-static struct queue_item_t *queue = NULL;
+static struct queue_item_t* queue = NULL;
 
 static SemaphoreHandle_t semaphore;
 static StaticSemaphore_t xMutexBuffer;
 
 static void stop_and_move_to_next_program();
 
-static void destruct_queue_item( struct queue_item_t *item ) {
+static void destruct_queue_item( struct queue_item_t* item ) {
     if ( item->zones_disabled ) {
         free( item->zones_disabled );
     }
@@ -58,7 +58,7 @@ static void start_next_zone() {
         stop_and_move_to_next_program();
         return;
     }
-    ProgramZone *zone = &current_program->zones[ current_zone_index ];
+    ProgramZone* zone = &current_program->zones[ current_zone_index ];
     current_zone_id = zone->zone_id;
     ESP_LOGI( LOG_TAG, "moving to zone %d/%d: id %d, duration %d secs",
               current_zone_index + 1, current_program->zones_count, current_zone_id, zone->duration_in_seconds );
@@ -105,8 +105,8 @@ static int64_t generate_program_id() {
 }
 
 static void start_or_queue_program( int program_index ) {
-    struct queue_item_t *item = calloc( 1, sizeof( struct queue_item_t ) );
-    Program *program = program_get( program_index );
+    struct queue_item_t* item = calloc( 1, sizeof( struct queue_item_t ) );
+    Program* program = program_get( program_index );
     item->program_id = generate_program_id();
     item->program_index = program_index;
     item->zones_count = program->zones_count;
@@ -115,7 +115,7 @@ static void start_or_queue_program( int program_index ) {
         queue = item;
         start_program();
     } else {
-        struct queue_item_t *next = queue;
+        struct queue_item_t* next = queue;
         while ( next->next != NULL ) {
             next = next->next;
         }
@@ -145,7 +145,7 @@ static void stop_and_move_to_next_program() {
         ESP_LOGI( LOG_TAG, "No queued program to start" );
         return;
     }
-    struct queue_item_t *prev = queue;
+    struct queue_item_t* prev = queue;
     queue = queue->next;
     destruct_queue_item( prev );
     if ( queue != NULL ) {
@@ -155,7 +155,7 @@ static void stop_and_move_to_next_program() {
 
 static void stop_all_programs() {
     while ( queue != NULL ) {
-        struct queue_item_t *next = queue->next;
+        struct queue_item_t* next = queue->next;
         destruct_queue_item( queue );
         queue = next;
     }
@@ -166,9 +166,9 @@ static void pump_state_changed( bool is_on ) {
     // TODO add logic
 }
 
-static struct queue_item_t *find_program_by_id( program_id_t program_id, struct queue_item_t **prev_item ) {
-    struct queue_item_t *prev = NULL;
-    struct queue_item_t *item = queue;
+static struct queue_item_t* find_program_by_id( program_id_t program_id, struct queue_item_t** prev_item ) {
+    struct queue_item_t* prev = NULL;
+    struct queue_item_t* item = queue;
     while ( item != NULL && item->program_id != program_id ) {
         prev = item;
         item = item->next;
@@ -209,8 +209,8 @@ void program_logic_stop_all() {
 
 void program_logic_cancel_scheduled_program( program_id_t program_id ) {
     xSemaphoreTake( semaphore, 10 );
-    struct queue_item_t *prev;
-    struct queue_item_t *item = find_program_by_id( program_id, &prev );
+    struct queue_item_t* prev;
+    struct queue_item_t* item = find_program_by_id( program_id, &prev );
     if ( item != NULL ) {
         if ( prev != NULL ) {
             prev->next = item->next;
@@ -227,7 +227,7 @@ void program_logic_cancel_scheduled_program( program_id_t program_id ) {
 
 void program_logic_toggle_scheduled_zone( program_id_t program_id, int zone_index ) {
     xSemaphoreTake( semaphore, 10 );
-    struct queue_item_t *item = find_program_by_id( program_id, NULL );
+    struct queue_item_t* item = find_program_by_id( program_id, NULL );
     if ( item != NULL ) {
         if ( zone_index < item->zones_count ) {
             if ( queue == item && zone_index <= current_zone_index ) {
@@ -247,7 +247,7 @@ void program_logic_toggle_scheduled_zone( program_id_t program_id, int zone_inde
     xSemaphoreGive( semaphore );
 }
 
-int program_logic_get_queued_programs( RunningProgramState *running_state, QueuedProgramState **queue_state ) {
+int program_logic_get_queued_programs( RunningProgramState* running_state, QueuedProgramState** queue_state ) {
     *queue_state = NULL;
     memset( running_state, 0, sizeof( RunningProgramState ) );
     xSemaphoreTake( semaphore, 10 );
@@ -256,19 +256,19 @@ int program_logic_get_queued_programs( RunningProgramState *running_state, Queue
         running_state->program_index = current_program_index;
         running_state->zone_index = current_zone_index;
         running_state->zone_left_seconds =
-                ( xTimerGetExpiryTime( timer ) - xTaskGetTickCount() ) * portTICK_PERIOD_MS / 1000 + 1;
+            ( xTimerGetExpiryTime( timer ) - xTaskGetTickCount() ) * portTICK_PERIOD_MS / 1000 + 1;
     } else {
         running_state->is_program_running = false;
     }
 
     int count = 0;
-    for ( struct queue_item_t *item = queue; item != NULL; item = item->next ) {
+    for ( struct queue_item_t* item = queue; item != NULL; item = item->next ) {
         count++;
     }
     *queue_state = calloc( count, sizeof( QueuedProgramState ) );
     int i = 0;
-    for ( struct queue_item_t *item = queue; item != NULL; item = item->next, i++ ) {
-        QueuedProgramState *result_item = *queue_state + i;
+    for ( struct queue_item_t* item = queue; item != NULL; item = item->next, i++ ) {
+        QueuedProgramState* result_item = *queue_state + i;
         result_item->program_id = item->program_id;
         result_item->program_index = item->program_index;
         result_item->zones_count = item->zones_count;
@@ -287,7 +287,7 @@ void program_logic_pump_state_change( bool is_on ) {
 bool program_logic_is_program_in_use( int program_index ) {
     xSemaphoreTake( semaphore, 10 );
     bool is_in_use = false;
-    struct queue_item_t *item = queue;
+    struct queue_item_t* item = queue;
     while ( item != NULL && !is_in_use ) {
         is_in_use = item->program_index == program_index;
         item = item->next;
@@ -302,11 +302,11 @@ void program_logic_init() {
 
     semaphore = xSemaphoreCreateMutexStatic( &xMutexBuffer );
     timer = xTimerCreate(
-            LOG_TAG,
-            1,
-            0,
-            NULL,
-            timer_callback );
+        LOG_TAG,
+        1,
+        0,
+        NULL,
+        timer_callback );
     if ( !timer ) {
         ESP_LOGE( LOG_TAG, "Failed to create timer" );
     }

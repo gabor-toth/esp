@@ -27,14 +27,14 @@ typedef struct {
 } ProgramDay;
 
 typedef struct Program_ {
-    int index;
+    int id;
     bool valid;
     bool enabled;
-    char *name;
+    char* name;
     int zones_count;
-    ProgramZone *zones;
+    ProgramZone* zones;
     int start_times_count;
-    int *start_times;
+    int* start_times;
     ProgramDay days;
     time_t last_run_time;
     time_t next_run_time;
@@ -42,20 +42,20 @@ typedef struct Program_ {
 
 extern void program_init();
 
-extern void program_add( Program *program );
+extern esp_err_t program_add( Program* program );
 
-extern void program_change( Program *program );
+extern esp_err_t program_change( Program* program );
 
-extern esp_err_t program_delete( int index );
+extern esp_err_t program_delete( int id );
 
 extern int program_get_count();
 
-extern const char *program_get_version();
+extern const char* program_get_version();
 
-extern Program *program_get( int index );
+extern Program* program_get( int id );
 
-extern Program *program_constructor();
+extern Program* program_constructor();
 
-extern void program_destructor( Program *program );
+extern void program_destructor( Program* program );
 
 #endif //ONTOZO_PROGRAM_H

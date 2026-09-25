@@ -17,8 +17,8 @@ static const char* LOG_TAG = "gpio";
 
 #define MAX_PIN_CLASSES 4
 
-#define NVS_KEY_PREFIX  "gpio."
-#define NVS_KEY_VERSION  NVS_KEY_PREFIX "version"
+#define NVS_NAMESPACE_GPIO  ""
+#define NVS_KEY_VERSION  "version"
 
 static nvs_handle_t nvs_storage_handle;
 static ConfigVersion version;
@@ -239,7 +239,7 @@ static void add_output_pins(void* user_context)
 
 void gpio_init(void* user_context, gpio_changed_callback_t gpio_changed_callback)
 {
-    nvs_storage_handle = nvs_open_storage();
+    nvs_storage_handle = nvs_open_storage(NVS_NAMESPACE_GPIO);
     config_version_init(&version, NVS_KEY_VERSION);
     config_version_read(nvs_storage_handle, &version);
     add_input_pins(user_context, gpio_changed_callback);
@@ -340,7 +340,7 @@ bool gpio_set_pin_data(bool is_input, int class_id, int index, PinData* pin_data
     char nvs_key[256];
     get_nvs_key(is_input, class_id, index, nvs_key, sizeof nvs_key);
 
-    nvs_handle_t nvs_handle = nvs_open_storage();
+    nvs_handle_t nvs_handle = nvs_open_storage( NVS_NAMESPACE_GPIO );
     nvs_write_string(nvs_handle, nvs_key, json_string);
     config_version_set_and_write(nvs_handle, &version);
     nvs_close_storage(nvs_handle);

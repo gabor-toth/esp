@@ -1,9 +1,9 @@
-import { Component, inject, OnInit, signal, WritableSignal } from '@angular/core';
-import { Program, ProgramDay, ProgramDayType, ProgramDayValue, ProgramZone } from "./program";
+import { Component, inject, OnInit, signal } from '@angular/core';
+import { Program, ProgramDay, ProgramDayType, ProgramZone } from "./program";
 import { ProgramService } from "./program.service";
 import { MatIcon } from '@angular/material/icon';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
-import { MatCardContent, MatCardModule } from "@angular/material/card";
+import { MatCardModule } from "@angular/material/card";
 import { MatButton } from "@angular/material/button";
 import { SnackBar } from "../common/snackbar-error/snackbar";
 import { ActivatedRoute, RouterLink } from "@angular/router";
@@ -11,7 +11,7 @@ import { FormBuilder, FormControl, FormsModule, ReactiveFormsModule, Validators 
 import { MatError, MatFormField, MatInput, MatLabel } from "@angular/material/input";
 import { MatCheckbox } from "@angular/material/checkbox";
 import { MatChipInputEvent, MatChipsModule } from "@angular/material/chips";
-import { MatRadioChange, MatRadioModule } from "@angular/material/radio";
+import { MatRadioModule } from "@angular/material/radio";
 import { MatOption, MatSelect } from "@angular/material/select";
 import { MatListOption, MatSelectionList } from "@angular/material/list";
 import { TimeSorter } from "../common/time.sorter";
@@ -71,7 +71,8 @@ export class ProgramComponent implements OnInit {
   readonly selectedDays = signal<number[]>( [] );
   intervalDays = signal<number | undefined>( 3 );
   intervalStartsOn = signal<number | undefined>( 1 );
-  intervalStartReset = signal<boolean>( false );
+
+  //intervalStartReset = signal<boolean>( false );
 
   constructor() {
     let id = this.activatedRoute.snapshot.params[ 'id' ];
@@ -95,7 +96,7 @@ export class ProgramComponent implements OnInit {
           //type: ProgramDayType.unused,
           type: ProgramDayType.onDays,
         },
-        index: 0,
+        id: 0,
         lastRunTime: 0,
         name: "xxx",
         nextRunTime: 0,
@@ -176,7 +177,6 @@ export class ProgramComponent implements OnInit {
 
   protected onDayChange( dayIndex: number, hasDay: boolean ) {
     this.selectedDays.update( selectedDays => {
-      let dayValue = ProgramDayValue[ dayIndex ];
       if ( hasDay ) {
         selectedDays = selectedDays.filter( e => e != dayIndex );
       } else {

@@ -201,7 +201,7 @@ export class StateComponent implements OnInit, OnDestroy {
 
   toggleScheduledZoneState( program: RunProgramState, zone: RunZoneState ) {
     let component = this;
-    this.runService.toggleScheduledZoneState( program.id, zone.index ).subscribe( {
+    this.runService.toggleScheduledZoneState( program.id, zone.id ).subscribe( {
       next() {
         component.updateView();
       },

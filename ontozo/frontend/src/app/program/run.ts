@@ -1,7 +1,7 @@
 export interface RunZoneState {
   enabled: boolean;
   duration: number;
-  index: number;
+  id: number;
   leftSeconds: number;
   name: string;
   running: boolean;
@@ -10,7 +10,6 @@ export interface RunZoneState {
 export interface RunProgramState {
   duration: number;
   id: number;
-  index: number;
   name: string;
   running: boolean;
   zones: RunZoneState[];

@@ -146,7 +146,7 @@ export const simulatedPrograms: Program[] =
           ProgramDayValue.Fri
         ]
       },
-      index: 1,
+      id: 1,
       lastRunTime: 0,
       name: "fű",
       nextRunTime: 0,
@@ -156,15 +156,15 @@ export const simulatedPrograms: Program[] =
       ],
       zones: [
         {
-          zoneId: 1,
+          id: 1,
           duration: 600
         },
         {
-          zoneId: 2,
+          id: 2,
           duration: 300
         },
         {
-          zoneId: 3,
+          id: 3,
           duration: 300
         }
       ]
@@ -179,13 +179,13 @@ export const simulatedPrograms: Program[] =
           ProgramDayValue.Fri
         ]
       },
-      index: 2,
+      id: 2,
       lastRunTime: 0,
       nextRunTime: 0,
       name: "veteményes",
       zones: [
         {
-          zoneId: 5,
+          id: 5,
           duration: 1800
         }
       ],

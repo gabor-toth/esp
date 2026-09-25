@@ -15,7 +15,7 @@ typedef struct {
     program_id_t program_id;
     int program_index;
     int zones_count;
-    bool *zones_disabled;
+    bool* zones_disabled;
 } QueuedProgramState;
 
 extern void program_logic_init();
@@ -34,7 +34,7 @@ extern void program_logic_toggle_scheduled_zone( program_id_t program_id, int zo
 
 extern void program_logic_pump_state_change( bool is_on );
 
-extern int program_logic_get_queued_programs( RunningProgramState *running_state, QueuedProgramState **queue_state );
+extern int program_logic_get_queued_programs( RunningProgramState* running_state, QueuedProgramState** queue_state );
 
 extern bool program_logic_is_program_in_use( int program_index );
 

@@ -3,7 +3,7 @@
 
 #include "program.h"
 
-extern char *const FIELD_INDEX;
+extern char *const FIELD_ID;
 
 extern void program_read_from_string( const char *json_string, Program **program_out );
 

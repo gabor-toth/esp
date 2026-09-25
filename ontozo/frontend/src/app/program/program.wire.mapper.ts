@@ -26,7 +26,7 @@ export class ProgramWireMapper {
     return <Program>{
       days: days,
       enabled: programWire.enabled,
-      index: programWire.index,
+      id: programWire.id,
       lastRunTime: programWire.lastRunTime,
       name: programWire.name,
       startTimes: programWire.startTimes,
@@ -65,11 +65,11 @@ export class ProgramWireMapper {
     return <ProgramWire>{
       days: days,
       enabled: program.enabled,
-      index: program.index,
+      id: program.id,
       lastRunTime: program.lastRunTime,
       name: program.name,
-      startTimes: program.startTimes,
       nextRunTime: program.nextRunTime,
+      startTimes: program.startTimes,
       zones: program.zones,
     };
   }

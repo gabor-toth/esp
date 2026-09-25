@@ -16,19 +16,19 @@ static esp_err_t programs_get_handler( httpd_req_t* req ) {
 
     debug_print_free_mem( LOG_TAG );
     rest_allow_cors( req );
-    ESP_ERROR_CHECK( httpd_resp_set_hdr( req, "ETag", program_get_version() ) );
+    httpd_resp_set_hdr( req, "ETag", program_get_version() );
 
     programs_write_to_json( &json_out );
     rest_set_json_content_type( req );
-    ESP_ERROR_CHECK( httpd_resp_sendstr( req, json_out ) );
-    free( (void*) json_out );
+    httpd_resp_sendstr( req, json_out );
+    free( json_out );
     debug_print_free_mem( LOG_TAG );
     return ESP_OK;
 }
 
 static esp_err_t program_get_handler( httpd_req_t* req ) {
     char* json_out;
-    int index;
+    int id;
     esp_err_t result;
 
     ESP_LOGI( LOG_TAG, "%s %s", http_method_str( req->method ), req->uri );
@@ -36,10 +36,10 @@ static esp_err_t program_get_handler( httpd_req_t* req ) {
     debug_print_free_mem( LOG_TAG );
     rest_allow_cors( req );
     const char* uri = req->uri + strlen( PROGRAMS_PREFIX ) + 1;
-    if ( ( result = rest_parse_index( &uri, &index, true ) ) != ESP_OK ) {
+    if ( ( result = rest_parse_index( &uri, &id, true ) ) != ESP_OK ) {
         return rest_set_error_code( req, result, "Program index expected in URL" );
     }
-    Program* program = program_get( index - 1 );
+    Program* program = program_get( id );
     if ( program == NULL ) {
         return httpd_resp_send_err( req, HTTPD_404_NOT_FOUND, "Program not found" );
     }
@@ -54,9 +54,23 @@ static esp_err_t program_get_handler( httpd_req_t* req ) {
 static void send_index_back( httpd_req_t* req, int index ) {
     char response[ 256 ];
     snprintf( response, sizeof response,
-              "{ \"%s\": %d }", FIELD_INDEX, index );
+              "{ \"%s\": %d }", FIELD_ID, index );
     rest_set_json_content_type( req );
     ESP_ERROR_CHECK( httpd_resp_sendstr( req, response ) );
+}
+
+static void handle_result( httpd_req_t* req, esp_err_t result ) {
+    switch ( result ) {
+        case ESP_ERR_NOT_FOUND:
+            httpd_resp_send_err( req, HTTPD_404_NOT_FOUND, NULL );
+            break;
+        case ESP_ERR_NOT_ALLOWED:
+            httpd_resp_send_err( req, HTTPD_403_FORBIDDEN, NULL );
+            break;
+        default:
+            httpd_resp_send_err( req, HTTPD_400_BAD_REQUEST, NULL );
+            break;
+    }
 }
 
 static esp_err_t program_put_post_handler( httpd_req_t* req, bool is_put ) {
@@ -67,7 +81,7 @@ static esp_err_t program_put_post_handler( httpd_req_t* req, bool is_put ) {
     debug_print_free_mem( LOG_TAG );
     rest_allow_cors( req );
     cJSON* root;
-    result = rest_receive_json_body( req, (http_server_context_t*) req->user_ctx, &root );
+    result = rest_receive_json_body( req, req->user_ctx, &root );
     if ( result != ESP_OK ) {
         return ESP_OK;
     }
@@ -79,21 +93,25 @@ static esp_err_t program_put_post_handler( httpd_req_t* req, bool is_put ) {
         return httpd_resp_send_err( req, HTTPD_400_BAD_REQUEST, "Bad request, see log for more information" );
     }
     if ( !is_put ) {
-        if ( program->index == 0 ) {
+        if ( program->id == 0 ) {
             program_destructor( program );
             return httpd_resp_send_err( req, HTTPD_400_BAD_REQUEST, "Needs an index for POST" );
         }
-        if ( program_logic_is_program_in_use( program->index - 1 ) ) {
+        if ( program_logic_is_program_in_use( program->id ) ) {
             return httpd_resp_send_err( req, HTTPD_403_FORBIDDEN, "Program is in use" );
         }
-        program_change( program );
+        result = program_change( program );
     } else {
-        program_add( program );
+        result = program_add( program );
     }
 
-    send_index_back( req, program->index );
+    if ( result == ESP_OK ) {
+        send_index_back( req, program->id );
+    } else {
+        handle_result( req, result );
+    }
     debug_print_free_mem( LOG_TAG );
-    //    heap_caps_check_integrity_all( true );
+    heap_caps_check_integrity_all( true );
 
     return ESP_OK;
 }
@@ -108,25 +126,24 @@ static esp_err_t program_post_handler( httpd_req_t* req ) {
 
 static esp_err_t program_delete_handler( httpd_req_t* req ) {
     esp_err_t result;
-    int index;
+    int id;
 
     rest_allow_cors( req );
 
     ESP_LOGI( LOG_TAG, "%s %s", http_method_str( req->method ), req->uri );
 
     const char* uri = req->uri + strlen( PROGRAMS_PREFIX ) + 1;
-    if ( ( result = rest_parse_index( &uri, &index, true ) ) != ESP_OK ) {
+    if ( ( result = rest_parse_index( &uri, &id, true ) ) != ESP_OK ) {
         return rest_set_error_code( req, result, "Program index expected in URL" );
     }
-    int program_index = index - 1;
-    if ( program_logic_is_program_in_use( program_index ) ) {
+    if ( program_logic_is_program_in_use( id ) ) {
         return httpd_resp_send_err( req, HTTPD_403_FORBIDDEN, "Program is in use" );
     }
-    if ( ( result = program_delete( program_index ) ) != ESP_OK ) {
+    if ( ( result = program_delete( id ) ) != ESP_OK ) {
         return rest_set_error_code( req, result, "Program not found" );
     }
 
-    send_index_back( req, index );
+    send_index_back( req, id );
     return ESP_OK;
 }
 

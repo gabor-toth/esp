@@ -2,7 +2,7 @@
     <h2>Programok</h2>
 
     @if (programs(); as programs) {
-        @for (program of programs; track program.index) {
+        @for (program of programs; track program.id) {
             <mat-card class="program-config">
                 <mat-card-header>
                     <div mat-card-avatar class="example-header-image">
@@ -36,7 +36,7 @@
                     } @else {
                         <button matButton="outlined" (click)="setEnabled(program,true)">Engedélyez</button>
                     }
-                    <button matButton="outlined" routerLink="/programs/{{program.index}}">Szerkeszt</button>
+                    <button matButton="outlined" routerLink="/programs/{{program.id}}">Szerkeszt</button>
                     <button matButton="outlined" (click)="delete(program)">Töröl</button>
                 </mat-card-actions>
             </mat-card>

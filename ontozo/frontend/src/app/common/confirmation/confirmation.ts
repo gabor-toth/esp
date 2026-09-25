@@ -9,6 +9,7 @@ import {
 } from "@angular/material/dialog";
 import { MatButtonModule } from "@angular/material/button";
 import { ConfirmationDialog } from "./confirmation.dialog";
+import { Observable } from "rxjs";
 
 @Service( {} )
 export class Confirmation {
@@ -20,7 +21,13 @@ export class Confirmation {
 
   public open( confirmMessage: string ) {
     const dialogRef = this.dialog.open( ConfirmationDialog, { data: { 'confirmMessage': confirmMessage } } );
-    dialogRef.afterClosed().subscribe( result => {
+    return new Observable<boolean>( ( subscriber ) => {
+      dialogRef.afterClosed().subscribe( result => {
+        if ( result ) {
+          subscriber.next( true );
+        }
+        subscriber.complete();
+      } );
     } );
   }
 }

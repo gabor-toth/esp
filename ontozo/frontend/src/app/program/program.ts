@@ -1,5 +1,5 @@
 export interface ProgramZone {
-  zoneId: number;
+  id: number;
   duration: number;
 }
 
@@ -30,7 +30,7 @@ export interface ProgramDay {
 export interface Program {
   days: ProgramDay;
   enabled: boolean;
-  index: number;
+  id: number;
   lastRunTime?: number;
   name: string;
   nextRunTime?: number;

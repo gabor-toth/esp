@@ -51,8 +51,8 @@
                     <mat-form-field>
                         <mat-select #selectedProgram (selectionChange)="onSelectedProgram(selectedProgram.value)">
                             <!--[(ngModel)]="selectedValue"-->
-                            @for (program of programs; track program.index) {
-                                <mat-option [value]="program.index">{{ program.name }}</mat-option>
+                            @for (program of programs; track program.id) {
+                                <mat-option [value]="program.id">{{ program.name }}</mat-option>
                             }
                         </mat-select>
                     </mat-form-field>
@@ -96,7 +96,7 @@
                             </div>
                         </div>
                         <div class="program-zones lg-6">
-                            @for (zone of runState.zones; track zone.index) {
+                            @for (zone of runState.zones; track zone.id) {
                                 <div class="row zone-card">
                                     <div class="zone-info lg-8">
                                         <span class="name">{{ zone.name }}</span>
@@ -139,7 +139,7 @@
                 <mat-card-title>Sorbanálló programok</mat-card-title>
             </mat-card-header>
             <mat-card-content>
-                @for (queued of queueState; track queued.index) {
+                @for (queued of queueState; track queued.id) {
                     <div class="row program-container">
                         <div class="row program-card lg-6">
                             <div class="program-info lg-6">
@@ -155,7 +155,7 @@
                             </div>
                         </div>
                         <div class="program-zones lg-6">
-                            @for (zone of queued.zones; track zone.index) {
+                            @for (zone of queued.zones; track zone.id) {
                                 <div class="row zone-card">
                                     <div class="zone-info lg-8">
                                         <span class="name">{{ zone.name }}</span>

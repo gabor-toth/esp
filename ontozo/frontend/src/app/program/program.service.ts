@@ -41,7 +41,7 @@ export class ProgramService {
   set( program: Program ): Observable<Object> {
     let url = environment.baseUrl + 'programs';
     let programWire = this.mapper.mapProgramToWire( program );
-    if ( program.index == 0 ) {
+    if ( program.id == 0 ) {
       return this.http.put( url, programWire );
     } else {
       return this.http.post( url, programWire );

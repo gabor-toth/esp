@@ -19,44 +19,44 @@ export class RunService {
         isProgramRunning: true,
         programs: [
           {
-            index: simulatedPrograms[ 0 ].index,
+            id: simulatedPrograms[ 0 ].id,
             duration: 0,
             name: simulatedPrograms[ 0 ].name,
             running: true,
             zones: [
               {
-                index: simulatedPrograms[ 0 ].zones[ 0 ].zoneId,
+                id: simulatedPrograms[ 0 ].zones[ 0 ].id,
                 duration: simulatedPrograms[ 0 ].zones[ 0 ].duration,
                 leftSeconds: 20,
-                name: simulatedPinConfiguration.outputs.zones[ simulatedPrograms[ 0 ].zones[ 0 ].zoneId ].name,
+                name: simulatedPinConfiguration.outputs.zones[ simulatedPrograms[ 0 ].zones[ 0 ].id ].name,
                 running: true
               },
               {
-                index: simulatedPrograms[ 0 ].zones[ 1 ].zoneId,
+                id: simulatedPrograms[ 0 ].zones[ 1 ].id,
                 duration: simulatedPrograms[ 0 ].zones[ 1 ].duration,
                 leftSeconds: 20,
-                name: simulatedPinConfiguration.outputs.zones[ simulatedPrograms[ 0 ].zones[ 1 ].zoneId ].name,
+                name: simulatedPinConfiguration.outputs.zones[ simulatedPrograms[ 0 ].zones[ 1 ].id ].name,
                 running: false
               },
               {
-                index: simulatedPrograms[ 0 ].zones[ 2 ].zoneId,
+                id: simulatedPrograms[ 0 ].zones[ 2 ].id,
                 duration: simulatedPrograms[ 0 ].zones[ 2 ].duration,
                 leftSeconds: 20,
-                name: simulatedPinConfiguration.outputs.zones[ simulatedPrograms[ 0 ].zones[ 2 ].zoneId ].name,
+                name: simulatedPinConfiguration.outputs.zones[ simulatedPrograms[ 0 ].zones[ 2 ].id ].name,
                 running: false
               }
             ]
           },
           {
-            index: simulatedPrograms[ 1 ].index,
+            id: simulatedPrograms[ 1 ].id,
             duration: 0,
             name: simulatedPrograms[ 1 ].name,
             running: false,
             zones: [
               {
-                index: simulatedPrograms[ 1 ].zones[ 0 ].zoneId,
+                id: simulatedPrograms[ 1 ].zones[ 0 ].id,
                 duration: simulatedPrograms[ 1 ].zones[ 0 ].duration,
-                name: simulatedPinConfiguration.outputs.zones[ simulatedPrograms[ 1 ].zones[ 0 ].zoneId ].name,
+                name: simulatedPinConfiguration.outputs.zones[ simulatedPrograms[ 1 ].zones[ 0 ].id ].name,
               }
             ]
           }
