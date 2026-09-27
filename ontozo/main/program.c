@@ -72,7 +72,7 @@ static void program_add_to_list( Program* program ) {
     programs[ program_count++ ] = program;
 }
 
-static int get_index_by_id( int id ) {
+int program_get_index_by_id( int id ) {
     for ( int i = 0; i < program_count; i++ ) {
         if ( programs[ i ]->id == id ) {
             return i;
@@ -90,7 +90,7 @@ esp_err_t program_add( Program* program ) {
 }
 
 esp_err_t program_change( Program* program ) {
-    int index = get_index_by_id( program->id );
+    int index = program_get_index_by_id( program->id );
     if ( index < 0 ) {
         return ESP_ERR_NOT_FOUND;
     }
@@ -102,7 +102,7 @@ esp_err_t program_change( Program* program ) {
 }
 
 esp_err_t program_delete( int id ) {
-    int index = get_index_by_id( id );
+    int index = program_get_index_by_id( id );
     if ( index < 0 ) {
         return ESP_ERR_NOT_FOUND;
     }
@@ -127,7 +127,15 @@ int program_get_count() {
     return program_count;
 }
 
-Program* program_get( int index ) {
+Program* program_get_by_id( int id ) {
+    int index = program_get_index_by_id( id );
+    if ( index < 0 ) {
+        return NULL;
+    }
+    return programs[ index ];
+}
+
+Program* program_get_by_index( int index ) {
     if ( index < 0 || index >= program_count ) {
         ESP_LOGW( LOG_TAG, "Program index %d is out of range 1..%d", index, program_count );
         return NULL;

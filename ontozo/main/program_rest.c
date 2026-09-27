@@ -39,7 +39,7 @@ static esp_err_t program_get_handler( httpd_req_t* req ) {
     if ( ( result = rest_parse_index( &uri, &id, true ) ) != ESP_OK ) {
         return rest_set_error_code( req, result, "Program index expected in URL" );
     }
-    Program* program = program_get( id );
+    Program* program = program_get_by_id( id );
     if ( program == NULL ) {
         return httpd_resp_send_err( req, HTTPD_404_NOT_FOUND, "Program not found" );
     }

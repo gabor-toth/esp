@@ -338,7 +338,7 @@ void programs_write_to_json( char** json_out ) {
 
     int count = program_get_count();
     for ( int i = 0; i < count; i++ ) {
-        Program* program = program_get( i );
+        Program* program = program_get_by_index( i );
         if ( program == NULL ) {
             continue;
         }

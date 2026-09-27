@@ -52,7 +52,11 @@ extern int program_get_count();
 
 extern const char* program_get_version();
 
-extern Program* program_get( int id );
+extern Program* program_get_by_id( int id );
+
+extern Program* program_get_by_index( int index );
+
+extern int program_get_index_by_id( int id );
 
 extern Program* program_constructor();
 

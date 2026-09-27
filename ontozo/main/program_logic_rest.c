@@ -9,12 +9,11 @@
 #define RUN_PREFIX "/run/"
 #define RUN_URI RUN_PREFIX "*"
 
-static const char *LOG_TAG = "program_logic";
+static const char* LOG_TAG = "program_logic";
 
-static esp_err_t run_post_handler( httpd_req_t *req ) {
+static esp_err_t run_post_handler( httpd_req_t* req ) {
     esp_err_t result;
-    int index;
-    const char *uri = req->uri + strlen( RUN_PREFIX );
+    const char* uri = req->uri + strlen( RUN_PREFIX );
 
     ESP_LOGI( LOG_TAG, "%s %s", http_method_str( req->method ), req->uri );
 
@@ -34,15 +33,17 @@ static esp_err_t run_post_handler( httpd_req_t *req ) {
         program_logic_move_to_next_program( 0 );
         rest_send_message_back( req, "moved to next program" );
         found = true;
-    } else if ( strncmp( uri, "start/", 6 /*strlen("start/")*/) == 0 ) {
+    } else if ( strncmp( uri, "start/", 6 /*strlen("start/")*/ ) == 0 ) {
         uri += 6;
-        if ( ( result = rest_parse_index( &uri, &index, true ) ) != ESP_OK ) {
-            return rest_set_error_code( req, result, "Program index expected in URL" );
+        int id;
+        if ( ( result = rest_parse_index( &uri, &id, true ) ) != ESP_OK ) {
+            return rest_set_error_code( req, result, "Program id expected in URL" );
         }
-        if ( index < 1 || index > program_get_count() ) {
-            return rest_set_error_code( req, result, "Program index is wrong" );
+        int index = program_get_index_by_id( id );
+        if ( index < 0 ) {
+            return rest_set_error_code( req, result, "Program id is wrong" );
         }
-        program_logic_start( index - 1 );
+        program_logic_start( index );
         rest_send_message_back( req, "started" );
         found = true;
     } else if ( strncmp( uri, "queued/", 7 ) == 0 ) {
@@ -78,20 +79,20 @@ static esp_err_t run_post_handler( httpd_req_t *req ) {
     return ESP_OK;
 }
 
-static void add_program_json( cJSON *jsonPrograms, int programIndex, QueuedProgramState *queued_state,
-                              RunningProgramState *state ) {
-    Program *program = program_get( programIndex );
-    cJSON *jsonProgram = cJSON_CreateObject();
+static void add_program_json( cJSON* jsonPrograms, int programIndex, QueuedProgramState* queued_state,
+                              RunningProgramState* state ) {
+    Program* program = program_get_by_index( programIndex );
+    cJSON* jsonProgram = cJSON_CreateObject();
     cJSON_AddItemToArray( jsonPrograms, jsonProgram );
     cJSON_AddNumberToObject( jsonProgram, "id", (double) queued_state->program_id );
     cJSON_AddNumberToObject( jsonProgram, "index", programIndex + 1 );
     cJSON_AddStringToObject( jsonProgram, "name", program->name );
     PinData pin_data;
-    cJSON *jsonZones = cJSON_AddArrayToObject( jsonProgram, "zones" );
+    cJSON* jsonZones = cJSON_AddArrayToObject( jsonProgram, "zones" );
     for ( int zone_index = 0; zone_index < program->zones_count; zone_index++ ) {
-        cJSON *jsonZone = cJSON_CreateObject();
+        cJSON* jsonZone = cJSON_CreateObject();
         cJSON_AddItemToArray( jsonZones, jsonZone );
-        ProgramZone *zone = &program->zones[ zone_index ];
+        ProgramZone* zone = &program->zones[ zone_index ];
         gpio_get_pin_data( OUTPUTS, ZONES_CLASS, zone->zone_id, &pin_data );
         if ( zone_index < queued_state->zones_count ) {
             cJSON_AddBoolToObject( jsonZone, "enabled", !queued_state->zones_disabled[ zone_index ] );
@@ -106,18 +107,18 @@ static void add_program_json( cJSON *jsonPrograms, int programIndex, QueuedProgr
     }
 }
 
-static esp_err_t run_get_handler( httpd_req_t *req ) {
+static esp_err_t run_get_handler( httpd_req_t* req ) {
     ESP_LOGI( LOG_TAG, "%s %s", http_method_str( req->method ), req->uri );
 
-    cJSON *jsonRoot = cJSON_CreateObject();
+    cJSON* jsonRoot = cJSON_CreateObject();
     cJSON_AddStringToObject( jsonRoot, "version", program_get_version() );
 
     RunningProgramState state;
-    QueuedProgramState *queued_programs;
+    QueuedProgramState* queued_programs;
     int queued_programs_count = program_logic_get_queued_programs( &state, &queued_programs );
     cJSON_AddBoolToObject( jsonRoot, "isProgramRunning", state.is_program_running );
     if ( queued_programs_count > 0 ) {
-        cJSON *jsonPrograms = cJSON_AddArrayToObject( jsonRoot, "programs" );
+        cJSON* jsonPrograms = cJSON_AddArrayToObject( jsonRoot, "programs" );
         for ( int queue_index = 0; queue_index < queued_programs_count; queue_index++ ) {
             int programIndex = queued_programs[ queue_index ].program_index;
             add_program_json( jsonPrograms, programIndex,
@@ -134,28 +135,28 @@ static esp_err_t run_get_handler( httpd_req_t *req ) {
     return ESP_OK;
 }
 
-void rest_register_program_logic_handlers( httpd_handle_t server, http_server_context_t *server_context ) {
+void rest_register_program_logic_handlers( httpd_handle_t server, http_server_context_t* server_context ) {
     httpd_uri_t run_post_uri = {
-            .uri = RUN_URI,
-            .method = HTTP_POST,
-            .handler = run_post_handler,
-            .user_ctx = server_context
+        .uri = RUN_URI,
+        .method = HTTP_POST,
+        .handler = run_post_handler,
+        .user_ctx = server_context
     };
     ESP_ERROR_CHECK( httpd_register_uri_handler( server, &run_post_uri ) );
 
     httpd_uri_t run_delete_uri = {
-            .uri = RUN_URI,
-            .method = HTTP_DELETE,
-            .handler = run_post_handler,
-            .user_ctx = server_context
+        .uri = RUN_URI,
+        .method = HTTP_DELETE,
+        .handler = run_post_handler,
+        .user_ctx = server_context
     };
     ESP_ERROR_CHECK( httpd_register_uri_handler( server, &run_delete_uri ) );
 
     httpd_uri_t run_get_uri = {
-            .uri = "/run",
-            .method = HTTP_GET,
-            .handler = run_get_handler,
-            .user_ctx = server_context
+        .uri = "/run",
+        .method = HTTP_GET,
+        .handler = run_get_handler,
+        .user_ctx = server_context
     };
     ESP_ERROR_CHECK( httpd_register_uri_handler( server, &run_get_uri ) );
 }

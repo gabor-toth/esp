@@ -38,9 +38,9 @@ static bool check_day( Program* program, struct tm* timeinfo ) {
 }
 
 static void check_for_program_start() {
-    //    ESP_LOGI( LOG_TAG, "check_for_program_start" );
+    // ESP_LOGI( LOG_TAG, "check_for_program_start" );
     if ( !sntp_is_time_set() ) {
-        //        ESP_LOGW( LOG_TAG, "no time set yet" );
+        // ESP_LOGW( LOG_TAG, "no time set yet" );
         return;
     }
 
@@ -56,18 +56,16 @@ static void check_for_program_start() {
 
     int program_count = program_get_count();
     for ( int program_index = 0; program_index < program_count; program_index++ ) {
-        Program* program = program_get( program_index );
+        Program* program = program_get_by_index( program_index );
         if ( program == NULL ) {
             continue;
         }
         if ( !program->valid ) {
-            //            ESP_LOGW( LOG_TAG, "Program %d is invalid",
-            //            program_index );
+            // ESP_LOGW( LOG_TAG, "Program %d is invalid", program_index );
             continue;
         }
         if ( !program->valid || !program->enabled ) {
-            //            ESP_LOGI( LOG_TAG, "Program %d is not enabled",
-            //            program_index );
+            // ESP_LOGI( LOG_TAG, "Program %d is not enabled", program_index );
             continue;
         }
         for ( int start_time_index = 0;

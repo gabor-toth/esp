@@ -78,7 +78,7 @@ static void timer_callback( TimerHandle_t unused ) {
 
 static void start_program() {
     int index = queue->program_index;
-    current_program = program_get( index );
+    current_program = program_get_by_index( index );
     if ( current_program == NULL ) {
         ESP_LOGW( LOG_TAG, "Program does %d not exists, skipping", index );
         stop_and_move_to_next_program();
@@ -106,7 +106,7 @@ static int64_t generate_program_id() {
 
 static void start_or_queue_program( int program_index ) {
     struct queue_item_t* item = calloc( 1, sizeof( struct queue_item_t ) );
-    Program* program = program_get( program_index );
+    Program* program = program_get_by_index( program_index );
     item->program_id = generate_program_id();
     item->program_index = program_index;
     item->zones_count = program->zones_count;
