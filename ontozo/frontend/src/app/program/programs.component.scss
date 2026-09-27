@@ -30,19 +30,22 @@ $foreground-disabled: color-mix(in srgb, var(--mat-sys-on-surface) 38%, transpar
 
 .program-days {
   .program-day {
-    border: 1px solid #cecece;
-    display: inline-block;
+    min-width: 40px;
+    padding: 0;
     margin: 2px;
-    padding: 2px;
-    text-align: center;
-    width: 20px;
-
-    &.on {
-      color: var(--mat-sys-primary);
-    }
-
-    &.off {
-      color: $foreground-disabled;
-    }
   }
+}
+
+mat-card-header {
+  mat-icon {
+    margin-right: 0.5em;
+  }
+}
+
+.program-start-times {
+  margin-bottom: 0.5em;
+}
+
+.program-start-time {
+  margin-right: 0.5em;
 }

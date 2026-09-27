@@ -23,6 +23,12 @@ export class PinService {
       this.getConfiguration();
   }
 
+  public getCachedConfiguration(): Observable<PinsConfiguration> {
+    return this.cached !== undefined ?
+      of( this.cached ) :
+      this.getConfiguration();
+  }
+
   getState(): Observable<PinsState> {
     if ( environment.simulateRestCall ) {
       return of( <PinsState>simulatedPinState );
@@ -38,7 +44,7 @@ export class PinService {
   }
 
   setState( type: string, id: number, state: boolean ): Observable<Object> {
-    let url = environment.baseUrl + `pins/${type}/${id}/${state ? "on" : "off"}`;
+    let url = environment.baseUrl + `pins/${ type }/${ id }/${ state ? "on" : "off" }`;
     return this.http.put( url, null );
   }
 
@@ -53,8 +59,8 @@ export class PinService {
   }
 
   setConfiguration( type: string, id: number, name: string, inactive: boolean, hidden: boolean ): Observable<Object> {
-    let url = environment.baseUrl + `pins/${type}`;
-    let body = `{"id":${id}, "name": "${name}", "inactive": ${inactive}, "hidden": ${hidden}}`;
+    let url = environment.baseUrl + `pins/${ type }`;
+    let body = `{"id":${ id }, "name": "${ name }", "inactive": ${ inactive }, "hidden": ${ hidden }}`;
     return this.http.put( url, body );
   }
 

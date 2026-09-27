@@ -6,12 +6,14 @@ import { environment } from '../../environments/environment';
 import { simulatedPrograms } from '../simulator/simulator';
 import { ProgramsWire, ProgramWire } from "./program.wire";
 import { ProgramWireMapper } from "./program.wire.mapper";
+import { PinService } from "../pin/pin.service";
 
 @Injectable( {
   providedIn: 'root'
 } )
 export class ProgramService {
   private readonly http = inject( HttpClient );
+  private readonly pinService = inject( PinService );
   private readonly mapper = inject( ProgramWireMapper );
 
   constructor() {
@@ -22,9 +24,13 @@ export class ProgramService {
     if ( environment.simulateRestCall ) {
       return of( simulatedPrograms );
     } else {
-      return this.http.get<ProgramsWire>( environment.baseUrl + 'programs' ).pipe(
-        map( programs => service.mapper.mapProgramsFromWire( programs.programs ) )
-      );
+      return this.http.get<ProgramsWire>( environment.baseUrl + 'programs', )
+        .pipe( switchMap(
+          programs => service.pinService.getCachedConfiguration()
+            .pipe( map(
+              pinState => service.mapper.mapProgramsFromWire( programs.programs, pinState ) )
+            ) )
+        );
     }
   }
 
@@ -34,7 +40,12 @@ export class ProgramService {
     } else {
       let service = this;
       return this.http.get<ProgramWire>( environment.baseUrl + 'programs/' + index )
-        .pipe( map( program => service.mapper.mapProgramFromWire( program ) ) );
+        .pipe( switchMap(
+          program => service.pinService.getCachedConfiguration()
+            .pipe( map(
+              pinState => service.mapper.mapProgramFromWire( program, pinState ) )
+            ) )
+        );
     }
   }
 

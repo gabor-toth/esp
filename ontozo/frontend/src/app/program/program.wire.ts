@@ -1,4 +1,7 @@
-import {ProgramDayType, ProgramDayValue, ProgramZone} from "./program";
+export interface ProgramZoneWire {
+  id: number;
+  duration: number; // in seconds
+}
 
 export interface ProgramDayWire {
   type: string;
@@ -16,7 +19,7 @@ export interface ProgramWire {
   name: string;
   nextRunTime?: number;
   startTimes: string[];
-  zones: ProgramZone[];
+  zones: ProgramZoneWire[];
 }
 
 export interface ProgramsWire {

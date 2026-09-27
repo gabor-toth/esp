@@ -157,15 +157,18 @@ export const simulatedPrograms: Program[] =
       zones: [
         {
           id: 1,
-          duration: 600
+          duration: 600,
+          name: "fű nagy"
         },
         {
           id: 2,
-          duration: 300
+          duration: 300,
+          name: "fű elől"
         },
         {
           id: 3,
-          duration: 300
+          duration: 300,
+          name: "fű hátul"
         }
       ]
     },
@@ -185,8 +188,9 @@ export const simulatedPrograms: Program[] =
       name: "veteményes",
       zones: [
         {
-          id: 5,
-          duration: 1800
+          id: 6,
+          duration: 1800,
+          name: "veteményes"
         }
       ],
       startTimes: [

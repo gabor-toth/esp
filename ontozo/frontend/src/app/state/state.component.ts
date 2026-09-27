@@ -12,7 +12,7 @@ import { MatIcon } from '@angular/material/icon';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { MatFormField } from '@angular/material/form-field';
 import { MatOption, MatSelect } from '@angular/material/select';
-import { MatButton, MatFabButton } from '@angular/material/button';
+import { MatButton, MatFabButton, MatMiniFabButton } from '@angular/material/button';
 import { MatCard, MatCardContent, MatCardHeader, MatCardTitle } from "@angular/material/card";
 import { Program } from "../program/program";
 import { SnackBar } from "../common/snackbar-error/snackbar";
@@ -31,11 +31,11 @@ const sameJson = <T>( a: T, b: T ) => JSON.stringify( a ) === JSON.stringify( b 
     MatFormField,
     MatSelect,
     MatOption,
-    MatButton,
     MatCard,
     MatCardHeader,
     MatCardContent,
     MatCardTitle,
+    MatMiniFabButton,
     MatFabButton,
   ]
 } )
@@ -68,7 +68,7 @@ export class StateComponent implements OnInit, OnDestroy {
     if ( state === undefined ) {
       return undefined;
     }
-    if ( !state.isProgramRunning || state.programs.length === 0 ) {
+    if ( !state.isProgramRunning || !state.programs || state.programs.length === 0 ) {
       return { running: <RunProgramState>{}, queued: <RunProgramState[]>[] };
     }
     let [ running, ...queued ] = state.programs;
@@ -96,10 +96,10 @@ export class StateComponent implements OnInit, OnDestroy {
     let component = this;
     this.programService.getAll().subscribe( {
       next( state ) {
-        component.programs.set( state );
+        component.programs.set( state.sort( ( a, b ) => a.name.localeCompare( b.name ) ) );
       },
       error( error ) {
-        component.snackBar.open( 'Error loading programs', error );
+        component.snackBar.open( 'Nem sikerült a betöltés.', error );
       }
     } );
   }
@@ -134,7 +134,7 @@ export class StateComponent implements OnInit, OnDestroy {
         component.updateView();
       },
       error( error ) {
-        component.snackBar.open( 'Error writing state', error );
+        component.snackBar.open( 'Nem sikerült a módosítás.', error );
       }
     } );
   }
@@ -158,7 +158,7 @@ export class StateComponent implements OnInit, OnDestroy {
         component.updateView();
       },
       error( error ) {
-        component.snackBar.open( 'Error in startProgram', error );
+        component.snackBar.open( 'Nem sikerült elindítani a programot.', error );
       }
     } );
   }
@@ -170,7 +170,7 @@ export class StateComponent implements OnInit, OnDestroy {
         component.updateView();
       },
       error( error ) {
-        component.snackBar.open( 'Error in stopProgram', error );
+        component.snackBar.open( 'Nem sikerült leállítani a programot.', error );
       },
     } );
   }
@@ -182,7 +182,7 @@ export class StateComponent implements OnInit, OnDestroy {
         component.updateView();
       },
       error( error ) {
-        component.snackBar.open( 'Error in nextZone', error );
+        component.snackBar.open( 'Nem sikerült ugrani a következtő zónára.', error );
       },
     } );
   }
@@ -194,7 +194,7 @@ export class StateComponent implements OnInit, OnDestroy {
         component.updateView();
       },
       error( error ) {
-        component.snackBar.open( 'Error in nextProgram', error );
+        component.snackBar.open( 'Nem sikerült ugrani a következtő programra.', error );
       },
     } );
   }
@@ -206,7 +206,7 @@ export class StateComponent implements OnInit, OnDestroy {
         component.updateView();
       },
       error( error ) {
-        component.snackBar.open( 'Error in toggleScheduledZoneState', error );
+        component.snackBar.open( 'Nem sikerült a módosítás.', error );
       },
     } );
   }
@@ -218,7 +218,7 @@ export class StateComponent implements OnInit, OnDestroy {
         component.updateView();
       },
       error( error ) {
-        component.snackBar.open( 'Error in cancelSchedule', error );
+        component.snackBar.open( 'Nem sikerült a törlés.', error );
       },
     } );
   }

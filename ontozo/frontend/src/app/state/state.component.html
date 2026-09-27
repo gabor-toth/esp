@@ -9,7 +9,7 @@
             @if (pinState()?.outputs; as outputs) {
                 <div class="card-container">
                     @for (pump of outputs.pumps; track pump.id) {
-                        <button mat-fab extended class="card icon-switch"
+                        <button mat-mini-fab extended class="card icon-switch"
                                 (click)="click('pumps',pump.id,!pump.on)">
                             <mat-icon
                                     class="material-symbols-outlined  {{ pump.on ? 'on' : 'off' }}"> {{ pump.on ? 'toggle_on' : 'toggle_off' }}
@@ -31,7 +31,7 @@
         <mat-card-content>
             @if (pinState()?.levels; as levels) {
                 <div class="state-container">
-                    @for (level of levels; track level) {
+                    @for (level of levels; track $index) {
                         <div class="card-level {{level}}"></div>
                     }
                 </div>
@@ -47,7 +47,7 @@
         </mat-card-header>
         <mat-card-content>
             @if (programs(); as programs) {
-                <div>
+                <div class="program-start-container">
                     <mat-form-field>
                         <mat-select #selectedProgram (selectionChange)="onSelectedProgram(selectedProgram.value)">
                             <!--[(ngModel)]="selectedValue"-->
@@ -56,7 +56,7 @@
                             }
                         </mat-select>
                     </mat-form-field>
-                    <button mat-raised-button (click)="startProgram()"
+                    <button mat-fab (click)="startProgram()"
                             [disabled]="selectedProgramIndex() == 0">
                         <mat-icon class="material-symbols-outlined icon-big">play_arrow</mat-icon>
                     </button>
@@ -72,7 +72,7 @@
             <mat-card-title>Futó program</mat-card-title>
             @if (runState()?.running && queueState()) {
                 <div class="stop-button-holder">
-                    <button mat-raised-button (click)="stopProgram()">
+                    <button mat-mini-fab (click)="stopProgram()">
                         <mat-icon class="material-symbols-outlined icon-big">cancel</mat-icon>
                     </button>
                 </div>
@@ -83,12 +83,12 @@
                 @if (runState.running) {
                     <div class="row program-container">
                         <div class="row program-card lg-6">
-                            <div class="program-info lg-6">
+                            <div class="program-info lg-8">
                                 <span class="name">{{ runState.name }}</span>
-                                <span class="duration">{{ ( runState.duration * 1000 ) | date:'m:ss' }}</span>
+                                <span class="duration">{{ (runState.duration * 1000) | date:'m:ss' }}</span>
                             </div>
-                            <div class="program-action lg-6">
-                                <button mat-raised-button
+                            <div class="program-action lg-4">
+                                <button mat-mini-fab
                                         (click)="nextProgram()"
                                         [disabled]="queueState()?.length == 0">
                                     <mat-icon class="material-symbols-outlined icon-big">step_over</mat-icon>
@@ -96,21 +96,21 @@
                             </div>
                         </div>
                         <div class="program-zones lg-6">
-                            @for (zone of runState.zones; track zone.id) {
+                            @for (zone of runState.zones; track $index) {
                                 <div class="row zone-card">
                                     <div class="zone-info lg-8">
                                         <span class="name">{{ zone.name }}</span>
-                                        <span class="duration">{{ ( zone.duration * 1000 ) | date:'m:ss' }}</span>
+                                        <span class="duration">{{ (zone.duration * 1000) | date:'m:ss' }}</span>
                                     </div>
                                     <div class="zone-action lg-4">
                                         @if ($first) {
-                                            <button mat-raised-button
+                                            <button mat-mini-fab
                                                     (click)="nextZone()">
                                                 <mat-icon class="material-symbols-outlined icon-big">step_over
                                                 </mat-icon>
                                             </button>
                                         } @else {
-                                            <button mat-raised-button
+                                            <button mat-mini-fab
                                                     (click)="toggleScheduledZoneState(runState, zone)"
                                                     [disabled]="!featureToggleZone()">
                                                 <mat-icon
@@ -139,15 +139,15 @@
                 <mat-card-title>Sorbanálló programok</mat-card-title>
             </mat-card-header>
             <mat-card-content>
-                @for (queued of queueState; track queued.id) {
+                @for (queued of queueState; track $index) {
                     <div class="row program-container">
                         <div class="row program-card lg-6">
-                            <div class="program-info lg-6">
+                            <div class="program-info lg-8">
                                 <span class="name">{{ queued.name }}</span>
-                                <span class="duration">{{ ( queued.duration * 1000 ) | date:'m:ss' }}</span>
+                                <span class="duration">{{ (queued.duration * 1000) | date:'m:ss' }}</span>
                             </div>
-                            <div class="program-action lg-6">
-                                <button mat-raised-button
+                            <div class="program-action lg-4">
+                                <button mat-mini-fab
                                         (click)="cancelSchedule(queued)"
                                         [disabled]="queueState.length == 0">
                                     <mat-icon class="material-symbols-outlined icon-big">cancel</mat-icon>
@@ -155,14 +155,14 @@
                             </div>
                         </div>
                         <div class="program-zones lg-6">
-                            @for (zone of queued.zones; track zone.id) {
-                                <div class="row zone-card">
+                            @for (zone of queued.zones; track $index) {
+                                <div class="row zone-card">1
                                     <div class="zone-info lg-8">
                                         <span class="name">{{ zone.name }}</span>
-                                        <span class="duration">{{ ( zone.duration * 1000 ) | date:'m:ss' }}</span>
+                                        <span class="duration">{{ (zone.duration * 1000) | date:'m:ss' }}</span>
                                     </div>
                                     <div class="zone-action lg-4">
-                                        <button mat-raised-button
+                                        <button mat-mini-fab
                                                 (click)="toggleScheduledZoneState(queued, zone)"
                                                 [disabled]="!featureToggleZone()">
                                             <mat-icon

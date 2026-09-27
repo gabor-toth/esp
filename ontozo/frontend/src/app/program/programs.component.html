@@ -13,19 +13,25 @@
                     <mat-card-title>{{ program.name }}</mat-card-title>
                 </mat-card-header>
                 <mat-card-content>
-                    <div class="program-start-times"> {{ program.startTimes }}</div>
+                    <div class="program-start-times">
+                        @for (startTime of program.startTimes; track $index) {
+                            <span class="program-start-time">{{ startTime }}</span>
+                        }
+                    </div>
                     <div class="program-days">
                         @if (program.days.type == ProgramDayType.onDays) {
                             <div>
                                 @for (day of programDaysDisplay; track $index) {
-                                    <div class="program-day {{this.hasDay(program, $index)?'on':'off'}}">
+                                    <button [matButton]="this.hasDay(program, $index)?'filled':'outlined'"
+                                            class="program-day">
                                         {{ day }}
-                                    </div>
+                                    </button>
                                 }
                             </div>
                         } @else if (program.days.type == ProgramDayType.interval) {
                             <div>
-                                {{ program.days.intervalDays }} naponta
+                                {{ program.days.intervalDays }} naponta,
+                                következő nap {{ programDaysLongDisplay[program.days.intervalStartsOn!] }}
                             </div>
                         }
                     </div>

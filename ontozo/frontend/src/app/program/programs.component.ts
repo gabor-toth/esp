@@ -28,6 +28,7 @@ import { Confirmation } from "../common/confirmation/confirmation";
 export class ProgramsComponent implements OnInit {
   readonly programs = signal<Program[] | undefined>( undefined );
   readonly programDaysDisplay: string[] = [ 'H', 'K', 'Sz', 'Cs', 'P', 'Sz', 'V' ];
+  readonly programDaysLongDisplay: string[] = [ 'hétfő', 'kedd', 'szerda', 'csütörtök', 'péntek', 'szombat', 'vasárnap' ];
 
   private readonly programService = inject( ProgramService );
   private readonly snackBar = inject( SnackBar );
@@ -54,8 +55,7 @@ export class ProgramsComponent implements OnInit {
   }
 
   hasDay( program: Program, dayIndex: number ): boolean {
-    let dayValue = ProgramDayValue[ dayIndex ];
-    return program.days.onDays?.find( e => e.valueOf().toString() == dayValue ) != null;
+    return program.days.onDays?.find( e => e == dayIndex ) != null;
   }
 
   setEnabled( program: Program, enabled: boolean ) {

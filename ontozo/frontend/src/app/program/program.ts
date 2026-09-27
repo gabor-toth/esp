@@ -1,6 +1,7 @@
 export interface ProgramZone {
   id: number;
   duration: number;
+  name: string;
 }
 
 export enum ProgramDayType {

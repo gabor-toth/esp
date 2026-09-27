@@ -1,13 +1,13 @@
 import { Injectable } from "@angular/core";
-import { ProgramDayWire, ProgramWire } from "./program.wire";
-import { Program, ProgramDay, ProgramDayType, ProgramDayValue } from "./program";
+import { ProgramDayWire, ProgramWire, ProgramZoneWire } from "./program.wire";
+import { Program, ProgramDay, ProgramDayType, ProgramDayValue, ProgramZone } from "./program";
+import { PinsConfiguration } from "../pin/pin";
 
 @Injectable( {
   providedIn: 'root'
 } )
 export class ProgramWireMapper {
-  public mapProgramFromWire( programWire: ProgramWire ) {
-    console.log( programWire );
+  public mapProgramFromWire( programWire: ProgramWire, pinState: PinsConfiguration ) {
     let service = this;
     let days = <ProgramDay>{
       type: ProgramDayType[ programWire.days.type as keyof typeof ProgramDayType ],
@@ -31,14 +31,23 @@ export class ProgramWireMapper {
       name: programWire.name,
       startTimes: programWire.startTimes,
       nextRunTime: programWire.nextRunTime,
-      zones: programWire.zones,
+      zones: programWire.zones.map( zone => service.mapZoneFromWire( zone, pinState ) ),
     };
   }
 
-  public mapProgramsFromWire( programs: ProgramWire[] ) {
+  public mapZoneFromWire( programZone: ProgramZoneWire, pinState: PinsConfiguration ) {
+    let zoneConfig = pinState.outputs.zones.find( zone => zone.id == programZone.id );
+    return {
+      duration: programZone.duration / 60,
+      id: programZone.id,
+      name: zoneConfig?.name != undefined ? zoneConfig.name : programZone.id.toString(),
+    };
+  }
+
+  public mapProgramsFromWire( programs: ProgramWire[], pinState: PinsConfiguration ) {
     let service = this;
     return programs.map( ( program ) => {
-      return service.mapProgramFromWire( program );
+      return service.mapProgramFromWire( program, pinState );
     } );
   }
 
@@ -70,7 +79,14 @@ export class ProgramWireMapper {
       name: program.name,
       nextRunTime: program.nextRunTime,
       startTimes: program.startTimes,
-      zones: program.zones,
+      zones: program.zones.map( zone => service.mapZoneToWire( zone ) ),
+    };
+  }
+
+  public mapZoneToWire( programZone: ProgramZone ) {
+    return {
+      duration: programZone.duration * 60,
+      id: programZone.id,
     };
   }
 

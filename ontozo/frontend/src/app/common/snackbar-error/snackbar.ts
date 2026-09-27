@@ -11,7 +11,6 @@ export class SnackBar {
   }
 
   open( log: string, error: any, message?: string ) {
-    console.error( log, error, message, typeof message);
     this.snackBar.openFromComponent(
       SnackbarErrorComponent,
       {
