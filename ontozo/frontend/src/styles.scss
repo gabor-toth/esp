@@ -45,7 +45,8 @@ h6 {
 }
 
 h2 {
-  padding: 16px;
+  margin-bottom: 0;
+  padding: 16px 16px 0 16px;
 }
 
 p {
@@ -120,6 +121,7 @@ mat-icon.mat-icon {
 
 .btn-group {
   margin-top: 1em;
+  margin-bottom: 1em;
 
   > * {
     margin-right: 0.3em;
@@ -289,7 +291,6 @@ mat-spinner {
     display: flex;
   }
 }
-
 
 form mat-card {
   margin-bottom: 1em;

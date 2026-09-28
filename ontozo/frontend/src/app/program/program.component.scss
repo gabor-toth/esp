@@ -7,6 +7,9 @@
   mat-form-field {
     &.zone-field-name {
       width: 160px;
+      @media screen and (max-width: 768px) {
+        width: 122px;
+      }
     }
 
     &.zone-field-duration {
