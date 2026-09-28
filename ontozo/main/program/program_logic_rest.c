@@ -1,8 +1,8 @@
 #include <esp_log.h>
 #include "gpio_define.h"
-#include "gpio_logic.h"
+#include "../gpio/gpio_logic.h"
 #include "program.h"
-#include "program_logic.h"
+#include "program/program_logic.h"
 #include "program_logic_rest.h"
 #include "rest_util.h"
 

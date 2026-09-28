@@ -1,11 +1,10 @@
 #include <stdint.h>
 #include <string.h>
 #include <esp_log.h>
-#include "config.h"
+#include "../config.h"
 #include "gpio_define.h"
 #include "gpio_logic.h"
-#include "nvs_main.h"
-#include "program_logic.h"
+#include "../program/program_logic.h"
 
 static const char *LOG_TAG = "pin_logic";
 

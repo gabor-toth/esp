@@ -1,4 +1,4 @@
-#include "config_version.h"
+#include "../config_version.h"
 #include "esp_log.h"
 #include "nvs.h"
 #include "nvs_main.h"

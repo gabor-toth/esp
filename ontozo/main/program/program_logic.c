@@ -4,7 +4,7 @@
 #include "freertos/queue.h"
 #include "freertos/timers.h"
 #include "gpio_define.h"
-#include "gpio_logic.h"
+#include "../gpio/gpio_logic.h"
 #include "program_logic.h"
 #include "program.h"
 

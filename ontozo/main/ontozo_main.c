@@ -1,22 +1,22 @@
 #include "debug_helper.h"
-#include "gpio_logic.h"
+#include "gpio/gpio_logic.h"
 #include "http/http_discovery.h"
 #include "http/http_server.h"
 #include "http/http_static_file.h"
+#include "http/rest_handler.h"
+#include "http/wss_server.h"
 #include "main_main.h"
 #include "nvs_main.h"
 #include "power_led.h"
-#include "program.h"
-#include "program_logic.h"
-#include "program_start.h"
-#include "rest_handler.h"
+#include "program/program.h"
+#include "program/program_logic.h"
+#include "program/program_start.h"
 #include "sntp_main.h"
 #include "wifi/wifi_main.h"
 
-void app_main(void)
-{
+void app_main( void ) {
     power_led_main();
-    debug_start_heap_dump(10);
+    debug_start_heap_dump( 10 );
     main_main();
 
     nvs_init();
@@ -26,10 +26,10 @@ void app_main(void)
     sntp_main();
     discovery_register();
 
-    http_server_main(DEFAULT_HTTP_SERVER_CONTEXT_SIZE, 24);
+    http_server_main( DEFAULT_HTTP_SERVER_CONTEXT_SIZE, 24 );
     http_static_files_register();
     rest_register();
-    wifi_main("ontozo");
+    wifi_main( "ontozo" );
     // ESP_ERROR_CHECK(wifi_main( "ontozo" ));
 
     program_logic_init();
