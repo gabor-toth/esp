@@ -46,7 +46,7 @@ typedef struct wss_keep_alive_storage* wss_keep_alive_t;
 
 static const char* TAG = "wss_keep_alive";
 
-static uint64_t _tick_get_ms( void ) {
+static uint64_t tick_get_ms( void ) {
     return esp_timer_get_time() / 1000;
 }
 
@@ -56,8 +56,8 @@ static uint64_t get_max_delay( wss_keep_alive_t h ) {
     for ( int i = 0; i < h->max_clients; ++i ) {
         if ( h->clients[ i ].type == CLIENT_ACTIVE ) {
             uint64_t check_this_client_at = h->clients[ i ].last_seen + h->keep_alive_period_ms;
-            if ( check_this_client_at < check_after_ms + _tick_get_ms() ) {
-                check_after_ms = check_this_client_at - _tick_get_ms();
+            if ( check_this_client_at < check_after_ms + tick_get_ms() ) {
+                check_after_ms = check_this_client_at - tick_get_ms();
                 if ( check_after_ms < 0 ) {
                     check_after_ms = 1000; // min delay, some client(s) not responding already
                 }
@@ -100,7 +100,7 @@ static bool add_new_client( wss_keep_alive_t h, int sockfd ) {
         if ( h->clients[ i ].type == NO_CLIENT ) {
             h->clients[ i ].type = CLIENT_ACTIVE;
             h->clients[ i ].fd = sockfd;
-            h->clients[ i ].last_seen = _tick_get_ms();
+            h->clients[ i ].last_seen = tick_get_ms();
             return true; // success
         }
     }
@@ -125,8 +125,8 @@ static void keep_alive_task( void* arg ) {
                 case CLIENT_FD_REMOVE:
                     if ( remove_client( keep_alive_storage, client_action.fd ) ) {
                         ESP_LOGI( TAG, "Removed WS client for socket %d", client_action.fd );
-                    } else {
-                        ESP_LOGW( TAG, "Client fd %d already removed", client_action.fd );
+                    // } else {
+                    //     ESP_LOGW( TAG, "Client fd %d already removed", client_action.fd );
                     }
                     break;
                 case CLIENT_UPDATE:
@@ -147,11 +147,11 @@ static void keep_alive_task( void* arg ) {
             for ( int i = 0; i < keep_alive_storage->max_clients; ++i ) {
                 if ( keep_alive_storage->clients[ i ].type == CLIENT_ACTIVE ) {
                     if ( keep_alive_storage->clients[ i ].last_seen + keep_alive_storage->keep_alive_period_ms <=
-                        _tick_get_ms() ) {
+                        tick_get_ms() ) {
                         ESP_LOGD( TAG, "Haven't seen the client (fd=%d) for a while",
                                   keep_alive_storage->clients[ i ].fd );
                         if ( keep_alive_storage->clients[ i ].last_seen + keep_alive_storage->not_alive_after_ms <=
-                            _tick_get_ms() ) {
+                            tick_get_ms() ) {
                             ESP_LOGI( TAG, "Client (fd=%d) not alive!", keep_alive_storage->clients[ i ].fd );
                             keep_alive_storage->client_not_alive_cb( keep_alive_storage,
                                                                      keep_alive_storage->clients[ i ].fd );
@@ -221,7 +221,7 @@ esp_err_t wss_keep_alive_remove_client( wss_keep_alive_t h, int fd ) {
 esp_err_t wss_keep_alive_client_is_active( wss_keep_alive_t h, int fd ) {
     client_fd_action_t client_fd_action = {
         .fd = fd, .type = CLIENT_UPDATE,
-        .last_seen = _tick_get_ms()
+        .last_seen = tick_get_ms()
     };
     if ( xQueueSendToBack( h->q, &client_fd_action, 0 ) == pdTRUE ) {
         return ESP_OK;

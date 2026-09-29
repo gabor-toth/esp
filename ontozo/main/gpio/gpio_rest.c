@@ -95,7 +95,7 @@ static esp_err_t pins_get_handler( httpd_req_t* req ) {
             const char* className = gpio_get_class_name( type, class );
             cJSON* itemArray = cJSON_AddArrayToObject( typeJson, className );
             int pin_count = gpio_get_number_of_pins( type, class );
-            ESP_LOGI( LOG_TAG, "pin class type=%d name=%s count=%d", type, className, pin_count );
+            // ESP_LOGI( LOG_TAG, "pin class type=%d name=%s count=%d", type, className, pin_count );
             for ( int i = 0; i < pin_count; i++ ) {
                 PinData pin_data;
                 gpio_get_pin_data( type, class, i, &pin_data );
@@ -105,8 +105,8 @@ static esp_err_t pins_get_handler( httpd_req_t* req ) {
                 cJSON_AddBoolToObject( item, GPIO_FIELD_HIDDEN, pin_data.is_hidden );
                 cJSON_AddBoolToObject( item, GPIO_FIELD_MANUAL, pin_data.is_manual );
                 cJSON_AddStringToObject( item, GPIO_FIELD_NAME, pin_data.name );
-                ESP_LOGI( LOG_TAG, "pin name=%s inactive=%d hidden=%d manual=%d", pin_data.name, pin_data.is_inactive,
-                          pin_data.is_hidden, pin_data.is_manual );
+                // ESP_LOGI( LOG_TAG, "pin name=%s inactive=%d hidden=%d manual=%d", pin_data.name, pin_data.is_inactive,
+                //           pin_data.is_hidden, pin_data.is_manual );
                 cJSON_AddItemToArray( itemArray, item );
             }
         }

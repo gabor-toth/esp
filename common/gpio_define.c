@@ -12,8 +12,8 @@ static const char* LOG_TAG = "gpio";
 
 #define reached( X ) ((X)!=0)
 
-#define PUMP_MAIN     0
-#define PUMP_REFILL   1
+#define PIN_INDEX_OUT_PUMP_MAIN     0
+#define PIN_INDEX_OUT_PUMP_REFILL   1
 
 #define MAX_PIN_CLASSES 4
 
@@ -22,10 +22,15 @@ static const char* LOG_TAG = "gpio";
 
 static nvs_handle_t nvs_storage_handle;
 static ConfigVersion version;
+static gpio_changed_callback_t gpio_in_changed_callback = NULL;
+static gpio_changed_callback_t gpio_out_changed_callback = NULL;
+static bool in_gpio_out_changed_callback = false;
 
 typedef struct {
     PinData data;
-    gpio_num_t pin;
+    int pin_class;
+    int pin_index;
+    gpio_num_t gpio;
     PinLevelType level_type;
     int delay_ms_going_low;
     int delay_ms_going_high;
@@ -97,8 +102,15 @@ static void set_pin_state( Pin* output_pin, bool enabled ) {
     output_pin->data.state = enabled;
     bool level =
         ( enabled && output_pin->level_type == high_is_on ) || ( !enabled && output_pin->level_type == low_is_on );
-    ESP_LOGI( LOG_TAG, "set pin %d to %d", output_pin->pin, level );
-    gpio_set_level( output_pin->pin, level );
+    ESP_LOGI( LOG_TAG, "set pin %d/%d (gpio %d) to %d", output_pin->pin_class, output_pin->pin_index, output_pin->gpio,
+              level );
+    gpio_set_level( output_pin->gpio, level );
+    if ( gpio_out_changed_callback != NULL && !in_gpio_out_changed_callback ) {
+        in_gpio_out_changed_callback = true;
+        // ESP_LOGI( LOG_TAG, "gpio_out_changed_callback" );
+        gpio_out_changed_callback( output_pin->pin_class, output_pin->pin_index, enabled );
+        in_gpio_out_changed_callback = false;
+    }
 }
 
 static void read_nvs_or_default( bool is_input, int class_id, int index, PinData* pin_data ) {
@@ -137,9 +149,11 @@ int gpio_add_pin( bool is_input, int class_id, gpio_num_t gpio_pin, PinLevelType
     Pin* pin = &pin_class->pins[ index ];
     memset( pin, 0, sizeof( Pin ) );
     pin->data = pin_data;
-    pin->pin = gpio_pin;
-    pin->level_type = level_type != inherit ? level_type : pin_class->level_type;
     //    pin->delay_ms_going_high = pin->delay_ms_going_low = 0;
+    pin->gpio = gpio_pin;
+    pin->level_type = level_type != inherit ? level_type : pin_class->level_type;
+    pin->pin_class = class_id;
+    pin->pin_index = index;
 
     *pin_bit_mask |= ( 1ULL << gpio_pin );
     if ( !is_input ) {
@@ -148,7 +162,33 @@ int gpio_add_pin( bool is_input, int class_id, gpio_num_t gpio_pin, PinLevelType
     return index;
 }
 
-static void add_input_pins( void* user_context, gpio_changed_callback_t gpio_changed_callback ) {
+static Pin* find_in_pin_by_gpio( gpio_num_t io_num ) {
+    PinClasses* input_classes = &pin_definitions[ INPUTS ];
+    for ( int input_class_index = 0; input_class_index < input_classes->used_classes; input_class_index++ ) {
+        PinClass* input_class = &input_classes->classes[ input_class_index ];
+        for ( int input_pin = 0; input_pin < input_class->used_pin_count; input_pin++ ) {
+            Pin* pin = &input_class->pins[ input_pin ];
+            if ( pin->gpio == io_num ) {
+                return pin;
+            }
+        }
+    }
+    return NULL;
+}
+
+static void on_gpio_in_changed( gpio_num_t io_num, int state ) {
+    if ( gpio_in_changed_callback == NULL ) {
+        return;
+    }
+    Pin* pin = find_in_pin_by_gpio( io_num );
+    if ( pin == NULL ) {
+        ESP_LOGW( LOG_TAG, "No pin with gpio %d", io_num );
+        return;
+    }
+    gpio_in_changed_callback( pin->pin_class, pin->pin_index, pin->level_type == high_is_on ? state : !state );
+}
+
+static void add_input_pins( void* user_context ) {
     //zero-initialize the config structure.
     gpio_config_t io_conf = {};
 
@@ -176,16 +216,19 @@ static void add_input_pins( void* user_context, gpio_changed_callback_t gpio_cha
     //install gpio isr service
     gpio_install_isr_service( ESP_INTR_FLAG_DEFAULT );
 
-    gpio_task_init( gpio_changed_callback );
+    if ( gpio_in_changed_callback != NULL ) {
+        gpio_task_init( on_gpio_in_changed );
+    }
     PinClasses* input_classes = &pin_definitions[ INPUTS ];
     for ( int input_class_index = 0; input_class_index < input_classes->used_classes; input_class_index++ ) {
         PinClass* input_class = &input_classes->classes[ input_class_index ];
         for ( int input_pin = 0; input_pin < input_class->used_pin_count; input_pin++ ) {
             Pin* pin = &input_class->pins[ input_pin ];
-            gpio_task_add( pin->pin, pin->delay_ms_going_low, pin->delay_ms_going_high );
+            gpio_task_add( pin->gpio, pin->delay_ms_going_low, pin->delay_ms_going_high );
         }
     }
 }
+
 
 static void add_output_pins( void* user_context ) {
     gpio_config_t io_conf = {};
@@ -213,11 +256,15 @@ static void add_output_pins( void* user_context ) {
     gpio_config( &io_conf );
 }
 
-void gpio_init( void* user_context, gpio_changed_callback_t gpio_changed_callback ) {
+void gpio_init( void* user_context,
+                gpio_changed_callback_t _gpio_in_changed_callback,
+                gpio_changed_callback_t _gpio_out_changed_callback ) {
     nvs_storage_handle = nvs_open_storage( NVS_NAMESPACE_GPIO );
     config_version_init( &version, NVS_KEY_VERSION );
     config_version_read( nvs_storage_handle, &version );
-    add_input_pins( user_context, gpio_changed_callback );
+    gpio_in_changed_callback = _gpio_in_changed_callback;
+    gpio_out_changed_callback = _gpio_out_changed_callback;
+    add_input_pins( user_context );
     add_output_pins( user_context );
     nvs_close_storage( nvs_storage_handle );
     nvs_storage_handle = 0;
@@ -249,7 +296,7 @@ bool gpio_get_pin_state( bool is_input, int class_id, int index ) {
     if ( !is_input ) {
         return pin->data.state;
     }
-    int state = gpio_get_level( pin->pin );
+    int state = gpio_get_level( pin->gpio );
     return ( pin->level_type == high_is_on ) == state;
 }
 

@@ -10,20 +10,31 @@ static const char* LOG_TAG = "pin_logic";
 
 #define reached( X ) ((X)!=0)
 
-#define PUMP_MAIN     0
-#define PUMP_REFILL   1
+#define PIN_INDEX_OUT_PUMP_MAIN     0
+#define PIN_INDEX_OUT_PUMP_REFILL   1
+
+#define PIN_INDEX_OUT_PUMP_REFILL   1
+
+#define PIN_INDEX_OUT_BUTTON_2      0
+
+#define PIN_INDEX_IN_LEVEL_1        0
+#define PIN_INDEX_IN_LEVEL_2        1
+#define PIN_INDEX_IN_LEVEL_3        2
+#define PIN_INDEX_IN_LEVEL_4        3
+
+#define PIN_INDEX_IN_BUTTON_1       0
 
 static char* const PUMPS_NAME = "pumps";
 static char* const ZONES_NAME = "zones";
 
 static void set_initial_pump_states() {
-    int level1 = gpio_get_pin_state( INPUTS, PIN_CLASS_IN_LEVELS, 0 );
-    int level2 = gpio_get_pin_state( INPUTS, PIN_CLASS_IN_LEVELS, 1 );
-    int level3 = gpio_get_pin_state( INPUTS, PIN_CLASS_IN_LEVELS, 2 );
-    int level4 = gpio_get_pin_state( INPUTS, PIN_CLASS_IN_LEVELS, 3 );
+    int level1 = gpio_get_pin_state( INPUTS, PIN_CLASS_IN_LEVELS, PIN_INDEX_IN_LEVEL_1 );
+    int level2 = gpio_get_pin_state( INPUTS, PIN_CLASS_IN_LEVELS, PIN_INDEX_IN_LEVEL_2 );
+    int level3 = gpio_get_pin_state( INPUTS, PIN_CLASS_IN_LEVELS, PIN_INDEX_IN_LEVEL_3 );
+    int level4 = gpio_get_pin_state( INPUTS, PIN_CLASS_IN_LEVELS, PIN_INDEX_IN_LEVEL_4 );
 
-    gpio_set_pin_state_forced( OUTPUTS, PIN_CLASS_OUT_PUMPS, PUMP_MAIN, false );
-    gpio_set_pin_state_forced( OUTPUTS, PIN_CLASS_OUT_PUMPS, PUMP_REFILL, false );
+    gpio_set_pin_state_forced( OUTPUTS, PIN_CLASS_OUT_PUMPS, PIN_INDEX_OUT_PUMP_MAIN, false );
+    gpio_set_pin_state_forced( OUTPUTS, PIN_CLASS_OUT_PUMPS, PIN_INDEX_OUT_PUMP_REFILL, false );
 
     bool refillState = !reached( level4 )
         //                       || !reached( level3 )
@@ -31,7 +42,7 @@ static void set_initial_pump_states() {
         //                       || !reached( level1 )
         ;
     ESP_LOGI( LOG_TAG, "Levels: 1-%d 2-%d 3-%d 4-%d refillPump-%d", level1, level2, level3, level4, refillState );
-    gpio_set_pin_state( OUTPUTS, PIN_CLASS_OUT_PUMPS, PUMP_REFILL,
+    gpio_set_pin_state( OUTPUTS, PIN_CLASS_OUT_PUMPS, PIN_INDEX_OUT_PUMP_REFILL,
                         refillState );
 }
 
@@ -103,52 +114,62 @@ void gpio_define_input_pins_callback( gpio_config_t* io_conf, void* user_context
                   low_is_on, &io_conf->pin_bit_mask );
 }
 
-static void gpio_changed_callback( gpio_num_t io_num, int state ) {
-    ESP_LOGI( LOG_TAG, "Pin %d changed to %d", io_num, state );
+static void gpio_in_changed_callback( int pin_class, int pin_index, int state ) {
+    ESP_LOGI( LOG_TAG, "pin in %d/%d changed to %d", pin_class, pin_index, state );
 
-    bool refill_state = gpio_get_pin_state( OUTPUTS, PIN_CLASS_OUT_PUMPS, PUMP_REFILL );
+    bool refill_state = gpio_get_pin_state( OUTPUTS, PIN_CLASS_OUT_PUMPS, PIN_INDEX_OUT_PUMP_REFILL );
     bool old_refill_state = refill_state;
-    bool main_state = gpio_get_pin_state( OUTPUTS, PIN_CLASS_OUT_PUMPS, PUMP_MAIN );
+    bool main_state = gpio_get_pin_state( OUTPUTS, PIN_CLASS_OUT_PUMPS, PIN_INDEX_OUT_PUMP_MAIN );
     bool old_main_state = main_state;
 
-    if ( io_num == GPIO_INPUT_LEVEL_4 ) {
-        if ( state == PIN_ENABLED ) {
-            refill_state = false;
-        } else {
-            refill_state = true;
+    if ( pin_class == PIN_CLASS_IN_LEVELS ) {
+        if ( pin_index == PIN_INDEX_IN_LEVEL_4 ) {
+            if ( state == PIN_ENABLED ) {
+                refill_state = false;
+            } else {
+                refill_state = true;
+            }
+        } else if ( pin_index == PIN_INDEX_IN_LEVEL_3 || pin_index == PIN_INDEX_IN_LEVEL_2 ) {
+            if ( state == PIN_ENABLED ) {
+                main_state = true;
+            }
+        } else if ( pin_index == PIN_INDEX_IN_LEVEL_1 ) {
+            if ( state == PIN_DISABLED ) {
+                main_state = false;
+            }
         }
-    } else if ( io_num == GPIO_INPUT_LEVEL_3 || io_num == GPIO_INPUT_LEVEL_2 ) {
-        if ( state == PIN_ENABLED ) {
-            main_state = true;
+    } else if ( pin_class == PIN_CLASS_IN_BUTTONS ) {
+        if ( pin_index == PIN_INDEX_IN_BUTTON_1 ) {
+            if ( state ) {
+                main_state = !main_state;
+            }
         }
-    } else if ( io_num == GPIO_INPUT_LEVEL_1 ) {
-        if ( state == PIN_DISABLED ) {
-            main_state = false;
-        }
-    } else if ( io_num == GPIO_INPUT_BUTTON_1 ) {
-        if ( state ) {
-            main_state = !main_state;
-        }
-    } else {
-        ESP_LOGE( LOG_TAG, "Unhandled gpio %d (state %d)!\n", io_num, state );
     }
 
     if ( old_main_state != main_state ) {
-        ESP_LOGI( LOG_TAG, "Turning main pum %s", main_state ? "on" : "off" );
-        gpio_set_pin_state( OUTPUTS, PIN_CLASS_OUT_PUMPS, PUMP_MAIN, main_state );
+        ESP_LOGI( LOG_TAG, "turning main pum %s", main_state ? "on" : "off" );
+        gpio_set_pin_state( OUTPUTS, PIN_CLASS_OUT_PUMPS, PIN_INDEX_OUT_PUMP_MAIN, main_state );
         program_logic_pump_state_change( main_state );
-        gpio_set_pin_state( OUTPUTS, PIN_CLASS_OUT_BUTTONS, 0, main_state );
     }
     if ( old_refill_state != refill_state ) {
-        ESP_LOGI( LOG_TAG, "Turning refill pump %s", refill_state ? "on" : "off" );
-        gpio_set_pin_state( OUTPUTS, PIN_CLASS_OUT_PUMPS, PUMP_REFILL, refill_state );
+        ESP_LOGI( LOG_TAG, "turning refill pump %s", refill_state ? "on" : "off" );
+        gpio_set_pin_state( OUTPUTS, PIN_CLASS_OUT_PUMPS, PIN_INDEX_OUT_PUMP_REFILL, refill_state );
+    }
+}
+
+static void gpio_out_changed_callback( int pin_class, int pin_index, int state ) {
+    ESP_LOGI( LOG_TAG, "pin out %d/%d changed to %d", pin_class, pin_index, state );
+    if ( pin_class == PIN_CLASS_OUT_PUMPS ) {
+        if ( pin_index == PIN_INDEX_OUT_PUMP_MAIN ) {
+            // gpio_set_pin_state( OUTPUTS, PIN_CLASS_OUT_BUTTONS, PIN_INDEX_OUT_BUTTON_2, state );
+        }
     }
 }
 
 void gpio_logic_init() {
-    gpio_init( NULL, gpio_changed_callback );
+    gpio_init( NULL, gpio_in_changed_callback, gpio_out_changed_callback );
 }
 
 void gpio_pump_main( bool on ) {
-    gpio_set_pin_state( OUTPUTS, PIN_CLASS_OUT_PUMPS, PUMP_MAIN, on );
+    gpio_set_pin_state( OUTPUTS, PIN_CLASS_OUT_PUMPS, PIN_INDEX_OUT_PUMP_MAIN, on );
 }
