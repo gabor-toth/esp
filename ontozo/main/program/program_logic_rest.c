@@ -93,7 +93,7 @@ static void add_program_json( cJSON* jsonPrograms, int programIndex, QueuedProgr
         cJSON* jsonZone = cJSON_CreateObject();
         cJSON_AddItemToArray( jsonZones, jsonZone );
         ProgramZone* zone = &program->zones[ zone_index ];
-        gpio_get_pin_data( OUTPUTS, ZONES_CLASS, zone->zone_id, &pin_data );
+        gpio_get_pin_data( OUTPUTS, PIN_CLASS_OUT_ZONES, zone->zone_id, &pin_data );
         if ( zone_index < queued_state->zones_count ) {
             cJSON_AddBoolToObject( jsonZone, "enabled", !queued_state->zones_disabled[ zone_index ] );
         }

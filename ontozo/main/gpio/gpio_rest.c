@@ -14,280 +14,239 @@ static const char* LOG_TAG = "gpio_rest";
 #define LEVEL_STATE_FILLING "filling"
 #define LEVEL_STATE_FULL    "full"
 
-typedef struct
-{
+typedef struct {
     http_server_context_t* server_context;
     bool type;
     int class;
 } PinHandlerContext;
 
-static bool hasSetLevelAbove(int pin_count, const bool* levels, int i)
-{
-    for (int j = i + 1; j < pin_count; j++)
-    {
-        if (levels[j])
-        {
+static bool hasSetLevelAbove( int pin_count, const bool* levels, int i ) {
+    for ( int j = i + 1; j < pin_count; j++ ) {
+        if ( levels[ j ] ) {
             return true;
         }
     }
     return false;
 }
 
-static void state_add_levels(cJSON* root)
-{
-    cJSON* levelsJson = cJSON_AddArrayToObject(root, "levels");
-    int pin_count = gpio_get_number_of_pins(INPUTS, classLevels);
-    bool* levels = calloc(pin_count, sizeof(bool));
-    for (int i = 0; i < pin_count; i++)
-    {
+static void state_add_levels( cJSON* root ) {
+    cJSON* levelsJson = cJSON_AddArrayToObject( root, "levels" );
+    int pin_count = gpio_get_number_of_pins( INPUTS, classLevels );
+    bool* levels = calloc( pin_count, sizeof( bool ) );
+    for ( int i = 0; i < pin_count; i++ ) {
         PinData pin_data;
-        gpio_get_pin_data(INPUTS, classLevels, i, &pin_data);
-        levels[i] = pin_data.state;
+        gpio_get_pin_data( INPUTS, classLevels, i, &pin_data );
+        levels[ i ] = pin_data.state;
     }
-    for (int i = 0; i < pin_count - 1; i++)
-    {
+    for ( int i = 0; i < pin_count - 1; i++ ) {
         const char* state = NULL;
-        bool isSetLevelAbove = hasSetLevelAbove(pin_count, levels, i);
-        if (levels[i])
-        {
+        bool isSetLevelAbove = hasSetLevelAbove( pin_count, levels, i );
+        if ( levels[ i ] ) {
             state = isSetLevelAbove ? LEVEL_STATE_FULL : LEVEL_STATE_FILLING;
-        }
-        else
-        {
+        } else {
             state = isSetLevelAbove ? LEVEL_STATE_FAILURE : LEVEL_STATE_EMPTY;
         }
-        cJSON_AddItemToArray(levelsJson, cJSON_CreateString(state));
+        cJSON_AddItemToArray( levelsJson, cJSON_CreateString( state ) );
     }
-    free(levels);
+    free( levels );
 }
 
-static esp_err_t state_get_handler(httpd_req_t* req)
-{
-    ESP_LOGI(LOG_TAG, "%s %s", http_method_str( req->method ), req->uri);
+static esp_err_t state_get_handler( httpd_req_t* req ) {
+    ESP_LOGI( LOG_TAG, "%s %s", http_method_str( req->method ), req->uri );
 
-    rest_allow_cors(req);
+    rest_allow_cors( req );
     cJSON* root = cJSON_CreateObject();
-    cJSON_AddStringToObject(root, "version", gpio_get_version());
-    rest_add_time_json(root);
+    cJSON_AddStringToObject( root, "version", gpio_get_version() );
+    rest_add_time_json( root );
 
-    for (int type = OUTPUTS; type <= INPUTS; type++)
-    {
-        cJSON* typeJson = cJSON_AddObjectToObject(root, type == INPUTS ? "inputs" : "outputs");
+    for ( int type = OUTPUTS; type <= INPUTS; type++ ) {
+        cJSON* typeJson = cJSON_AddObjectToObject( root, type == INPUTS ? "inputs" : "outputs" );
 
-        int class_count = gpio_get_number_of_classes(type);
-        for (int class = 0; class < class_count; class++)
-        {
-            cJSON* itemArray = cJSON_AddArrayToObject(typeJson, gpio_get_class_name(type, class));
-            int pin_count = gpio_get_number_of_pins(type, class);
-            for (int i = 0; i < pin_count; i++)
-            {
+        int class_count = gpio_get_number_of_classes( type );
+        for ( int class = 0; class < class_count; class++ ) {
+            cJSON* itemArray = cJSON_AddArrayToObject( typeJson, gpio_get_class_name( type, class ) );
+            int pin_count = gpio_get_number_of_pins( type, class );
+            for ( int i = 0; i < pin_count; i++ ) {
                 cJSON* item = cJSON_CreateObject();
-                cJSON_AddNumberToObject(item, REST_FIELD_ID, i + 1);
-                cJSON_AddBoolToObject(item, "on", gpio_get_pin_state(type, class, i));
-                cJSON_AddItemToArray(itemArray, item);
+                cJSON_AddNumberToObject( item, REST_FIELD_ID, i + 1 );
+                cJSON_AddBoolToObject( item, "on", gpio_get_pin_state( type, class, i ) );
+                cJSON_AddItemToArray( itemArray, item );
             }
         }
     }
-    state_add_levels(root);
+    state_add_levels( root );
 
-    rest_send_json_back_and_delete(req, root);
+    rest_send_json_back_and_delete( req, root );
     return ESP_OK;
 }
 
-static esp_err_t pins_get_handler(httpd_req_t* req)
-{
-    ESP_LOGI(LOG_TAG, "%s %s", http_method_str( req->method ), req->uri);
+static esp_err_t pins_get_handler( httpd_req_t* req ) {
+    ESP_LOGI( LOG_TAG, "%s %s", http_method_str( req->method ), req->uri );
 
-    rest_allow_cors(req);
+    rest_allow_cors( req );
     cJSON* root = cJSON_CreateObject();
-    cJSON_AddStringToObject(root, "version", gpio_get_version());
+    cJSON_AddStringToObject( root, "version", gpio_get_version() );
 
-    for (int type = OUTPUTS; type <= INPUTS; type++)
-    {
-        cJSON* typeJson = cJSON_AddObjectToObject(root, type == INPUTS ? "inputs" : "outputs");
+    for ( int type = OUTPUTS; type <= INPUTS; type++ ) {
+        cJSON* typeJson = cJSON_AddObjectToObject( root, type == INPUTS ? "inputs" : "outputs" );
 
-        int class_count = gpio_get_number_of_classes(type);
-        for (int class = 0; class < class_count; class++)
-        {
-            const char* className = gpio_get_class_name(type, class);
-            cJSON* itemArray = cJSON_AddArrayToObject(typeJson, className);
-            int pin_count = gpio_get_number_of_pins(type, class);
-            for (int i = 0; i < pin_count; i++)
-            {
+        int class_count = gpio_get_number_of_classes( type );
+        for ( int class = 0; class < class_count; class++ ) {
+            const char* className = gpio_get_class_name( type, class );
+            cJSON* itemArray = cJSON_AddArrayToObject( typeJson, className );
+            int pin_count = gpio_get_number_of_pins( type, class );
+            ESP_LOGI( LOG_TAG, "pin class type=%d name=%s count=%d", type, className, pin_count );
+            for ( int i = 0; i < pin_count; i++ ) {
                 PinData pin_data;
-                gpio_get_pin_data(type, class, i, &pin_data);
+                gpio_get_pin_data( type, class, i, &pin_data );
                 cJSON* item = cJSON_CreateObject();
-                cJSON_AddNumberToObject(item, REST_FIELD_ID, i + 1);
-                cJSON_AddBoolToObject(item, GPIO_FIELD_INACTIVE, pin_data.is_inactive);
-                cJSON_AddBoolToObject(item, GPIO_FIELD_HIDDEN, pin_data.is_hidden);
-                cJSON_AddBoolToObject(item, GPIO_FIELD_MANUAL, pin_data.is_manual);
-                cJSON_AddStringToObject(item, GPIO_FIELD_NAME, pin_data.name);
-                ESP_LOGI(LOG_TAG, "pin name=%s inactive=%d hidden=%d manual=%d", pin_data.name, pin_data.is_inactive,
-                         pin_data.is_hidden, pin_data.is_manual);
-                cJSON_AddItemToArray(itemArray, item);
+                cJSON_AddNumberToObject( item, REST_FIELD_ID, i + 1 );
+                cJSON_AddBoolToObject( item, GPIO_FIELD_INACTIVE, pin_data.is_inactive );
+                cJSON_AddBoolToObject( item, GPIO_FIELD_HIDDEN, pin_data.is_hidden );
+                cJSON_AddBoolToObject( item, GPIO_FIELD_MANUAL, pin_data.is_manual );
+                cJSON_AddStringToObject( item, GPIO_FIELD_NAME, pin_data.name );
+                ESP_LOGI( LOG_TAG, "pin name=%s inactive=%d hidden=%d manual=%d", pin_data.name, pin_data.is_inactive,
+                          pin_data.is_hidden, pin_data.is_manual );
+                cJSON_AddItemToArray( itemArray, item );
             }
         }
     }
 
-    rest_send_json_back_and_delete(req, root);
+    rest_send_json_back_and_delete( req, root );
     return ESP_OK;
 }
 
-static esp_err_t pins_put_handler_inner(httpd_req_t* req, cJSON* root, bool is_input, int class)
-{
-    cJSON* id_element = cJSON_GetObjectItem(root, "id");
-    if (id_element == NULL)
-    {
-        return httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Id is mandatory");
+static esp_err_t pins_put_handler_inner( httpd_req_t* req, cJSON* root, bool is_input, int class ) {
+    cJSON* id_element = cJSON_GetObjectItem( root, "id" );
+    if ( id_element == NULL ) {
+        return httpd_resp_send_err( req, HTTPD_400_BAD_REQUEST, "Id is mandatory" );
     }
     int pin_index = id_element->valueint - 1;
-    if (!gpio_is_valid_index(is_input, class, pin_index))
-    {
-        return httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Id is not valid");
+    if ( !gpio_is_valid_index( is_input, class, pin_index ) ) {
+        return httpd_resp_send_err( req, HTTPD_400_BAD_REQUEST, "Id is not valid" );
     }
 
-    const char* class_name = gpio_get_class_name(is_input, class);
+    const char* class_name = gpio_get_class_name( is_input, class );
 
     bool changed = false;
     PinData pin_data;
-    gpio_get_pin_data(is_input, class, pin_index, &pin_data);
+    gpio_get_pin_data( is_input, class, pin_index, &pin_data );
 
     cJSON* element;
-    element = cJSON_GetObjectItem(root, GPIO_FIELD_NAME);
-    if (cJSON_IsString(element))
-    {
+    element = cJSON_GetObjectItem( root, GPIO_FIELD_NAME );
+    if ( cJSON_IsString( element ) ) {
         changed = true;
-        pin_data.name = strdup(element->valuestring);
+        pin_data.name = strdup( element->valuestring );
     }
-    element = cJSON_GetObjectItem(root, GPIO_FIELD_INACTIVE);
-    if (cJSON_IsBool(element))
-    {
+    element = cJSON_GetObjectItem( root, GPIO_FIELD_INACTIVE );
+    if ( cJSON_IsBool( element ) ) {
         changed = true;
-        pin_data.is_inactive = cJSON_IsTrue(element);
+        pin_data.is_inactive = cJSON_IsTrue( element );
     }
-    element = cJSON_GetObjectItem(root, GPIO_FIELD_HIDDEN);
-    if (cJSON_IsBool(element))
-    {
+    element = cJSON_GetObjectItem( root, GPIO_FIELD_HIDDEN );
+    if ( cJSON_IsBool( element ) ) {
         changed = true;
-        pin_data.is_hidden = cJSON_IsTrue(element);
+        pin_data.is_hidden = cJSON_IsTrue( element );
     }
-    element = cJSON_GetObjectItem(root, GPIO_FIELD_MANUAL);
-    if (cJSON_IsBool(element))
-    {
+    element = cJSON_GetObjectItem( root, GPIO_FIELD_MANUAL );
+    if ( cJSON_IsBool( element ) ) {
         changed = true;
-        pin_data.is_manual = cJSON_IsTrue(element);
+        pin_data.is_manual = cJSON_IsTrue( element );
     }
-    if (!changed)
-    {
-        return httpd_resp_send_err(req, 304, "Nothing changed"); // 304 Not Modified
+    if ( !changed ) {
+        return httpd_resp_send_err( req, 304, "Nothing changed" ); // 304 Not Modified
     }
-    gpio_set_pin_data(is_input, class, pin_index, &pin_data);
+    gpio_set_pin_data( is_input, class, pin_index, &pin_data );
 
-    rest_allow_cors(req);
-    rest_send_message_back(req, "%s changed successfully", class_name);
+    rest_allow_cors( req );
+    rest_send_message_back( req, "%s changed successfully", class_name );
     return ESP_OK;
 }
 
-static esp_err_t pins_put_config_handler(httpd_req_t* req)
-{
-    ESP_LOGI(LOG_TAG, "%s %s", http_method_str( req->method ), req->uri);
+static esp_err_t pins_put_config_handler( httpd_req_t* req ) {
+    ESP_LOGI( LOG_TAG, "%s %s", http_method_str( req->method ), req->uri );
 
     cJSON* root;
     esp_err_t result;
 
-    result = rest_receive_json_body(req, ((PinHandlerContext*)req->user_ctx)->server_context, &root);
-    if (result != ESP_OK)
-    {
+    result = rest_receive_json_body( req, ( (PinHandlerContext*) req->user_ctx )->server_context, &root );
+    if ( result != ESP_OK ) {
         return result;
     }
-    PinHandlerContext* context = (PinHandlerContext*)req->user_ctx;
-    result = pins_put_handler_inner(req, root, context->type, context->class);
-    cJSON_Delete(root);
+    PinHandlerContext* context = (PinHandlerContext*) req->user_ctx;
+    result = pins_put_handler_inner( req, root, context->type, context->class );
+    cJSON_Delete( root );
     return result;
 }
 
-static esp_err_t pins_put_state_handler(httpd_req_t* req)
-{
-    ESP_LOGI(LOG_TAG, "%s %s", http_method_str( req->method ), req->uri);
+static esp_err_t pins_put_state_handler( httpd_req_t* req ) {
+    ESP_LOGI( LOG_TAG, "%s %s", http_method_str( req->method ), req->uri );
 
-    PinHandlerContext* context = (PinHandlerContext*)req->user_ctx;
+    PinHandlerContext* context = (PinHandlerContext*) req->user_ctx;
 
-    const char* ptr = req->uri + strlen(PINS_PREFIX) + 1;
-    while (*ptr && *ptr != '/')
-    {
+    const char* ptr = req->uri + strlen( PINS_PREFIX ) + 1;
+    while ( *ptr && *ptr != '/' ) {
         ptr++;
     }
-    if (*ptr != '/')
-    {
-        ESP_LOGW(LOG_TAG, "Index expected in URL, got %s at %d", ptr, (int) ( ptr - req->uri ));
-        return rest_set_error_code(req, ESP_ERR_INVALID_ARG, "Index expected in URL");
+    if ( *ptr != '/' ) {
+        ESP_LOGW( LOG_TAG, "Index expected in URL, got %s at %d", ptr, (int) ( ptr - req->uri ) );
+        return rest_set_error_code( req, ESP_ERR_INVALID_ARG, "Index expected in URL" );
     }
     ptr++;
-    int pin_index = (int)strtol(ptr, (char**)&ptr, 10) - 1;
-    if (*ptr != '/')
-    {
-        ESP_LOGW(LOG_TAG, "Index expected in URL, got %s at %d", ptr, (int) ( ptr - req->uri ));
-        return rest_set_error_code(req, ESP_ERR_INVALID_ARG, "Index expected in URL");
+    int pin_index = (int) strtol( ptr, (char**) &ptr, 10 ) - 1;
+    if ( *ptr != '/' ) {
+        ESP_LOGW( LOG_TAG, "Index expected in URL, got %s at %d", ptr, (int) ( ptr - req->uri ) );
+        return rest_set_error_code( req, ESP_ERR_INVALID_ARG, "Index expected in URL" );
     }
     ptr++;
     int state;
-    if (strcmp(ptr, "on") == 0)
-    {
+    if ( strcmp( ptr, "on" ) == 0 ) {
         state = 1;
-    }
-    else if (strcmp(ptr, "off") == 0)
-    {
+    } else if ( strcmp( ptr, "off" ) == 0 ) {
         state = 0;
+    } else {
+        ESP_LOGW( LOG_TAG, "Index expected in URL, got %s at %d", ptr, (int) ( ptr - req->uri ) );
+        return rest_set_error_code( req, ESP_ERR_INVALID_ARG, "State expected in URL" );
     }
-    else
-    {
-        ESP_LOGW(LOG_TAG, "Index expected in URL, got %s at %d", ptr, (int) ( ptr - req->uri ));
-        return rest_set_error_code(req, ESP_ERR_INVALID_ARG, "State expected in URL");
-    }
-    const char* class_name = gpio_get_class_name(context->type, context->class);
-    gpio_set_pin_state_forced(context->type, context->class, pin_index, state);
-    ESP_LOGI(LOG_TAG, "%s %d state changed to %d", class_name, pin_index + 1, state);
+    const char* class_name = gpio_get_class_name( context->type, context->class );
+    gpio_set_pin_state_forced( context->type, context->class, pin_index, state );
+    ESP_LOGI( LOG_TAG, "%s %d state changed to %d", class_name, pin_index + 1, state );
 
-    rest_allow_cors(req);
-    rest_send_message_back(req, "%s/%d changed successfully", class_name, pin_index + 1);
+    rest_allow_cors( req );
+    rest_send_message_back( req, "%s/%d changed successfully", class_name, pin_index + 1 );
     return ESP_OK;
 }
 
-static void rest_register_state_handler(httpd_handle_t server, http_server_context_t* server_context)
-{
+static void rest_register_state_handler( httpd_handle_t server, http_server_context_t* server_context ) {
     httpd_uri_t state_get_uri = {
         .uri = PINS_PREFIX "/state",
         .method = HTTP_GET,
         .handler = state_get_handler,
         .user_ctx = server_context
     };
-    ESP_ERROR_CHECK(httpd_register_uri_handler( server, &state_get_uri ));
+    ESP_ERROR_CHECK( httpd_register_uri_handler( server, &state_get_uri ) );
 }
 
-static void rest_register_get_handler(httpd_handle_t server, http_server_context_t* server_context)
-{
+static void rest_register_get_handler( httpd_handle_t server, http_server_context_t* server_context ) {
     httpd_uri_t state_get_uri = {
         .uri = PINS_PREFIX,
         .method = HTTP_GET,
         .handler = pins_get_handler,
         .user_ctx = server_context
     };
-    ESP_ERROR_CHECK(httpd_register_uri_handler( server, &state_get_uri ));
+    ESP_ERROR_CHECK( httpd_register_uri_handler( server, &state_get_uri ) );
 }
 
-static void rest_register_put_handlers(httpd_handle_t server, http_server_context_t* server_context)
-{
-    char uri[256];
+static void rest_register_put_handlers( httpd_handle_t server, http_server_context_t* server_context ) {
+    char uri[ 256 ];
 
-    for (int type = OUTPUTS; type <= INPUTS; type++)
-    {
-        int class_count = gpio_get_number_of_classes(type);
-        for (int class = 0; class < class_count; class++)
-        {
-            snprintf(uri, sizeof uri, PINS_PREFIX "/%s", gpio_get_class_name(type, class));
+    for ( int type = OUTPUTS; type <= INPUTS; type++ ) {
+        int class_count = gpio_get_number_of_classes( type );
+        for ( int class = 0; class < class_count; class++ ) {
+            snprintf( uri, sizeof uri, PINS_PREFIX "/%s", gpio_get_class_name( type, class ) );
             PinHandlerContext* context;
 
-            context = malloc(sizeof(PinHandlerContext));
+            context = malloc( sizeof( PinHandlerContext ) );
             context->server_context = server_context;
             context->type = type;
             context->class = class;
@@ -297,20 +256,19 @@ static void rest_register_put_handlers(httpd_handle_t server, http_server_contex
                 .handler = pins_put_config_handler,
                 .user_ctx = context
             };
-            ESP_ERROR_CHECK(httpd_register_uri_handler( server, &uri_definition ));
+            ESP_ERROR_CHECK( httpd_register_uri_handler( server, &uri_definition ) );
 
-            snprintf(uri, sizeof uri, PINS_PREFIX "/%s/*", gpio_get_class_name(type, class));
+            snprintf( uri, sizeof uri, PINS_PREFIX "/%s/*", gpio_get_class_name( type, class ) );
             uri_definition.handler = pins_put_state_handler;
             uri_definition.uri = uri;
-            ESP_ERROR_CHECK(httpd_register_uri_handler( server, &uri_definition ));
-            ESP_LOGI(LOG_TAG, "Registered PUT %s", uri);
+            ESP_ERROR_CHECK( httpd_register_uri_handler( server, &uri_definition ) );
+            ESP_LOGI( LOG_TAG, "Registered PUT %s", uri );
         }
     }
 }
 
-void rest_register_gpio_handlers(httpd_handle_t server, http_server_context_t* server_context)
-{
-    rest_register_state_handler(server, server_context);
-    rest_register_put_handlers(server, server_context);
-    rest_register_get_handler(server, server_context);
+void rest_register_gpio_handlers( httpd_handle_t server, http_server_context_t* server_context ) {
+    rest_register_state_handler( server, server_context );
+    rest_register_put_handlers( server, server_context );
+    rest_register_get_handler( server, server_context );
 }

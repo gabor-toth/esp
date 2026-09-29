@@ -5,13 +5,14 @@
 
 // outputs
 
-#define PUMPS_CLASS 0
-#define ZONES_CLASS 1
+#define PIN_CLASS_OUT_PUMPS 0
+#define PIN_CLASS_OUT_ZONES 1
+#define PIN_CLASS_OUT_BUTTONS 2
 
 // inputs
 
-#define LEVELS_CLASS 0
-#define BUTTONS_CLASS 1
+#define PIN_CLASS_IN_LEVELS 0
+#define PIN_CLASS_IN_BUTTONS 1
 
 extern void gpio_logic_init();
 

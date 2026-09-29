@@ -41,7 +41,7 @@ static void destruct_queue_item( struct queue_item_t* item ) {
 
 static void end_current_zone() {
     if ( current_zone_id >= 0 ) {
-        gpio_set_pin_state( OUTPUTS, ZONES_CLASS, current_zone_id, false );
+        gpio_set_pin_state( OUTPUTS, PIN_CLASS_OUT_ZONES, current_zone_id, false );
         current_zone_id = -1;
     }
 }
@@ -62,7 +62,7 @@ static void start_next_zone() {
     current_zone_id = zone->zone_id;
     ESP_LOGI( LOG_TAG, "moving to zone %d/%d: id %d, duration %d secs",
               current_zone_index + 1, current_program->zones_count, current_zone_id, zone->duration_in_seconds );
-    gpio_set_pin_state( OUTPUTS, ZONES_CLASS, current_zone_id, true );
+    gpio_set_pin_state( OUTPUTS, PIN_CLASS_OUT_ZONES, current_zone_id, true );
     TickType_t timer_ticks = pdMS_TO_TICKS( zone->duration_in_seconds * 1000 );
     ESP_LOGI( LOG_TAG, "set timer to %ld ticks", timer_ticks );
     if ( !xTimerChangePeriod( timer, timer_ticks, portMAX_DELAY ) ) {
