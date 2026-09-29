@@ -161,7 +161,7 @@ static void gpio_out_changed_callback( int pin_class, int pin_index, int state )
     ESP_LOGI( LOG_TAG, "pin out %d/%d changed to %d", pin_class, pin_index, state );
     if ( pin_class == PIN_CLASS_OUT_PUMPS ) {
         if ( pin_index == PIN_INDEX_OUT_PUMP_MAIN ) {
-            // gpio_set_pin_state( OUTPUTS, PIN_CLASS_OUT_BUTTONS, PIN_INDEX_OUT_BUTTON_2, state );
+            gpio_set_pin_state( OUTPUTS, PIN_CLASS_OUT_BUTTONS, PIN_INDEX_OUT_BUTTON_2, state );
         }
     }
 }
