@@ -4,7 +4,7 @@
 #include "http/http_server.h"
 #include "http/http_static_file.h"
 #include "http/rest_handler.h"
-#include "http/wss_server.h"
+#include "http/ws_main.h"
 #include "main_main.h"
 #include "nvs_main.h"
 #include "power_led.h"
@@ -27,10 +27,11 @@ void app_main( void ) {
     discovery_register();
 
     http_server_main( DEFAULT_HTTP_SERVER_CONTEXT_SIZE, 24 );
-    http_static_files_register();
+    ws_main();
     rest_register();
+    http_static_files_register();
+
     wifi_main( "ontozo" );
-    // ESP_ERROR_CHECK(wifi_main( "ontozo" ));
 
     program_logic_init();
     program_start_init();
