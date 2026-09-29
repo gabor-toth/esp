@@ -6,8 +6,8 @@
 #include "program_logic_rest.h"
 #include "rest_util.h"
 
-#define RUN_PREFIX "/run/"
-#define RUN_URI RUN_PREFIX "*"
+#define RUN_PREFIX "/rest/run"
+#define RUN_URI RUN_PREFIX "/*"
 
 static const char* LOG_TAG = "program_logic";
 
@@ -19,21 +19,21 @@ static esp_err_t run_post_handler( httpd_req_t* req ) {
 
     bool found = false;
     rest_allow_cors( req );
-    if ( strcmp( uri, "stop" ) == 0 ) {
+    if ( strcmp( uri, "/stop" ) == 0 ) {
         program_logic_stop_all();
         rest_send_message_back( req, "stopped" );
         found = true;
-    } else if ( strcmp( uri, "next/zone" ) == 0 ) {
+    } else if ( strcmp( uri, "/next/zone" ) == 0 ) {
         // TODO pass in current ids
         program_logic_move_to_next_zone( 0, 0 );
         rest_send_message_back( req, "moved to next zone" );
         found = true;
-    } else if ( strcmp( uri, "next/program" ) == 0 ) {
+    } else if ( strcmp( uri, "/next/program" ) == 0 ) {
         // TODO pass in current ids
         program_logic_move_to_next_program( 0 );
         rest_send_message_back( req, "moved to next program" );
         found = true;
-    } else if ( strncmp( uri, "start/", 6 /*strlen("start/")*/ ) == 0 ) {
+    } else if ( strncmp( uri, "/start/", 7 /*strlen("start/")*/ ) == 0 ) {
         uri += 6;
         int id;
         if ( ( result = rest_parse_index( &uri, &id, true ) ) != ESP_OK ) {
@@ -46,8 +46,8 @@ static esp_err_t run_post_handler( httpd_req_t* req ) {
         program_logic_start( index );
         rest_send_message_back( req, "started" );
         found = true;
-    } else if ( strncmp( uri, "queued/", 7 ) == 0 ) {
-        uri += 7;
+    } else if ( strncmp( uri, "/queued/", 8 ) == 0 ) {
+        uri += 8;
         int program_id;
         if ( ( result = rest_parse_index( &uri, &program_id, true ) ) != ESP_OK ) {
             ESP_LOGW( LOG_TAG, "Program index expected in URL %s %s at %s", http_method_str( req->method ), req->uri,
@@ -153,7 +153,7 @@ void rest_register_program_logic_handlers( httpd_handle_t server, http_server_co
     ESP_ERROR_CHECK( httpd_register_uri_handler( server, &run_delete_uri ) );
 
     httpd_uri_t run_get_uri = {
-        .uri = "/run",
+        .uri = RUN_PREFIX,
         .method = HTTP_GET,
         .handler = run_get_handler,
         .user_ctx = server_context

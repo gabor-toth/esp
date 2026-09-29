@@ -5,7 +5,7 @@
 #include "gpio_rest.h"
 #include "rest_util.h"
 
-#define PINS_PREFIX    "/pins"
+#define PINS_PREFIX    "/rest/pins"
 
 static const char* LOG_TAG = "gpio_rest";
 

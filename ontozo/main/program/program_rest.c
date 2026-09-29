@@ -7,7 +7,7 @@
 
 static const char* LOG_TAG = "program_rest";
 
-#define PROGRAMS_PREFIX    "/programs"
+#define PROGRAMS_PREFIX    "/rest/programs"
 
 static esp_err_t programs_get_handler( httpd_req_t* req ) {
     char* json_out;
