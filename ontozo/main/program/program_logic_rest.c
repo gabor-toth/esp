@@ -33,8 +33,8 @@ static esp_err_t run_post_handler( httpd_req_t* req ) {
         program_logic_move_to_next_program( 0 );
         rest_send_message_back( req, "moved to next program" );
         found = true;
-    } else if ( strncmp( uri, "/start/", 7 /*strlen("start/")*/ ) == 0 ) {
-        uri += 6;
+    } else if ( strncmp( uri, "/start/", 7 /*strlen("/start/")*/ ) == 0 ) {
+        uri += 7; /*strlen("/start/")*/
         int id;
         if ( ( result = rest_parse_index( &uri, &id, true ) ) != ESP_OK ) {
             return rest_set_error_code( req, result, "Program id expected in URL" );
@@ -46,8 +46,8 @@ static esp_err_t run_post_handler( httpd_req_t* req ) {
         program_logic_start( index );
         rest_send_message_back( req, "started" );
         found = true;
-    } else if ( strncmp( uri, "/queued/", 8 ) == 0 ) {
-        uri += 8;
+    } else if ( strncmp( uri, "/queued/", 8 /*strlen("/queued/")*/ ) == 0 ) {
+        uri += 8; /*strlen("/queued/")*/
         int program_id;
         if ( ( result = rest_parse_index( &uri, &program_id, true ) ) != ESP_OK ) {
             ESP_LOGW( LOG_TAG, "Program index expected in URL %s %s at %s", http_method_str( req->method ), req->uri,

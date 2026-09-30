@@ -5,6 +5,8 @@
 #include "gpio_define.h"
 #include "gpio_logic.h"
 #include "../program/program_logic.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/timers.h"
 
 static const char* LOG_TAG = "pin_logic";
 
@@ -23,6 +25,9 @@ static const char* LOG_TAG = "pin_logic";
 #define PIN_INDEX_IN_LEVEL_4        3
 
 #define PIN_INDEX_IN_BUTTON_1       0
+
+#define BUTTON1_FLASH_PERIOD_MS     100
+#define BUTTON1_WAIT_TIMEOUT_MS     2000
 
 static char* const PUMPS_NAME = "pumps";
 static char* const ZONES_NAME = "zones";
@@ -71,6 +76,8 @@ static gpio_num_t zone_pins[ ] = {
 
 int classLevels;
 int classButtons;
+static TimerHandle_t button1_timer;
+static int button1_flash_counter;
 
 void gpio_define_output_pins_callback( gpio_config_t* io_conf, void* user_context ) {
     gpio_add_class( OUTPUTS, PUMPS_NAME, 2, high_is_on );
@@ -114,8 +121,14 @@ void gpio_define_input_pins_callback( gpio_config_t* io_conf, void* user_context
                   low_is_on, &io_conf->pin_bit_mask );
 }
 
-static void gpio_in_changed_callback( int pin_class, int pin_index, int state ) {
-    ESP_LOGI( LOG_TAG, "pin in %d/%d changed to %d", pin_class, pin_index, state );
+static void main_pump_state_change( bool main_state ) {
+    ESP_LOGI( LOG_TAG, "turning main pum %s", main_state ? "on" : "off" );
+    gpio_set_pin_state( OUTPUTS, PIN_CLASS_OUT_PUMPS, PIN_INDEX_OUT_PUMP_MAIN, main_state );
+    program_logic_pump_state_change( main_state );
+}
+
+static void gpio_in_changed_callback( int pin_class, int pin_index, int pin_state ) {
+    ESP_LOGI( LOG_TAG, "pin in %d/%d changed to %d", pin_class, pin_index, pin_state );
 
     bool refill_state = gpio_get_pin_state( OUTPUTS, PIN_CLASS_OUT_PUMPS, PIN_INDEX_OUT_PUMP_REFILL );
     bool old_refill_state = refill_state;
@@ -124,32 +137,42 @@ static void gpio_in_changed_callback( int pin_class, int pin_index, int state ) 
 
     if ( pin_class == PIN_CLASS_IN_LEVELS ) {
         if ( pin_index == PIN_INDEX_IN_LEVEL_4 ) {
-            if ( state == PIN_ENABLED ) {
+            if ( pin_state == PIN_ENABLED ) {
                 refill_state = false;
             } else {
                 refill_state = true;
             }
         } else if ( pin_index == PIN_INDEX_IN_LEVEL_3 || pin_index == PIN_INDEX_IN_LEVEL_2 ) {
-            if ( state == PIN_ENABLED ) {
+            if ( pin_state == PIN_ENABLED ) {
                 main_state = true;
             }
         } else if ( pin_index == PIN_INDEX_IN_LEVEL_1 ) {
-            if ( state == PIN_DISABLED ) {
+            if ( pin_state == PIN_DISABLED ) {
                 main_state = false;
             }
         }
     } else if ( pin_class == PIN_CLASS_IN_BUTTONS ) {
         if ( pin_index == PIN_INDEX_IN_BUTTON_1 ) {
-            if ( state ) {
-                main_state = !main_state;
+            if ( pin_state ) {
+                if ( main_state ) {
+                    main_state = false;
+                    program_logic_stop_all();
+                } else {
+                    ESP_LOGI( LOG_TAG, "start button1 timer" );
+                    button1_flash_counter = BUTTON1_WAIT_TIMEOUT_MS / BUTTON1_FLASH_PERIOD_MS;
+                    xTimerStart( button1_timer, portMAX_DELAY );
+                }
+            } else {
+                if ( xTimerIsTimerActive( button1_timer ) ) {
+                    ESP_LOGI( LOG_TAG, "cancel button1 timer" );
+                    xTimerStop( button1_timer, portMAX_DELAY );
+                }
             }
         }
     }
 
     if ( old_main_state != main_state ) {
-        ESP_LOGI( LOG_TAG, "turning main pum %s", main_state ? "on" : "off" );
-        gpio_set_pin_state( OUTPUTS, PIN_CLASS_OUT_PUMPS, PIN_INDEX_OUT_PUMP_MAIN, main_state );
-        program_logic_pump_state_change( main_state );
+        main_pump_state_change( main_state );
     }
     if ( old_refill_state != refill_state ) {
         ESP_LOGI( LOG_TAG, "turning refill pump %s", refill_state ? "on" : "off" );
@@ -166,8 +189,20 @@ static void gpio_out_changed_callback( int pin_class, int pin_index, int state )
     }
 }
 
+static void button1_timer_callback( TimerHandle_t timer ) {
+    if ( --button1_flash_counter == 0 ) {
+        ESP_LOGI( LOG_TAG, "start button1 expired" );
+        xTimerStop( button1_timer, portMAX_DELAY );
+        main_pump_state_change( true );
+    } else {
+        gpio_set_pin_state( OUTPUTS, PIN_CLASS_OUT_BUTTONS, PIN_INDEX_OUT_BUTTON_2, button1_flash_counter % 2 );
+    }
+}
+
 void gpio_logic_init() {
     gpio_init( NULL, gpio_in_changed_callback, gpio_out_changed_callback );
+    button1_timer = xTimerCreate( LOG_TAG, pdMS_TO_TICKS( BUTTON1_FLASH_PERIOD_MS ), true, NULL,
+                                  button1_timer_callback );
 }
 
 void gpio_pump_main( bool on ) {

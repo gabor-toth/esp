@@ -30,7 +30,7 @@ static struct queue_item_t* queue = NULL;
 static SemaphoreHandle_t semaphore;
 static StaticSemaphore_t xMutexBuffer;
 
-static void stop_and_move_to_next_program();
+static void stop_and_move_to_next_program( bool forced_stop );
 
 static void destruct_queue_item( struct queue_item_t* item ) {
     if ( item->zones_disabled ) {
@@ -55,7 +55,7 @@ static void start_next_zone() {
     if ( ++current_zone_index == current_program->zones_count ) {
         ESP_LOGI( LOG_TAG, "Ending program %d after last zone", current_program_index );
         current_zone_index = -1;
-        stop_and_move_to_next_program();
+        stop_and_move_to_next_program( false );
         return;
     }
     ProgramZone* zone = &current_program->zones[ current_zone_index ];
@@ -81,12 +81,12 @@ static void start_program() {
     current_program = program_get_by_index( index );
     if ( current_program == NULL ) {
         ESP_LOGW( LOG_TAG, "Program does %d not exists, skipping", index );
-        stop_and_move_to_next_program();
+        stop_and_move_to_next_program( false );
         return;
     }
     if ( !current_program->valid ) {
         ESP_LOGW( LOG_TAG, "Program %d is not valid, skipping", index );
-        stop_and_move_to_next_program();
+        stop_and_move_to_next_program( false );
         return;
     }
     ESP_LOGI( LOG_TAG, "Starting program %d", index );
@@ -124,10 +124,10 @@ static void start_or_queue_program( int program_index ) {
     ESP_LOGI( LOG_TAG, "Queued program %d", program_index );
 }
 
-static void stop_current_program() {
+static void stop_current_program( bool forced_stop ) {
     if ( is_running ) {
         ESP_LOGI( LOG_TAG, "Stopping program %d", current_program_index );
-    } else {
+    } else if ( !forced_stop ) {
         ESP_LOGW( LOG_TAG, "No current program to stop" );
     }
 
@@ -135,8 +135,8 @@ static void stop_current_program() {
     end_current_zone();
 }
 
-static void stop_and_move_to_next_program() {
-    stop_current_program();
+static void stop_and_move_to_next_program( bool forced_stop ) {
+    stop_current_program( forced_stop );
 
     if ( queue == NULL ) {
         gpio_pump_main( false );
@@ -159,7 +159,7 @@ static void stop_all_programs() {
         destruct_queue_item( queue );
         queue = next;
     }
-    stop_and_move_to_next_program();
+    stop_and_move_to_next_program( true );
 }
 
 static void pump_state_changed( bool is_on ) {
@@ -196,7 +196,7 @@ void program_logic_move_to_next_zone( program_id_t program_id, int zone_index ) 
 void program_logic_move_to_next_program( program_id_t program_id ) {
     xSemaphoreTake( semaphore, 10 );
     if ( program_id == 0 || current_program_id == program_id ) {
-        stop_and_move_to_next_program();
+        stop_and_move_to_next_program( false );
     }
     xSemaphoreGive( semaphore );
 }
