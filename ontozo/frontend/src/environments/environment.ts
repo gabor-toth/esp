@@ -1,5 +1,5 @@
 export const environment = {
-  baseUrl: 'http://192.168.72.185/rest/',
+  baseUrl: 'http://192.168.72.182/rest/',
   defaultHttpTimeout: 3000,
   production: false,
   simulateRestCall: false,
